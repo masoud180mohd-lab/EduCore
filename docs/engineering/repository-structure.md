@@ -20,7 +20,8 @@ The immutable EduCore AI Development Kit in `EduCore/` remains the source of tru
 |     |- database-freeze/   Accepted/proposed Database Freeze packages
 |     |- api-contract-freeze/ Accepted/proposed API Contract Freeze packages
 |     |- implementation-plans/ Spec-driven implementation plans (e.g. IMP-001)
-|     |- gates/               Go/No-Go records (e.g. IMP-001 P0)
+|     |- gates/               Go/No-Go and freeze acceptance records
+|     |- decisions/           Repository ADRs (e.g. ADR-012 exception)
 |     `- templates/           Engineering PR checklists
 |- infra/
 |  `- docker/               Local Docker platform notes (DEV-001)

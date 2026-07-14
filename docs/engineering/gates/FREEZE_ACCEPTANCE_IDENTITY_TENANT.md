@@ -42,11 +42,12 @@ This implementation **preceded** formal human signatures. Gate documents previou
 
 ## Mandatory conditions (must close before full freeze acceptance)
 
-1. **Human signatures** on DBF-001 and ACF-001 approval blocks (Database Architect, Principal Architect, Security, Backend Lead / API Contract Guardian) — or an ADR that records an explicit Architecture exception with named owners and expiry.
-2. **G3 — RLS trust model:** prevent client-settable GUC spoofing on INSERT/bootstrap/platform paths (Audit Critical G3).
-3. **G3 — Live isolation evidence:** automated PostgreSQL integration tests for the DBF-001 T1–T8 (or successor) isolation matrix using `educore_app`, not static SQL string matching alone.
-4. **Membership path:** replace fail-closed membership stub with real membership-backed visibility before relying on RLS for multi-tenant product traffic.
-5. **OpenAPI hardening:** encode permission requirements / missing auth schemes called out by the audit before P2 NestJS identity/tenant route implementation.
+1. **Human signatures** on DBF-001 and ACF-001 approval blocks (Database Architect, Principal Architect, Security, Backend Lead / API Contract Guardian).
+   - **Exception path (now recorded):** [`ADR-012`](../decisions/ADR-012-exception-identity-tenant-implementation.md) authorizes **limited provisional** Identity/Tenant persistence work under Conditional Freeze; it **does not** mark freezes as full v1.0 accepted.
+2. **G3 — RLS trust model:** prevent client-settable GUC spoofing on INSERT/bootstrap/platform paths (Audit Critical G3). **Status: addressed in AUDIT-R2** (re-verify on review).
+3. **G3 — Live isolation evidence:** automated PostgreSQL integration tests using `educore_app`. **Status: evidenced PASS** (see AUDIT-R2 live evidence; re-run on schema change).
+4. **Membership path:** replace fail-closed membership stub with real membership-backed visibility. **Status: `tenant_memberships` + SECURITY DEFINER helpers landed** (IMP-001 P1 continuation); keep expanding isolation coverage.
+5. **OpenAPI hardening:** encode permission requirements / auth schemes before NestJS identity/tenant **route** implementation. **Status: securitySchemes + x-permissions landed**; full freeze signature still open.
 
 ## Allowed work under this conditional record
 
@@ -68,12 +69,13 @@ This implementation **preceded** formal human signatures. Gate documents previou
 
 Does **not** supersede Architecture Freeze v1.0 (`EduCore/38_ARCHITECTURE_FREEZE_RECORD.md`).
 
-## Residual risks (updated after Phase 2 AUDIT-R2 + live evidence)
+## Residual risks (updated after ADR-012 + memberships + OpenAPI hardening)
 
-- **Live isolation (G3 condition #3):** evidenced **PASS** on 2026-07-14 against local PostgreSQL 16 — see `docs/engineering/task-records/AUDIT-R2-live-evidence-2026-07-14.md`. Docker Desktop on this host may still be unhealthy; use local PG or a healthy Docker engine.
-- Membership-backed visibility (`tenant_memberships`) remains deferred — cross-user-in-tenant scenarios incomplete until that table lands.
+- **Exception ADR-012** is **time-bounded** (review by 2026-08-15; hard expiry 2026-09-15 unless renewed or freezes fully accepted). Do not treat it as permanent permission to skip freezes.
+- **Domain NestJS routes** remain **NO GO** under ADR-012 until full freeze acceptance or a new ADR.
+- Live isolation evidenced; re-run suite after each schema change (`RUN_LIVE_DB_TESTS=1`).
+- Full DBF/ACF **human signatures** remain open — freezes are still not “Accepted v1.0”.
 - Physical Drive-sync workspace relocation remains an operator action (Audit G1 residual).
-- Full DBF/ACF human signatures remain open.
 
 ## Sign-off
 
