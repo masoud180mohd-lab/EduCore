@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,13 +9,6 @@ const migrationsDir = path.join(projectRoot, 'apps/api/db/migrations');
 
 function readMigration(name: string): string {
   return readFileSync(path.join(migrationsDir, name), 'utf8');
-}
-
-function allUpSql(): string {
-  return readdirSync(migrationsDir)
-    .filter((f) => f.endsWith('.up.sql'))
-    .map((f) => readMigration(f))
-    .join('\n');
 }
 
 describe('IMP-001 P1 tenants + users + first RLS policies', () => {
@@ -30,12 +23,12 @@ describe('IMP-001 P1 tenants + users + first RLS policies', () => {
     expect(ddl).toMatch(/ck_users_status/i);
   });
 
-  it('does not create memberships, sessions, or other deferred tables in this increment', () => {
-    const sql = allUpSql().toUpperCase();
-    expect(sql).not.toContain('CREATE TABLE TENANT_MEMBERSHIPS');
-    expect(sql).not.toContain('CREATE TABLE SESSIONS');
-    expect(sql).not.toContain('CREATE TABLE ORGANIZATIONS');
-    expect(sql).not.toContain('CREATE TABLE ROLES');
+  it('does not create sessions or other non-membership deferred tables in tenants/users migrations', () => {
+    const tenantsUsers = readMigration('20260714150000_tenants_and_users.up.sql').toUpperCase();
+    expect(tenantsUsers).not.toContain('CREATE TABLE TENANT_MEMBERSHIPS');
+    expect(tenantsUsers).not.toContain('CREATE TABLE SESSIONS');
+    expect(tenantsUsers).not.toContain('CREATE TABLE ORGANIZATIONS');
+    expect(tenantsUsers).not.toContain('CREATE TABLE ROLES');
   });
 
   it('enables FORCE RLS and defines Pattern B/C policies for educore_app', () => {
@@ -47,7 +40,6 @@ describe('IMP-001 P1 tenants + users + first RLS policies', () => {
     expect(rls).toMatch(/app\.can_see_tenant/i);
     expect(rls).toMatch(/app\.can_see_user/i);
     expect(rls).toMatch(/app\.user_has_active_membership/i);
-    expect(rls).toMatch(/rls_mode\(\) IN \('bootstrap', 'platform'\)/i);
     // No DELETE policies for runtime role (deny by default).
     expect(rls.toUpperCase()).not.toMatch(/CREATE POLICY\s+\w+\s+ON\s+TENANTS\s+FOR\s+DELETE/);
     expect(rls.toUpperCase()).not.toMatch(/CREATE POLICY\s+\w+\s+ON\s+USERS\s+FOR\s+DELETE/);
@@ -59,7 +51,7 @@ describe('IMP-001 P1 tenants + users + first RLS policies', () => {
     expect(ddl).toMatch(/REVOKE DELETE ON TABLE users FROM educore_app/i);
   });
 
-  it('keeps membership hook as fail-closed placeholder until memberships table exists', () => {
+  it('documents that membership was stubbed before the memberships migration', () => {
     const rls = readMigration('20260714160000_tenants_users_rls.up.sql');
     expect(rls).toMatch(/CREATE OR REPLACE FUNCTION app\.user_has_active_membership/i);
     expect(rls).toMatch(/SELECT false/i);

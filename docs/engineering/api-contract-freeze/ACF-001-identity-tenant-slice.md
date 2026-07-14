@@ -6,7 +6,7 @@
 | ---------------- | ----------------------------------------------------------------------------------- |
 | Freeze ID        | `ACF-001`                                                                           |
 | Title            | API Contract Freeze — Identity & Tenant / Organization slice                        |
-| Version          | `1.0` (proposed for formal acceptance)                                              |
+| Version          | `1.0` (**conditional** acceptance — OpenAPI hardened with security + x-permissions) |
 | Date             | 2026-07-14                                                                          |
 | Authority        | Engineering design freeze under Architecture Freeze v1.0                            |
 | Companion        | `DBF-001` (Database Freeze — Identity & Tenant)                                     |

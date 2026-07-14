@@ -2,9 +2,11 @@ openapi: 3.1.0
 info:
   title: EduCore API — Identity & Tenant Slice (ACF-001)
   version: 1.0.0
-  description: |
-    API Contract Freeze v1.0 for Identity And Access + Tenant And Billing (baseline).
-    Design freeze only — not an implementation guarantee until formally accepted with DBF-001.
+  description: >-
+    API Contract Freeze ACF-001 for Identity And Access + Tenant And Billing (baseline). Status: CONDITIONAL acceptance
+    — design baseline under IMP-001; not a full v1.0 production freeze signature. Domain HTTP routes are not implemented
+    yet; this document governs future implementation. AuthZ stack: Authenticated → Active membership → Permission code →
+    Scope → RLS. Operation extensions: x-permissions (codes), x-authz (stack summary).
   contact:
     name: EduCore Engineering
 servers:
@@ -25,11 +27,11 @@ tags:
   - name: Mfa
   - name: Relationships
   - name: Delegations
-
 paths:
   /auth/login:
     post:
-      tags: [Auth]
+      tags:
+        - Auth
       operationId: authLogin
       summary: Authenticate and create a session
       security: []
@@ -52,10 +54,20 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '429':
           $ref: '#/components/responses/RateLimited'
-
+      x-permissions: []
+      x-authz:
+        stack:
+          - public
+          - scope
+          - rls
+        permissionCodes: []
+        notes: >-
+          No catalogue permission required (public or self-service). Membership still applies where stack lists
+          active_membership.
   /auth/mfa/verify:
     post:
-      tags: [Auth]
+      tags:
+        - Auth
       operationId: authMfaVerify
       summary: Complete MFA challenge after login
       security: []
@@ -74,10 +86,20 @@ paths:
                 $ref: '#/components/schemas/LoginResponseEnvelope'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
+      x-permissions: []
+      x-authz:
+        stack:
+          - public
+          - scope
+          - rls
+        permissionCodes: []
+        notes: >-
+          No catalogue permission required (public or self-service). Membership still applies where stack lists
+          active_membership.
   /auth/refresh:
     post:
-      tags: [Auth]
+      tags:
+        - Auth
       operationId: authRefresh
       summary: Rotate access token using refresh credential
       security: []
@@ -100,10 +122,20 @@ paths:
                 $ref: '#/components/schemas/TokenRefreshResponseEnvelope'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
+      x-permissions: []
+      x-authz:
+        stack:
+          - public
+          - scope
+          - rls
+        permissionCodes: []
+        notes: >-
+          No catalogue permission required (public or self-service). Membership still applies where stack lists
+          active_membership.
   /auth/logout:
     post:
-      tags: [Auth]
+      tags:
+        - Auth
       operationId: authLogout
       summary: Revoke the current session
       security:
@@ -113,10 +145,20 @@ paths:
           description: Logged out
         '401':
           $ref: '#/components/responses/Unauthorized'
-
+      x-permissions: []
+      x-authz:
+        stack:
+          - authenticated
+          - scope
+          - rls
+        permissionCodes: []
+        notes: >-
+          No catalogue permission required (public or self-service). Membership still applies where stack lists
+          active_membership.
   /auth/me:
     get:
-      tags: [Auth]
+      tags:
+        - Auth
       operationId: authMe
       summary: Current authenticated principal
       security:
@@ -130,14 +172,25 @@ paths:
                 $ref: '#/components/schemas/MeResponseEnvelope'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
+      x-permissions: []
+      x-authz:
+        stack:
+          - authenticated
+          - scope
+          - rls
+        permissionCodes: []
+        notes: >-
+          No catalogue permission required (public or self-service). Membership still applies where stack lists
+          active_membership.
   /auth/select-tenant:
     post:
-      tags: [Auth]
+      tags:
+        - Auth
       operationId: authSelectTenant
       summary: Bind session to an active tenant membership
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/IdempotencyKeyOptional'
       requestBody:
@@ -146,7 +199,8 @@ paths:
           application/json:
             schema:
               type: object
-              required: [tenantId]
+              required:
+                - tenantId
               properties:
                 tenantId:
                   $ref: '#/components/schemas/Uuid'
@@ -157,16 +211,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SelectTenantResponseEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-
+      x-permissions:
+        - tenant.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - tenant.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /sessions:
     get:
-      tags: [Sessions]
+      tags:
+        - Sessions
       operationId: listSessions
       summary: List sessions for current user or tenant (admin)
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/Limit'
@@ -187,14 +256,27 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-
+      x-permissions:
+        - session.revoke
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - session.revoke
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /sessions/{sessionId}/revoke:
     post:
-      tags: [Sessions]
+      tags:
+        - Sessions
       operationId: revokeSession
       summary: Revoke a session
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/SessionId'
@@ -202,12 +284,28 @@ paths:
       responses:
         '204':
           description: Revoked
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
+      x-permissions:
+        - session.revoke
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - session.revoke
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /tenants:
     post:
-      tags: [Tenants]
+      tags:
+        - Tenants
       operationId: createTenant
       summary: Provision a tenant (platform/bootstrap)
       security:
@@ -229,18 +327,32 @@ paths:
                 $ref: '#/components/schemas/TenantEnvelope'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
-
+      x-permissions:
+        - tenant.manage
+      x-authz:
+        stack:
+          - authenticated
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - tenant.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /tenants/current:
     get:
-      tags: [Tenants]
+      tags:
+        - Tenants
       operationId: getCurrentTenant
       summary: Get tenant from X-Tenant-Id
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
       responses:
@@ -250,16 +362,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TenantEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-
+      x-permissions:
+        - tenant.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - tenant.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /tenants/{tenantId}:
     get:
-      tags: [Tenants]
+      tags:
+        - Tenants
       operationId: getTenant
       summary: Get tenant by id
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/TenantId'
@@ -270,14 +397,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TenantEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+      x-permissions:
+        - tenant.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - tenant.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     patch:
-      tags: [Tenants]
+      tags:
+        - Tenants
       operationId: updateTenant
       summary: Update tenant profile fields
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/TenantId'
@@ -295,16 +440,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TenantEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-
+      x-permissions:
+        - tenant.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - tenant.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /organizations:
     get:
-      tags: [Organizations]
+      tags:
+        - Organizations
       operationId: listOrganizations
       summary: List organizations in tenant
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/Limit'
@@ -313,7 +473,9 @@ paths:
           in: query
           schema:
             type: string
-            enum: [active, inactive]
+            enum:
+              - active
+              - inactive
       responses:
         '200':
           description: Organization page
@@ -321,12 +483,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrganizationListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - organization.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - organization.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     post:
-      tags: [Organizations]
+      tags:
+        - Organizations
       operationId: createOrganization
       summary: Create organization
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/IdempotencyKeyRequired'
@@ -343,14 +523,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrganizationEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - organization.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - organization.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /organizations/{organizationId}:
     get:
-      tags: [Organizations]
+      tags:
+        - Organizations
       operationId: getOrganization
       summary: Get organization
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/OrganizationId'
@@ -361,14 +558,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrganizationEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+      x-permissions:
+        - organization.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - organization.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     patch:
-      tags: [Organizations]
+      tags:
+        - Organizations
       operationId: updateOrganization
       summary: Update organization
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/OrganizationId'
@@ -386,14 +601,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrganizationEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - organization.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - organization.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /organizations/{organizationId}/deactivate:
     post:
-      tags: [Organizations]
+      tags:
+        - Organizations
       operationId: deactivateOrganization
       summary: Deactivate organization
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/OrganizationId'
@@ -405,14 +637,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrganizationEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - organization.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - organization.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /tenant-settings:
     get:
-      tags: [TenantSettings]
+      tags:
+        - TenantSettings
       operationId: getTenantSettings
       summary: Get tenant settings document
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
       responses:
@@ -422,12 +671,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TenantSettingsEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - tenant.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - tenant.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     put:
-      tags: [TenantSettings]
+      tags:
+        - TenantSettings
       operationId: putTenantSettings
       summary: Replace tenant settings (validated schema)
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/IdempotencyKeyOptional'
@@ -446,14 +713,31 @@ paths:
                 $ref: '#/components/schemas/TenantSettingsEnvelope'
         '400':
           $ref: '#/components/responses/BadRequest'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - tenant.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - tenant.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /entitlements:
     get:
-      tags: [Entitlements]
+      tags:
+        - Entitlements
       operationId: listEntitlements
       summary: List tenant entitlements
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/Limit'
@@ -465,14 +749,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EntitlementListEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - entitlement.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - entitlement.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /subscriptions/current:
     get:
-      tags: [Entitlements]
+      tags:
+        - Entitlements
       operationId: getCurrentSubscription
       summary: Current subscription baseline
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
       responses:
@@ -482,16 +783,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SubscriptionEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
+      x-permissions:
+        - tenant.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - tenant.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /users:
     get:
-      tags: [Users]
+      tags:
+        - Users
       operationId: listUsers
       summary: List users visible in tenant
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/Limit'
@@ -500,7 +818,11 @@ paths:
           in: query
           schema:
             type: string
-            enum: [invited, active, disabled, locked]
+            enum:
+              - invited
+              - active
+              - disabled
+              - locked
       responses:
         '200':
           description: User page
@@ -508,14 +830,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserListEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /users/{userId}:
     get:
-      tags: [Users]
+      tags:
+        - Users
       operationId: getUser
       summary: Get user in tenant context
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/UserId'
@@ -526,14 +865,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+      x-permissions:
+        - user.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     patch:
-      tags: [Users]
+      tags:
+        - Users
       operationId: updateUser
       summary: Update user profile fields
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/UserId'
@@ -551,14 +908,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /users/{userId}/disable:
     post:
-      tags: [Users]
+      tags:
+        - Users
       operationId: disableUser
       summary: Disable a user account
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/UserId'
@@ -570,14 +944,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /memberships:
     get:
-      tags: [Memberships]
+      tags:
+        - Memberships
       operationId: listMemberships
       summary: List tenant memberships
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/Limit'
@@ -586,7 +977,11 @@ paths:
           in: query
           schema:
             type: string
-            enum: [invited, active, suspended, removed]
+            enum:
+              - invited
+              - active
+              - suspended
+              - removed
       responses:
         '200':
           description: Membership page
@@ -594,12 +989,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MembershipListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     post:
-      tags: [Memberships]
+      tags:
+        - Memberships
       operationId: createMembership
       summary: Invite or add a member
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/IdempotencyKeyRequired'
@@ -616,16 +1029,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MembershipEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
-
+      x-permissions:
+        - user.invite
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.invite
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /memberships/{membershipId}:
     get:
-      tags: [Memberships]
+      tags:
+        - Memberships
       operationId: getMembership
       summary: Get membership
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/MembershipId'
@@ -636,16 +1066,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MembershipEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
+      x-permissions:
+        - user.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /memberships/{membershipId}/suspend:
     post:
-      tags: [Memberships]
+      tags:
+        - Memberships
       operationId: suspendMembership
       summary: Suspend membership
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/MembershipId'
@@ -657,14 +1104,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MembershipEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /memberships/{membershipId}/reactivate:
     post:
-      tags: [Memberships]
+      tags:
+        - Memberships
       operationId: reactivateMembership
       summary: Reactivate membership
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/MembershipId'
@@ -676,14 +1140,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MembershipEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /memberships/{membershipId}/remove:
     post:
-      tags: [Memberships]
+      tags:
+        - Memberships
       operationId: removeMembership
       summary: Remove membership
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/MembershipId'
@@ -695,14 +1176,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MembershipEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /permissions:
     get:
-      tags: [Permissions]
+      tags:
+        - Permissions
       operationId: listPermissions
       summary: Global permission catalog
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
       responses:
@@ -712,14 +1210,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PermissionListEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - role.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - role.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /roles:
     get:
-      tags: [Roles]
+      tags:
+        - Roles
       operationId: listRoles
       summary: List tenant roles
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/Limit'
@@ -731,12 +1246,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - role.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - role.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     post:
-      tags: [Roles]
+      tags:
+        - Roles
       operationId: createRole
       summary: Create custom role
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/IdempotencyKeyRequired'
@@ -753,14 +1286,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - role.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - role.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /roles/{roleId}:
     get:
-      tags: [Roles]
+      tags:
+        - Roles
       operationId: getRole
       summary: Get role with permissions
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/RoleId'
@@ -771,12 +1321,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - role.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - role.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     patch:
-      tags: [Roles]
+      tags:
+        - Roles
       operationId: updateRole
       summary: Update role name
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/RoleId'
@@ -799,14 +1367,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - role.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - role.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /roles/{roleId}/permissions:
     put:
-      tags: [Roles]
+      tags:
+        - Roles
       operationId: replaceRolePermissions
       summary: Replace role permission set
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/RoleId'
@@ -817,7 +1402,8 @@ paths:
           application/json:
             schema:
               type: object
-              required: [permissionCodes]
+              required:
+                - permissionCodes
               properties:
                 permissionCodes:
                   type: array
@@ -830,14 +1416,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - role.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - role.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /user-roles:
     get:
-      tags: [UserRoles]
+      tags:
+        - UserRoles
       operationId: listUserRoles
       summary: List role assignments
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/Limit'
@@ -853,12 +1456,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserRoleListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - role.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - role.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     post:
-      tags: [UserRoles]
+      tags:
+        - UserRoles
       operationId: assignUserRole
       summary: Assign role to user
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/IdempotencyKeyRequired'
@@ -875,16 +1496,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserRoleEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
-
+      x-permissions:
+        - role.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - role.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /user-roles/{userRoleId}:
     delete:
-      tags: [UserRoles]
+      tags:
+        - UserRoles
       operationId: unassignUserRole
       summary: Remove role assignment
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/UserRoleId'
@@ -892,12 +1530,28 @@ paths:
       responses:
         '204':
           description: Removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
+      x-permissions:
+        - role.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - role.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /me/mfa-factors:
     get:
-      tags: [Mfa]
+      tags:
+        - Mfa
       operationId: listMyMfaFactors
       summary: List own MFA factors (no secrets)
       security:
@@ -909,8 +1563,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MfaFactorListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-permissions: []
+      x-authz:
+        stack:
+          - authenticated
+          - scope
+          - rls
+        permissionCodes: []
+        notes: >-
+          No catalogue permission required (public or self-service). Membership still applies where stack lists
+          active_membership.
     post:
-      tags: [Mfa]
+      tags:
+        - Mfa
       operationId: beginMfaEnrollment
       summary: Begin MFA factor enrollment
       security:
@@ -930,10 +1597,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MfaEnrollmentEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-permissions: []
+      x-authz:
+        stack:
+          - authenticated
+          - scope
+          - rls
+        permissionCodes: []
+        notes: >-
+          No catalogue permission required (public or self-service). Membership still applies where stack lists
+          active_membership.
   /me/mfa-factors/{factorId}/confirm:
     post:
-      tags: [Mfa]
+      tags:
+        - Mfa
       operationId: confirmMfaEnrollment
       summary: Confirm MFA enrollment
       security:
@@ -947,7 +1626,8 @@ paths:
           application/json:
             schema:
               type: object
-              required: [code]
+              required:
+                - code
               properties:
                 code:
                   type: string
@@ -958,10 +1638,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MfaFactorEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-permissions: []
+      x-authz:
+        stack:
+          - authenticated
+          - scope
+          - rls
+        permissionCodes: []
+        notes: >-
+          No catalogue permission required (public or self-service). Membership still applies where stack lists
+          active_membership.
   /me/mfa-factors/{factorId}/disable:
     post:
-      tags: [Mfa]
+      tags:
+        - Mfa
       operationId: disableMfaFactor
       summary: Disable MFA factor
       security:
@@ -976,14 +1668,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MfaFactorEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-permissions: []
+      x-authz:
+        stack:
+          - authenticated
+          - scope
+          - rls
+        permissionCodes: []
+        notes: >-
+          No catalogue permission required (public or self-service). Membership still applies where stack lists
+          active_membership.
   /relationships:
     get:
-      tags: [Relationships]
+      tags:
+        - Relationships
       operationId: listRelationships
       summary: List relationships in tenant
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/Limit'
@@ -995,12 +1700,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RelationshipListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.read
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.read
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     post:
-      tags: [Relationships]
+      tags:
+        - Relationships
       operationId: createRelationship
       summary: Create relationship (slice-1 objectType=user only)
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/IdempotencyKeyRequired'
@@ -1017,14 +1740,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RelationshipEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /relationships/{relationshipId}/end:
     post:
-      tags: [Relationships]
+      tags:
+        - Relationships
       operationId: endRelationship
       summary: End a relationship
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/RelationshipId'
@@ -1036,14 +1776,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RelationshipEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /delegations:
     get:
-      tags: [Delegations]
+      tags:
+        - Delegations
       operationId: listDelegations
       summary: List delegations
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/Limit'
@@ -1055,12 +1812,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DelegationListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
     post:
-      tags: [Delegations]
+      tags:
+        - Delegations
       operationId: createDelegation
       summary: Create time-bound delegation
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/IdempotencyKeyRequired'
@@ -1077,14 +1852,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DelegationEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
   /delegations/{delegationId}/revoke:
     post:
-      tags: [Delegations]
+      tags:
+        - Delegations
       operationId: revokeDelegation
       summary: Revoke delegation
       security:
         - bearerAuth: []
+          tenantHeader: []
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
         - $ref: '#/components/parameters/DelegationId'
@@ -1096,15 +1888,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DelegationEnvelope'
-
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: Requires listed permission codes unless a documented self-service exception applies.
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Access token from auth login/refresh (format flexible until IdP ADR).
-
+      description: >-
+        Access token from /auth/login or /auth/refresh. Format flexible until IdP ADR. Missing/invalid → 401
+        UNAUTHORIZED.
+    tenantHeader:
+      type: apiKey
+      in: header
+      name: X-Tenant-Id
+      description: >-
+        Active tenant UUID. Required on tenant-scoped routes. Must match an active membership for the caller (or trusted
+        platform path). Missing/invalid → 400 TENANT_CONTEXT_REQUIRED or 403 TENANT_MEMBERSHIP_REQUIRED.
   parameters:
     TenantIdHeader:
       name: X-Tenant-Id
@@ -1202,7 +2017,6 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/Uuid'
-
   responses:
     BadRequest:
       description: Validation error
@@ -1240,7 +2054,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorEnvelope'
-
   schemas:
     Uuid:
       type: string
@@ -1248,18 +2061,24 @@ components:
     IsoDateTime:
       type: string
       format: date-time
-
     ErrorEnvelope:
       type: object
-      required: [error]
+      required:
+        - error
       properties:
         error:
           type: object
-          required: [code, message, requestId]
+          required:
+            - code
+            - message
+            - requestId
           properties:
             code:
               type: string
-              examples: [VALIDATION_ERROR, FORBIDDEN, NOT_FOUND]
+              examples:
+                - VALIDATION_ERROR
+                - FORBIDDEN
+                - NOT_FOUND
             message:
               type: string
             requestId:
@@ -1267,16 +2086,17 @@ components:
             details:
               type: object
               additionalProperties: true
-
     PageInfo:
       type: object
-      required: [limit]
+      required:
+        - limit
       properties:
         nextCursor:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
         limit:
           type: integer
-
     LoginRequest:
       type: object
       properties:
@@ -1290,63 +2110,80 @@ components:
           type: string
           description: Optional external IdP assertion/token exchange payload
       description: Provide password pair or idpAssertion depending on auth mode
-
     LoginResponseEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           type: object
-          required: [requiresMfa]
+          required:
+            - requiresMfa
           properties:
             accessToken:
-              type: [string, 'null']
+              type:
+                - string
+                - 'null'
             tokenType:
               type: string
-              enum: [Bearer]
+              enum:
+                - Bearer
             expiresIn:
-              type: [integer, 'null']
+              type:
+                - integer
+                - 'null'
             refreshToken:
-              type: [string, 'null']
+              type:
+                - string
+                - 'null'
             requiresMfa:
               type: boolean
             mfaChallengeToken:
-              type: [string, 'null']
+              type:
+                - string
+                - 'null'
             user:
               $ref: '#/components/schemas/User'
-
     MfaVerifyRequest:
       type: object
-      required: [mfaChallengeToken, code]
+      required:
+        - mfaChallengeToken
+        - code
       properties:
         mfaChallengeToken:
           type: string
         code:
           type: string
-
     TokenRefreshResponseEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           type: object
-          required: [accessToken, tokenType, expiresIn]
+          required:
+            - accessToken
+            - tokenType
+            - expiresIn
           properties:
             accessToken:
               type: string
             tokenType:
               type: string
-              enum: [Bearer]
+              enum:
+                - Bearer
             expiresIn:
               type: integer
-
     MeResponseEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           type: object
-          required: [user, memberships]
+          required:
+            - user
+            - memberships
           properties:
             user:
               $ref: '#/components/schemas/User'
@@ -1355,16 +2192,19 @@ components:
               items:
                 $ref: '#/components/schemas/MembershipSummary'
             activeTenantId:
-              type: [string, 'null']
+              type:
+                - string
+                - 'null'
               format: uuid
-
     SelectTenantResponseEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           type: object
-          required: [tenantId]
+          required:
+            - tenantId
           properties:
             tenantId:
               $ref: '#/components/schemas/Uuid'
@@ -1372,10 +2212,15 @@ components:
               type: array
               items:
                 type: string
-
     User:
       type: object
-      required: [id, email, displayName, status, createdAt, updatedAt]
+      required:
+        - id
+        - email
+        - displayName
+        - status
+        - createdAt
+        - updatedAt
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1386,28 +2231,37 @@ components:
           type: string
         status:
           type: string
-          enum: [invited, active, disabled, locked]
+          enum:
+            - invited
+            - active
+            - disabled
+            - locked
         emailVerifiedAt:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
           format: date-time
         lastLoginAt:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
           format: date-time
         createdAt:
           $ref: '#/components/schemas/IsoDateTime'
         updatedAt:
           $ref: '#/components/schemas/IsoDateTime'
-
     UserEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           $ref: '#/components/schemas/User'
-
     UserListEnvelope:
       type: object
-      required: [data, page]
+      required:
+        - data
+        - page
       properties:
         data:
           type: array
@@ -1415,7 +2269,6 @@ components:
             $ref: '#/components/schemas/User'
         page:
           $ref: '#/components/schemas/PageInfo'
-
     UpdateUserRequest:
       type: object
       properties:
@@ -1423,10 +2276,17 @@ components:
           type: string
           minLength: 1
           maxLength: 120
-
     Tenant:
       type: object
-      required: [id, code, name, status, primaryLocale, timezone, createdAt, updatedAt]
+      required:
+        - id
+        - code
+        - name
+        - status
+        - primaryLocale
+        - timezone
+        - createdAt
+        - updatedAt
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1436,7 +2296,11 @@ components:
           type: string
         status:
           type: string
-          enum: [draft, active, suspended, closed]
+          enum:
+            - draft
+            - active
+            - suspended
+            - closed
         primaryLocale:
           type: string
         timezone:
@@ -1445,21 +2309,22 @@ components:
           $ref: '#/components/schemas/IsoDateTime'
         updatedAt:
           $ref: '#/components/schemas/IsoDateTime'
-
     TenantEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           $ref: '#/components/schemas/Tenant'
-
     CreateTenantRequest:
       type: object
-      required: [code, name]
+      required:
+        - code
+        - name
       properties:
         code:
           type: string
-          pattern: '^[a-z0-9-]{3,64}$'
+          pattern: ^[a-z0-9-]{3,64}$
         name:
           type: string
         primaryLocale:
@@ -1470,7 +2335,6 @@ components:
           default: Africa/Dar_es_Salaam
         ownerUserId:
           $ref: '#/components/schemas/Uuid'
-
     UpdateTenantRequest:
       type: object
       properties:
@@ -1480,10 +2344,16 @@ components:
           type: string
         timezone:
           type: string
-
     Organization:
       type: object
-      required: [id, tenantId, orgType, name, status, createdAt, updatedAt]
+      required:
+        - id
+        - tenantId
+        - orgType
+        - name
+        - status
+        - createdAt
+        - updatedAt
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1491,32 +2361,42 @@ components:
           $ref: '#/components/schemas/Uuid'
         orgType:
           type: string
-          enum: [school, campus, department]
+          enum:
+            - school
+            - campus
+            - department
         name:
           type: string
         code:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
         status:
           type: string
-          enum: [active, inactive]
+          enum:
+            - active
+            - inactive
         parentOrganizationId:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
           format: uuid
         createdAt:
           $ref: '#/components/schemas/IsoDateTime'
         updatedAt:
           $ref: '#/components/schemas/IsoDateTime'
-
     OrganizationEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           $ref: '#/components/schemas/Organization'
-
     OrganizationListEnvelope:
       type: object
-      required: [data, page]
+      required:
+        - data
+        - page
       properties:
         data:
           type: array
@@ -1524,21 +2404,24 @@ components:
             $ref: '#/components/schemas/Organization'
         page:
           $ref: '#/components/schemas/PageInfo'
-
     CreateOrganizationRequest:
       type: object
-      required: [orgType, name]
+      required:
+        - orgType
+        - name
       properties:
         orgType:
           type: string
-          enum: [school, campus, department]
+          enum:
+            - school
+            - campus
+            - department
         name:
           type: string
         code:
           type: string
         parentOrganizationId:
           $ref: '#/components/schemas/Uuid'
-
     UpdateOrganizationRequest:
       type: object
       properties:
@@ -1547,12 +2430,15 @@ components:
         code:
           type: string
         parentOrganizationId:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
           format: uuid
-
     TenantSettingsWrite:
       type: object
-      required: [schemaVersion, settings]
+      required:
+        - schemaVersion
+        - settings
       properties:
         schemaVersion:
           type: integer
@@ -1560,14 +2446,17 @@ components:
         settings:
           type: object
           additionalProperties: true
-
     TenantSettingsEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           type: object
-          required: [schemaVersion, settings, updatedAt]
+          required:
+            - schemaVersion
+            - settings
+            - updatedAt
           properties:
             schemaVersion:
               type: integer
@@ -1576,10 +2465,15 @@ components:
               additionalProperties: true
             updatedAt:
               $ref: '#/components/schemas/IsoDateTime'
-
     Entitlement:
       type: object
-      required: [id, tenantId, featureKey, value, status, source]
+      required:
+        - id
+        - tenantId
+        - featureKey
+        - value
+        - status
+        - source
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1591,14 +2485,20 @@ components:
           type: string
         status:
           type: string
-          enum: [enabled, disabled]
+          enum:
+            - enabled
+            - disabled
         source:
           type: string
-          enum: [plan, manual, trial]
-
+          enum:
+            - plan
+            - manual
+            - trial
     EntitlementListEnvelope:
       type: object
-      required: [data, page]
+      required:
+        - data
+        - page
       properties:
         data:
           type: array
@@ -1606,14 +2506,19 @@ components:
             $ref: '#/components/schemas/Entitlement'
         page:
           $ref: '#/components/schemas/PageInfo'
-
     SubscriptionEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           type: object
-          required: [id, tenantId, planCode, status, startsAt]
+          required:
+            - id
+            - tenantId
+            - planCode
+            - status
+            - startsAt
           properties:
             id:
               $ref: '#/components/schemas/Uuid'
@@ -1623,16 +2528,27 @@ components:
               type: string
             status:
               type: string
-              enum: [trialing, active, past_due, canceled]
+              enum:
+                - trialing
+                - active
+                - past_due
+                - canceled
             startsAt:
               $ref: '#/components/schemas/IsoDateTime'
             endsAt:
-              type: [string, 'null']
+              type:
+                - string
+                - 'null'
               format: date-time
-
     Membership:
       type: object
-      required: [id, tenantId, userId, status, createdAt, updatedAt]
+      required:
+        - id
+        - tenantId
+        - userId
+        - status
+        - createdAt
+        - updatedAt
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1642,9 +2558,15 @@ components:
           $ref: '#/components/schemas/Uuid'
         status:
           type: string
-          enum: [invited, active, suspended, removed]
+          enum:
+            - invited
+            - active
+            - suspended
+            - removed
         joinedAt:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
           format: date-time
         user:
           $ref: '#/components/schemas/User'
@@ -1652,10 +2574,12 @@ components:
           $ref: '#/components/schemas/IsoDateTime'
         updatedAt:
           $ref: '#/components/schemas/IsoDateTime'
-
     MembershipSummary:
       type: object
-      required: [id, tenantId, status]
+      required:
+        - id
+        - tenantId
+        - status
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1665,18 +2589,23 @@ components:
           type: string
         status:
           type: string
-          enum: [invited, active, suspended, removed]
-
+          enum:
+            - invited
+            - active
+            - suspended
+            - removed
     MembershipEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           $ref: '#/components/schemas/Membership'
-
     MembershipListEnvelope:
       type: object
-      required: [data, page]
+      required:
+        - data
+        - page
       properties:
         data:
           type: array
@@ -1684,10 +2613,10 @@ components:
             $ref: '#/components/schemas/Membership'
         page:
           $ref: '#/components/schemas/PageInfo'
-
     CreateMembershipRequest:
       type: object
-      required: [email]
+      required:
+        - email
       properties:
         email:
           type: string
@@ -1698,10 +2627,12 @@ components:
           type: array
           items:
             type: string
-
     Permission:
       type: object
-      required: [id, code, description]
+      required:
+        - id
+        - code
+        - description
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1709,19 +2640,26 @@ components:
           type: string
         description:
           type: string
-
     PermissionListEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           type: array
           items:
             $ref: '#/components/schemas/Permission'
-
     Role:
       type: object
-      required: [id, tenantId, code, name, isSystem, permissions, createdAt, updatedAt]
+      required:
+        - id
+        - tenantId
+        - code
+        - name
+        - isSystem
+        - permissions
+        - createdAt
+        - updatedAt
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1741,17 +2679,18 @@ components:
           $ref: '#/components/schemas/IsoDateTime'
         updatedAt:
           $ref: '#/components/schemas/IsoDateTime'
-
     RoleEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           $ref: '#/components/schemas/Role'
-
     RoleListEnvelope:
       type: object
-      required: [data, page]
+      required:
+        - data
+        - page
       properties:
         data:
           type: array
@@ -1759,24 +2698,29 @@ components:
             $ref: '#/components/schemas/Role'
         page:
           $ref: '#/components/schemas/PageInfo'
-
     CreateRoleRequest:
       type: object
-      required: [code, name]
+      required:
+        - code
+        - name
       properties:
         code:
           type: string
-          pattern: '^[a-z0-9_.-]{2,64}$'
+          pattern: ^[a-z0-9_.-]{2,64}$
         name:
           type: string
         permissionCodes:
           type: array
           items:
             type: string
-
     UserRole:
       type: object
-      required: [id, tenantId, userId, roleId, createdAt]
+      required:
+        - id
+        - tenantId
+        - userId
+        - roleId
+        - createdAt
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1787,23 +2731,26 @@ components:
         roleId:
           $ref: '#/components/schemas/Uuid'
         organizationId:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
           format: uuid
         roleCode:
           type: string
         createdAt:
           $ref: '#/components/schemas/IsoDateTime'
-
     UserRoleEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           $ref: '#/components/schemas/UserRole'
-
     UserRoleListEnvelope:
       type: object
-      required: [data, page]
+      required:
+        - data
+        - page
       properties:
         data:
           type: array
@@ -1811,10 +2758,11 @@ components:
             $ref: '#/components/schemas/UserRole'
         page:
           $ref: '#/components/schemas/PageInfo'
-
     AssignUserRoleRequest:
       type: object
-      required: [userId, roleId]
+      required:
+        - userId
+        - roleId
       properties:
         userId:
           $ref: '#/components/schemas/Uuid'
@@ -1822,10 +2770,15 @@ components:
           $ref: '#/components/schemas/Uuid'
         organizationId:
           $ref: '#/components/schemas/Uuid'
-
     Session:
       type: object
-      required: [id, userId, tenantId, status, createdAt, expiresAt]
+      required:
+        - id
+        - userId
+        - tenantId
+        - status
+        - createdAt
+        - expiresAt
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1835,22 +2788,32 @@ components:
           $ref: '#/components/schemas/Uuid'
         status:
           type: string
-          enum: [active, revoked, expired]
+          enum:
+            - active
+            - revoked
+            - expired
         createdAt:
           $ref: '#/components/schemas/IsoDateTime'
         expiresAt:
           $ref: '#/components/schemas/IsoDateTime'
         lastSeenAt:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
           format: date-time
         ip:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
         userAgent:
-          type: [string, 'null']
-
+          type:
+            - string
+            - 'null'
     SessionListEnvelope:
       type: object
-      required: [data, page]
+      required:
+        - data
+        - page
       properties:
         data:
           type: array
@@ -1858,55 +2821,69 @@ components:
             $ref: '#/components/schemas/Session'
         page:
           $ref: '#/components/schemas/PageInfo'
-
     MfaFactor:
       type: object
-      required: [id, factorType, status, createdAt, updatedAt]
+      required:
+        - id
+        - factorType
+        - status
+        - createdAt
+        - updatedAt
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
         factorType:
           type: string
-          enum: [totp, webauthn, sms_otp]
+          enum:
+            - totp
+            - webauthn
+            - sms_otp
         status:
           type: string
-          enum: [pending, active, disabled]
+          enum:
+            - pending
+            - active
+            - disabled
         createdAt:
           $ref: '#/components/schemas/IsoDateTime'
         updatedAt:
           $ref: '#/components/schemas/IsoDateTime'
-
     MfaFactorEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           $ref: '#/components/schemas/MfaFactor'
-
     MfaFactorListEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           type: array
           items:
             $ref: '#/components/schemas/MfaFactor'
-
     BeginMfaEnrollmentRequest:
       type: object
-      required: [factorType]
+      required:
+        - factorType
       properties:
         factorType:
           type: string
-          enum: [totp, webauthn, sms_otp]
-
+          enum:
+            - totp
+            - webauthn
+            - sms_otp
     MfaEnrollmentEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           type: object
-          required: [factor]
+          required:
+            - factor
           properties:
             factor:
               $ref: '#/components/schemas/MfaFactor'
@@ -1914,11 +2891,17 @@ components:
               type: object
               additionalProperties: true
               description: One-time enrollment material (e.g. otpauth URI); never re-exposed
-
     Relationship:
       type: object
       required:
-        [id, tenantId, subjectUserId, objectType, objectId, relationshipType, status, startsAt]
+        - id
+        - tenantId
+        - subjectUserId
+        - objectType
+        - objectId
+        - relationshipType
+        - status
+        - startsAt
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1934,23 +2917,28 @@ components:
           type: string
         status:
           type: string
-          enum: [active, ended]
+          enum:
+            - active
+            - ended
         startsAt:
           $ref: '#/components/schemas/IsoDateTime'
         endsAt:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
           format: date-time
-
     RelationshipEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           $ref: '#/components/schemas/Relationship'
-
     RelationshipListEnvelope:
       type: object
-      required: [data, page]
+      required:
+        - data
+        - page
       properties:
         data:
           type: array
@@ -1958,36 +2946,37 @@ components:
             $ref: '#/components/schemas/Relationship'
         page:
           $ref: '#/components/schemas/PageInfo'
-
     CreateRelationshipRequest:
       type: object
-      required: [subjectUserId, objectType, objectId, relationshipType]
+      required:
+        - subjectUserId
+        - objectType
+        - objectId
+        - relationshipType
       properties:
         subjectUserId:
           $ref: '#/components/schemas/Uuid'
         objectType:
           type: string
-          enum: [user]
+          enum:
+            - user
           description: Slice-1 limited to user; expanded in later freezes
         objectId:
           $ref: '#/components/schemas/Uuid'
         relationshipType:
           type: string
-
     Delegation:
       type: object
       required:
-        [
-          id,
-          tenantId,
-          delegatorUserId,
-          delegateeUserId,
-          scope,
-          reason,
-          status,
-          startsAt,
-          expiresAt,
-        ]
+        - id
+        - tenantId
+        - delegatorUserId
+        - delegateeUserId
+        - scope
+        - reason
+        - status
+        - startsAt
+        - expiresAt
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -2004,22 +2993,26 @@ components:
           type: string
         status:
           type: string
-          enum: [active, revoked, expired]
+          enum:
+            - active
+            - revoked
+            - expired
         startsAt:
           $ref: '#/components/schemas/IsoDateTime'
         expiresAt:
           $ref: '#/components/schemas/IsoDateTime'
-
     DelegationEnvelope:
       type: object
-      required: [data]
+      required:
+        - data
       properties:
         data:
           $ref: '#/components/schemas/Delegation'
-
     DelegationListEnvelope:
       type: object
-      required: [data, page]
+      required:
+        - data
+        - page
       properties:
         data:
           type: array
@@ -2027,10 +3020,14 @@ components:
             $ref: '#/components/schemas/Delegation'
         page:
           $ref: '#/components/schemas/PageInfo'
-
     CreateDelegationRequest:
       type: object
-      required: [delegateeUserId, scope, reason, startsAt, expiresAt]
+      required:
+        - delegateeUserId
+        - scope
+        - reason
+        - startsAt
+        - expiresAt
       properties:
         delegateeUserId:
           $ref: '#/components/schemas/Uuid'
@@ -2044,3 +3041,21 @@ components:
           $ref: '#/components/schemas/IsoDateTime'
         expiresAt:
           $ref: '#/components/schemas/IsoDateTime'
+  x-permission-catalogue:
+    description: DBF-001 / ACF-001 first-slice permission codes (seeded in DB)
+    codes:
+      - tenant.read
+      - tenant.manage
+      - organization.read
+      - organization.manage
+      - user.invite
+      - user.read
+      - user.manage
+      - role.read
+      - role.manage
+      - session.revoke
+      - audit.read
+      - entitlement.read
+      - entitlement.manage
+security:
+  - bearerAuth: []

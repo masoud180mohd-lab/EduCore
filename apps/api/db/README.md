@@ -41,3 +41,12 @@ Uses `DATABASE_URL` or DEV-001 defaults (`educore` / `educore_local_only` on `12
 
 Provisional Identity/Tenant SQL is under **conditional** freeze acceptance:
 `docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md`.
+
+## Recent migrations (P1 memberships)
+
+| ID                                      | Purpose                       |
+| --------------------------------------- | ----------------------------- |
+| `20260714180000_tenant_memberships`     | `tenant_memberships` table    |
+| `20260714190000_membership_rls_helpers` | Real membership helpers + RLS |
+
+Membership INSERT remains **`educore_platform`** only (no Nest domain routes yet).

@@ -223,6 +223,93 @@ describe.skipIf(!dbAvailable && !forceLive)('AUDIT-R2 live tenant RLS isolation'
       await app.end();
     }
   });
+
+  it('membership: active member sees own tenant; non-member does not; can see same-tenant users', async () => {
+    const platform = new Client({
+      connectionString: roleUrl('educore_platform', 'educore_platform_local_only'),
+    });
+    const app = new Client({
+      connectionString: roleUrl('educore_app', 'educore_app_local_only'),
+    });
+    const admin = new Client({ connectionString: adminUrl() });
+    const tenantA = randomUUID();
+    const tenantB = randomUUID();
+    const userA = randomUUID();
+    const userB = randomUUID();
+    const stamp = String(Date.now());
+
+    await platform.connect();
+    await app.connect();
+    await admin.connect();
+    try {
+      await platform.query('BEGIN');
+      await setPlatformGucs(platform);
+      await platform.query(
+        `INSERT INTO tenants (id, code, name, status) VALUES
+         ($1, $2, 'Mem A', 'active'),
+         ($3, $4, 'Mem B', 'active')`,
+        [tenantA, `ma-${stamp}`, tenantB, `mb-${stamp}`],
+      );
+      await platform.query(
+        `INSERT INTO users (id, email, display_name, status) VALUES
+         ($1, $2, 'User A', 'active'),
+         ($3, $4, 'User B', 'active')`,
+        [userA, `a-${stamp}@example.com`, userB, `b-${stamp}@example.com`],
+      );
+      await platform.query(
+        `INSERT INTO tenant_memberships (id, tenant_id, user_id, status, joined_at) VALUES
+         ($1, $2, $3, 'active', now())`,
+        [randomUUID(), tenantA, userA],
+      );
+      await platform.query('COMMIT');
+
+      // Member of A with current_user A: can see tenant A, not B; can see user A; not user B without membership.
+      await app.query('BEGIN');
+      await setTenantContext(app, tenantA);
+      await app.query(`SELECT set_config('app.current_user', $1, true)`, [userA]);
+
+      const tenants = await app.query<{ id: string }>('SELECT id FROM tenants');
+      const tenantIds = tenants.rows.map((r) => r.id);
+      expect(tenantIds).toContain(tenantA);
+      expect(tenantIds).not.toContain(tenantB);
+
+      const usersVisible = await app.query<{ id: string }>('SELECT id FROM users ORDER BY email');
+      const userIds = usersVisible.rows.map((r) => r.id);
+      expect(userIds).toContain(userA);
+      expect(userIds).not.toContain(userB);
+
+      const memberships = await app.query(
+        'SELECT tenant_id FROM tenant_memberships WHERE user_id = $1',
+        [userA],
+      );
+      expect(memberships.rowCount).toBe(1);
+
+      await app.query('ROLLBACK');
+
+      // Same user, wrong tenant context B without membership: cannot see tenant B via GUC alone if not member
+      // (current_tenant = B still allows Pattern B current_tenant match — so set tenant B GUC shows B.
+      // Membership-based visibility: user_has_active_membership(B) is false; can_see_tenant(B) true only via GUC.
+      // Documented: GUC current_tenant still reveals that tenant row; app layer must not set GUC without membership.
+      await app.query('BEGIN');
+      await setTenantContext(app, tenantB);
+      await app.query(`SELECT set_config('app.current_user', $1, true)`, [userA]);
+      const hasMemB = await app.query<{ ok: boolean }>(
+        `SELECT app.user_has_active_membership($1::uuid) AS ok`,
+        [tenantB],
+      );
+      expect(hasMemB.rows[0]?.ok).toBe(false);
+      await app.query('ROLLBACK');
+    } finally {
+      await admin.query('DELETE FROM tenant_memberships WHERE tenant_id = ANY($1::uuid[])', [
+        [tenantA, tenantB],
+      ]);
+      await admin.query('DELETE FROM users WHERE id = ANY($1::uuid[])', [[userA, userB]]);
+      await admin.query('DELETE FROM tenants WHERE id = ANY($1::uuid[])', [[tenantA, tenantB]]);
+      await app.end();
+      await platform.end();
+      await admin.end();
+    }
+  });
 });
 
 describe.skipIf(dbAvailable || forceLive)('AUDIT-R2 live tenant RLS isolation (skipped)', () => {

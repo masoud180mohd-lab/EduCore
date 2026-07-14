@@ -13,5 +13,6 @@
 
 ## Next product work
 
-- Add `tenant_memberships` + redefine membership hook (after isolation evidence)
-- Feature APIs only after full freeze acceptance
+- [x] `tenant_memberships` + real membership helpers + OpenAPI hardening
+- Feature APIs / P2 request platform only after full freeze acceptance (or explicit exception)
+- Optional: git commit + GitHub push (operator)
