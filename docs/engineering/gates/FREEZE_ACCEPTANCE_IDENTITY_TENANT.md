@@ -1,0 +1,100 @@
+# Freeze Acceptance Record — Identity & Tenant Slice
+
+## Document ID
+
+`FREEZE-ACC-001` — Identity & Tenant (DBF-001 + ACF-001)
+
+## Date
+
+2026-07-14
+
+## Status
+
+**CONDITIONAL ACCEPTANCE** (Audit Remediation Phase 1 / G2)
+
+This record does **not** grant unrestricted production coding permission. It records an honest governance state after Independent Engineering Audit findings of 2026-07-14.
+
+## Related freeze artifacts
+
+| Artifact                  | Path                                                                                | Prior status                          |
+| ------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------- |
+| Database Freeze draft     | `docs/engineering/database-freeze/DBF-001-identity-tenant-slice.md`                 | Proposed; human signature block empty |
+| API Contract Freeze draft | `docs/engineering/api-contract-freeze/ACF-001-identity-tenant-slice.md`             | Proposed; human signature block empty |
+| OpenAPI baseline          | `docs/engineering/api-contract-freeze/openapi/acf-001-identity-tenant.openapi.yaml` | Draft baseline                        |
+
+## What already exists in the repository (fact)
+
+As of this record, the workspace already contains:
+
+- Migration tooling and ordered SQL under `apps/api/db/migrations/` including catalogs, RLS helpers, `tenants`, `users`, and FORCE RLS policies.
+- Design artifacts that largely cover Gate 1 / Gate 2 _content_ requirements from Architecture Freeze Gate 1 and Gate 2.
+
+This implementation **preceded** formal human signatures. Gate documents previously recorded “MASTER PROMPT / prompt authorization” which is **not** independent human review and is **not** valid freeze acceptance under EduCore governance.
+
+## Conditional decision
+
+| Decision                                                                         | Value                                                       |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Unrestricted Identity/Tenant API & domain coding                                 | **NO GO**                                                   |
+| Keep existing P1 SQL as provisional scaffolding pending Phase 2 security closure | **CONDITIONAL GO**                                          |
+| Add further tenant-owned tables beyond current migrations                        | **NO GO** until Phase 2 RLS + live T1–T8 isolation evidence |
+| Treat DBF-001 / ACF-001 as “Accepted Freeze v1.0” without human signatures       | **NO**                                                      |
+
+## Mandatory conditions (must close before full freeze acceptance)
+
+1. **Human signatures** on DBF-001 and ACF-001 approval blocks (Database Architect, Principal Architect, Security, Backend Lead / API Contract Guardian) — or an ADR that records an explicit Architecture exception with named owners and expiry.
+2. **G3 — RLS trust model:** prevent client-settable GUC spoofing on INSERT/bootstrap/platform paths (Audit Critical G3).
+3. **G3 — Live isolation evidence:** automated PostgreSQL integration tests for the DBF-001 T1–T8 (or successor) isolation matrix using `educore_app`, not static SQL string matching alone.
+4. **Membership path:** replace fail-closed membership stub with real membership-backed visibility before relying on RLS for multi-tenant product traffic.
+5. **OpenAPI hardening:** encode permission requirements / missing auth schemes called out by the audit before P2 NestJS identity/tenant route implementation.
+
+## Allowed work under this conditional record
+
+- Audit Remediation Phase 2 (RLS hardening + live isolation tests).
+- Documentation reconciliation (Phase 3).
+- Structural hardening (public barrel repository token policy, CI baseline) without new business features.
+- Non-destructive review of existing provisional migrations.
+
+## Forbidden work under this conditional record
+
+- New business domain features (students, fees, attendance, finance ledger posting, payments, AI providers, etc.).
+- Additional business schema tables beyond the provisional Identity/Tenant P1 set already present.
+- Claiming “Database Freeze accepted” or “API Contract Freeze accepted” without closing the conditions above.
+- Self-approving further gates via AI prompt names alone.
+
+## Supersedes
+
+- Self-declared GO language in prompt-authorization gate notes that treated incomplete freezes as full authorization for tenant-owned tables.
+
+Does **not** supersede Architecture Freeze v1.0 (`EduCore/38_ARCHITECTURE_FREEZE_RECORD.md`).
+
+## Residual risks (accepted knowingly until Phase 2)
+
+- Provisional `tenants`/`users` RLS INSERT policies remain audit-flagged until Phase 2 lands.
+- Docker / PostgreSQL may be unavailable on some developer machines; live tests remain a Phase 2 deliverable.
+- Repository may still reside on a cloud-synced path; operator should relocate outside OneDrive/Drive sync when possible (Audit G1 residual).
+
+## Sign-off
+
+### Conditional record authors (process remediation)
+
+| Role                            | Name                                  | Date       | Notes                                                             |
+| ------------------------------- | ------------------------------------- | ---------- | ----------------------------------------------------------------- |
+| Audit Remediation (Engineering) | Cursor Agent session — Phase 1 prompt | 2026-07-14 | Creates conditional governance only; not a human freeze signature |
+| Product Owner / Project Lead    | _pending human_                       |            | Must acknowledge this CONDITIONAL status                          |
+
+### Full freeze still requires (unchanged)
+
+| Role                  | DBF-001 | ACF-001 |
+| --------------------- | ------- | ------- |
+| Database Architect    | pending | n/a     |
+| Principal Architect   | pending | pending |
+| Security              | pending | pending |
+| Backend Lead          | pending | pending |
+| API Contract Guardian | n/a     | pending |
+
+## Revision history
+
+| Version | Date       | Notes                                                      |
+| ------- | ---------- | ---------------------------------------------------------- |
+| 1.0     | 2026-07-14 | Conditional acceptance after Independent Engineering Audit |

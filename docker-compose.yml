@@ -1,0 +1,64 @@
+# EduCore local development platform (DEV-001).
+# Provides PostgreSQL and Redis for local engineering only.
+# Does NOT define database schema, migrations, production topology, or cloud providers.
+# Application code is intentionally not connected to these services yet.
+
+name: educore-local
+
+services:
+  postgres:
+    image: postgres:16.8-alpine
+    container_name: educore-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-educore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-educore_local_only}
+      POSTGRES_DB: ${POSTGRES_DB:-educore}
+    ports:
+      - '${POSTGRES_HOST_PORT:-5432}:5432'
+    volumes:
+      - educore_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - educore_local
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: educore-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - 'yes'
+      - --requirepass
+      - ${REDIS_PASSWORD:-educore_local_only}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-educore_local_only}
+    ports:
+      - '${REDIS_HOST_PORT:-6379}:6379'
+    volumes:
+      - educore_redis_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$${REDIS_PASSWORD}" ping | grep -q PONG']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    networks:
+      - educore_local
+
+volumes:
+  educore_postgres_data:
+    name: educore_postgres_data
+  educore_redis_data:
+    name: educore_redis_data
+
+networks:
+  educore_local:
+    name: educore_local
+    driver: bridge

@@ -1,0 +1,48 @@
+{
+  "name": "educore",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "EduCore Engineering Sprint 0 workspace tooling baseline.",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "boundaries:check": "node scripts/check-module-boundaries.mjs",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run env:check && npm run boundaries:check",
+    "db:bootstrap-roles": "tsx scripts/db-bootstrap-roles.ts",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:migrate:down": "tsx scripts/db-migrate.ts --down",
+    "db:test-lifecycle": "tsx scripts/db-test-lifecycle.ts",
+    "docker:down": "docker compose --env-file .env.docker.example down",
+    "docker:logs": "docker compose --env-file .env.docker.example logs -f",
+    "docker:ps": "docker compose --env-file .env.docker.example ps",
+    "docker:up": "docker compose --env-file .env.docker.example up -d --wait",
+    "env:check": "tsx scripts/validate-environment.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint --max-warnings 0 .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit --project tsconfig.json"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/js-yaml": "4.0.9",
+    "@types/node": "26.1.1",
+    "@types/pg": "8.15.4",
+    "dependency-cruiser": "18.1.0",
+    "eslint": "10.7.0",
+    "eslint-config-prettier": "10.1.8",
+    "js-yaml": "4.1.0",
+    "prettier": "3.9.5",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.64.0",
+    "vitest": "4.1.10"
+  }
+}

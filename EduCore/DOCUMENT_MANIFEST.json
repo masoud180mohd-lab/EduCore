@@ -1,0 +1,35 @@
+{
+  "kit": "EduCore AI Development Kit",
+  "version": "2.0",
+  "updated": "2026-07-13",
+  "project_phase": "pre-implementation controls and downstream design freeze",
+  "production_feature_permission": "blocked",
+  "foundation_permission": "controlled_engineering_sprint_0_only",
+  "entrypoint": "00_START_HERE.md",
+  "authority_order": [
+    "03_DEVELOPMENT_CONSTITUTION.md",
+    "decisions/ADR-*.md",
+    "38_ARCHITECTURE_FREEZE_RECORD.md",
+    "35_PROJECT_ARCHITECTURE.md",
+    "domain bibles and security/operations standards",
+    "34_SOFTWARE_REQUIREMENTS_SPECIFICATION.md and implementation guidelines",
+    "AI-EOS prompts and templates"
+  ],
+  "canonical_documents": {
+    "status": "43_PROJECT_STATUS.md",
+    "readiness": "42_ENGINEERING_READINESS_REVIEW.md",
+    "execution": "39_ENGINEERING_EXECUTION_ROADMAP.md",
+    "implementation_control": "40_MASTER_ENGINEERING_EXECUTION_PROMPT.md",
+    "ai_eos": "41_AI_ENGINEERING_OPERATING_SYSTEM.md",
+    "document_control": "47_DOCUMENT_CONTROL_REGISTER.md",
+    "known_limitations": "46_KNOWN_LIMITATIONS.md",
+    "changelog": "CHANGELOG.md"
+  },
+  "required_gates_before_production_feature_work": [
+    "Database Freeze for the affected slice",
+    "API Contract Freeze for the affected slice",
+    "Design System Freeze for the affected slice",
+    "applicable blockers from 42_ENGINEERING_READINESS_REVIEW.md"
+  ],
+  "next_milestone": "Identity and Organization first-slice design freeze"
+}

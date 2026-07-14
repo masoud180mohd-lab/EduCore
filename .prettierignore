@@ -1,0 +1,15 @@
+.git/
+node_modules/
+coverage/
+dist/
+build/
+.next/
+*.lock
+EduCore/
+*.docx
+.dependency-cruiser.cjs
+docker-compose.yml
+*.yml
+*.yaml
+docs/engineering/api-contract-freeze/openapi/
+.agents/
