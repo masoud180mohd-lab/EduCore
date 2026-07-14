@@ -28,7 +28,9 @@ async function main(): Promise<void> {
   const sql = readFileSync(bootstrapSqlPath, 'utf8');
   const client = new Client({ connectionString: resolveDatabaseUrl() });
 
-  process.stdout.write('Bootstrapping educore_migrator + educore_app roles (url redacted).\n');
+  process.stdout.write(
+    'Bootstrapping educore_migrator + educore_app + educore_platform roles (url redacted).\n',
+  );
 
   try {
     await client.connect();
@@ -45,7 +47,7 @@ async function main(): Promise<void> {
     await client.query(sql);
     process.stdout.write('Role bootstrap completed.\n');
     process.stdout.write(
-      'Reminder: NestJS must use educore_app only; never educore_migrator/superuser.\n',
+      'Reminder: NestJS must use educore_app only; never educore_migrator, educore_platform, or superuser.\n',
     );
   } finally {
     await client.end();

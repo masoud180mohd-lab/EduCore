@@ -6,7 +6,7 @@ EduCore is an education operations platform for African schools. The immutable p
 
 Engineering Sprint 0 / first-slice implementation transition is active. Platform foundation (PLAT-001–003, PLAT-005, DEV-001) is in place. **IMP-001** provisional migrations exist (`catalogs`, RLS helpers, `tenants` + `users`).
 
-**Audit Remediation Phase 1 (2026-07-14)** addressed Critical G1/G2/G4: real git baseline, nested kit duplicate removed, and a **conditional** Identity & Tenant freeze acceptance record. See [`docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md`](docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md). Unrestricted domain coding remains **NO GO**.
+**Audit Remediation:** Phase 1 (G1/G2/G4) and Phase 2 (G3 RLS hardening + live isolation suite) complete. See [`docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md`](docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md). Unrestricted domain coding remains **NO GO**.
 
 Before starting any task, read [`EduCore/00_START_HERE.md`](EduCore/00_START_HERE.md) and follow the authority order it defines. Use only the canonical `EduCore/` kit root (no nested `EduCore/EduCore/`).
 

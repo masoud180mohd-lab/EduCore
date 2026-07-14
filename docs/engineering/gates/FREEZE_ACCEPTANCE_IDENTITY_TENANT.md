@@ -68,11 +68,12 @@ This implementation **preceded** formal human signatures. Gate documents previou
 
 Does **not** supersede Architecture Freeze v1.0 (`EduCore/38_ARCHITECTURE_FREEZE_RECORD.md`).
 
-## Residual risks (accepted knowingly until Phase 2)
+## Residual risks (updated after Phase 2 AUDIT-R2)
 
-- Provisional `tenants`/`users` RLS INSERT policies remain audit-flagged until Phase 2 lands.
-- Docker / PostgreSQL may be unavailable on some developer machines; live tests remain a Phase 2 deliverable.
-- Repository may still reside on a cloud-synced path; operator should relocate outside OneDrive/Drive sync when possible (Audit G1 residual).
+- Live isolation tests require PostgreSQL (DEV-001). On hosts without Docker/Postgres they skip unless `RUN_LIVE_DB_TESTS=1`.
+- Membership-backed visibility (`tenant_memberships`) remains deferred — cross-user-in-tenant scenarios incomplete until that table lands.
+- Physical Drive-sync workspace relocation remains an operator action (Audit G1 residual).
+- Full DBF/ACF human signatures remain open.
 
 ## Sign-off
 

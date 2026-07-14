@@ -1,13 +1,13 @@
-# Phase 1 — Todo
+# Phase 2 — Todo
 
-- [x] Plan written (`tasks/plan.md`)
-- [x] G1: Harden `.gitignore`
-- [x] G4: Delete `EduCore/EduCore/` + canonical notice
-- [x] G2: `FREEZE_ACCEPTANCE_IDENTITY_TENANT.md` (conditional)
-- [x] Gate language cleanup + Phase 1 task record
-- [x] Git commits (baseline + remediation)
-- [x] `npm run check` verification
+- [x] Plan (`tasks/plan-phase2.md`)
+- [x] G3: RLS INSERT hardening migration + platform role
+- [x] Static hardening tests
+- [x] Live isolation suite (skip without Postgres)
+- [x] AUDIT-R2 task record + freeze residual update
+- [x] `npm run check` + commit
 
 ## Next
 
-- Phase 2: G3 RLS hardening + live isolation tests
+- Phase 3: documentation drift, repository barrel tokens, CI baseline
+- Operator: install Docker Desktop and run `RUN_LIVE_DB_TESTS=1 npm test` once

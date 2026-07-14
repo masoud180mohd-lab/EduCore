@@ -34,10 +34,11 @@ describe('IMP-001 migration tooling', () => {
     expect(baseline).not.toMatch(/create table\s+plans/u);
   });
 
-  it('documents migrator vs app roles and FORCE RLS intent', () => {
+  it('documents migrator vs app vs platform roles and FORCE RLS intent', () => {
     const bootstrap = read('apps/api/db/bootstrap/001_roles.sql');
     expect(bootstrap).toContain('educore_migrator');
     expect(bootstrap).toContain('educore_app');
+    expect(bootstrap).toContain('educore_platform');
     expect(bootstrap.toLowerCase()).toContain('force rls');
 
     const readme = read('apps/api/db/README.md').toLowerCase();
