@@ -29,11 +29,11 @@ The immutable EduCore AI Development Kit in `EduCore/` remains the source of tru
 `- tests/                   Tooling, contract harness, cross-workspace tests
 ```
 
-`apps/api` contains the NestJS skeleton (PLAT-003), boundary enforcement (PLAT-005), and **P0 DB tooling** under `apps/api/db/` (baseline `schema_migrations` only). Identity & Tenant freezes: DBF-001, ACF-001; plan IMP-001. No business domain controllers yet.
+`apps/api` contains the NestJS skeleton (PLAT-003), boundary enforcement (PLAT-005), and database tooling under `apps/api/db/` (migrations through Imp-001 / AUDIT-R2: catalogs, RLS helpers, `tenants`/`users`, platform role hardening). Identity & Tenant freezes: DBF-001 / ACF-001 remain **conditionally** accepted — see `docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md`. No NestJS domain business controllers yet.
 
 ## Boundary rules
 
-- `apps/api` is the NestJS modular monolith required by ADR-001. Bounded contexts communicate through public barrels (`modules/<context>/index.ts`) or future domain events; direct cross-module internal imports and persistence access are prohibited.
+- `apps/api` is the NestJS modular monolith required by ADR-001. Bounded contexts communicate through public barrels (`modules/<context>/index.ts`) or future domain events; direct cross-module internal imports are prohibited. Repository tokens are **not** exported on public barrels (AUDIT-R3).
 - Automated enforcement is provided by `dependency-cruiser` (`.dependency-cruiser.cjs`) via `npm run boundaries:check`, which is part of `npm run check` (PLAT-005).
 - `apps/web` is reserved for the future Next.js application. Production UI remains blocked until the applicable Design System Freeze is accepted.
 - `packages` may contain only shared, dependency-light technical primitives with a single documented owner. It must not become a backdoor for business-domain coupling or an unfrozen API contract.

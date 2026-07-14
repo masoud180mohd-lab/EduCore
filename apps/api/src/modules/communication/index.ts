@@ -10,5 +10,3 @@ export { CommunicationEventNames } from './events/communication.events.js';
 export type { CommunicationSkeletonRegisteredEvent } from './events/communication.events.js';
 export { COMMUNICATION_SKELETON_DTO } from './dto/communication.dto.js';
 export type { CommunicationSkeletonDto } from './dto/communication.dto.js';
-export { COMMUNICATION_REPOSITORY } from './repositories/communication.repository.js';
-export type { CommunicationRepository } from './repositories/communication.repository.js';

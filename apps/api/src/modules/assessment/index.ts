@@ -10,5 +10,3 @@ export { AssessmentEventNames } from './events/assessment.events.js';
 export type { AssessmentSkeletonRegisteredEvent } from './events/assessment.events.js';
 export { ASSESSMENT_SKELETON_DTO } from './dto/assessment.dto.js';
 export type { AssessmentSkeletonDto } from './dto/assessment.dto.js';
-export { ASSESSMENT_REPOSITORY } from './repositories/assessment.repository.js';
-export type { AssessmentRepository } from './repositories/assessment.repository.js';

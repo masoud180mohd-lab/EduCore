@@ -10,5 +10,3 @@ export { PlatformOperationsEventNames } from './events/platform-operations.event
 export type { PlatformOperationsSkeletonRegisteredEvent } from './events/platform-operations.events.js';
 export { PLATFORM_OPERATIONS_SKELETON_DTO } from './dto/platform-operations.dto.js';
 export type { PlatformOperationsSkeletonDto } from './dto/platform-operations.dto.js';
-export { PLATFORM_OPERATIONS_REPOSITORY } from './repositories/platform-operations.repository.js';
-export type { PlatformOperationsRepository } from './repositories/platform-operations.repository.js';

@@ -17,8 +17,8 @@ Create a NestJS modular-monolith skeleton in `apps/api` that registers all archi
 - Unit smoke tests pass.
 - Root `npm run check` passes.
 - Task record and engineering guide are written.
-- PLAT-004 and PLAT-005 are not started.
-- Database, API Contract, and Design System freezes remain unviolated.
+- At completion time: PLAT-004 and PLAT-005 were not started (**note:** PLAT-005 later completed; see its task record).
+- Database, API Contract, and Design System freezes remain unviolated at PLAT-003 completion (later IMP-001 / AUDIT work added provisional SQL under conditional freeze acceptance).
 
 ## Non-goals
 

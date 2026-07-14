@@ -2,14 +2,19 @@
 
 ## Status and scope
 
-This document records the NestJS modular-monolith skeleton created by Engineering Sprint 0 task `PLAT-003` and the enforceable module-boundary checks added by `PLAT-005`.
+This document records the NestJS modular-monolith skeleton (`PLAT-003`) and enforceable module-boundary checks (`PLAT-005`).
 
-It does **not** introduce:
+**NestJS `src/` scope (skeleton):**
 
-- database schema, migrations, or persistence adapters
-- business API routes or contracts
-- authentication providers, JWT/session implementation, or tenant provisioning
-- Docker, hosted CI, or cloud topology
+- No Nest persistence adapters or business HTTP routes
+- No authentication provider / JWT session implementation
+- No tenant provisioning application services
+
+**Related platform work (outside the Nest skeleton document’s original PLAT-003 non-goals):**
+
+- Local Docker Postgres/Redis: `DEV-001` (`docker-compose.yml`)
+- SQL migrations + RLS under `apps/api/db/` (IMP-001 / AUDIT-R2) — see `apps/api/db/README.md`
+- Hosted CI quality gate: `.github/workflows/quality-gate.yml` (AUDIT-R3)
 
 ## Location
 
@@ -40,29 +45,14 @@ Each context follows `EduCore/08_BACKEND_GUIDELINES.md` folder shape:
 - controllers (placeholder, no business routes)
 - application services (placeholder)
 - domain services (placeholder)
-- repositories (interface + non-persistent placeholder)
+- repositories (interface + non-persistent placeholder — **private to the module**)
 - DTOs (neutral skeleton only)
 - policies (deny-by-default placeholder)
 - events (event-name placeholders)
 - smoke tests
 - **public API barrel** (`index.ts`) — the only cross-module import surface
 
-Registered contexts (ADR-001 / architecture map):
-
-1. Identity And Access
-2. Tenant And Billing
-3. Student Registry
-4. Academic Structure
-5. Attendance
-6. Assessment
-7. Finance Ledger
-8. Payments
-9. Communication
-10. Documents And Files
-11. AI Insights
-12. Integrations
-13. Analytics
-14. Platform Operations
+Registered contexts (ADR-001 / architecture map): Identity And Access, Tenant And Billing, Student Registry, Academic Structure, Attendance, Assessment, Finance Ledger, Payments, Communication, Documents And Files, AI Insights, Integrations, Analytics, Platform Operations.
 
 ## Public API convention
 
@@ -72,11 +62,14 @@ Each bounded context exposes a public barrel at:
 apps/api/src/modules/<context>/index.ts
 ```
 
-Cross-module and composition-root imports must use that barrel (or future domain events), for example:
+Public barrels export only:
 
-```ts
-import { IdentityAndAccessModule } from './modules/identity-and-access/index.js';
-```
+- Nest module class
+- application service class used for composition/tests
+- public event names/types
+- neutral skeleton DTO constants/types
+
+**Not exported (AUDIT-R3):** repository interfaces and DI tokens. Persistence stays intra-module to prevent legal cross-module repository coupling via barrels.
 
 Forbidden:
 
@@ -84,16 +77,6 @@ Forbidden:
 // deep import of another context's internals
 import { IdentityAndAccessDomainService } from './modules/identity-and-access/domain/...';
 ```
-
-Public barrels currently export only intentionally shared surface:
-
-- Nest module class
-- application service token/class used for composition/tests
-- public event names/types
-- neutral skeleton DTO constants/types
-- repository interface + DI token (no persistence adapter)
-
-Internal folders remain private to the owning module.
 
 ## Boundary rules in force (PLAT-005)
 
@@ -108,26 +91,17 @@ Automated enforcement uses **dependency-cruiser** via `npm run boundaries:check`
 
 Additional product rules:
 
-- No repository may query another module’s tables (none exist yet; still a design rule).
-- Business routes remain blocked until the applicable API Contract Freeze.
+- No repository may query another module’s tables.
+- Business routes remain blocked until the applicable API Contract Freeze and conditional freeze conditions are met.
 
 ## Local commands
-
-From repository root:
 
 ```bash
 npm install
 npm run boundaries:check
 npm run check
-```
-
-Start the skeleton API:
-
-```bash
 npm run start -w @educore/api
 ```
-
-Default listen port is `3000` (override with `PORT`).
 
 ## Neutral endpoints
 
@@ -138,4 +112,4 @@ Default listen port is `3000` (override with `PORT`).
 
 ## Quality gate
 
-`npm run check` must pass and includes format, lint, typecheck, tests (tooling + backend smoke + boundary validation), environment validation, and module-boundary enforcement.
+`npm run check` must pass (format, lint, typecheck, tests, env, boundaries). Hosted CI runs the same command via `.github/workflows/quality-gate.yml`.

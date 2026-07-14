@@ -10,5 +10,3 @@ export { AiInsightsEventNames } from './events/ai-insights.events.js';
 export type { AiInsightsSkeletonRegisteredEvent } from './events/ai-insights.events.js';
 export { AI_INSIGHTS_SKELETON_DTO } from './dto/ai-insights.dto.js';
 export type { AiInsightsSkeletonDto } from './dto/ai-insights.dto.js';
-export { AI_INSIGHTS_REPOSITORY } from './repositories/ai-insights.repository.js';
-export type { AiInsightsRepository } from './repositories/ai-insights.repository.js';

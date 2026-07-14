@@ -10,5 +10,3 @@ export { IdentityAndAccessEventNames } from './events/identity-and-access.events
 export type { IdentityAndAccessSkeletonRegisteredEvent } from './events/identity-and-access.events.js';
 export { IDENTITY_AND_ACCESS_SKELETON_DTO } from './dto/identity-and-access.dto.js';
 export type { IdentityAndAccessSkeletonDto } from './dto/identity-and-access.dto.js';
-export { IDENTITY_AND_ACCESS_REPOSITORY } from './repositories/identity-and-access.repository.js';
-export type { IdentityAndAccessRepository } from './repositories/identity-and-access.repository.js';

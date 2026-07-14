@@ -10,5 +10,3 @@ export { AnalyticsEventNames } from './events/analytics.events.js';
 export type { AnalyticsSkeletonRegisteredEvent } from './events/analytics.events.js';
 export { ANALYTICS_SKELETON_DTO } from './dto/analytics.dto.js';
 export type { AnalyticsSkeletonDto } from './dto/analytics.dto.js';
-export { ANALYTICS_REPOSITORY } from './repositories/analytics.repository.js';
-export type { AnalyticsRepository } from './repositories/analytics.repository.js';

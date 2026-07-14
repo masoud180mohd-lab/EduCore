@@ -10,5 +10,3 @@ export { AttendanceEventNames } from './events/attendance.events.js';
 export type { AttendanceSkeletonRegisteredEvent } from './events/attendance.events.js';
 export { ATTENDANCE_SKELETON_DTO } from './dto/attendance.dto.js';
 export type { AttendanceSkeletonDto } from './dto/attendance.dto.js';
-export { ATTENDANCE_REPOSITORY } from './repositories/attendance.repository.js';
-export type { AttendanceRepository } from './repositories/attendance.repository.js';

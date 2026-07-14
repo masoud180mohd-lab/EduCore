@@ -10,5 +10,3 @@ export { DocumentsAndFilesEventNames } from './events/documents-and-files.events
 export type { DocumentsAndFilesSkeletonRegisteredEvent } from './events/documents-and-files.events.js';
 export { DOCUMENTS_AND_FILES_SKELETON_DTO } from './dto/documents-and-files.dto.js';
 export type { DocumentsAndFilesSkeletonDto } from './dto/documents-and-files.dto.js';
-export { DOCUMENTS_AND_FILES_REPOSITORY } from './repositories/documents-and-files.repository.js';
-export type { DocumentsAndFilesRepository } from './repositories/documents-and-files.repository.js';

@@ -10,5 +10,3 @@ export { StudentRegistryEventNames } from './events/student-registry.events.js';
 export type { StudentRegistrySkeletonRegisteredEvent } from './events/student-registry.events.js';
 export { STUDENT_REGISTRY_SKELETON_DTO } from './dto/student-registry.dto.js';
 export type { StudentRegistrySkeletonDto } from './dto/student-registry.dto.js';
-export { STUDENT_REGISTRY_REPOSITORY } from './repositories/student-registry.repository.js';
-export type { StudentRegistryRepository } from './repositories/student-registry.repository.js';

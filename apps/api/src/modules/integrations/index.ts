@@ -10,5 +10,3 @@ export { IntegrationsEventNames } from './events/integrations.events.js';
 export type { IntegrationsSkeletonRegisteredEvent } from './events/integrations.events.js';
 export { INTEGRATIONS_SKELETON_DTO } from './dto/integrations.dto.js';
 export type { IntegrationsSkeletonDto } from './dto/integrations.dto.js';
-export { INTEGRATIONS_REPOSITORY } from './repositories/integrations.repository.js';
-export type { IntegrationsRepository } from './repositories/integrations.repository.js';

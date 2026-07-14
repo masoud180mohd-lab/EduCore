@@ -129,6 +129,9 @@ describe('PLAT-005 module boundary enforcement', () => {
       const contents = readFileSync(barrel, 'utf8');
       expect(contents).toContain('Public API');
       expect(contents).toContain('Module');
+      // AUDIT-R3: persistence tokens stay module-private (not on the public barrel).
+      expect(contents).not.toMatch(/_REPOSITORY/);
+      expect(contents).not.toMatch(/from '\.\/repositories\//);
     }
   });
 

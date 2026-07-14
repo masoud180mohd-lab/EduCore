@@ -7,12 +7,18 @@ The Compose file lives at the repository root (`docker-compose.yml`) for standar
 - PostgreSQL (local data volume, healthcheck)
 - Redis (local data volume, healthcheck)
 
+## Prerequisite
+
+**Docker Desktop (or equivalent Compose v2)** must be installed and on `PATH`. If `docker` is not recognized, install Docker Desktop for Windows, restart the terminal, then retry `npm run docker:up`.
+
+Without Docker, `db:migrate`, `db:bootstrap-roles`, and live RLS isolation tests cannot run. Static tests and `npm run check` (with `RUN_LIVE_DB_TESTS` unset) still pass.
+
 ## Scope
 
 - Local engineering only
 - No production topology
 - No cloud provider selection
-- No database schema or migrations
-- No application connection wiring in DEV-001
+- Compose does **not** bake business schema into the image; schema is applied via `npm run db:migrate` against the running Postgres
+- NestJS is not auto-wired to these services in the skeleton bootstrap
 
-See `docs/engineering/development-environment.md` for commands and `docs/engineering/task-records/DEV-001-local-docker-platform.md` for task evidence.
+Migrations and RLS live under `apps/api/db/`. See `docs/engineering/development-environment.md` for commands and task records for DEV-001 / AUDIT-R2.

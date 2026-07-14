@@ -10,5 +10,3 @@ export { TenantAndBillingEventNames } from './events/tenant-and-billing.events.j
 export type { TenantAndBillingSkeletonRegisteredEvent } from './events/tenant-and-billing.events.js';
 export { TENANT_AND_BILLING_SKELETON_DTO } from './dto/tenant-and-billing.dto.js';
 export type { TenantAndBillingSkeletonDto } from './dto/tenant-and-billing.dto.js';
-export { TENANT_AND_BILLING_REPOSITORY } from './repositories/tenant-and-billing.repository.js';
-export type { TenantAndBillingRepository } from './repositories/tenant-and-billing.repository.js';

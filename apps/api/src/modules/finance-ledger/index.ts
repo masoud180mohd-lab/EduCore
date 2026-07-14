@@ -10,5 +10,3 @@ export { FinanceLedgerEventNames } from './events/finance-ledger.events.js';
 export type { FinanceLedgerSkeletonRegisteredEvent } from './events/finance-ledger.events.js';
 export { FINANCE_LEDGER_SKELETON_DTO } from './dto/finance-ledger.dto.js';
 export type { FinanceLedgerSkeletonDto } from './dto/finance-ledger.dto.js';
-export { FINANCE_LEDGER_REPOSITORY } from './repositories/finance-ledger.repository.js';
-export type { FinanceLedgerRepository } from './repositories/finance-ledger.repository.js';

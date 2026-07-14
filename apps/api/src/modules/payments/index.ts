@@ -10,5 +10,3 @@ export { PaymentsEventNames } from './events/payments.events.js';
 export type { PaymentsSkeletonRegisteredEvent } from './events/payments.events.js';
 export { PAYMENTS_SKELETON_DTO } from './dto/payments.dto.js';
 export type { PaymentsSkeletonDto } from './dto/payments.dto.js';
-export { PAYMENTS_REPOSITORY } from './repositories/payments.repository.js';
-export type { PaymentsRepository } from './repositories/payments.repository.js';

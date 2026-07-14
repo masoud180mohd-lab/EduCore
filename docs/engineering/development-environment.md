@@ -7,8 +7,10 @@ This document records Engineering Sprint 0 local development controls:
 - `PLAT-002` quality tooling baseline
 - `PLAT-003` / `PLAT-005` NestJS modular-monolith skeleton and boundary checks
 - `DEV-001` local Docker platform (PostgreSQL + Redis)
+- IMP-001 / AUDIT-R2 database migrations and RLS under `apps/api/db/`
+- AUDIT-R3 hosted CI quality gate (`.github/workflows/quality-gate.yml`)
 
-It does **not** introduce a production domain model, database schema, API contract, provider selection, production topology, or production UI.
+NestJS still has **no** production domain HTTP routes. Persistence for Identity/Tenant is provisional SQL under conditional freeze acceptance — see `docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md`.
 
 The immutable EduCore AI Development Kit in `EduCore/` remains authoritative.
 
@@ -30,7 +32,9 @@ A clean checkout must restore lockfile-pinned tooling and pass the full quality 
 
 ## Local Docker platform (DEV-001)
 
-Provides empty PostgreSQL and Redis servers for local engineering. **No schema, migrations, or NestJS data wiring is included.**
+Provides PostgreSQL and Redis for local engineering. Compose does not embed schema; apply SQL with `npm run db:migrate` after containers are healthy.
+
+**If `docker` is not recognized:** install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows), ensure it is running, open a **new** terminal so `PATH` updates, then retry. Without Docker, skip data-platform commands; `npm run check` still works and live RLS tests skip unless `RUN_LIVE_DB_TESTS=1` (which will fail hard without Postgres — by design).
 
 ### Start
 
@@ -77,33 +81,43 @@ These credentials are **local-only placeholders**. Do not reuse them in staging 
 ### Explicit non-goals for Docker platform
 
 - No production compose stack, Kubernetes, or cloud topology
-- Business Identity/Tenant tables are **not** created in P0 (only migration meta)
+- NestJS runtime is not auto-connected to Postgres/Redis in the skeleton bootstrap
 
-## Database migrations (IMP-001 P0)
+## Database migrations (IMP-001 / AUDIT-R2)
 
 Tooling lives under `apps/api/db/` (see that README).
 
-Current schema surface after `npm run db:migrate`:
+Current schema surface after a successful `npm run db:migrate` (requires Docker Postgres):
 
-- `schema_migrations` (ledger)
+- `schema_migrations` ledger
 - Global catalogs: `permissions`, `plans` (+ seeds)
-- RLS helpers in schema `app` (no tenant-owned tables yet)
+- RLS helpers in schema `app`
+- Provisional `tenants` / `users` tables with FORCE RLS
+- AUDIT-R2 hardening: `educore_platform` role; runtime `educore_app` cannot INSERT tenants/users
 
 ```bash
 npm run docker:up
 npm run db:migrate           # apply pending *.up.sql
-npm run db:bootstrap-roles   # educore_migrator + educore_app (local placeholders)
+npm run db:bootstrap-roles   # migrator + app + platform (local placeholders)
 npm run db:migrate:down      # roll back last migration
 npm run db:test-lifecycle    # print test DB guidance
 ```
 
+Live isolation suite:
+
+```powershell
+# Only after Docker Postgres is up and migrations applied:
+$env:RUN_LIVE_DB_TESTS='1'
+npm run test
+```
+
 Security rules:
 
-- NestJS runtime must use **`educore_app`**, never migrator/superuser.
-- FORCE RLS is mandatory from P1 on tenant-owned tables (see DBF-001).
+- NestJS runtime must use **`educore_app`**, never migrator, platform, or superuser.
+- FORCE RLS is mandatory on tenant-owned tables.
 - Migrate scripts redact connection URLs in logs.
 
-P0 go/no-go: `docs/engineering/gates/IMP-001-P0-go-no-go.md` (P0 conditional GO; P1 blocked on formal freeze signatures).
+Governance: `docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md` (conditional GO; full freeze signatures still open).
 
 ## Commands
 
@@ -128,19 +142,18 @@ P0 go/no-go: `docs/engineering/gates/IMP-001-P0-go-no-go.md` (P0 conditional GO;
 | `npm run check`                 | Run all required quality checks in CI-ready order.     |
 | `npm run start -w @educore/api` | Start the NestJS API skeleton (health endpoints only). |
 
-`npm run check` is provider-neutral so it can be used by local development and the later hosted CI task without selecting a Git hosting or CI provider prematurely. It includes `boundaries:check` (PLAT-005). It does **not** require Docker to pass.
+`npm run check` is provider-neutral and is also run by `.github/workflows/quality-gate.yml` (AUDIT-R3). It includes `boundaries:check` (PLAT-005). It does **not** require Docker to pass (live RLS tests skip without Postgres unless `RUN_LIVE_DB_TESTS=1`).
 
-Backend skeleton layout and boundary rules are documented in `docs/engineering/backend-module-skeleton.md`.
+Backend skeleton layout and boundary rules: `docs/engineering/backend-module-skeleton.md`.
 
-Identity & Tenant design freezes + plan:
+Identity & Tenant governance:
 
-- Database: `docs/engineering/database-freeze/DBF-001-identity-tenant-slice.md`
+- Conditional freeze acceptance: `docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md`
+- Database draft: `docs/engineering/database-freeze/DBF-001-identity-tenant-slice.md`
 - API contracts: `docs/engineering/api-contract-freeze/ACF-001-identity-tenant-slice.md`
-- OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-001-identity-tenant.openapi.yaml`
 - Implementation plan: `docs/engineering/implementation-plans/IMP-001-identity-tenant-implementation-plan.md`
-- P0 gate: `docs/engineering/gates/IMP-001-P0-go-no-go.md`
 
-P0 scaffolding is authorized (migration tooling only). **Do not start P1 business tables** until formal freeze signatures are recorded (see gate).
+Unrestricted domain coding remains **NO GO** until full freeze signatures and remaining freeze conditions close.
 
 ## Workspace standards
 

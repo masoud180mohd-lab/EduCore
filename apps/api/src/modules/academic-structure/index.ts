@@ -10,5 +10,3 @@ export { AcademicStructureEventNames } from './events/academic-structure.events.
 export type { AcademicStructureSkeletonRegisteredEvent } from './events/academic-structure.events.js';
 export { ACADEMIC_STRUCTURE_SKELETON_DTO } from './dto/academic-structure.dto.js';
 export type { AcademicStructureSkeletonDto } from './dto/academic-structure.dto.js';
-export { ACADEMIC_STRUCTURE_REPOSITORY } from './repositories/academic-structure.repository.js';
-export type { AcademicStructureRepository } from './repositories/academic-structure.repository.js';
