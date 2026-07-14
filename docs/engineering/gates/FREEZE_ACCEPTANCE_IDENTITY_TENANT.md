@@ -68,9 +68,9 @@ This implementation **preceded** formal human signatures. Gate documents previou
 
 Does **not** supersede Architecture Freeze v1.0 (`EduCore/38_ARCHITECTURE_FREEZE_RECORD.md`).
 
-## Residual risks (updated after Phase 2 AUDIT-R2)
+## Residual risks (updated after Phase 2 AUDIT-R2 + live evidence)
 
-- Live isolation tests require PostgreSQL (DEV-001). On hosts without Docker/Postgres they skip unless `RUN_LIVE_DB_TESTS=1`.
+- **Live isolation (G3 condition #3):** evidenced **PASS** on 2026-07-14 against local PostgreSQL 16 — see `docs/engineering/task-records/AUDIT-R2-live-evidence-2026-07-14.md`. Docker Desktop on this host may still be unhealthy; use local PG or a healthy Docker engine.
 - Membership-backed visibility (`tenant_memberships`) remains deferred — cross-user-in-tenant scenarios incomplete until that table lands.
 - Physical Drive-sync workspace relocation remains an operator action (Audit G1 residual).
 - Full DBF/ACF human signatures remain open.
