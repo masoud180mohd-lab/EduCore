@@ -1,14 +1,15 @@
 import type { AppErrorCode } from './app-error.js';
 
 /**
- * Neutral HTTP error envelope.
- * Domain-specific error catalogues remain deferred until API Contract Freeze.
+ * ACF-001 client error envelope.
+ * `requestId` is canonical (fed from correlation / request ID middleware).
+ * Never include stacks, SQL, or secrets.
  */
 export type ErrorEnvelope = {
   readonly error: {
     readonly code: AppErrorCode | 'INTERNAL_ERROR';
     readonly message: string;
-    readonly correlationId: string;
+    readonly requestId: string;
     readonly details?: Readonly<Record<string, unknown>>;
   };
 };
@@ -16,14 +17,14 @@ export type ErrorEnvelope = {
 export function buildErrorEnvelope(input: {
   code: AppErrorCode | 'INTERNAL_ERROR';
   message: string;
-  correlationId: string;
+  requestId: string;
   details?: Readonly<Record<string, unknown>>;
 }): ErrorEnvelope {
   return {
     error: {
       code: input.code,
       message: input.message,
-      correlationId: input.correlationId,
+      requestId: input.requestId,
       ...(input.details === undefined ? {} : { details: input.details }),
     },
   };

@@ -14,5 +14,9 @@
 ## Next product work
 
 - [x] `tenant_memberships` + real membership helpers + OpenAPI hardening
-- Feature APIs / P2 request platform only after full freeze acceptance (or explicit exception)
+- [x] IMP-001 Phase P2 request platform & auth plumbing (conditional freeze / ADR-012)
+- [x] P2 improvement: DB-backed `TenantMembershipChecker` + optional Nest `educore_app` pool
+- [x] P2 improvement: Nest `PermissionSource` from roles / role_permissions (membership gate wired)
+- [ ] P3 AuthN (login/sessions) only after GO or continued ADR-012 exception
+- [ ] Real DB-backed TokenValidator when AuthN opens
 - Optional: git commit + GitHub push (operator)

@@ -2,7 +2,9 @@ import type { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 
+import { AuthContextMiddleware } from './common/auth/auth-context.middleware.js';
 import { ConfigModule } from './common/config/config.module.js';
+import { DatabaseModule } from './common/persistence/index.js';
 import { CorrelationIdMiddleware } from './common/correlation/correlation-id.middleware.js';
 import { HttpExceptionFilter } from './common/errors/http-exception.filter.js';
 import { DOMAIN_EVENT_PUBLISHER, NoopDomainEventPublisher } from './common/events/domain-event.js';
@@ -10,6 +12,8 @@ import { HealthModule } from './common/health/health.module.js';
 import type { AppLogger } from './common/logging/logger.js';
 import { LoggerModule } from './common/logging/logger.module.js';
 import { APP_LOGGER } from './common/logging/logger.tokens.js';
+import { RequestPlatformModule } from './common/request-platform/request-platform.module.js';
+import { TenantContextMiddleware } from './common/tenant/tenant-context.middleware.js';
 import { AcademicStructureModule } from './modules/academic-structure/index.js';
 import { AiInsightsModule } from './modules/ai-insights/index.js';
 import { AnalyticsModule } from './modules/analytics/index.js';
@@ -28,11 +32,14 @@ import { TenantAndBillingModule } from './modules/tenant-and-billing/index.js';
 /**
  * Root modular-monolith composition.
  * Bounded contexts are registered via public barrels only (ADR-001 / PLAT-005).
+ * Request platform middleware order: correlation → auth → tenant (IMP-001 P2).
  */
 @Module({
   imports: [
     ConfigModule,
     LoggerModule,
+    DatabaseModule,
+    RequestPlatformModule,
     HealthModule,
     IdentityAndAccessModule,
     TenantAndBillingModule,
@@ -50,6 +57,9 @@ import { TenantAndBillingModule } from './modules/tenant-and-billing/index.js';
     PlatformOperationsModule,
   ],
   providers: [
+    CorrelationIdMiddleware,
+    AuthContextMiddleware,
+    TenantContextMiddleware,
     {
       provide: DOMAIN_EVENT_PUBLISHER,
       useClass: NoopDomainEventPublisher,
@@ -64,6 +74,8 @@ import { TenantAndBillingModule } from './modules/tenant-and-billing/index.js';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+    consumer
+      .apply(CorrelationIdMiddleware, AuthContextMiddleware, TenantContextMiddleware)
+      .forRoutes('*');
   }
 }

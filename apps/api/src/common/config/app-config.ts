@@ -35,7 +35,8 @@ function parsePort(value: string | undefined): number {
 
 /**
  * Loads non-secret runtime configuration only.
- * Database URLs, provider keys, and other secrets are out of scope until later approved work.
+ * Database connectivity for Nest uses separate `loadDatabaseConfig`
+ * (`EDUCORE_APP_DATABASE_URL` / `EDUCORE_ENABLE_APP_DB`) — never bake secrets into AppConfig dumps.
  */
 export function loadAppConfig(environment: NodeJS.ProcessEnv = process.env): AppConfig {
   return {

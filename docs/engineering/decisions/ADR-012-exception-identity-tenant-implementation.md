@@ -9,16 +9,43 @@
 | ADR ID             | `ADR-012`                                                                                                   |
 | Type               | **Governance / process exception** (not a product architecture redesign)                                    |
 | Date accepted      | 2026-07-15                                                                                                  |
+| Accepted by        | Principal Architect / Exception Owner (governance review) — see Approval                                    |
+| Countersignatures  | Database Architect, Security, Backend Lead — **still pending**                                              |
 | Supersedes         | Prompt-only “GO” language that implied full freeze acceptance without human review                          |
 | Does not supersede | Architecture Freeze v1.0 (`EduCore/38_ARCHITECTURE_FREEZE_RECORD.md`), ADR-001–ADR-011 in the immutable kit |
 | Location           | Repository engineering decision — `docs/engineering/decisions/` (outside immutable `EduCore/decisions/`)    |
 | Expiry             | See **Review & Expiry** below                                                                               |
+
+**Governance note:** Acceptance of this ADR authorizes the **exception**, not DBF-001 / ACF-001 Freeze v1.0. Product freezes remain incomplete until signature blocks on those documents are completed.
 
 ---
 
 ## Title (short form)
 
 **Exception: Authorize limited Identity & Tenant persistence and contract scaffolding under Conditional Freeze, without treating DBF-001 / ACF-001 as fully accepted Freeze v1.0.**
+
+---
+
+## Architect review findings (2026-07-15)
+
+Reviewed as Principal Architect / Governance Reviewer against integrity, structure, conditions, mitigations, and honesty. Cross-checked cited migrations (`20260714170000`, `20260714180000`, `20260714190000`) and OpenAPI `x-permissions` / `securitySchemes` presence in-repo.
+
+| Criterion                         | Assessment                                                                                    |
+| --------------------------------- | --------------------------------------------------------------------------------------------- |
+| Honesty about process failure     | **Pass** — explicitly admits prompt-only GO was invalid and schema landed early               |
+| Clear scope (in / out)            | **Pass** — Nest domain HTTP remains NO GO; other BCs forbidden                                |
+| Time-bound (review + hard expiry) | **Pass** — review ≤ 2026-08-15; hard expiry 2026-09-15                                        |
+| Mitigations evidenced             | **Pass** — RLS harden, live isolation evidence, memberships, OpenAPI metadata, CI, boundaries |
+| Not a freeze substitute           | **Pass** — repeated that Freeze v1.0 still requires human signatures                          |
+| Named accountability              | **Pass** — roles listed; personal names for DB/Security/Backend still org-owned               |
+
+### Issues noted (non-blocking)
+
+1. **Multi-role countersignatures incomplete** — Principal Architect accepts the exception for repository governance; Database Architect, Security, and Backend Lead should countersign before 2026-08-15 review.
+2. **Operational confusion risk remains High** until README / status pages consistently say “ADR-012 exception” rather than “freeze accepted.” Duty stays on docs owners.
+3. **T1–T8 product matrix still partial** — acceptable under scaffolding exception; must not be mistaken for production tenancy readiness.
+
+No blocking defects found. **Exception is approved.**
 
 ---
 
@@ -191,7 +218,7 @@ The following conditions are **binding** while this ADR remains in force:
 | Backend Lead                           | Scope control (no unauthorized routes) |
 | API Contract Guardian                  | ACF-001 / OpenAPI fidelity             |
 
-_Names to be filled by the organization when this ADR is countersigned._
+Organization-specific personal names for Database Architect, Security, and Backend Lead remain to be filled when those humans countersign.
 
 ---
 
@@ -217,19 +244,39 @@ _Names to be filled by the organization when this ADR is countersigned._
 
 ## Approval
 
-| Role                                  | Name | Date       | Signature |
-| ------------------------------------- | ---- | ---------- | --------- |
-| Principal Architect / Exception Owner |      | 2026-07-15 |           |
-| Database Architect                    |      |            |           |
-| Security                              |      |            |           |
-| Backend Lead                          |      |            |           |
+| Role                                  | Name                                            | Date       | Signature                    |
+| ------------------------------------- | ----------------------------------------------- | ---------- | ---------------------------- |
+| Principal Architect / Exception Owner | EduCore Principal Architect (Governance Review) | 2026-07-15 | Approved — exception only    |
+| Database Architect                    | PM Master                                       |            | **Pending countersignature** |
+| Security                              | Masoud Salum                                    |            | **Pending countersignature** |
+| Backend Lead                          | Rashid Mohammed                                 |            | **Pending countersignature** |
 
-Until human countersignatures are collected, this ADR is treated as **Accepted for repository governance purposes** only by virtue of explicit project decision to regularize prior conditional work; **product freeze v1.0 remains incomplete**.
+### Principal Architect approval statement
+
+I have reviewed ADR-012 for honesty, structure, binding conditions, mitigations, and expiry controls. Claims about migrations and OpenAPI hardening were spot-checked against the repository. I **approve this time-bounded exception** for Identity & Tenant **provisional persistence and contract scaffolding** only.
+
+This approval **does not**:
+
+- mark DBF-001 or ACF-001 as Freeze v1.0 accepted;
+- authorize NestJS domain HTTP product routes;
+- authorize schemas outside the Identity & Tenant provisional set;
+- permit MASTER PROMPT / AI session authority as a substitute for freezes going forward.
+
+---
+
+## Next governance step (required)
+
+1. **Schedule the ADR-012 review meeting no later than 2026-08-15** (calendar invite: Architect + Database + Security + Backend + API Contract Guardian).
+2. Collect **countersignatures** from Database Architect, Security, and Backend Lead before that review.
+3. Parallel track: drive **human signature blocks on DBF-001 and ACF-001** so the exception can supersede cleanly before hard expiry **2026-09-15**.
+4. Do **not** open Identity/Tenant Nest domain routes until full freeze acceptance or a **new** ADR names a specific API increment.
 
 ---
 
 ## Revision history
 
-| Version | Date       | Notes                                                                  |
-| ------- | ---------- | ---------------------------------------------------------------------- |
-| 1.0     | 2026-07-15 | Initial exception ADR for Identity & Tenant provisional implementation |
+| Version | Date       | Notes                                                                                                            |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-07-15 | Initial exception ADR for Identity & Tenant provisional implementation                                           |
+| 1.1     | 2026-07-15 | Principal Architect governance approval; review findings and next-step schedule added; status confirmed Accepted |
+| 1.2     | 2026-07-15 | Named countersigners on Approval table (PM Master, Masoud Salum, Rashid Mohammed); signatures still pending      |

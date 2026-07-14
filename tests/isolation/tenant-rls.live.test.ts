@@ -71,18 +71,25 @@ async function setTenantContext(client: pg.Client, tenantId: string): Promise<vo
 const dbAvailable = await canConnect(adminUrl());
 
 describe.skipIf(!dbAvailable && !forceLive)('AUDIT-R2 live tenant RLS isolation', () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     if (!dbAvailable) {
       throw new Error(
         'RUN_LIVE_DB_TESTS=1 but PostgreSQL is unreachable. Start DEV-001: npm run docker:up',
       );
     }
 
+    // Align migrate/bootstrap with the same privileged URL used for connectivity
+    // (scripts default POSTGRES_USER=educore, which often lacks CREATEROLE).
+    const privilegedEnv = {
+      ...process.env,
+      DATABASE_URL: adminUrl(),
+    };
+
     const migrate = spawnSync('npm', ['run', 'db:migrate'], {
       cwd: process.cwd(),
       encoding: 'utf8',
       shell: true,
-      env: process.env,
+      env: privilegedEnv,
     });
     if (migrate.status !== 0) {
       throw new Error(`db:migrate failed: ${migrate.stderr || migrate.stdout}`);
@@ -91,10 +98,14 @@ describe.skipIf(!dbAvailable && !forceLive)('AUDIT-R2 live tenant RLS isolation'
       cwd: process.cwd(),
       encoding: 'utf8',
       shell: true,
-      env: process.env,
+      env: privilegedEnv,
     });
     if (bootstrap.status !== 0) {
-      throw new Error(`db:bootstrap-roles failed: ${bootstrap.stderr || bootstrap.stdout}`);
+      // Roles may already exist from a prior bootstrap; continue if educore_app works.
+      const appRoleOk = await canConnect(roleUrl('educore_app', 'educore_app_local_only'));
+      if (!appRoleOk) {
+        throw new Error(`db:bootstrap-roles failed: ${bootstrap.stderr || bootstrap.stdout}`);
+      }
     }
   });
 

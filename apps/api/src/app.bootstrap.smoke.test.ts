@@ -10,7 +10,13 @@ import { AppModule } from './app.module.js';
 import { BOUNDED_CONTEXT_MODULES, BOUNDED_CONTEXT_NAMES } from './modules/index.js';
 import { HealthService } from './common/health/health.service.js';
 import { IdentityAndAccessApplicationService } from './modules/identity-and-access/index.js';
-import { CORRELATION_ID_HEADER } from './common/correlation/correlation.constants.js';
+import {
+  CORRELATION_ID_HEADER,
+  REQUEST_ID_HEADER,
+} from './common/correlation/correlation.constants.js';
+import { AUDIT_PUBLISHER } from './modules/platform-operations/index.js';
+import { PolicyEvaluator } from './common/policy/index.js';
+import { TOKEN_VALIDATOR } from './common/auth/index.js';
 
 async function httpGet(
   server: Server,
@@ -103,13 +109,42 @@ describe('PLAT-003 NestJS modular monolith skeleton', () => {
     });
   });
 
-  it('propagates correlation IDs on health responses', async () => {
+  it('propagates correlation and request IDs on health responses', async () => {
     const correlationId = 'plat-003-smoke-correlation';
     const health = await httpGet(server, '/health', {
       [CORRELATION_ID_HEADER]: correlationId,
     });
 
     expect(health.headers[CORRELATION_ID_HEADER]).toBe(correlationId);
+    expect(health.headers[REQUEST_ID_HEADER]).toBe(correlationId);
+  });
+
+  it('emits both correlation headers when client omits them', async () => {
+    const health = await httpGet(server, '/health');
+    expect(typeof health.headers[CORRELATION_ID_HEADER]).toBe('string');
+    expect(typeof health.headers[REQUEST_ID_HEADER]).toBe('string');
+    expect(health.headers[CORRELATION_ID_HEADER]).toBe(health.headers[REQUEST_ID_HEADER]);
+  });
+
+  it('resolves P2 platform providers (fail-closed defaults)', () => {
+    expect(app.get(PolicyEvaluator)).toBeInstanceOf(PolicyEvaluator);
+    expect(app.get(TOKEN_VALIDATOR)).toBeDefined();
+    expect(app.get(AUDIT_PUBLISHER)).toBeDefined();
+  });
+
+  it('rejects invalid bearer tokens without opening business routes', async () => {
+    const response = await httpGet(server, '/health', {
+      authorization: 'Bearer not-a-valid-token',
+    });
+    // Health remains public when no auth header semantics force 401 on all routes;
+    // invalid token on public route still fail-closed via middleware when Authorization present.
+    expect(response.statusCode).toBe(401);
+    const body = JSON.parse(response.body) as {
+      error: { code: string; requestId: string };
+    };
+    expect(body.error.code).toBe('UNAUTHORIZED');
+    expect(body.error.requestId).toBeTruthy();
+    expect(body.error).not.toHaveProperty('correlationId');
   });
 
   it('keeps HealthService configuration-only with no infrastructure checks', () => {

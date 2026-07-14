@@ -26,14 +26,22 @@ This document records the NestJS modular-monolith skeleton (`PLAT-003`) and enfo
 
 ## Platform common layer
 
-| Area        | Path                      | Purpose                                                      |
-| ----------- | ------------------------- | ------------------------------------------------------------ |
-| Config      | `src/common/config/`      | Typed non-secret config (`NODE_ENV`, `PORT`, `SERVICE_NAME`) |
-| Health      | `src/common/health/`      | Neutral `/health` and `/ready` endpoints                     |
-| Correlation | `src/common/correlation/` | `x-correlation-id` middleware                                |
-| Errors      | `src/common/errors/`      | Typed `AppError` and client-safe error envelope              |
-| Logging     | `src/common/logging/`     | Structured logger interface with field redaction             |
-| Events      | `src/common/events/`      | Domain-event type and no-op publisher placeholder            |
+| Area             | Path                           | Purpose                                                           |
+| ---------------- | ------------------------------ | ----------------------------------------------------------------- |
+| Config           | `src/common/config/`           | Typed non-secret config (`NODE_ENV`, `PORT`, `SERVICE_NAME`)      |
+| Health           | `src/common/health/`           | Neutral `/health` and `/ready` endpoints                          |
+| Correlation      | `src/common/correlation/`      | `X-Correlation-Id` + `X-Request-Id` middleware (ACF-001)          |
+| Errors           | `src/common/errors/`           | `AppError` + ACF envelope (`requestId`) + global filter           |
+| Auth plumbing    | `src/common/auth/`             | Bearer extract, `TokenValidator`, auth context middleware, guards |
+| Tenant context   | `src/common/tenant/`           | `X-Tenant-Id` parse, membership checker interface                 |
+| Policy           | `src/common/policy/`           | Permission codes + `PolicyEvaluator` foundation                   |
+| Idempotency      | `src/common/idempotency/`      | Key validation + scope key + in-memory store helpers              |
+| Pagination       | `src/common/pagination/`       | Cursor list helpers (`limit`/`cursor`)                            |
+| Request platform | `src/common/request-platform/` | Global DI defaults (fail-closed token/membership/permissions)     |
+| Logging          | `src/common/logging/`          | Structured logger interface with field redaction                  |
+| Events           | `src/common/events/`           | Domain-event type and no-op publisher placeholder                 |
+
+**Audit publisher** lives in **platform-operations** (`AUDIT_PUBLISHER` via public barrel) — not in common — so other modules depend on the bounded-context contract (IMP-001-T19 / ADR-001).
 
 Modules may depend on `src/common/**`. The common layer must not depend on any bounded-context module.
 

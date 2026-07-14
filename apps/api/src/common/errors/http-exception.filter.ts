@@ -5,15 +5,28 @@ import type { Request, Response } from 'express';
 import {
   CORRELATION_ID_HEADER,
   CORRELATION_ID_REQUEST_KEY,
+  REQUEST_ID_HEADER,
+  REQUEST_ID_REQUEST_KEY,
 } from '../correlation/correlation.constants.js';
 import type { AppLogger } from '../logging/logger.js';
 import { APP_LOGGER } from '../logging/logger.tokens.js';
 import { AppError } from './app-error.js';
 import { buildErrorEnvelope } from './error-envelope.js';
 
-type RequestWithCorrelation = Request & {
+type RequestWithIds = Request & {
   [CORRELATION_ID_REQUEST_KEY]?: string;
+  [REQUEST_ID_REQUEST_KEY]?: string;
 };
+
+function resolveRequestId(request: RequestWithIds): string {
+  return (
+    request[REQUEST_ID_REQUEST_KEY] ??
+    request[CORRELATION_ID_REQUEST_KEY] ??
+    request.header(REQUEST_ID_HEADER) ??
+    request.header(CORRELATION_ID_HEADER) ??
+    'unknown'
+  );
+}
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -22,17 +35,26 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
     const response = http.getResponse<Response>();
-    const request = http.getRequest<RequestWithCorrelation>();
+    const request = http.getRequest<RequestWithIds>();
 
+    const requestId = resolveRequestId(request);
     const correlationId =
-      request[CORRELATION_ID_REQUEST_KEY] ?? request.header(CORRELATION_ID_HEADER) ?? 'unknown';
+      request[CORRELATION_ID_REQUEST_KEY] ?? request.header(CORRELATION_ID_HEADER) ?? requestId;
+
+    // Ensure support headers are present even when middleware did not run.
+    if (!response.getHeader(CORRELATION_ID_HEADER)) {
+      response.setHeader(CORRELATION_ID_HEADER, correlationId);
+    }
+    if (!response.getHeader(REQUEST_ID_HEADER)) {
+      response.setHeader(REQUEST_ID_HEADER, requestId);
+    }
 
     if (exception instanceof AppError) {
       response.status(exception.statusCode).json(
         buildErrorEnvelope({
           code: exception.code,
           message: exception.message,
-          correlationId,
+          requestId,
           ...(exception.details === undefined ? {} : { details: exception.details }),
         }),
       );
@@ -41,18 +63,30 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
-      const code = status === Number(HttpStatus.NOT_FOUND) ? 'NOT_FOUND' : 'INTERNAL_ERROR';
+      const code =
+        status === Number(HttpStatus.NOT_FOUND)
+          ? 'NOT_FOUND'
+          : status === Number(HttpStatus.UNAUTHORIZED)
+            ? 'UNAUTHORIZED'
+            : status === Number(HttpStatus.FORBIDDEN)
+              ? 'FORBIDDEN'
+              : status === Number(HttpStatus.BAD_REQUEST)
+                ? 'VALIDATION_ERROR'
+                : status === Number(HttpStatus.CONFLICT)
+                  ? 'CONFLICT'
+                  : 'INTERNAL_ERROR';
       response.status(status).json(
         buildErrorEnvelope({
           code,
           message: 'Request failed.',
-          correlationId,
+          requestId,
         }),
       );
       return;
     }
 
     this.logger.error('Unhandled exception', {
+      requestId,
       correlationId,
       // Never attach raw exception messages or stacks to client responses.
       outcome: 'error',
@@ -62,7 +96,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       buildErrorEnvelope({
         code: 'INTERNAL_ERROR',
         message: 'An unexpected error occurred.',
-        correlationId,
+        requestId,
       }),
     );
   }
