@@ -1,13 +1,17 @@
-# Phase 2 — Todo
+# Operator / verification — current
 
-- [x] Plan (`tasks/plan-phase2.md`)
-- [x] G3: RLS INSERT hardening migration + platform role
-- [x] Static hardening tests
-- [x] Live isolation suite (skip without Postgres)
-- [x] AUDIT-R2 task record + freeze residual update
-- [x] `npm run check` + commit
+- [x] Phase 2 RLS hardening + live suite (skip without DB)
+- [x] Phase 3 docs, barrels, CI baseline (`d68142a`)
+- [x] Fix migration order: `user_has_active_membership` before `can_see_tenant`
+- [x] Install local PostgreSQL 16 (native; Docker Desktop install stalled on download)
+- [x] Create `educore` DB, run `db:migrate` + `db:bootstrap-roles`
+- [x] Run live RLS isolation suite with `RUN_LIVE_DB_TESTS=1` — **5 passed, 1 skipped**
+- [x] Operator script `scripts/run-live-db-tests.ps1`
+- [ ] Optional: Docker Desktop later (Redis + compose parity) if needed
+- [ ] Optional: `git remote` + push + branch protection required checks
+- [ ] Human freeze signatures (DBF-001 / ACF-001)
 
-## Next
+## Next product work
 
-- Phase 3: documentation drift, repository barrel tokens, CI baseline
-- Operator: install Docker Desktop and run `RUN_LIVE_DB_TESTS=1 npm test` once
+- Add `tenant_memberships` + redefine membership hook (after isolation evidence)
+- Feature APIs only after full freeze acceptance

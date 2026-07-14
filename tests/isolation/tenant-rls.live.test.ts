@@ -22,8 +22,12 @@ function adminUrl(): string {
   if (process.env['DATABASE_URL'] !== undefined && process.env['DATABASE_URL'].trim() !== '') {
     return process.env['DATABASE_URL'].trim();
   }
-  const user = process.env['POSTGRES_USER'] ?? 'educore';
-  const password = process.env['POSTGRES_PASSWORD'] ?? 'educore_local_only';
+  // Prefer a privileged local login for migrate/bootstrap (native install often uses postgres).
+  const user = process.env['POSTGRES_USER'] ?? process.env['POSTGRES_SUPERUSER'] ?? 'postgres';
+  const password =
+    process.env['POSTGRES_PASSWORD'] ??
+    process.env['POSTGRES_SUPERUSER_PASSWORD'] ??
+    'educore_local_only';
   const host = process.env['POSTGRES_HOST'] ?? '127.0.0.1';
   const port = process.env['POSTGRES_HOST_PORT'] ?? process.env['POSTGRES_PORT'] ?? '5432';
   const database = process.env['POSTGRES_DB'] ?? 'educore';

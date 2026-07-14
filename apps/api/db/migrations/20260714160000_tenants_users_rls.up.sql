@@ -4,7 +4,22 @@
 
 -- ---------------------------------------------------------------------------
 -- Visibility helpers (membership-ready)
+-- Order matters: membership hook first (referenced by can_see_tenant).
 -- ---------------------------------------------------------------------------
+
+-- Membership hook: false until tenant_memberships is created; then redefined.
+CREATE OR REPLACE FUNCTION app.user_has_active_membership(target_tenant_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT false
+    AND target_tenant_id IS NOT NULL
+    AND app.current_user_id() IS NOT NULL;
+$$;
+
+COMMENT ON FUNCTION app.user_has_active_membership(uuid) IS
+  'Placeholder returning false until tenant_memberships exists. Do not remove call sites.';
 
 -- True when the actor may see a tenant row (Pattern B core + membership hook).
 CREATE OR REPLACE FUNCTION app.can_see_tenant(target_tenant_id uuid)
@@ -22,20 +37,6 @@ AS $$
       OR app.user_has_active_membership(target_tenant_id)
     );
 $$;
-
--- Membership hook: false until tenant_memberships is created; then redefined.
-CREATE OR REPLACE FUNCTION app.user_has_active_membership(target_tenant_id uuid)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-AS $$
-  SELECT false
-    AND target_tenant_id IS NOT NULL
-    AND app.current_user_id() IS NOT NULL;
-$$;
-
-COMMENT ON FUNCTION app.user_has_active_membership(uuid) IS
-  'Placeholder returning false until tenant_memberships exists. Do not remove call sites.';
 
 -- True when actor may see a user row (Pattern C interim without memberships).
 CREATE OR REPLACE FUNCTION app.can_see_user(target_user_id uuid)

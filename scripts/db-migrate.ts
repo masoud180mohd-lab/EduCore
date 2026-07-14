@@ -39,6 +39,28 @@ async function ensureLedger(client: pg.Client): Promise<void> {
       applied_at timestamptz NOT NULL DEFAULT now()
     );
   `);
+  // Best-effort grants for local multi-role DX (ignore if not owner / insufficient privilege).
+  await client.query(`
+    DO $do$
+    BEGIN
+      BEGIN
+        GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE schema_migrations TO educore_migrator;
+      EXCEPTION WHEN undefined_object OR insufficient_privilege THEN
+        NULL;
+      END;
+      BEGIN
+        GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE schema_migrations TO educore;
+      EXCEPTION WHEN undefined_object OR insufficient_privilege THEN
+        NULL;
+      END;
+      BEGIN
+        GRANT SELECT ON TABLE schema_migrations TO educore_app;
+      EXCEPTION WHEN undefined_object OR insufficient_privilege THEN
+        NULL;
+      END;
+    END
+    $do$;
+  `);
 }
 
 async function appliedIds(client: pg.Client): Promise<Set<string>> {

@@ -40,17 +40,40 @@ GRANT USAGE, CREATE ON SCHEMA public TO educore_migrator;
 GRANT USAGE ON SCHEMA public TO educore_app;
 GRANT USAGE ON SCHEMA public TO educore_platform;
 
-ALTER DEFAULT PRIVILEGES FOR ROLE educore_migrator IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO educore_app;
-
-ALTER DEFAULT PRIVILEGES FOR ROLE educore_migrator IN SCHEMA public
-  GRANT USAGE, SELECT ON SEQUENCES TO educore_app;
+-- Default privileges require ownership of the target role; skip if not allowed.
+DO
+$$
+BEGIN
+  BEGIN
+    ALTER DEFAULT PRIVILEGES FOR ROLE educore_migrator IN SCHEMA public
+      GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO educore_app;
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL;
+  END;
+  BEGIN
+    ALTER DEFAULT PRIVILEGES FOR ROLE educore_migrator IN SCHEMA public
+      GRANT USAGE, SELECT ON SEQUENCES TO educore_app;
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL;
+  END;
+END
+$$;
 
 DO
 $$
 BEGIN
   IF to_regclass('public.schema_migrations') IS NOT NULL THEN
+    -- Migrator / local bootstrap users need ledger read-write; app may read only.
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE schema_migrations TO educore_migrator;
     GRANT SELECT ON TABLE schema_migrations TO educore_app;
+    GRANT SELECT ON TABLE schema_migrations TO educore_platform;
+    -- DEV-001 / local superuser-style login often named "educore" or "postgres".
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'educore') THEN
+      GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE schema_migrations TO educore;
+      GRANT USAGE, CREATE ON SCHEMA public TO educore;
+    END IF;
   END IF;
 END
 $$;

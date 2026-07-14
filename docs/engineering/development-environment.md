@@ -34,7 +34,23 @@ A clean checkout must restore lockfile-pinned tooling and pass the full quality 
 
 Provides PostgreSQL and Redis for local engineering. Compose does not embed schema; apply SQL with `npm run db:migrate` after containers are healthy.
 
-**If `docker` is not recognized:** install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows), ensure it is running, open a **new** terminal so `PATH` updates, then retry. Without Docker, skip data-platform commands; `npm run check` still works and live RLS tests skip unless `RUN_LIVE_DB_TESTS=1` (which will fail hard without Postgres — by design).
+**If `docker` is not recognized:** either:
+
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows), start it, open a **new** terminal, then `npm run docker:up`, or
+2. Use a local PostgreSQL 16+ on `127.0.0.1:5432` with database/user credentials matching DEV-001 defaults (`educore` / `educore_local_only`, or set `DATABASE_URL` / `POSTGRES_*`).
+
+Without Postgres, skip data-platform commands; `npm run check` still works and live RLS tests **skip** unless `RUN_LIVE_DB_TESTS=1` (which fails hard without Postgres — by design).
+
+**One-shot live RLS verification (PowerShell, after Postgres is up):**
+
+```powershell
+.\scripts\run-live-db-tests.ps1
+# or:
+npm run db:migrate
+npm run db:bootstrap-roles
+$env:RUN_LIVE_DB_TESTS='1'
+npm run test -- tests/isolation/tenant-rls.live.test.ts
+```
 
 ### Start
 
