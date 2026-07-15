@@ -23,11 +23,12 @@ import { IdentityAndAccessDomainService } from './domain/identity-and-access.dom
 import { IdentityAndAccessPolicy } from './policies/identity-and-access.policy.js';
 import { IDENTITY_AND_ACCESS_REPOSITORY } from './repositories/identity-and-access.repository.js';
 import { IdentityAndAccessRepositoryPlaceholder } from './repositories/identity-and-access.repository.placeholder.js';
+import { RbacReadRepository } from './rbac/rbac-read.repository.js';
 import { SessionRepository } from './repositories/session.repository.js';
 
 /**
  * Bounded context: Identity And Access.
- * P3 AuthN + me/select-tenant + cookie refresh + multi-backend rate limit.
+ * P3 AuthN + P4 RBAC read path (no role-admin HTTP under ADR-012).
  */
 @Global()
 @Module({
@@ -42,6 +43,7 @@ import { SessionRepository } from './repositories/session.repository.js';
       useClass: IdentityAndAccessRepositoryPlaceholder,
     },
     SessionRepository,
+    RbacReadRepository,
     AuthService,
     {
       provide: LOGIN_RATE_LIMITER,
@@ -65,6 +67,7 @@ import { SessionRepository } from './repositories/session.repository.js';
     IDENTITY_AND_ACCESS_REPOSITORY,
     AuthService,
     TOKEN_VALIDATOR,
+    RbacReadRepository,
   ],
 })
 export class IdentityAndAccessModule {}

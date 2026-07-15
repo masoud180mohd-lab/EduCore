@@ -20,5 +20,7 @@
 - [x] IMP-001 Phase P3 AuthN sessions + login/refresh/logout (ADR-012)
 - [x] P3 improvement: local admin seed (`npm run seed:admin`)
 - [x] P3 improvement: /auth/me, select-tenant, HttpOnly refresh, rate limit backends
+- [x] IMP-001 Phase P4 RBAC foundation (system roles seed, RequirePermission tests, /auth/me permissions) — ADR-012
 - [ ] P3 follow-ups: MFA, session list/revoke (optional)
+- [ ] Role-admin HTTP (blocked until Freeze v1.0)
 - Optional: git commit + GitHub push (operator)

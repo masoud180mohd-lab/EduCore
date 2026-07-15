@@ -3,9 +3,12 @@ import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 
 import { AppError } from '../../../common/errors/app-error.js';
+import { PERMISSION_SOURCE } from '../../../common/policy/index.js';
+import type { PermissionSource } from '../../../common/policy/policy-evaluator.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
 import type { AuditPublisher } from '../../platform-operations/index.js';
 import { AUDIT_PUBLISHER } from '../../platform-operations/index.js';
+import { RbacReadRepository } from '../rbac/rbac-read.repository.js';
 import { SessionRepository } from '../repositories/session.repository.js';
 import type { LoginRateLimiter } from './login-rate-limiter.js';
 import { LOGIN_RATE_LIMITER } from './login-rate-limiter.js';
@@ -68,6 +71,14 @@ export type MeResult = {
   }>;
   readonly activeTenantId: string | null;
   readonly sessionId: string | null;
+  /** Role codes in the active tenant (empty when no tenant / no assignments). */
+  readonly roles: ReadonlyArray<{
+    readonly code: string;
+    readonly name: string;
+    readonly isSystem: boolean;
+  }>;
+  /** Effective permission codes for active tenant (RBAC; empty when unbound). */
+  readonly permissions: ReadonlyArray<string>;
 };
 
 @Injectable()
@@ -75,7 +86,11 @@ export class AuthService {
   constructor(
     private readonly sessions: SessionRepository,
     @Inject(LOGIN_RATE_LIMITER) private readonly rateLimiter: LoginRateLimiter,
-    @Optional() @Inject(AUDIT_PUBLISHER) private readonly audit: AuditPublisher | null,
+    @Optional() @Inject(AUDIT_PUBLISHER) private readonly audit: AuditPublisher | null = null,
+    @Optional() private readonly rbacRead: RbacReadRepository | null = null,
+    @Optional()
+    @Inject(PERMISSION_SOURCE)
+    private readonly permissionSource: PermissionSource | null = null,
   ) {}
 
   /**
@@ -318,6 +333,20 @@ export class AuthService {
     }
 
     const memberships = await this.sessions.listMembershipSummaries(input.userId);
+    const activeTenantId = input.tenantId ?? null;
+
+    let roles: MeResult['roles'] = [];
+    let permissions: ReadonlyArray<string> = [];
+
+    if (activeTenantId !== null && isUuid(activeTenantId)) {
+      if (this.rbacRead !== null) {
+        roles = await this.rbacRead.listRolesForUser(input.userId, activeTenantId);
+      }
+      if (this.permissionSource !== null) {
+        const set = await this.permissionSource.getPermissions(input.userId, activeTenantId);
+        permissions = [...set].sort();
+      }
+    }
 
     return {
       user: {
@@ -327,8 +356,10 @@ export class AuthService {
         status: profile.status,
       },
       memberships,
-      activeTenantId: input.tenantId ?? null,
+      activeTenantId,
       sessionId: input.sessionId ?? null,
+      roles,
+      permissions,
     };
   }
 

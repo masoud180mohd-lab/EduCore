@@ -109,6 +109,14 @@ describe('PLAT-003 NestJS modular monolith skeleton', () => {
     });
   });
 
+  it('serves engineering status HTML at root (platform only)', async () => {
+    const home = await httpGet(server, '/');
+    expect(home.statusCode).toBe(200);
+    expect(home.body).toContain('EduCore');
+    expect(home.body).toContain('ADR-012');
+    expect(home.body).toContain('Still closed');
+  });
+
   it('propagates correlation and request IDs on health responses', async () => {
     const correlationId = 'plat-003-smoke-correlation';
     const health = await httpGet(server, '/health', {

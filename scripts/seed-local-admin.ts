@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
 import { hashPassword } from '../apps/api/src/modules/identity-and-access/auth/password-hasher.js';
+import { bootstrapSystemRolesForTenant } from '../apps/api/src/modules/identity-and-access/rbac/system-role-bootstrap.js';
 
 const { Client } = pg;
 
@@ -27,6 +28,10 @@ const { Client } = pg;
 export const SEED_TENANT_ID = '01900000-0010-7000-8000-000000000001';
 export const SEED_USER_ID = '01900000-0010-7000-8000-000000000002';
 export const SEED_MEMBERSHIP_ID = '01900000-0010-7000-8000-000000000003';
+export const SEED_ROLE_OWNER_ID = '01900000-0010-7000-8000-000000000010';
+export const SEED_ROLE_ADMIN_ID = '01900000-0010-7000-8000-000000000011';
+export const SEED_ROLE_STAFF_ID = '01900000-0010-7000-8000-000000000012';
+export const SEED_USER_ROLE_OWNER_ID = '01900000-0010-7000-8000-000000000013';
 
 export type SeedAdminConfig = {
   readonly email: string;
@@ -111,6 +116,10 @@ export type SeedAdminResult = {
     readonly membership: boolean;
   };
   readonly passwordUpdated: boolean;
+  readonly rbac: {
+    readonly roles: ReadonlyArray<string>;
+    readonly assignedRole: string | null;
+  };
 };
 
 /**
@@ -202,6 +211,19 @@ export async function seedLocalAdmin(
       [SEED_MEMBERSHIP_ID, tenantId, userId],
     );
 
+    // IMP-001 P4: system roles + assign owner so PolicyEvaluator has real codes.
+    const rbac = await bootstrapSystemRolesForTenant(client, {
+      tenantId,
+      assignUserId: userId,
+      assignRoleCode: 'owner',
+      roleIds: {
+        owner: SEED_ROLE_OWNER_ID,
+        admin: SEED_ROLE_ADMIN_ID,
+        staff: SEED_ROLE_STAFF_ID,
+      },
+      userRoleId: SEED_USER_ROLE_OWNER_ID,
+    });
+
     await client.query('COMMIT');
 
     return {
@@ -215,6 +237,10 @@ export async function seedLocalAdmin(
         membership: (membershipInserted.rowCount ?? 0) > 0,
       },
       passwordUpdated,
+      rbac: {
+        roles: rbac.roles.map((r) => r.code),
+        assignedRole: rbac.assigned?.roleCode ?? null,
+      },
     };
   } catch (error) {
     try {
@@ -246,10 +272,13 @@ async function main(): Promise<void> {
         `  created.tenant: ${String(result.created.tenant)}`,
         `  created.user: ${String(result.created.user)}`,
         `  passwordUpdated: ${String(result.passwordUpdated)}`,
+        `  rbac.roles: ${result.rbac.roles.join(', ')}`,
+        `  rbac.assignedRole: ${result.rbac.assignedRole ?? 'none'}`,
         '',
         'Login (API): POST /api/v1/auth/login',
         `  body: { "email": "${result.email}", "password": "<SEED_ADMIN_PASS>", "tenantId": "${result.tenantId}" }`,
         "  or omit tenantId if this is the user's only active membership.",
+        '  Then GET /api/v1/auth/me → data.roles + data.permissions (when tenant bound).',
         '',
         'Runtime pool must be educore_app (EDUCORE_APP_DATABASE_URL / EDUCORE_ENABLE_APP_DB=1).',
       ].join('\n') + '\n',

@@ -11,3 +11,12 @@ export type { IdentityAndAccessSkeletonRegisteredEvent } from './events/identity
 export { IDENTITY_AND_ACCESS_SKELETON_DTO } from './dto/identity-and-access.dto.js';
 export type { IdentityAndAccessSkeletonDto } from './dto/identity-and-access.dto.js';
 export { AuthService } from './auth/auth.service.js';
+export { RbacReadRepository } from './rbac/rbac-read.repository.js';
+export {
+  SYSTEM_ROLE_CODES,
+  SYSTEM_ROLE_DEFINITIONS,
+  isSystemRoleCode,
+  permissionsForSystemRole,
+} from './rbac/system-roles.js';
+export type { SystemRoleCode, SystemRoleDefinition } from './rbac/system-roles.js';
+export { bootstrapSystemRolesForTenant } from './rbac/system-role-bootstrap.js';
