@@ -1,0 +1,149 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import { AppError } from '../../../common/errors/app-error.js';
+import { AuthService } from './auth.service.js';
+import { InMemoryLoginRateLimiter } from './login-rate-limiter.js';
+import { hashPassword } from './password-hasher.js';
+
+describe('AuthService login', () => {
+  it('rejects when session store is unavailable', async () => {
+    const sessions = {
+      isAvailable: () => false,
+    };
+    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    await expect(
+      service.login({
+        email: 'a@example.com',
+        password: 'password12',
+        correlationId: 'c1',
+      }),
+    ).rejects.toMatchObject({ statusCode: 503 });
+  });
+
+  it('returns INVALID_CREDENTIALS for unknown user (no enumeration)', async () => {
+    const sessions = {
+      isAvailable: () => true,
+      lookupUserByEmail: vi.fn().mockResolvedValue(null),
+    };
+    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    await expect(
+      service.login({
+        email: 'missing@example.com',
+        password: 'password12',
+        correlationId: 'c1',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_CREDENTIALS' });
+  });
+
+  it('issues tokens when password and membership are valid', async () => {
+    const passwordHash = await hashPassword('password12');
+    const sessions = {
+      isAvailable: () => true,
+      lookupUserByEmail: vi.fn().mockResolvedValue({
+        id: '01900000-0000-7000-8000-000000000001',
+        email: 'user@example.com',
+        displayName: 'User',
+        status: 'active',
+        passwordHash,
+      }),
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
+      listActiveMembershipTenants: vi.fn(),
+      createSession: vi.fn().mockResolvedValue('sess-id'),
+    };
+    const audit = { publish: vi.fn().mockResolvedValue(undefined) };
+    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), audit);
+
+    const result = await service.login({
+      email: 'user@example.com',
+      password: 'password12',
+      tenantId: '01900000-0000-7000-8000-0000000000aa',
+      correlationId: 'c1',
+    });
+
+    expect(result.accessToken.startsWith('ecs_')).toBe(true);
+    expect(result.refreshToken.startsWith('ecr_')).toBe(true);
+    expect(result.requiresMfa).toBe(false);
+    expect(result.user.email).toBe('user@example.com');
+    expect(sessions.createSession).toHaveBeenCalledOnce();
+    expect(audit.publish).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'auth.login', outcome: 'success' }),
+    );
+  });
+
+  it('rate-limits repeated failures', async () => {
+    const limiter = new InMemoryLoginRateLimiter(2, 60_000);
+    const sessions = {
+      isAvailable: () => true,
+      lookupUserByEmail: vi.fn().mockResolvedValue(null),
+    };
+    const service = new AuthService(sessions as never, limiter, null);
+    const cmd = {
+      email: 'a@example.com',
+      password: 'password12',
+      correlationId: 'c',
+      ip: '1.2.3.4',
+    };
+    await expect(service.login(cmd)).rejects.toBeInstanceOf(AppError);
+    await expect(service.login(cmd)).rejects.toBeInstanceOf(AppError);
+    await expect(service.login(cmd)).rejects.toMatchObject({ code: 'RATE_LIMITED' });
+  });
+});
+
+describe('AuthService me + select-tenant', () => {
+  it('returns profile and memberships for me', async () => {
+    const sessions = {
+      isAvailable: () => true,
+      getUserProfile: vi.fn().mockResolvedValue({
+        id: 'u1',
+        email: 'a@b.co',
+        displayName: 'A',
+        status: 'active',
+      }),
+      listMembershipSummaries: vi
+        .fn()
+        .mockResolvedValue([
+          { tenantId: 't1', status: 'active', joinedAt: '2026-01-01T00:00:00.000Z' },
+        ]),
+    };
+    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    const me = await service.me({ userId: 'u1', sessionId: 's1', tenantId: 't1' });
+    expect(me.user.email).toBe('a@b.co');
+    expect(me.activeTenantId).toBe('t1');
+    expect(me.memberships).toHaveLength(1);
+  });
+
+  it('selectTenant rebinds when membership is active', async () => {
+    const sessions = {
+      isAvailable: () => true,
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
+      rebindSessionTenant: vi.fn().mockResolvedValue(true),
+    };
+    const audit = { publish: vi.fn().mockResolvedValue(undefined) };
+    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), audit);
+    await expect(
+      service.selectTenant({
+        userId: '01900000-0000-7000-8000-000000000001',
+        sessionId: '01900000-0000-7000-8000-000000000099',
+        tenantId: '01900000-0000-7000-8000-0000000000aa',
+        correlationId: 'c',
+      }),
+    ).resolves.toEqual({ tenantId: '01900000-0000-7000-8000-0000000000aa' });
+    expect(sessions.rebindSessionTenant).toHaveBeenCalledOnce();
+  });
+
+  it('selectTenant denies without active membership', async () => {
+    const sessions = {
+      isAvailable: () => true,
+      hasActiveMembership: vi.fn().mockResolvedValue(false),
+    };
+    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    await expect(
+      service.selectTenant({
+        userId: '01900000-0000-7000-8000-000000000001',
+        sessionId: '01900000-0000-7000-8000-000000000099',
+        tenantId: '01900000-0000-7000-8000-0000000000aa',
+        correlationId: 'c',
+      }),
+    ).rejects.toMatchObject({ code: 'TENANT_MEMBERSHIP_REQUIRED' });
+  });
+});

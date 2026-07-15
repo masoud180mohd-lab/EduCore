@@ -24,13 +24,17 @@ apps/api/db/
 
 ## Commands (from repository root)
 
-Requires Docker Postgres (`npm run docker:up`) first.
+Requires Docker Postgres (`npm run docker:up`) first — or local Postgres 16+ with DEV-001 roles.
 
 ```bash
 npm run db:migrate
 npm run db:migrate:down
 npm run db:bootstrap-roles
 npm run db:test-lifecycle -- --help
+
+# Local lab only: first tenant + admin user + active membership (scrypt password)
+# SEED_ADMIN_PASSWORD='…' npm run seed:admin
+# See seeds/README.md
 ```
 
 ## Environment

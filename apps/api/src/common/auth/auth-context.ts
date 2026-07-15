@@ -6,6 +6,8 @@ export type AuthContext = {
   readonly userId: string;
   /** Opaque token id / session id when known; omitted for stub tokens. */
   readonly sessionId?: string;
+  /** Active tenant bound on the session (DBF-001 sessions.tenant_id). */
+  readonly tenantId?: string;
   readonly tokenType: 'bearer';
 };
 

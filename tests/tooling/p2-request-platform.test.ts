@@ -68,14 +68,17 @@ describe('IMP-001 P2 request platform structure', () => {
     expect(tenantCtrl).not.toMatch(/@(Get|Post|Put|Patch|Delete)\(/);
   });
 
-  it('uses fail-closed token default and membership factory (DB or DenyAll)', () => {
+  it('uses membership factory (DB or DenyAll); token validator lives in Identity module', () => {
     const platform = read('apps/api/src/common/request-platform/request-platform.module.ts');
-    expect(platform).toContain('RejectAllTokenValidator');
     expect(platform).toContain('DenyAllTenantMembershipChecker');
     expect(platform).toContain('PgTenantMembershipChecker');
     expect(platform).toContain('MembershipAwarePermissionSource');
     expect(platform).toContain('PgPermissionSource');
     expect(platform).toContain('EmptyPermissionSource');
+    const identity = read('apps/api/src/modules/identity-and-access/identity-and-access.module.ts');
+    expect(identity).toContain('RejectAllTokenValidator');
+    expect(identity).toContain('SessionTokenValidator');
+    expect(identity).toContain('TOKEN_VALIDATOR');
   });
 
   it('ships Nest persistence + Pg membership checker without business routes', () => {

@@ -13,7 +13,9 @@ export type AppErrorCode =
   | 'TENANT_CONTEXT_REQUIRED'
   | 'TENANT_MEMBERSHIP_REQUIRED'
   | 'IDEMPOTENCY_KEY_REQUIRED'
-  | 'IDEMPOTENCY_KEY_REUSE_MISMATCH';
+  | 'IDEMPOTENCY_KEY_REUSE_MISMATCH'
+  | 'INVALID_CREDENTIALS'
+  | 'RATE_LIMITED';
 
 const DEFAULT_STATUS: Readonly<Record<AppErrorCode, number>> = {
   INTERNAL_ERROR: 500,
@@ -27,6 +29,8 @@ const DEFAULT_STATUS: Readonly<Record<AppErrorCode, number>> = {
   TENANT_MEMBERSHIP_REQUIRED: 403,
   IDEMPOTENCY_KEY_REQUIRED: 400,
   IDEMPOTENCY_KEY_REUSE_MISMATCH: 409,
+  INVALID_CREDENTIALS: 401,
+  RATE_LIMITED: 429,
 };
 
 export class AppError extends Error {
@@ -70,5 +74,22 @@ export class AppError extends Error {
     message = 'Active membership is required for this tenant.',
   ): AppError {
     return new AppError('TENANT_MEMBERSHIP_REQUIRED', message);
+  }
+
+  /** Generic login failure — never distinguish unknown user vs bad password. */
+  static invalidCredentials(message = 'Invalid email or password.'): AppError {
+    return new AppError('INVALID_CREDENTIALS', message);
+  }
+
+  static rateLimited(
+    message = 'Too many attempts. Try again later.',
+    retryAfterSeconds?: number,
+  ): AppError {
+    return new AppError(
+      'RATE_LIMITED',
+      message,
+      429,
+      retryAfterSeconds === undefined ? undefined : { retryAfterSeconds },
+    );
   }
 }

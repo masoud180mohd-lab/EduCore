@@ -107,7 +107,7 @@ describe.skipIf(!dbAvailable && !forceLive)('AUDIT-R2 live tenant RLS isolation'
         throw new Error(`db:bootstrap-roles failed: ${bootstrap.stderr || bootstrap.stdout}`);
       }
     }
-  });
+  }, 120_000);
 
   it('T7/G3: educore_app cannot INSERT tenants even after spoofing both GUCs', async () => {
     const app = new Client({

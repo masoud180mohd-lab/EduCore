@@ -17,6 +17,8 @@
 - [x] IMP-001 Phase P2 request platform & auth plumbing (conditional freeze / ADR-012)
 - [x] P2 improvement: DB-backed `TenantMembershipChecker` + optional Nest `educore_app` pool
 - [x] P2 improvement: Nest `PermissionSource` from roles / role_permissions (membership gate wired)
-- [ ] P3 AuthN (login/sessions) only after GO or continued ADR-012 exception
-- [ ] Real DB-backed TokenValidator when AuthN opens
+- [x] IMP-001 Phase P3 AuthN sessions + login/refresh/logout (ADR-012)
+- [x] P3 improvement: local admin seed (`npm run seed:admin`)
+- [x] P3 improvement: /auth/me, select-tenant, HttpOnly refresh, rate limit backends
+- [ ] P3 follow-ups: MFA, session list/revoke (optional)
 - Optional: git commit + GitHub push (operator)

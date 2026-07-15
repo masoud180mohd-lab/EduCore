@@ -18,6 +18,7 @@
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:migrate:down": "tsx scripts/db-migrate.ts --down",
     "db:test-lifecycle": "tsx scripts/db-test-lifecycle.ts",
+    "seed:admin": "tsx scripts/seed-local-admin.ts",
     "docker:down": "docker compose --env-file .env.docker.example down",
     "docker:logs": "docker compose --env-file .env.docker.example logs -f",
     "docker:ps": "docker compose --env-file .env.docker.example ps",

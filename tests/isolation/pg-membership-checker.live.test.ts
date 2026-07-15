@@ -81,7 +81,7 @@ describe.skipIf(!dbAvailable && !forceLive)('PgTenantMembershipChecker live DB',
       shell: true,
       env: privilegedEnv,
     });
-  });
+  }, 120_000);
 
   it('returns true only for active memberships under educore_app', async () => {
     const platform = new Client({

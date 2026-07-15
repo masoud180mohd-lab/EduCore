@@ -14,3 +14,15 @@ export {
   RequireAuthGuard,
   RequireTenantContextGuard,
 } from './auth.guards.js';
+export { SESSION_ACCESS_LOOKUP, SessionTokenValidator } from './session-token.validator.js';
+export type { SessionAccessLookup, TokenHasher } from './session-token.validator.js';
+export {
+  ACCESS_TOKEN_PREFIX,
+  ACCESS_TOKEN_TTL_SECONDS,
+  accessExpiresAt,
+  generateOpaqueToken,
+  hashToken,
+  REFRESH_TOKEN_PREFIX,
+  REFRESH_TOKEN_TTL_SECONDS,
+  refreshExpiresAt,
+} from './opaque-tokens.js';

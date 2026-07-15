@@ -70,7 +70,7 @@ describe.skipIf(!dbAvailable && !forceLive)('PgPermissionSource live DB', () => 
       shell: true,
       env: privilegedEnv,
     });
-  });
+  }, 120_000);
 
   it('returns role permission codes only for active members with assignments', async () => {
     const platform = new Client({

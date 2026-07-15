@@ -4,7 +4,6 @@ import { APP_FILTER } from '@nestjs/core';
 
 import { AuthContextMiddleware } from './common/auth/auth-context.middleware.js';
 import { ConfigModule } from './common/config/config.module.js';
-import { DatabaseModule } from './common/persistence/index.js';
 import { CorrelationIdMiddleware } from './common/correlation/correlation-id.middleware.js';
 import { HttpExceptionFilter } from './common/errors/http-exception.filter.js';
 import { DOMAIN_EVENT_PUBLISHER, NoopDomainEventPublisher } from './common/events/domain-event.js';
@@ -12,6 +11,7 @@ import { HealthModule } from './common/health/health.module.js';
 import type { AppLogger } from './common/logging/logger.js';
 import { LoggerModule } from './common/logging/logger.module.js';
 import { APP_LOGGER } from './common/logging/logger.tokens.js';
+import { DatabaseModule } from './common/persistence/index.js';
 import { RequestPlatformModule } from './common/request-platform/request-platform.module.js';
 import { TenantContextMiddleware } from './common/tenant/tenant-context.middleware.js';
 import { AcademicStructureModule } from './modules/academic-structure/index.js';
@@ -32,7 +32,8 @@ import { TenantAndBillingModule } from './modules/tenant-and-billing/index.js';
 /**
  * Root modular-monolith composition.
  * Bounded contexts are registered via public barrels only (ADR-001 / PLAT-005).
- * Request platform middleware order: correlation → auth → tenant (IMP-001 P2).
+ * Request platform middleware order: correlation → auth → tenant.
+ * TOKEN_VALIDATOR is provided by IdentityAndAccessModule (session-backed when DB on).
  */
 @Module({
   imports: [

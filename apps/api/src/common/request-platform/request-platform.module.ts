@@ -3,11 +3,9 @@ import type { Pool } from 'pg';
 
 import {
   DevStubTokenValidator,
-  RejectAllTokenValidator,
   RequireActiveMembershipGuard,
   RequireAuthGuard,
   RequireTenantContextGuard,
-  TOKEN_VALIDATOR,
 } from '../auth/index.js';
 import { DatabaseModule, PG_POOL } from '../persistence/index.js';
 import {
@@ -26,24 +24,14 @@ import {
 import type { TenantMembershipChecker } from '../tenant/tenant-membership.checker.js';
 
 /**
- * Global request-platform providers (auth, tenant membership, policy).
- * Middleware is registered on AppModule; guards/evaluator inject from here.
- *
- * Defaults:
- * - RejectAllTokenValidator (fail-closed tokens until AuthN lands)
- * - PgTenantMembershipChecker when app DB pool enabled, else DenyAll
- * - MembershipAwarePermissionSource → PgPermissionSource (or Empty without pool)
- *
- * Tests may override TOKEN_VALIDATOR / TENANT_MEMBERSHIP_CHECKER / PERMISSION_SOURCE.
+ * Global request-platform providers (tenant membership, policy, guards).
+ * TOKEN_VALIDATOR is composed in AppModule (SessionTokenValidator vs RejectAll)
+ * so common does not depend on Identity session repository (PLAT-005).
  */
 @Global()
 @Module({
   imports: [DatabaseModule],
   providers: [
-    {
-      provide: TOKEN_VALIDATOR,
-      useClass: RejectAllTokenValidator,
-    },
     {
       provide: TENANT_MEMBERSHIP_CHECKER,
       inject: [PG_POOL],
@@ -72,11 +60,9 @@ import type { TenantMembershipChecker } from '../tenant/tenant-membership.checke
     RequireAuthGuard,
     RequireTenantContextGuard,
     RequireActiveMembershipGuard,
-    // Available for test modules that opt in; not wired as default TOKEN_VALIDATOR.
     DevStubTokenValidator,
   ],
   exports: [
-    TOKEN_VALIDATOR,
     TENANT_MEMBERSHIP_CHECKER,
     PERMISSION_SOURCE,
     PolicyEvaluator,
