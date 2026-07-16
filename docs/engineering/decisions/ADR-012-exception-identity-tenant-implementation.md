@@ -2,7 +2,7 @@
 
 ## Status
 
-**Accepted** (time-bounded architecture exception)
+**Accepted** (time-bounded architecture exception) — **superseded for sequencing** by solo-operator Freeze v1.0 ([SOLO-GOV-001](../governance/SOLO_OPERATOR_GOVERNANCE_NOTE.md), 2026-07-16); retained as historical record
 
 | Field              | Value                                                                                                       |
 | ------------------ | ----------------------------------------------------------------------------------------------------------- |
@@ -10,7 +10,7 @@
 | Type               | **Governance / process exception** (not a product architecture redesign)                                    |
 | Date accepted      | 2026-07-15                                                                                                  |
 | Accepted by        | Principal Architect / Exception Owner (governance review) — see Approval                                    |
-| Countersignatures  | Database Architect, Security, Backend Lead — **still pending**                                              |
+| Countersignatures  | Database Architect, Security, Backend Lead — **complete (solo-operator acting; see SOLO-GOV-001)** |
 | Supersedes         | Prompt-only “GO” language that implied full freeze acceptance without human review                          |
 | Does not supersede | Architecture Freeze v1.0 (`EduCore/38_ARCHITECTURE_FREEZE_RECORD.md`), ADR-001–ADR-011 in the immutable kit |
 | Location           | Repository engineering decision — `docs/engineering/decisions/` (outside immutable `EduCore/decisions/`)    |
@@ -218,7 +218,7 @@ The following conditions are **binding** while this ADR remains in force:
 | Backend Lead                           | Scope control (no unauthorized routes) |
 | API Contract Guardian                  | ACF-001 / OpenAPI fidelity             |
 
-Organization-specific personal names for Database Architect, Security, and Backend Lead remain to be filled when those humans countersign.
+Organization-specific personal names were initially placeholders. On **2026-07-16**, the Project Owner authorized **solo-operator consolidation** (`docs/engineering/governance/SOLO_OPERATOR_GOVERNANCE_NOTE.md`): the Governance Lead / Principal Architect (acting) holds Database Architect, Security, and Backend Lead seats for countersignature and freeze closure. This is **not** independent multi-person review.
 
 ---
 
@@ -244,12 +244,20 @@ Organization-specific personal names for Database Architect, Security, and Backe
 
 ## Approval
 
-| Role                                  | Name                                            | Date       | Signature                    |
-| ------------------------------------- | ----------------------------------------------- | ---------- | ---------------------------- |
-| Principal Architect / Exception Owner | EduCore Principal Architect (Governance Review) | 2026-07-15 | Approved — exception only    |
-| Database Architect                    | PM Master                                       |            | **Pending countersignature** |
-| Security                              | Masoud Salum                                    |            | **Pending countersignature** |
-| Backend Lead                          | Rashid Mohammed                                 |            | **Pending countersignature** |
+| Role                                  | Name                                                                  | Date       | Signature                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------- |
+| Principal Architect / Exception Owner | EduCore Principal Architect (Governance Review)                       | 2026-07-15 | Approved — exception only                                                    |
+| Database Architect                    | PM Master _(acting: Governance Lead under SOLO-GOV-001)_              | 2026-07-16 | Countersigned — exception only; Freeze v1.0 still pending _(at countersign)_ |
+| Security                              | Masoud Salum _(acting: Governance Lead under SOLO-GOV-001)_           | 2026-07-16 | Countersigned — exception only; Freeze v1.0 still pending _(at countersign)_ |
+| Backend Lead                          | Rashid Mohammed _(acting: Governance Lead under SOLO-GOV-001)_        | 2026-07-16 | Countersigned — exception only; Freeze v1.0 still pending _(at countersign)_ |
+
+> **Post-freeze note (same day):** After SOLO-GOV-001 completion of DBF-001 + ACF-001 approval blocks and FREEZE-ACC-001 update to **Accepted v1.0 (solo-operator)**, this exception is **superseded for sequencing** of the Identity & Tenant slice per Automatic supersession. ADR-012 remains historical record. Product CRUD / role-admin HTTP still require normal implementation gates.
+
+### Solo-operator countersignature statement (2026-07-16)
+
+Acting under Project Owner direction (SOLO-GOV-001), the Governance Lead / Principal Architect has reviewed residual risks for Database, Security, and Backend perspectives against the repository evidence (migrations, AUDIT-R2 live isolation, AuthN/RBAC platform surface, closed product CRUD). Countersignatures above accept the **exception only** at the moment of signing; Freeze v1.0 was completed in the same governance session via DBF/ACF blocks.
+
+This is **not** a claim of three independent human reviewers.
 
 ### Principal Architect approval statement
 
@@ -266,10 +274,10 @@ This approval **does not**:
 
 ## Next governance step (required)
 
-1. **Schedule the ADR-012 review meeting no later than 2026-08-15** (calendar invite: Architect + Database + Security + Backend + API Contract Guardian).
-2. Collect **countersignatures** from Database Architect, Security, and Backend Lead before that review.
-3. Parallel track: drive **human signature blocks on DBF-001 and ACF-001** so the exception can supersede cleanly before hard expiry **2026-09-15**.
-4. Do **not** open Identity/Tenant Nest domain routes until full freeze acceptance or a **new** ADR names a specific API increment.
+1. ~~Schedule the ADR-012 review meeting no later than 2026-08-15~~ → **Superseded by SOLO-GOV-001** (no external attendees; formal review recorded as solo-operator closure 2026-07-16).
+2. ~~Collect countersignatures~~ → **Complete** (acting seats; see Approval).
+3. ~~Drive human signature blocks on DBF-001 and ACF-001~~ → **Complete** under SOLO-GOV-001 (solo-operator Freeze v1.0).
+4. Do **not** open Identity/Tenant Nest **product** domain routes (tenant/user CRUD, role-admin, other BCs) without a normal IMP gate — freezes accept design baseline; they do not auto-open every OpenAPI path.
 
 ---
 
@@ -280,3 +288,4 @@ This approval **does not**:
 | 1.0     | 2026-07-15 | Initial exception ADR for Identity & Tenant provisional implementation                                           |
 | 1.1     | 2026-07-15 | Principal Architect governance approval; review findings and next-step schedule added; status confirmed Accepted |
 | 1.2     | 2026-07-15 | Named countersigners on Approval table (PM Master, Masoud Salum, Rashid Mohammed); signatures still pending      |
+| 1.3     | 2026-07-16 | Solo-operator countersignatures (SOLO-GOV-001); freezes accepted same session; exception superseded for sequencing |

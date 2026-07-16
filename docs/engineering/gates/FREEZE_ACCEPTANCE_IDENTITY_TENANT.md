@@ -6,98 +6,77 @@
 
 ## Date
 
-2026-07-14
+2026-07-14 (conditional) · **Updated 2026-07-16 (Accepted v1.0 — solo-operator)**
 
 ## Status
 
-**CONDITIONAL ACCEPTANCE** (Audit Remediation Phase 1 / G2)
+**ACCEPTED FREEZE v1.0 — solo-operator consolidation** ([SOLO-GOV-001](../governance/SOLO_OPERATOR_GOVERNANCE_NOTE.md))
 
-This record does **not** grant unrestricted production coding permission. It records an honest governance state after Independent Engineering Audit findings of 2026-07-14.
+DBF-001 and ACF-001 approval blocks are complete under Project Owner–directed acting seats
+(Database Architect, Security, Backend Lead, API Contract Guardian held by Governance Lead /
+Principal Architect). This is **not** independent multi-person external review.
+
+Prior status **CONDITIONAL ACCEPTANCE** (2026-07-14) is superseded for freeze posture.
+ADR-012 remains historical and is **superseded for sequencing** of this slice.
 
 ## Related freeze artifacts
 
-| Artifact                  | Path                                                                                | Prior status                          |
-| ------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------- |
-| Database Freeze draft     | `docs/engineering/database-freeze/DBF-001-identity-tenant-slice.md`                 | Proposed; human signature block empty |
-| API Contract Freeze draft | `docs/engineering/api-contract-freeze/ACF-001-identity-tenant-slice.md`             | Proposed; human signature block empty |
-| OpenAPI baseline          | `docs/engineering/api-contract-freeze/openapi/acf-001-identity-tenant.openapi.yaml` | Draft baseline                        |
+| Artifact                  | Path                                                                                | Status                                              |
+| ------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Database Freeze           | `docs/engineering/database-freeze/DBF-001-identity-tenant-slice.md`                 | **Accepted v1.0 (solo-operator)**                   |
+| API Contract Freeze       | `docs/engineering/api-contract-freeze/ACF-001-identity-tenant-slice.md`             | **Accepted v1.0 (solo-operator)**                   |
+| OpenAPI baseline          | `docs/engineering/api-contract-freeze/openapi/acf-001-identity-tenant.openapi.yaml` | Binding design baseline                             |
+| Solo-operator note        | `docs/engineering/governance/SOLO_OPERATOR_GOVERNANCE_NOTE.md`                      | Authority for consolidated signatures               |
+| Exception ADR (historical)| `docs/engineering/decisions/ADR-012-exception-identity-tenant-implementation.md`    | Superseded for sequencing                           |
 
-## What already exists in the repository (fact)
+## Decision (current)
 
-As of this record, the workspace already contains:
+| Decision                                                                         | Value                                                                 |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Treat DBF-001 / ACF-001 as Accepted Freeze v1.0 for this slice                   | **YES** (solo-operator; see honesty qualifier)                        |
+| Unrestricted opening of every OpenAPI product route same day                     | **NO** — use IMP gates                                                |
+| Platform AuthN/AuthZ under `/api/v1/auth/*`                                      | **Allowed** (already landed under ADR-012; retained)                  |
+| Tenant/user CRUD, membership invite admin, role-admin HTTP, other BC APIs        | **NO GO** until gated implementation plan                             |
+| Additional tenant-owned schema beyond freeze / provisional set                   | **NO GO** without DBF-001.x revision                                  |
 
-- Migration tooling and ordered SQL under `apps/api/db/migrations/` including catalogs, RLS helpers, `tenants`, `users`, and FORCE RLS policies.
-- Design artifacts that largely cover Gate 1 / Gate 2 _content_ requirements from Architecture Freeze Gate 1 and Gate 2.
+## Conditions closed
 
-This implementation **preceded** formal human signatures. Gate documents previously recorded “MASTER PROMPT / prompt authorization” which is **not** independent human review and is **not** valid freeze acceptance under EduCore governance.
+1. **Signatures** on DBF-001 and ACF-001 — complete under SOLO-GOV-001 (2026-07-16).
+2. **G3 RLS trust / live isolation** — addressed in AUDIT-R2; re-run after schema change.
+3. **Membership path** — `tenant_memberships` + helpers landed.
+4. **OpenAPI security metadata** — `securitySchemes` + `x-permissions` landed.
+5. **ADR-012 countersignatures** — complete (acting seats, same session).
 
-## Conditional decision
+## Residual risks (honest)
 
-| Decision                                                                         | Value                                                       |
-| -------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Unrestricted Identity/Tenant API & domain coding                                 | **NO GO**                                                   |
-| Keep existing P1 SQL as provisional scaffolding pending Phase 2 security closure | **CONDITIONAL GO**                                          |
-| Add further tenant-owned tables beyond current migrations                        | **NO GO** until Phase 2 RLS + live T1–T8 isolation evidence |
-| Treat DBF-001 / ACF-001 as “Accepted Freeze v1.0” without human signatures       | **NO**                                                      |
-
-## Mandatory conditions (must close before full freeze acceptance)
-
-1. **Human signatures** on DBF-001 and ACF-001 approval blocks (Database Architect, Principal Architect, Security, Backend Lead / API Contract Guardian).
-   - **Exception path (now recorded):** [`ADR-012`](../decisions/ADR-012-exception-identity-tenant-implementation.md) authorizes **limited provisional** Identity/Tenant persistence work under Conditional Freeze; it **does not** mark freezes as full v1.0 accepted.
-2. **G3 — RLS trust model:** prevent client-settable GUC spoofing on INSERT/bootstrap/platform paths (Audit Critical G3). **Status: addressed in AUDIT-R2** (re-verify on review).
-3. **G3 — Live isolation evidence:** automated PostgreSQL integration tests using `educore_app`. **Status: evidenced PASS** (see AUDIT-R2 live evidence; re-run on schema change).
-4. **Membership path:** replace fail-closed membership stub with real membership-backed visibility. **Status: `tenant_memberships` + SECURITY DEFINER helpers landed** (IMP-001 P1 continuation); keep expanding isolation coverage.
-5. **OpenAPI hardening:** encode permission requirements / auth schemes before NestJS identity/tenant **route** implementation. **Status: securitySchemes + x-permissions landed**; full freeze signature still open.
-
-## Allowed work under this conditional record
-
-- Audit Remediation Phase 2 (RLS hardening + live isolation tests).
-- Documentation reconciliation (Phase 3).
-- Structural hardening (public barrel repository token policy, CI baseline) without new business features.
-- Non-destructive review of existing provisional migrations.
-
-## Forbidden work under this conditional record
-
-- New business domain features (students, fees, attendance, finance ledger posting, payments, AI providers, etc.).
-- Additional business schema tables beyond the provisional Identity/Tenant P1 set already present.
-- Claiming “Database Freeze accepted” or “API Contract Freeze accepted” without closing the conditions above.
-- Self-approving further gates via AI prompt names alone.
-
-## Supersedes
-
-- Self-declared GO language in prompt-authorization gate notes that treated incomplete freezes as full authorization for tenant-owned tables.
-
-Does **not** supersede Architecture Freeze v1.0 (`EduCore/38_ARCHITECTURE_FREEZE_RECORD.md`).
-
-## Residual risks (updated after ADR-012 + memberships + OpenAPI hardening)
-
-- **Exception ADR-012** is **time-bounded** (review by 2026-08-15; hard expiry 2026-09-15 unless renewed or freezes fully accepted). Do not treat it as permanent permission to skip freezes.
-- **Domain NestJS routes** remain **NO GO** under ADR-012 until full freeze acceptance or a new ADR.
-- Live isolation evidenced; re-run suite after each schema change (`RUN_LIVE_DB_TESTS=1`).
-- Full DBF/ACF **human signatures** remain open — freezes are still not “Accepted v1.0”.
-- Physical Drive-sync workspace relocation remains an operator action (Audit G1 residual).
+- Solo-operator signatures lack independent peer challenge — accept consciously.
+- Live isolation matrix T1–T8 product completeness remains partial.
+- MFA / production IdP / session admin revoke not done.
+- `RequirePermission` not yet on business routes (P4b bind is ready).
+- Physical Drive-sync workspace relocation remains operator-owned if still open.
 
 ## Sign-off
 
-### Conditional record authors (process remediation)
+### Conditional record (historical)
 
 | Role                            | Name                                  | Date       | Notes                                                             |
 | ------------------------------- | ------------------------------------- | ---------- | ----------------------------------------------------------------- |
-| Audit Remediation (Engineering) | Cursor Agent session — Phase 1 prompt | 2026-07-14 | Creates conditional governance only; not a human freeze signature |
-| Product Owner / Project Lead    | _pending human_                       |            | Must acknowledge this CONDITIONAL status                          |
+| Audit Remediation (Engineering) | Cursor Agent session — Phase 1 prompt | 2026-07-14 | Created conditional governance only                               |
 
-### Full freeze still requires (unchanged)
+### Freeze v1.0 (solo-operator)
 
-| Role                  | DBF-001 | ACF-001 |
-| --------------------- | ------- | ------- |
-| Database Architect    | pending | n/a     |
-| Principal Architect   | pending | pending |
-| Security              | pending | pending |
-| Backend Lead          | pending | pending |
-| API Contract Guardian | n/a     | pending |
+| Role                  | DBF-001 | ACF-001 | Date       | Notes                          |
+| --------------------- | ------- | ------- | ---------- | ------------------------------ |
+| Database Architect    | Signed  | n/a     | 2026-07-16 | Acting seat (SOLO-GOV-001)     |
+| Principal Architect   | Signed  | Signed  | 2026-07-16 | Acting / Governance Lead       |
+| Security              | Signed  | Signed  | 2026-07-16 | Acting seat (SOLO-GOV-001)     |
+| Backend Lead          | Signed  | Signed  | 2026-07-16 | Acting seat (SOLO-GOV-001)     |
+| API Contract Guardian | n/a     | Signed  | 2026-07-16 | Dual-hat Backend (SOLO-GOV-001)|
+| Product Owner         | —       | —       | 2026-07-16 | Directed consolidation         |
 
 ## Revision history
 
-| Version | Date       | Notes                                                      |
-| ------- | ---------- | ---------------------------------------------------------- |
-| 1.0     | 2026-07-14 | Conditional acceptance after Independent Engineering Audit |
+| Version | Date       | Notes                                                                 |
+| ------- | ---------- | --------------------------------------------------------------------- |
+| 1.0     | 2026-07-14 | Conditional acceptance after Independent Engineering Audit            |
+| 2.0     | 2026-07-16 | Accepted Freeze v1.0 under solo-operator consolidation (SOLO-GOV-001) |

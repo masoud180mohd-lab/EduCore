@@ -75,7 +75,7 @@ export async function bootstrapSystemRolesForTenant(
     }
 
     // Note: educore_platform cannot DELETE role_permissions (least privilege).
-    // Matrix tightening requires migrator/ops; bootstrap only adds missing grants.
+    // Matrix tightening: npm run rbac:reconcile-grants (see system-role-grant-reconcile.ts).
 
     roles.push({ code: def.code, id: roleId });
   }

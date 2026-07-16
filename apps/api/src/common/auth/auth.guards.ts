@@ -8,6 +8,7 @@ import type { TenantContext } from '../tenant/tenant-context.js';
 import type { TenantMembershipChecker } from '../tenant/tenant-membership.checker.js';
 import { AUTH_CONTEXT_REQUEST_KEY } from './auth.constants.js';
 import type { AuthContext } from './auth-context.js';
+import { assertSessionTenantMatchesHeader } from './session-tenant-bind.js';
 
 type PlatformRequest = Request & {
   [AUTH_CONTEXT_REQUEST_KEY]?: AuthContext;
@@ -37,7 +38,8 @@ export class RequireTenantContextGuard implements CanActivate {
 }
 
 /**
- * Requires authenticated user + tenant header + active membership (tenant_memberships).
+ * Requires authenticated user + tenant header + session↔header bind + active membership.
+ * Membership is evaluated for the session-bound tenant (not header alone).
  */
 @Injectable()
 export class RequireActiveMembershipGuard implements CanActivate {
@@ -58,7 +60,8 @@ export class RequireActiveMembershipGuard implements CanActivate {
       throw AppError.tenantContextRequired();
     }
 
-    const ok = await this.membershipChecker.hasActiveMembership(auth.userId, tenant.tenantId);
+    const boundTenantId = assertSessionTenantMatchesHeader(auth, tenant);
+    const ok = await this.membershipChecker.hasActiveMembership(auth.userId, boundTenantId);
     if (!ok) {
       throw AppError.tenantMembershipRequired();
     }

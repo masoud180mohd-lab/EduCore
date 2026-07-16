@@ -795,18 +795,20 @@ Additional domain permissions arrive with later freezes.
 - [x] Naming conventions and data types defined
 - [x] Migration order + rollback approach defined
 - [x] Non-goals and exclusions explicit
-- [ ] **Formal human acceptance** (Architect + Security + Backend Lead signatures)
+- [x] **Formal acceptance** (Architect + Security + Backend Lead signatures) — **solo-operator consolidation** ([SOLO-GOV-001](../governance/SOLO_OPERATOR_GOVERNANCE_NOTE.md))
 
-### Approval block (to be signed)
+### Approval block
 
-| Role                | Name | Date | Signature |
-| ------------------- | ---- | ---- | --------- |
-| Database Architect  |      |      |           |
-| Principal Architect |      |      |           |
-| Security            |      |      |           |
-| Backend Lead        |      |      |           |
+| Role                | Name                                                           | Date       | Signature                                              |
+| ------------------- | -------------------------------------------------------------- | ---------- | ------------------------------------------------------ |
+| Database Architect  | PM Master _(acting: Governance Lead under SOLO-GOV-001)_       | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant)    |
+| Principal Architect | EduCore Principal Architect / Governance Lead (acting)         | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant)    |
+| Security            | Masoud Salum _(acting: Governance Lead under SOLO-GOV-001)_    | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant)    |
+| Backend Lead        | Rashid Mohammed _(acting: Governance Lead under SOLO-GOV-001)_ | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant)    |
 
-Upon signature, this document becomes **Database Freeze v1.0 — Identity & Tenant Slice** and may only change via revision `DBF-001.x` or superseding freeze.
+**Status:** **Database Freeze v1.0 — Identity & Tenant Slice** (solo-operator). Changes only via revision `DBF-001.x` or superseding freeze.
+
+> Honesty: signatures consolidate theoretical role seats into one acting authority per Project Owner direction. Not independent multi-person review.
 
 ---
 
@@ -824,6 +826,7 @@ Upon signature, this document becomes **Database Freeze v1.0 — Identity & Tena
 
 ## 18. Revision history
 
-| Version | Date       | Notes                                                     |
-| ------- | ---------- | --------------------------------------------------------- |
-| 1.0     | 2026-07-14 | Initial Identity & Tenant slice freeze proposal (DBF-001) |
+| Version | Date       | Notes                                                                                          |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-07-14 | Initial Identity & Tenant slice freeze proposal (DBF-001)                                      |
+| 1.1     | 2026-07-16 | Freeze v1.0 accepted under solo-operator consolidation (SOLO-GOV-001); approval block completed |

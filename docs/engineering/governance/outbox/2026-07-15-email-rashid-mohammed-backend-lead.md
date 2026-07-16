@@ -1,17 +1,18 @@
 # READY TO SEND — Rashid Mohammed (Backend Lead)
 
-| Field    | Value                                                                                                          |
-| -------- | -------------------------------------------------------------------------------------------------------------- |
-| Status   | **READY TO COPY-PASTE** — AI cannot send mail; human must Send                                                 |
-| Prepared | 2026-07-15 (send by **2026-07-16**)                                                                            |
-| From     | Principal Architect / Governance Lead                                                                          |
-| To       | **Rashid Mohammed** \<replace-with-real-email\>                                                                |
-| Cc       | PM Master; Masoud Salum                                                                                        |
-| Attach   | `ADR-012_ONE_PAGE_SUMMARY.md` · `ADR-012_COUNTERSIGNATURE_PACKET.md` · `2026-08-13-adr-012-review-meeting.ics` |
+| Field             | Value                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| **Status**        | **READY TO COPY-PASTE** — human must click Send                                    |
+| **Prepared**      | 2026-07-15 · refresh for final send                                                |
+| **Send by**       | **As soon as possible** (target same day / next business day)                      |
+| **From**          | Principal Architect / Governance Lead                                              |
+| **To**            | Rashid Mohammed \<rashid.mohammed@educore.local\>                                  |
+| **Cc**            | PM Master \<pm.master@educore.local\>; Masoud Salum \<masoud.salum@educore.local\> |
+| **Attach / link** | See list below                                                                     |
 
 ---
 
-## SUBJECT (copy)
+## SUBJECT (copy entire line)
 
 ```
 ACTION REQUIRED by 2026-08-08 — Countersign ADR-012 (Backend Lead) | EduCore Identity & Tenant
@@ -19,80 +20,97 @@ ACTION REQUIRED by 2026-08-08 — Countersign ADR-012 (Backend Lead) | EduCore I
 
 ---
 
-## BODY (copy everything below this line)
+## BODY (copy everything inside the fence — do not include the fence)
 
 ```
 Dear Rashid,
 
-I am writing in my capacity as Principal Architect / Governance Lead for EduCore to request your formal countersignature on ADR-012.
+I am writing as Principal Architect / Governance Lead for EduCore to request your
+formal countersignature on ADR-012 (Identity & Tenant architecture exception).
 
 ────────────────────────────────────────
-1. Why you are receiving this
+1. Why we need your signature
 ────────────────────────────────────────
-ADR-012 authorizes a limited, time-bounded exception for Identity & Tenant
-persistence scaffolding under Conditional Freeze. It deliberately keeps NestJS
-product HTTP routes closed.
+ADR-012 authorizes a limited, time-bounded exception for Identity & Tenant work
+under Conditional Freeze. Day-to-day enforcement lives in PR reviews and
+implementation sequencing. Without Backend Lead ownership, delivery pressure can
+quietly expand product HTTP surface before Freeze v1.0 is real.
 
-Backend Lead countersignature is required because day-to-day enforcement lives
-in PR reviews and implementation sequencing. Without Backend ownership, “demo
-pressure” can quietly open login/CRUD routes before Freeze v1.0 is real.
-
-Your signature means you will enforce the exception’s Conditions in engineering
-practice. It does NOT authorize product APIs, and it does NOT accept ACF-001 as
-Freeze v1.0.
+Your countersignature means you will enforce the exception’s Conditions in
+engineering practice. It does NOT authorize unrestricted product APIs, and it
+does NOT accept ACF-001 as Freeze v1.0.
 
 ────────────────────────────────────────
-2. What Backend must own under this exception
+2. Engineering snapshot & Backend ownership
 ────────────────────────────────────────
-  • No Identity/Tenant domain controllers or public business routes under
-    ADR-012 alone (login, tenant CRUD, membership invite, RBAC admin, etc.)
-  • Runtime DB pool = educore_app only (never migrator / platform / superuser)
-  • Material schema/API design changes go into DBF-001 / ACF-001 drafts first
-  • PR checklist for Identity/Tenant remains mandatory
-  • npm run check + boundaries:check stay green on related changes
+Intentional under the exception (platform / scaffolding):
+  • Nest modular skeleton, quality gate, module boundaries
+  • AuthN routes under /api/v1/auth/* (login, refresh, logout, me, select-tenant)
+  • RBAC foundation (roles seed path, PolicyEvaluator, RequirePermission)
+
+Still NO GO under ADR-012 alone (enforce in reviews):
+  • Tenant / user admin CRUD and membership invite admin APIs
+  • Role-admin HTTP and other domain product APIs (Student, Finance, …)
+  • Runtime pool other than educore_app for Nest
+  • Claiming Freeze v1.0 without human signatures
+
+Please also continue to require:
+  • npm run check + boundaries:check on related changes
+  • Material schema/API design changes reflected in DBF-001 / ACF-001 drafts first
 
 ────────────────────────────────────────
-3. Documents to review (priority order)
+3. Documents to review (≈ 30–40 minutes)
 ────────────────────────────────────────
 Required:
   1) docs/engineering/governance/ADR-012_ONE_PAGE_SUMMARY.md
-       → especially Out of scope / Forbidden
+       → Out of scope / Forbidden
   2) docs/engineering/decisions/ADR-012-exception-identity-tenant-implementation.md
-       → Conditions of the Exception
-  3) docs/engineering/governance/IDENTITY_TENANT_GOVERNANCE_ACTION_PLAN.md §4.3
-  4) docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md
+       → Conditions of the Exception, Approval block
+  3) docs/engineering/governance/IDENTITY_TENANT_GOVERNANCE_COMPLETION_PLAN.md §7.3
+  4) docs/engineering/governance/IDENTITY_TENANT_GOVERNANCE_ACTION_PLAN.md §4.3
+  5) docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md
        → Allowed vs Forbidden work
-  5) Skim: docs/engineering/api-contract-freeze/ACF-001-identity-tenant-slice.md
-       → design context only; not signing Freeze v1.0 in this step
 
-Full packet index:
+Awareness only (not signing Freeze v1.0 in this step):
+  6) docs/engineering/api-contract-freeze/ACF-001-identity-tenant-slice.md
+
+Packet index:
   docs/engineering/governance/ADR-012_COUNTERSIGNATURE_PACKET.md
 
 ────────────────────────────────────────
 4. Deadlines
 ────────────────────────────────────────
-  • Countersign / reply deadline:  Friday  2026-08-08
+  • Countersign / reply deadline:  Friday  2026-08-08 (end of day)
   • ADR-012 review meeting:        Thursday 2026-08-13, 10:00–11:15 EAT
   • Binding ADR review-by date:    2026-08-15
-  • ADR hard expiry:               2026-09-15 (unless renewed or freezes completed)
+  • Exception hard expiry:         2026-09-15 (unless freezes complete or renewed)
 
 ────────────────────────────────────────
-5. How to respond
+5. Please reply by 2026-08-08 with ONE of
 ────────────────────────────────────────
-Please reply by 2026-08-08 with ONE of:
-
   (A) APPROVE
-      Then complete the Backend Lead row in ADR-012 Approval table:
-      Name: Rashid Mohammed
-      Date: YYYY-MM-DD
-      Signature phrase: Countersigned — exception only; Freeze v1.0 still pending
+      Then complete the Backend Lead row in the ADR-012 Approval table:
+        Name: Rashid Mohammed
+        Date: YYYY-MM-DD
+        Phrase: Countersigned — exception only; Freeze v1.0 still pending
 
   (B) CHANGES REQUESTED — list concrete process / scope blockers
 
   (C) DELEGATE — name an alternate with Backend Lead authority
 
-Please accept the calendar invite. At the 13 August meeting we will reaffirm
-HTTP NO GO and agree the path to Freeze v1.0 before hard expiry.
+────────────────────────────────────────
+6. Meeting request
+────────────────────────────────────────
+Please accept the calendar invite for:
+
+  Thursday 13 August 2026, 10:00–11:15 EAT
+  EduCore — ADR-012 Exception Review (Identity & Tenant)
+  Video: see calendar LOCATION (or “Video link TBD” until host finalizes)
+
+At the meeting we will reaffirm product-route discipline and the path to
+ACF-001 / DBF-001 Freeze v1.0 before hard expiry.
+
+Thank you for holding engineering discipline under Conditional Freeze.
 
 Kind regards,
 
@@ -102,8 +120,24 @@ EduCore School Management System
 
 ---
 
+## Headers for your mail client (copy)
+
+| Header      | Value                                               |
+| ----------- | --------------------------------------------------- |
+| **To**      | rashid.mohammed@educore.local                       |
+| **Cc**      | pm.master@educore.local; masoud.salum@educore.local |
+| **Subject** | (see SUBJECT block above)                           |
+
+## Attachments (recommended)
+
+1. `docs/engineering/governance/ADR-012_ONE_PAGE_SUMMARY.md`
+2. `docs/engineering/governance/ADR-012_COUNTERSIGNATURE_PACKET.md`
+3. `docs/engineering/governance/outbox/2026-08-13-adr-012-review-meeting.ics`
+4. Optional: `docs/engineering/governance/IDENTITY_TENANT_GOVERNANCE_COMPLETION_PLAN.md`
+
+---
+
 ## Operator notes (do not paste into email)
 
-- Replace real email addresses before send.
+- After Send: tick the Rashid Mohammed row in `SEND_LOG.md`.
 - Optionally BCC yourself for archive.
-- After Send: tick `SEND_LOG.md`.

@@ -538,21 +538,26 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 - [x] Idempotency + cursor pagination standards
 - [x] Alignment with DBF-001
 - [x] No implementation code
-- [ ] Formal human acceptance signatures
+- [x] Formal acceptance signatures — **solo-operator consolidation** ([SOLO-GOV-001](../governance/SOLO_OPERATOR_GOVERNANCE_NOTE.md))
 
 ### Approval block
 
-| Role                  | Name | Date | Signature |
-| --------------------- | ---- | ---- | --------- |
-| Principal Architect   |      |      |           |
-| Backend Lead          |      |      |           |
-| Security              |      |      |           |
-| API Contract Guardian |      |      |           |
+| Role                  | Name                                                                  | Date       | Signature                                                 |
+| --------------------- | --------------------------------------------------------------------- | ---------- | --------------------------------------------------------- |
+| Principal Architect   | EduCore Principal Architect / Governance Lead (acting)                | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant)   |
+| Backend Lead          | Rashid Mohammed _(acting: Governance Lead under SOLO-GOV-001)_        | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant)   |
+| Security              | Masoud Salum _(acting: Governance Lead under SOLO-GOV-001)_           | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant)   |
+| API Contract Guardian | Rashid Mohammed _(dual-hat acting under SOLO-GOV-001)_                | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant)   |
+
+**Status:** **API Contract Freeze v1.0 — Identity & Tenant Slice** (solo-operator).
+
+> Honesty: OpenAPI remains the design baseline. Platform AuthN routes under `/api/v1/auth/*` already exist under ADR-012; remaining OpenAPI product paths (tenant CRUD, invites, role-admin) stay **implementation-gated** and are not auto-opened by this signature.
 
 ---
 
 ## 12. Revision history
 
-| Version | Date       | Notes                                                  |
-| ------- | ---------- | ------------------------------------------------------ |
-| 1.0     | 2026-07-14 | Initial Identity & Tenant API Contract Freeze proposal |
+| Version | Date       | Notes                                                                                          |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-07-14 | Initial Identity & Tenant API Contract Freeze proposal                                         |
+| 1.1     | 2026-07-16 | Freeze v1.0 accepted under solo-operator consolidation (SOLO-GOV-001); approval block completed |

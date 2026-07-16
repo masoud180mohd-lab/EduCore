@@ -42,6 +42,8 @@ $env:EDUCORE_ENABLE_APP_DB = '1'
 # POST /api/v1/auth/login  { "email": "admin@educore.local", "password": "…", "tenantId": "01900000-0010-7000-8000-000000000001" }
 ```
 
+Full P4b manual plan (session bind + reconcile + auth flow): `tasks/manual-test-p4b-rbac.md`.
+
 ### Security
 
 - **Local / lab only.** Refuse production unless explicitly allowed.

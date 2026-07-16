@@ -8,6 +8,8 @@ Under **ADR-012 conditional freeze**, complete the **RBAC foundation** so AuthZ 
 
 **Complete** (2026-07-15) — foundation only; admin role APIs remain closed.
 
+**Hardening follow-up (2026-07-15):** session↔header tenant bind on privileged guards + ops grant reconciler — see `IMP-001-P4b-rbac-session-bind-grant-reconcile.md`.
+
 ## Context
 
 | Prior work    | Deliverable                                                                                     |
@@ -76,4 +78,5 @@ npm run check
 1. ADR-012 countersignatures / Freeze v1.0 (DBF-001 + ACF-001).
 2. IMP-001 tenant core routes only after freezes (P4 in master plan is tenant CRUD — do not conflate with this RBAC foundation).
 3. Role-admin APIs after formal Freeze + threat model.
-4. Optional: wire `RequirePermission` on first privileged business route when authorized.
+4. Optional: wire `RequirePermission` on first privileged business route when authorized (session bind is already enforced).
+5. Medium follow-ups: gate `/auth/me` roles via membership; warn-log fail-closed DB errors; me() RBAC field unit tests.

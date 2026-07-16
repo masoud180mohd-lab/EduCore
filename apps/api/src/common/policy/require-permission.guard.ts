@@ -5,6 +5,7 @@ import type { Request } from 'express';
 import { AppError } from '../errors/app-error.js';
 import { AUTH_CONTEXT_REQUEST_KEY } from '../auth/auth.constants.js';
 import type { AuthContext } from '../auth/auth-context.js';
+import { assertSessionTenantMatchesHeader } from '../auth/session-tenant-bind.js';
 import { TENANT_CONTEXT_REQUEST_KEY } from '../tenant/tenant.constants.js';
 import type { TenantContext } from '../tenant/tenant-context.js';
 import type { PermissionCode } from './permission-codes.js';
@@ -17,7 +18,8 @@ type PlatformRequest = Request & {
 
 /**
  * Factory guard: RequirePermission('tenant.read').
- * Requires auth + tenant context, then policy evaluator.
+ * Requires auth + tenant header + session↔header bind, then policy evaluator
+ * against the session-bound tenant.
  */
 export function RequirePermission(
   ...permissions: ReadonlyArray<PermissionCode>
@@ -41,7 +43,8 @@ export function RequirePermission(
         throw AppError.forbidden('No permissions configured for this route.');
       }
 
-      await this.evaluator.requireAny(auth.userId, tenant.tenantId, permissions);
+      const boundTenantId = assertSessionTenantMatchesHeader(auth, tenant);
+      await this.evaluator.requireAny(auth.userId, boundTenantId, permissions);
       return true;
     }
   }

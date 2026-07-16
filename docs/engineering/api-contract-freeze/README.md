@@ -14,7 +14,7 @@ Engineering design freezes for public HTTP contracts. These refine `EduCore/06_A
 
 | ID      | Slice             | Document                                                               | OpenAPI                                                                                        | Status                  |
 | ------- | ----------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------- |
-| ACF-001 | Identity & Tenant | [ACF-001-identity-tenant-slice.md](./ACF-001-identity-tenant-slice.md) | [openapi/acf-001-identity-tenant.openapi.yaml](./openapi/acf-001-identity-tenant.openapi.yaml) | Proposed for acceptance |
+| ACF-001 | Identity & Tenant | [ACF-001-identity-tenant-slice.md](./ACF-001-identity-tenant-slice.md) | [openapi/acf-001-identity-tenant.openapi.yaml](./openapi/acf-001-identity-tenant.openapi.yaml) | **Accepted v1.0 (solo-operator)** |
 
 ## Rules
 

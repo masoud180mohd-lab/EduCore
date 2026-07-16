@@ -144,9 +144,9 @@ export const ENGINEERING_STATUS_HTML = `<!DOCTYPE html>
       <p class="brand">Edu<em>Core</em></p>
       <p class="tagline">
         Engineering status board for the Identity &amp; Tenant foundation —
-        what ships under Conditional Freeze today.
+        Freeze v1.0 accepted under solo-operator consolidation (SOLO-GOV-001).
       </p>
-      <p class="badge">ADR-012 · Conditional Freeze · Not product Freeze v1.0</p>
+      <p class="badge">DBF-001 + ACF-001 · Accepted v1.0 (solo-operator) · Product CRUD still gated</p>
     </header>
 
     <section>
@@ -169,14 +169,15 @@ export const ENGINEERING_STATUS_HTML = `<!DOCTYPE html>
         <li><span class="dot"></span><span>PgPermissionSource (roles → permission codes) behind MembershipAware gate</span></li>
         <li><span class="dot"></span><span>P3 AuthN API: POST /api/v1/auth/login · refresh · logout · me · select-tenant</span></li>
         <li><span class="dot"></span><span>P4 RBAC: system roles (owner/admin/staff), RequirePermission, PolicyEvaluator, /auth/me permissions</span></li>
-        <li><span class="dot"></span><span>Governance: ADR-012, freeze acceptance, countersignature packet</span></li>
+        <li><span class="dot"></span><span>P4b: session↔header tenant bind on privileged guards; ops grant reconcile script</span></li>
+        <li><span class="dot"></span><span>Governance: SOLO-GOV-001 · DBF/ACF Freeze v1.0 (solo-operator) · ADR-012 superseded for sequencing</span></li>
         <li><span class="dot"></span><span>CI quality gate + module boundary checks</span></li>
       </ul>
     </section>
 
     <section>
       <h2>Still closed</h2>
-      <p class="sub">No product web UI yet; domain CRUD remains gated under ADR-012.</p>
+      <p class="sub">No product web UI yet; domain CRUD remains implementation-gated (freezes accept design, not every route).</p>
       <ul>
         <li><span class="dot off"></span><span>Product web app / login screen (apps/web is empty)</span></li>
         <li><span class="dot off"></span><span>MFA flows</span></li>
@@ -188,17 +189,18 @@ export const ENGINEERING_STATUS_HTML = `<!DOCTYPE html>
     </section>
 
     <section>
-      <h2>Governance clock</h2>
-      <p class="sub">Exception owners and review dates from ADR-012.</p>
+      <h2>Governance</h2>
+      <p class="sub">Solo-operator closure 2026-07-16 (theoretical role seats consolidated).</p>
       <ul>
-        <li><span class="dot warn"></span><span>Countersignatures: PM Master · Masoud Salum · Rashid Mohammed (pending)</span></li>
-        <li><span class="dot warn"></span><span>Review meeting target: 2026-08-13 (binding by 2026-08-15)</span></li>
-        <li><span class="dot warn"></span><span>Hard expiry: 2026-09-15 unless freezes accepted or renewed</span></li>
+        <li><span class="dot"></span><span>ADR-012 countersignatures complete (acting DBA / SEC / BE)</span></li>
+        <li><span class="dot"></span><span>DBF-001 + ACF-001 Freeze v1.0 accepted (solo-operator)</span></li>
+        <li><span class="dot"></span><span>Outbox external send cancelled — see SOLO-GOV-001</span></li>
+        <li><span class="dot warn"></span><span>Residual: not independent multi-person peer review; product CRUD still gated</span></li>
       </ul>
     </section>
 
     <footer>
-      EduCore engineering status · platform page only · Generated for local demo under ADR-012
+      EduCore engineering status · platform page only · Solo-operator Freeze v1.0 (SOLO-GOV-001)
     </footer>
   </div>
 </body>

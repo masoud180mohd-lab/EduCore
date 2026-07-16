@@ -1,6 +1,6 @@
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//EduCore//ADR-012 Countersignature Review//EN
+PRODID:-//EduCore//ADR-012 Exception Review//EN
 CALSCALE:GREGORIAN
 METHOD:REQUEST
 BEGIN:VTIMEZONE
@@ -15,21 +15,21 @@ END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
 UID:educore-adr-012-review-20260813-1000-eat@educore.governance
-DTSTAMP:20260715T120000Z
+DTSTAMP:20260715T180000Z
 DTSTART;TZID=Africa/Nairobi:20260813T100000
 DTEND;TZID=Africa/Nairobi:20260813T111500
 SUMMARY:EduCore — ADR-012 Exception Review (Identity & Tenant)
-DESCRIPTION:EDUCORE GOVERNANCE — ADR-012 EXCEPTION REVIEW\n\nPurpose:\nReview the time-bounded Identity & Tenant architecture exception (ADR-012) under Conditional Freeze. Decide Renew / Amend / Expire. Reaffirm that Nest Identity/Tenant product HTTP remains NO GO. Confirm path to full DBF-001 and ACF-001 Freeze v1.0 before hard expiry 2026-09-15.\n\nIMPORTANT:\nThis meeting does NOT accept Database Freeze v1.0 or API Contract Freeze v1.0.\nThis meeting does NOT open product HTTP routes.\n\nRequired attendees:\n• Principal Architect / Governance Lead (Host)\n• PM Master — Database Architect\n• Masoud Salum — Security Lead\n• Rashid Mohammed — Backend Lead\n\nPre-read (before the meeting):\n1) docs/engineering/governance/ADR-012_ONE_PAGE_SUMMARY.md\n2) docs/engineering/decisions/ADR-012-exception-identity-tenant-implementation.md\n3) docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md\n4) Role section in docs/engineering/governance/IDENTITY_TENANT_GOVERNANCE_ACTION_PLAN.md\n\nCountersign ADR-012 by Friday 2026-08-08 (before this meeting if possible).\n\nAgenda (75 minutes):\n00–05  Framing: exception ≠ Freeze v1.0 (Host)\n05–15  Countersignature status check (Host)\n15–30  Security residuals — RLS\, live evidence\, HTTP closed (Masoud Salum)\n30–45  Schema / DBF fidelity & rework risk (PM Master)\n45–55  Backend scope control & OpenAPI readiness (Rashid Mohammed)\n55–70  Decision: Renew / Amend / Expire + Freeze v1.0 path by 2026-09-01 (All)\n70–75  Actions\, owners\, Nest HTTP NO GO reaffirmation in minutes (Host)\n\nRequired outcomes:\n• Recorded decision (Renew / Amend / Expire)\n• Named follow-ups with owners and dates\n• Explicit HTTP NO GO statement in meeting minutes\n\nBinding ADR review-by date: 2026-08-15\nHard expiry if not renewed: 2026-09-15\nAlternate slot if needed: Tuesday 2026-08-12\, 14:00–15:15 EAT\n\nBefore sending this invite: replace example.invalid emails and set LOCATION to the real video link.
-LOCATION:Video conference — REPLACE WITH REAL LINK BEFORE SEND (e.g. Teams/Meet/Zoom)
+DESCRIPTION:EDUCORE GOVERNANCE — ADR-012 EXCEPTION REVIEW\n\nPurpose:\nReview the time-bounded Identity & Tenant architecture exception (ADR-012) under Conditional Freeze. Confirm countersignature status. Decide Renew / Amend / Expire path. Agree path to DBF-001 and ACF-001 Freeze v1.0 before hard expiry 2026-09-15.\n\nIMPORTANT:\n• This meeting does NOT accept Database Freeze v1.0 or API Contract Freeze v1.0.\n• This meeting does NOT authorize tenant/user CRUD or role-admin product APIs.\n• Platform AuthN (/api/v1/auth/*) and RBAC foundation may already exist under the exception — residual production readiness remains open.\n\nRequired attendees:\n• Principal Architect / Governance Lead (Host) — governance.lead@educore.local\n• PM Master — Database Architect — pm.master@educore.local\n• Masoud Salum — Security Lead — masoud.salum@educore.local\n• Rashid Mohammed — Backend Lead — rashid.mohammed@educore.local\n\nPre-read (before the meeting):\n1) docs/engineering/governance/ADR-012_ONE_PAGE_SUMMARY.md\n2) docs/engineering/decisions/ADR-012-exception-identity-tenant-implementation.md\n3) docs/engineering/governance/IDENTITY_TENANT_GOVERNANCE_COMPLETION_PLAN.md\n4) docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md\n\nCountersign ADR-012 by Friday 2026-08-08 (before this meeting if possible).\nSignature phrase: Countersigned — exception only; Freeze v1.0 still pending\n\nAgenda (75 minutes):\n00–10  Framing: exception ≠ Freeze v1.0 (Host)\n10–20  Countersignature status (Host)\n20–35  Security residuals — RLS\, live evidence\, product surface (Masoud Salum)\n35–50  Schema / DBF fidelity & rework risk (PM Master)\n50–60  Backend scope control & AuthN/RBAC vs closed CRUD (Rashid Mohammed)\n60–70  Decision: Renew / Amend / Expire + Freeze v1.0 path by 2026-09-01 (All)\n70–75  Actions\, owners\, minutes (Host)\n\nRequired outcomes:\n• Recorded decision (Renew / Amend / Expire)\n• Named follow-ups with owners and dates\n• Explicit product HTTP NO GO (CRUD/admin) statement in minutes\n\nBinding ADR review-by date: 2026-08-15\nHard expiry if not renewed or freezes completed: 2026-09-15\nAlternate slot if needed: Tuesday 2026-08-12\, 14:00–15:15 EAT\n\nVideo: replace LOCATION below with real Teams/Meet/Zoom URL before send if still TBD.
+LOCATION:Video conference — Video link TBD (replace with Teams/Meet/Zoom URL before send)
 STATUS:CONFIRMED
-SEQUENCE:1
+SEQUENCE:2
 CLASS:PRIVATE
 TRANSP:OPAQUE
-ORGANIZER;CN=Principal Architect / Governance Lead:MAILTO:architect@example.invalid
-ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=FALSE;CN=Principal Architect / Governance Lead:MAILTO:architect@example.invalid
-ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=PM Master (Database Architect):MAILTO:pm.master@example.invalid
-ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=Masoud Salum (Security Lead):MAILTO:masoud.salum@example.invalid
-ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=Rashid Mohammed (Backend Lead):MAILTO:rashid.mohammed@example.invalid
+ORGANIZER;CN=Principal Architect / Governance Lead:MAILTO:governance.lead@educore.local
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=FALSE;CN=Principal Architect / Governance Lead:MAILTO:governance.lead@educore.local
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=PM Master (Database Architect):MAILTO:pm.master@educore.local
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=Masoud Salum (Security Lead):MAILTO:masoud.salum@educore.local
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=Rashid Mohammed (Backend Lead):MAILTO:rashid.mohammed@educore.local
 BEGIN:VALARM
 TRIGGER:-P2D
 ACTION:DISPLAY

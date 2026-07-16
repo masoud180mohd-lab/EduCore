@@ -13,11 +13,11 @@ This directory holds **downstream database design freeze** packages. These are e
 
 | ID      | Slice                            | Document                                                               | Status                  |
 | ------- | -------------------------------- | ---------------------------------------------------------------------- | ----------------------- |
-| DBF-001 | Identity & Tenant / Organization | [DBF-001-identity-tenant-slice.md](./DBF-001-identity-tenant-slice.md) | Proposed for acceptance |
+| DBF-001 | Identity & Tenant / Organization | [DBF-001-identity-tenant-slice.md](./DBF-001-identity-tenant-slice.md) | **Accepted v1.0 (solo-operator)** |
 
 ## Rules
 
 - A freeze is **not** a migration.
-- Do not implement production schema for a slice until its freeze is accepted.
+- Do not implement production schema for a slice until its freeze is accepted (DBF-001 Identity & Tenant is Accepted v1.0 under [SOLO-GOV-001](../governance/SOLO_OPERATOR_GOVERNANCE_NOTE.md)).
 - Do not expand beyond the freeze table list without a revision or new freeze ID.
 - Cross-module table access remains forbidden (ADR-001).

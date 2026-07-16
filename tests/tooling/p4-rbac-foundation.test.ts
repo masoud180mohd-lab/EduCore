@@ -35,9 +35,24 @@ describe('IMP-001 P4 RBAC foundation (ADR-012)', () => {
     const guard = read('apps/api/src/common/policy/require-permission.guard.ts');
     const platform = read('apps/api/src/common/request-platform/request-platform.module.ts');
     expect(guard).toContain('export function RequirePermission');
+    expect(guard).toContain('assertSessionTenantMatchesHeader');
     expect(platform).toContain('PgPermissionSource');
     expect(platform).toContain('MembershipAwarePermissionSource');
     expect(platform).toContain('PolicyEvaluator');
+  });
+
+  it('binds privileged guards to session tenant and ships grant reconciler', () => {
+    const membership = read('apps/api/src/common/auth/auth.guards.ts');
+    const bind = read('apps/api/src/common/auth/session-tenant-bind.ts');
+    const reconcile = read(
+      'apps/api/src/modules/identity-and-access/rbac/system-role-grant-reconcile.ts',
+    );
+    const pkg = read('package.json');
+    expect(membership).toContain('assertSessionTenantMatchesHeader');
+    expect(bind).toContain('SESSION_TENANT_MISMATCH');
+    expect(reconcile).toContain('reconcileSystemRoleGrantsForTenant');
+    expect(reconcile).toContain('DELETE FROM role_permissions');
+    expect(pkg).toContain('rbac:reconcile-grants');
   });
 
   it('enriches /auth/me with roles and permissions (no role-admin routes)', () => {
@@ -55,8 +70,9 @@ describe('IMP-001 P4 RBAC foundation (ADR-012)', () => {
     expect(identityController).not.toMatch(/@(Get|Post|Put|Patch|Delete)\(/);
   });
 
-  it('documents P4 task record', () => {
+  it('documents P4 + P4b task records', () => {
     const files = readdirSync(path.join(projectRoot, 'docs/engineering/task-records'));
     expect(files).toContain('IMP-001-P4-rbac-foundation.md');
+    expect(files).toContain('IMP-001-P4b-rbac-session-bind-grant-reconcile.md');
   });
 });

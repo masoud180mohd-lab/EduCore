@@ -1,6 +1,7 @@
 export { AUTH_CONTEXT_REQUEST_KEY, AUTHORIZATION_HEADER } from './auth.constants.js';
 export type { AuthContext } from './auth-context.js';
 export { extractBearerToken } from './auth-context.js';
+export { assertSessionTenantMatchesHeader } from './session-tenant-bind.js';
 export { AuthContextMiddleware } from './auth-context.middleware.js';
 export type { RequestWithAuth } from './auth-context.middleware.js';
 export type { TokenValidator } from './token-validator.js';

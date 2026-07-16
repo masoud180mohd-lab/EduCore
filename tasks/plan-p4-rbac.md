@@ -74,4 +74,6 @@ npm run check
 | --------------------------------------- | --------------------------------------------------------------------------- |
 | Privilege escalation via seed matrices  | Document matrices; owner vs admin split; app role cannot INSERT roles       |
 | me() leaks cross-tenant perms           | Only resolve for `activeTenantId` / session tenant; membership-aware source |
+| Session vs header tenant mismatch       | P4b: `assertSessionTenantMatchesHeader` on privileged guards                |
+| Matrix shrink leaves stale grants       | P4b: `npm run rbac:reconcile-grants` under migrator DATABASE_URL            |
 | ADR-012 countersignatures still pending | Task record states conditional freeze; no product Freeze claim              |
