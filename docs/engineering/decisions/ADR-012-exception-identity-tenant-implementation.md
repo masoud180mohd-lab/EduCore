@@ -10,7 +10,7 @@
 | Type               | **Governance / process exception** (not a product architecture redesign)                                    |
 | Date accepted      | 2026-07-15                                                                                                  |
 | Accepted by        | Principal Architect / Exception Owner (governance review) — see Approval                                    |
-| Countersignatures  | Database Architect, Security, Backend Lead — **complete (solo-operator acting; see SOLO-GOV-001)** |
+| Countersignatures  | Database Architect, Security, Backend Lead — **complete (solo-operator acting; see SOLO-GOV-001)**          |
 | Supersedes         | Prompt-only “GO” language that implied full freeze acceptance without human review                          |
 | Does not supersede | Architecture Freeze v1.0 (`EduCore/38_ARCHITECTURE_FREEZE_RECORD.md`), ADR-001–ADR-011 in the immutable kit |
 | Location           | Repository engineering decision — `docs/engineering/decisions/` (outside immutable `EduCore/decisions/`)    |
@@ -244,12 +244,12 @@ Organization-specific personal names were initially placeholders. On **2026-07-1
 
 ## Approval
 
-| Role                                  | Name                                                                  | Date       | Signature                                                                    |
-| ------------------------------------- | --------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------- |
-| Principal Architect / Exception Owner | EduCore Principal Architect (Governance Review)                       | 2026-07-15 | Approved — exception only                                                    |
-| Database Architect                    | PM Master _(acting: Governance Lead under SOLO-GOV-001)_              | 2026-07-16 | Countersigned — exception only; Freeze v1.0 still pending _(at countersign)_ |
-| Security                              | Masoud Salum _(acting: Governance Lead under SOLO-GOV-001)_           | 2026-07-16 | Countersigned — exception only; Freeze v1.0 still pending _(at countersign)_ |
-| Backend Lead                          | Rashid Mohammed _(acting: Governance Lead under SOLO-GOV-001)_        | 2026-07-16 | Countersigned — exception only; Freeze v1.0 still pending _(at countersign)_ |
+| Role                                  | Name                                                           | Date       | Signature                                                                    |
+| ------------------------------------- | -------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------- |
+| Principal Architect / Exception Owner | EduCore Principal Architect (Governance Review)                | 2026-07-15 | Approved — exception only                                                    |
+| Database Architect                    | PM Master _(acting: Governance Lead under SOLO-GOV-001)_       | 2026-07-16 | Countersigned — exception only; Freeze v1.0 still pending _(at countersign)_ |
+| Security                              | Masoud Salum _(acting: Governance Lead under SOLO-GOV-001)_    | 2026-07-16 | Countersigned — exception only; Freeze v1.0 still pending _(at countersign)_ |
+| Backend Lead                          | Rashid Mohammed _(acting: Governance Lead under SOLO-GOV-001)_ | 2026-07-16 | Countersigned — exception only; Freeze v1.0 still pending _(at countersign)_ |
 
 > **Post-freeze note (same day):** After SOLO-GOV-001 completion of DBF-001 + ACF-001 approval blocks and FREEZE-ACC-001 update to **Accepted v1.0 (solo-operator)**, this exception is **superseded for sequencing** of the Identity & Tenant slice per Automatic supersession. ADR-012 remains historical record. Product CRUD / role-admin HTTP still require normal implementation gates.
 
@@ -283,9 +283,9 @@ This approval **does not**:
 
 ## Revision history
 
-| Version | Date       | Notes                                                                                                            |
-| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
-| 1.0     | 2026-07-15 | Initial exception ADR for Identity & Tenant provisional implementation                                           |
-| 1.1     | 2026-07-15 | Principal Architect governance approval; review findings and next-step schedule added; status confirmed Accepted |
-| 1.2     | 2026-07-15 | Named countersigners on Approval table (PM Master, Masoud Salum, Rashid Mohammed); signatures still pending      |
+| Version | Date       | Notes                                                                                                              |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1.0     | 2026-07-15 | Initial exception ADR for Identity & Tenant provisional implementation                                             |
+| 1.1     | 2026-07-15 | Principal Architect governance approval; review findings and next-step schedule added; status confirmed Accepted   |
+| 1.2     | 2026-07-15 | Named countersigners on Approval table (PM Master, Masoud Salum, Rashid Mohammed); signatures still pending        |
 | 1.3     | 2026-07-16 | Solo-operator countersignatures (SOLO-GOV-001); freezes accepted same session; exception superseded for sequencing |

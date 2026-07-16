@@ -45,13 +45,13 @@ When stating freezes are Accepted v1.0, always qualify:
 
 ## 5. Actions completed under this note (2026-07-16)
 
-| Action                                         | Artifact                                                                      |
-| ---------------------------------------------- | ----------------------------------------------------------------------------- |
-| ADR-012 countersignatures (acting)             | `docs/engineering/decisions/ADR-012-…` Approval table                         |
-| DBF-001 Freeze v1.0 signatures (acting)        | `docs/engineering/database-freeze/DBF-001-…`                                  |
-| ACF-001 Freeze v1.0 signatures (acting)        | `docs/engineering/api-contract-freeze/ACF-001-…`                              |
-| FREEZE-ACC-001 → Accepted v1.0 (solo-operator) | `docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md`                 |
-| Outbox disposition                             | `docs/engineering/governance/outbox/SEND_LOG.md`                              |
+| Action                                         | Artifact                                                                    |
+| ---------------------------------------------- | --------------------------------------------------------------------------- |
+| ADR-012 countersignatures (acting)             | `docs/engineering/decisions/ADR-012-…` Approval table                       |
+| DBF-001 Freeze v1.0 signatures (acting)        | `docs/engineering/database-freeze/DBF-001-…`                                |
+| ACF-001 Freeze v1.0 signatures (acting)        | `docs/engineering/api-contract-freeze/ACF-001-…`                            |
+| FREEZE-ACC-001 → Accepted v1.0 (solo-operator) | `docs/engineering/gates/FREEZE_ACCEPTANCE_IDENTITY_TENANT.md`               |
+| Outbox disposition                             | `docs/engineering/governance/outbox/SEND_LOG.md`                            |
 | Completion plan checkpoint                     | `docs/engineering/governance/IDENTITY_TENANT_GOVERNANCE_COMPLETION_PLAN.md` |
 
 ## 6. Residual product gates (unchanged)

@@ -799,12 +799,12 @@ Additional domain permissions arrive with later freezes.
 
 ### Approval block
 
-| Role                | Name                                                           | Date       | Signature                                              |
-| ------------------- | -------------------------------------------------------------- | ---------- | ------------------------------------------------------ |
-| Database Architect  | PM Master _(acting: Governance Lead under SOLO-GOV-001)_       | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant)    |
-| Principal Architect | EduCore Principal Architect / Governance Lead (acting)         | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant)    |
-| Security            | Masoud Salum _(acting: Governance Lead under SOLO-GOV-001)_    | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant)    |
-| Backend Lead        | Rashid Mohammed _(acting: Governance Lead under SOLO-GOV-001)_ | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant)    |
+| Role                | Name                                                           | Date       | Signature                                           |
+| ------------------- | -------------------------------------------------------------- | ---------- | --------------------------------------------------- |
+| Database Architect  | PM Master _(acting: Governance Lead under SOLO-GOV-001)_       | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant) |
+| Principal Architect | EduCore Principal Architect / Governance Lead (acting)         | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant) |
+| Security            | Masoud Salum _(acting: Governance Lead under SOLO-GOV-001)_    | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant) |
+| Backend Lead        | Rashid Mohammed _(acting: Governance Lead under SOLO-GOV-001)_ | 2026-07-16 | Accepted — Database Freeze v1.0 (Identity & Tenant) |
 
 **Status:** **Database Freeze v1.0 — Identity & Tenant Slice** (solo-operator). Changes only via revision `DBF-001.x` or superseding freeze.
 
@@ -826,7 +826,7 @@ Additional domain permissions arrive with later freezes.
 
 ## 18. Revision history
 
-| Version | Date       | Notes                                                                                          |
-| ------- | ---------- | ---------------------------------------------------------------------------------------------- |
-| 1.0     | 2026-07-14 | Initial Identity & Tenant slice freeze proposal (DBF-001)                                      |
+| Version | Date       | Notes                                                                                           |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-07-14 | Initial Identity & Tenant slice freeze proposal (DBF-001)                                       |
 | 1.1     | 2026-07-16 | Freeze v1.0 accepted under solo-operator consolidation (SOLO-GOV-001); approval block completed |

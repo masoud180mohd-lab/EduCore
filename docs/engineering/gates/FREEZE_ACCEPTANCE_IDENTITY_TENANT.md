@@ -21,23 +21,23 @@ ADR-012 remains historical and is **superseded for sequencing** of this slice.
 
 ## Related freeze artifacts
 
-| Artifact                  | Path                                                                                | Status                                              |
-| ------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Database Freeze           | `docs/engineering/database-freeze/DBF-001-identity-tenant-slice.md`                 | **Accepted v1.0 (solo-operator)**                   |
-| API Contract Freeze       | `docs/engineering/api-contract-freeze/ACF-001-identity-tenant-slice.md`             | **Accepted v1.0 (solo-operator)**                   |
-| OpenAPI baseline          | `docs/engineering/api-contract-freeze/openapi/acf-001-identity-tenant.openapi.yaml` | Binding design baseline                             |
-| Solo-operator note        | `docs/engineering/governance/SOLO_OPERATOR_GOVERNANCE_NOTE.md`                      | Authority for consolidated signatures               |
-| Exception ADR (historical)| `docs/engineering/decisions/ADR-012-exception-identity-tenant-implementation.md`    | Superseded for sequencing                           |
+| Artifact                   | Path                                                                                | Status                                |
+| -------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------- |
+| Database Freeze            | `docs/engineering/database-freeze/DBF-001-identity-tenant-slice.md`                 | **Accepted v1.0 (solo-operator)**     |
+| API Contract Freeze        | `docs/engineering/api-contract-freeze/ACF-001-identity-tenant-slice.md`             | **Accepted v1.0 (solo-operator)**     |
+| OpenAPI baseline           | `docs/engineering/api-contract-freeze/openapi/acf-001-identity-tenant.openapi.yaml` | Binding design baseline               |
+| Solo-operator note         | `docs/engineering/governance/SOLO_OPERATOR_GOVERNANCE_NOTE.md`                      | Authority for consolidated signatures |
+| Exception ADR (historical) | `docs/engineering/decisions/ADR-012-exception-identity-tenant-implementation.md`    | Superseded for sequencing             |
 
 ## Decision (current)
 
-| Decision                                                                         | Value                                                                 |
-| -------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Treat DBF-001 / ACF-001 as Accepted Freeze v1.0 for this slice                   | **YES** (solo-operator; see honesty qualifier)                        |
-| Unrestricted opening of every OpenAPI product route same day                     | **NO** — use IMP gates                                                |
-| Platform AuthN/AuthZ under `/api/v1/auth/*`                                      | **Allowed** (already landed under ADR-012; retained)                  |
-| Tenant/user CRUD, membership invite admin, role-admin HTTP, other BC APIs        | **NO GO** until gated implementation plan                             |
-| Additional tenant-owned schema beyond freeze / provisional set                   | **NO GO** without DBF-001.x revision                                  |
+| Decision                                                                  | Value                                                |
+| ------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Treat DBF-001 / ACF-001 as Accepted Freeze v1.0 for this slice            | **YES** (solo-operator; see honesty qualifier)       |
+| Unrestricted opening of every OpenAPI product route same day              | **NO** — use IMP gates                               |
+| Platform AuthN/AuthZ under `/api/v1/auth/*`                               | **Allowed** (already landed under ADR-012; retained) |
+| Tenant/user CRUD, membership invite admin, role-admin HTTP, other BC APIs | **NO GO** until gated implementation plan            |
+| Additional tenant-owned schema beyond freeze / provisional set            | **NO GO** without DBF-001.x revision                 |
 
 ## Conditions closed
 
@@ -59,20 +59,20 @@ ADR-012 remains historical and is **superseded for sequencing** of this slice.
 
 ### Conditional record (historical)
 
-| Role                            | Name                                  | Date       | Notes                                                             |
-| ------------------------------- | ------------------------------------- | ---------- | ----------------------------------------------------------------- |
-| Audit Remediation (Engineering) | Cursor Agent session — Phase 1 prompt | 2026-07-14 | Created conditional governance only                               |
+| Role                            | Name                                  | Date       | Notes                               |
+| ------------------------------- | ------------------------------------- | ---------- | ----------------------------------- |
+| Audit Remediation (Engineering) | Cursor Agent session — Phase 1 prompt | 2026-07-14 | Created conditional governance only |
 
 ### Freeze v1.0 (solo-operator)
 
-| Role                  | DBF-001 | ACF-001 | Date       | Notes                          |
-| --------------------- | ------- | ------- | ---------- | ------------------------------ |
-| Database Architect    | Signed  | n/a     | 2026-07-16 | Acting seat (SOLO-GOV-001)     |
-| Principal Architect   | Signed  | Signed  | 2026-07-16 | Acting / Governance Lead       |
-| Security              | Signed  | Signed  | 2026-07-16 | Acting seat (SOLO-GOV-001)     |
-| Backend Lead          | Signed  | Signed  | 2026-07-16 | Acting seat (SOLO-GOV-001)     |
-| API Contract Guardian | n/a     | Signed  | 2026-07-16 | Dual-hat Backend (SOLO-GOV-001)|
-| Product Owner         | —       | —       | 2026-07-16 | Directed consolidation         |
+| Role                  | DBF-001 | ACF-001 | Date       | Notes                           |
+| --------------------- | ------- | ------- | ---------- | ------------------------------- |
+| Database Architect    | Signed  | n/a     | 2026-07-16 | Acting seat (SOLO-GOV-001)      |
+| Principal Architect   | Signed  | Signed  | 2026-07-16 | Acting / Governance Lead        |
+| Security              | Signed  | Signed  | 2026-07-16 | Acting seat (SOLO-GOV-001)      |
+| Backend Lead          | Signed  | Signed  | 2026-07-16 | Acting seat (SOLO-GOV-001)      |
+| API Contract Guardian | n/a     | Signed  | 2026-07-16 | Dual-hat Backend (SOLO-GOV-001) |
+| Product Owner         | —       | —       | 2026-07-16 | Directed consolidation          |
 
 ## Revision history
 

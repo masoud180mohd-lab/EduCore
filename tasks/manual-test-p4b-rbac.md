@@ -9,16 +9,16 @@ Audience: any engineer with Postgres roles from DEV-001 / Docker.
 
 ## Important limits (read before testing)
 
-| Fact | Implication for this plan |
-| ---- | ------------------------- |
+| Fact                                                                                                   | Implication for this plan                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `RequirePermission` / `RequireActiveMembershipGuard` are **not** wired on any HTTP route yet (ADR-012) | **Test 3 (session mismatch → 403) cannot be exercised via curl against `/auth/me`.** That endpoint uses `RequireAuthGuard` only and resolves RBAC from **session** `tenantId`. |
-| Session bind **is** covered by unit tests | Use Test 3A (automated) as the acceptance proof today. |
-| Grant reconcile is an **ops script**, not an HTTP API | Use Test 6 (optional) for that High fix. |
+| Session bind **is** covered by unit tests                                                              | Use Test 3A (automated) as the acceptance proof today.                                                                                                                         |
+| Grant reconcile is an **ops script**, not an HTTP API                                                  | Use Test 6 (optional) for that High fix.                                                                                                                                       |
 
 Default seed IDs (unless you overrode seed env):
 
-| Entity | UUID |
-| ------ | ---- |
+| Entity | UUID                                   |
+| ------ | -------------------------------------- |
 | Tenant | `01900000-0010-7000-8000-000000000001` |
 | User   | `01900000-0010-7000-8000-000000000002` |
 
@@ -133,13 +133,13 @@ $loginResp.Headers['Set-Cookie']
 
 **Expected**
 
-| Check | Expected |
-| ----- | -------- |
-| HTTP status | `200` |
-| `data.accessToken` | non-empty opaque string |
-| `data.refreshToken` | non-empty **unless** `EDUCORE_REFRESH_IN_BODY=0` |
-| `data.tenantId` | seed tenant UUID |
-| `Set-Cookie` | contains `ecr_refresh=…` with `HttpOnly` (and path `/api/v1/auth`) |
+| Check               | Expected                                                           |
+| ------------------- | ------------------------------------------------------------------ |
+| HTTP status         | `200`                                                              |
+| `data.accessToken`  | non-empty opaque string                                            |
+| `data.refreshToken` | non-empty **unless** `EDUCORE_REFRESH_IN_BODY=0`                   |
+| `data.tenantId`     | seed tenant UUID                                                   |
+| `Set-Cookie`        | contains `ecr_refresh=…` with `HttpOnly` (and path `/api/v1/auth`) |
 
 Save for later:
 
@@ -151,12 +151,12 @@ $tenant = $login.tenantId
 
 **If it fails**
 
-| Symptom | Likely cause | Fix |
-| ------- | ------------ | --- |
-| Connection refused | API not running | Start `start:dev` with app DB env |
-| `503` / internal auth unavailable | App pool not enabled | Set `EDUCORE_ENABLE_APP_DB=1` + `EDUCORE_APP_DATABASE_URL` |
-| `INVALID_CREDENTIALS` | Wrong password / seed not run | Re-run `seed:admin` with `SEED_ADMIN_RESET=1` |
-| `TENANT_MEMBERSHIP_REQUIRED` | Wrong `tenantId` | Use seeded tenant UUID from seed stdout |
+| Symptom                           | Likely cause                  | Fix                                                        |
+| --------------------------------- | ----------------------------- | ---------------------------------------------------------- |
+| Connection refused                | API not running               | Start `start:dev` with app DB env                          |
+| `503` / internal auth unavailable | App pool not enabled          | Set `EDUCORE_ENABLE_APP_DB=1` + `EDUCORE_APP_DATABASE_URL` |
+| `INVALID_CREDENTIALS`             | Wrong password / seed not run | Re-run `seed:admin` with `SEED_ADMIN_RESET=1`              |
+| `TENANT_MEMBERSHIP_REQUIRED`      | Wrong `tenantId`              | Use seeded tenant UUID from seed stdout                    |
 
 ---
 
@@ -176,13 +176,13 @@ $meResp.data.activeTenantId
 
 **Expected**
 
-| Check | Expected |
-| ----- | -------- |
-| HTTP | `200` |
-| `data.activeTenantId` | seed tenant |
-| `data.roles` | includes `{ code: "owner", …, isSystem: true }` |
-| `data.permissions` | **13** codes (owner = full catalogue), including `entitlement.manage` and `tenant.manage` |
-| Sorted permissions | alphabetical list of all DBF-001 codes |
+| Check                 | Expected                                                                                  |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| HTTP                  | `200`                                                                                     |
+| `data.activeTenantId` | seed tenant                                                                               |
+| `data.roles`          | includes `{ code: "owner", …, isSystem: true }`                                           |
+| `data.permissions`    | **13** codes (owner = full catalogue), including `entitlement.manage` and `tenant.manage` |
+| Sorted permissions    | alphabetical list of all DBF-001 codes                                                    |
 
 Owner catalogue (all must appear):
 
@@ -190,11 +190,11 @@ Owner catalogue (all must appear):
 
 **If it fails**
 
-| Symptom | Likely cause | Fix |
-| ------- | ------------ | --- |
-| `roles` / `permissions` empty | App DB off, or session unbound | Confirm env + login with `tenantId`; re-seed RBAC |
-| `401` | Bad / expired access token | Re-login |
-| Missing `entitlement.manage` | Not owner / matrix drift | Check seed assigned `owner`; run reconcile (Test 6) |
+| Symptom                       | Likely cause                   | Fix                                                 |
+| ----------------------------- | ------------------------------ | --------------------------------------------------- |
+| `roles` / `permissions` empty | App DB off, or session unbound | Confirm env + login with `tenantId`; re-seed RBAC   |
+| `401`                         | Bad / expired access token     | Re-login                                            |
+| Missing `entitlement.manage`  | Not owner / matrix drift       | Check seed assigned `owner`; run reconcile (Test 6) |
 
 ---
 
@@ -262,12 +262,12 @@ Invoke-WebRequest -Uri "$base/api/v1/auth/refresh" `
 
 **Expected**
 
-| Check | Expected |
-| ----- | -------- |
-| HTTP | `200` |
-| New `accessToken` | different from previous (usually) |
+| Check              | Expected                                            |
+| ------------------ | --------------------------------------------------- |
+| HTTP               | `200`                                               |
+| New `accessToken`  | different from previous (usually)                   |
 | New `refreshToken` | rotated (old refresh should stop working after use) |
-| `Set-Cookie` | new `ecr_refresh` |
+| `Set-Cookie`       | new `ecr_refresh`                                   |
 
 Prove old refresh is dead (optional):
 
@@ -307,11 +307,11 @@ try {
 
 **Expected**
 
-| Check | Expected |
-| ----- | -------- |
-| Logout HTTP | `204` |
-| Cookie | `ecr_refresh` cleared (`Max-Age=0` / empty) |
-| Subsequent `/me` with same access | `401` |
+| Check                             | Expected                                    |
+| --------------------------------- | ------------------------------------------- |
+| Logout HTTP                       | `204`                                       |
+| Cookie                            | `ecr_refresh` cleared (`Max-Age=0` / empty) |
+| Subsequent `/me` with same access | `401`                                       |
 
 **If it fails:** missing `Authorization` → may still clear cookie but session revoke needs auth; use bearer from last refresh.
 
@@ -334,16 +334,16 @@ npm run rbac:reconcile-grants -- --tenant-id=01900000-0010-7000-8000-00000000000
 
 ## 3. Expected results summary
 
-| # | Result when green |
-| - | ----------------- |
-| Prep | migrate + bootstrap + seed + API up with app pool |
-| 1 | Login 200; access + refresh; `ecr_refresh` HttpOnly |
-| 2 | `/me` shows owner + 13 permissions |
-| 3A | Bind unit tests pass (403 mismatch) |
-| 3B | `/me` with wrong header still 200 (documented limit) |
-| 4 | Refresh rotates tokens |
-| 5 | Logout 204; access revoked |
-| 6 | Reconcile script completes under privileged DB URL |
+| #    | Result when green                                    |
+| ---- | ---------------------------------------------------- |
+| Prep | migrate + bootstrap + seed + API up with app pool    |
+| 1    | Login 200; access + refresh; `ecr_refresh` HttpOnly  |
+| 2    | `/me` shows owner + 13 permissions                   |
+| 3A   | Bind unit tests pass (403 mismatch)                  |
+| 3B   | `/me` with wrong header still 200 (documented limit) |
+| 4    | Refresh rotates tokens                               |
+| 5    | Logout 204; access revoked                           |
+| 6    | Reconcile script completes under privileged DB URL   |
 
 ### Stop / escalate
 

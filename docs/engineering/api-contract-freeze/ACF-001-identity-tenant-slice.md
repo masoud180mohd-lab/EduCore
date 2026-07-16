@@ -542,12 +542,12 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 
 ### Approval block
 
-| Role                  | Name                                                                  | Date       | Signature                                                 |
-| --------------------- | --------------------------------------------------------------------- | ---------- | --------------------------------------------------------- |
-| Principal Architect   | EduCore Principal Architect / Governance Lead (acting)                | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant)   |
-| Backend Lead          | Rashid Mohammed _(acting: Governance Lead under SOLO-GOV-001)_        | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant)   |
-| Security              | Masoud Salum _(acting: Governance Lead under SOLO-GOV-001)_           | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant)   |
-| API Contract Guardian | Rashid Mohammed _(dual-hat acting under SOLO-GOV-001)_                | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant)   |
+| Role                  | Name                                                           | Date       | Signature                                               |
+| --------------------- | -------------------------------------------------------------- | ---------- | ------------------------------------------------------- |
+| Principal Architect   | EduCore Principal Architect / Governance Lead (acting)         | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant) |
+| Backend Lead          | Rashid Mohammed _(acting: Governance Lead under SOLO-GOV-001)_ | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant) |
+| Security              | Masoud Salum _(acting: Governance Lead under SOLO-GOV-001)_    | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant) |
+| API Contract Guardian | Rashid Mohammed _(dual-hat acting under SOLO-GOV-001)_         | 2026-07-16 | Accepted — API Contract Freeze v1.0 (Identity & Tenant) |
 
 **Status:** **API Contract Freeze v1.0 — Identity & Tenant Slice** (solo-operator).
 
@@ -557,7 +557,7 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 
 ## 12. Revision history
 
-| Version | Date       | Notes                                                                                          |
-| ------- | ---------- | ---------------------------------------------------------------------------------------------- |
-| 1.0     | 2026-07-14 | Initial Identity & Tenant API Contract Freeze proposal                                         |
+| Version | Date       | Notes                                                                                           |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-07-14 | Initial Identity & Tenant API Contract Freeze proposal                                          |
 | 1.1     | 2026-07-16 | Freeze v1.0 accepted under solo-operator consolidation (SOLO-GOV-001); approval block completed |

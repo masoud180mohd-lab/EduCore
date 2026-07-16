@@ -4,7 +4,7 @@
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Document ID**     | `GCP-IT-001`                                                                                                                                                                                                                                                                                                             |
 | **Title**           | Complete Governance Closure for Identity & Tenant (ADR-012 + DBF-001 + ACF-001)                                                                                                                                                                                                                                          |
-| **Status**          | **Closed — solo-operator completion (SOLO-GOV-001)**                                                                                                                                                                                                                                     |
+| **Status**          | **Closed — solo-operator completion (SOLO-GOV-001)**                                                                                                                                                                                                                                                                     |
 | **Created**         | 2026-07-15                                                                                                                                                                                                                                                                                                               |
 | **Last updated**    | 2026-07-16                                                                                                                                                                                                                                                                                                               |
 | **Owner**           | Principal Architect / Governance Lead                                                                                                                                                                                                                                                                                    |
@@ -20,24 +20,24 @@
 > see [SOLO-GOV-001](./SOLO_OPERATOR_GOVERNANCE_NOTE.md). Countersignatures, DBF/ACF Freeze v1.0,
 > and FREEZE-ACC-001 Accepted status are **complete in-repo**. Rows below are historical process design.
 
-| # | Action | Owner | Done when |
-| - | ------ | ----- | --------- |
-| 1 | ~~Send three outbox emails~~ → acting seats signed ADR-012 | PA (acting) | **Done** — SOLO-GOV-001 |
-| 2 | ~~Confirm real mailboxes + video~~ | — | **N/A** — cancelled |
-| 3 | ~~Calendar holds for chase~~ | — | **N/A** — early closure |
-| 4 | Name ACG + PO | PA | **Done** — ACG = Backend dual-hat; PO directed consolidation |
-| 5 | Clarify ADR ≠ Freeze | PA | **Done** — then Freeze v1.0 completed same session |
+| #   | Action                                                     | Owner       | Done when                                                    |
+| --- | ---------------------------------------------------------- | ----------- | ------------------------------------------------------------ |
+| 1   | ~~Send three outbox emails~~ → acting seats signed ADR-012 | PA (acting) | **Done** — SOLO-GOV-001                                      |
+| 2   | ~~Confirm real mailboxes + video~~                         | —           | **N/A** — cancelled                                          |
+| 3   | ~~Calendar holds for chase~~                               | —           | **N/A** — early closure                                      |
+| 4   | Name ACG + PO                                              | PA          | **Done** — ACG = Backend dual-hat; PO directed consolidation |
+| 5   | Clarify ADR ≠ Freeze                                       | PA          | **Done** — then Freeze v1.0 completed same session           |
 
 ### 0.1 Closure summary (2026-07-16)
 
-| DoD | Outcome | Status |
-| --- | ------- | ------ |
-| D1 | ADR-012 countersignatures | **Done** (acting) |
-| D2 | Formal review ≤ 2026-08-15 | **Done** as solo-operator closure (no multi-person meeting) |
-| D3 | DBF-001 signed | **Done** (acting) |
-| D4 | ACF-001 signed | **Done** (acting) |
-| D5 | FREEZE-ACC-001 updated | **Done** — Accepted v1.0 (solo-operator) |
-| D6 | Status language honest | **Done** — always qualify solo-operator |
+| DoD | Outcome                    | Status                                                      |
+| --- | -------------------------- | ----------------------------------------------------------- |
+| D1  | ADR-012 countersignatures  | **Done** (acting)                                           |
+| D2  | Formal review ≤ 2026-08-15 | **Done** as solo-operator closure (no multi-person meeting) |
+| D3  | DBF-001 signed             | **Done** (acting)                                           |
+| D4  | ACF-001 signed             | **Done** (acting)                                           |
+| D5  | FREEZE-ACC-001 updated     | **Done** — Accepted v1.0 (solo-operator)                    |
+| D6  | Status language honest     | **Done** — always qualify solo-operator                     |
 
 **Residual:** Product CRUD / role-admin HTTP remain gated. Do not claim independent peer review.
 
@@ -87,12 +87,12 @@ Governance for this slice is **complete** when **all** of the following are true
 
 Implementation has advanced (IMP-001 through **P4 RBAC foundation** + **P4b hardening**). Reviewers must understand:
 
-| Area                | State                                                                                              | Still closed / residual                                           |
-| ------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Schema + RLS        | Tenants, users, memberships, sessions, RBAC tables; FORCE RLS; live isolation evidence             | Residual T1–T8 product matrix; migration rework if freezes change |
-| AuthN (P3)          | Login / refresh / logout / me / select-tenant under `/api/v1/auth/*`                               | MFA; production IdP; session admin list/revoke                    |
-| AuthZ (P4 / P4b)    | System roles seed, `PolicyEvaluator`, `RequirePermission`, `/auth/me` permissions; **session↔header tenant bind**; ops grant reconcile | Role-admin HTTP; first privileged **business** route; domain UIs |
-| Product domain HTTP | Tenant CRUD, membership invite, Student/Finance/etc.                                               | **NO GO** until freezes (or new ADR)                              |
+| Area                | State                                                                                                                                  | Still closed / residual                                           |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Schema + RLS        | Tenants, users, memberships, sessions, RBAC tables; FORCE RLS; live isolation evidence                                                 | Residual T1–T8 product matrix; migration rework if freezes change |
+| AuthN (P3)          | Login / refresh / logout / me / select-tenant under `/api/v1/auth/*`                                                                   | MFA; production IdP; session admin list/revoke                    |
+| AuthZ (P4 / P4b)    | System roles seed, `PolicyEvaluator`, `RequirePermission`, `/auth/me` permissions; **session↔header tenant bind**; ops grant reconcile | Role-admin HTTP; first privileged **business** route; domain UIs  |
+| Product domain HTTP | Tenant CRUD, membership invite, Student/Finance/etc.                                                                                   | **NO GO** until freezes (or new ADR)                              |
 
 **Honesty rule for all communications:** Do not claim “only scaffolding with zero HTTP.” Platform AuthN/AuthZ routes exist; **tenant/user admin and other domain product APIs remain closed.** Manual verification plan: `tasks/manual-test-p4b-rbac.md`.
 
@@ -158,8 +158,8 @@ Assumes start of active execution **immediately** (packet already prepared). Tim
 
 | ID  | Milestone                                                    | Target date                                               | Binding / soft     | Owner              |
 | --- | ------------------------------------------------------------ | --------------------------------------------------------- | ------------------ | ------------------ |
-| M0  | Real emails collected; placeholders removed from `.ics`      | **2026-07-16** (today)                                        | Soft (urgent)      | PA + PO            |
-| M1  | All three countersignature emails + calendar invite **sent** | **2026-07-16** (latest **2026-07-18**)                        | Soft               | PA                 |
+| M0  | Real emails collected; placeholders removed from `.ics`      | **2026-07-16** (today)                                    | Soft (urgent)      | PA + PO            |
+| M1  | All three countersignature emails + calendar invite **sent** | **2026-07-16** (latest **2026-07-18**)                    | Soft               | PA                 |
 | M2  | Soft reminder if no reply                                    | **2026-07-30**                                            | Soft               | PA                 |
 | M3  | Final reminder                                               | **2026-08-05**                                            | Soft               | PA                 |
 | M4  | **All ADR-012 countersignatures complete**                   | **2026-08-08**                                            | **Hard (process)** | DBA, SEC, BE       |

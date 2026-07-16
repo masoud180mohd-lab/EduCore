@@ -1,12 +1,12 @@
 # ADR-012 Countersignature Outbox — Send Log & Human Checklist
 
-| Field                  | Value                                                                 |
-| ---------------------- | --------------------------------------------------------------------- |
-| **Packet ready**       | Yes                                                                   |
-| **Last refreshed**     | 2026-07-16                                                            |
-| **Disposition**        | **CLOSED — external send cancelled** (solo-operator consolidation)    |
-| **Authority**          | [SOLO-GOV-001](../SOLO_OPERATOR_GOVERNANCE_NOTE.md)                   |
-| **Full process plan**  | [`../IDENTITY_TENANT_GOVERNANCE_COMPLETION_PLAN.md`](../IDENTITY_TENANT_GOVERNANCE_COMPLETION_PLAN.md) |
+| Field                 | Value                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Packet ready**      | Yes                                                                                                    |
+| **Last refreshed**    | 2026-07-16                                                                                             |
+| **Disposition**       | **CLOSED — external send cancelled** (solo-operator consolidation)                                     |
+| **Authority**         | [SOLO-GOV-001](../SOLO_OPERATOR_GOVERNANCE_NOTE.md)                                                    |
+| **Full process plan** | [`../IDENTITY_TENANT_GOVERNANCE_COMPLETION_PLAN.md`](../IDENTITY_TENANT_GOVERNANCE_COMPLETION_PLAN.md) |
 
 ---
 
@@ -17,12 +17,12 @@ role placeholders**, not reachable people. On **2026-07-16** the Project Owner d
 Governance Lead to hold those seats and complete repository governance under
 [SOLO-GOV-001](../SOLO_OPERATOR_GOVERNANCE_NOTE.md).
 
-| Channel                 | Status                                                         |
-| ----------------------- | -------------------------------------------------------------- |
-| Email → PM Master       | **NOT SENT** — role theoretical; acting countersign recorded   |
-| Email → Masoud Salum    | **NOT SENT** — role theoretical; acting countersign recorded   |
-| Email → Rashid Mohammed | **NOT SENT** — role theoretical; acting countersign recorded   |
-| Calendar (.ics)         | **NOT SENT** — no external review meeting required             |
+| Channel                 | Status                                                       |
+| ----------------------- | ------------------------------------------------------------ |
+| Email → PM Master       | **NOT SENT** — role theoretical; acting countersign recorded |
+| Email → Masoud Salum    | **NOT SENT** — role theoretical; acting countersign recorded |
+| Email → Rashid Mohammed | **NOT SENT** — role theoretical; acting countersign recorded |
+| Calendar (.ics)         | **NOT SENT** — no external review meeting required           |
 
 Draft files in this folder remain as **historical templates** only.
 
@@ -30,13 +30,13 @@ Draft files in this folder remain as **historical templates** only.
 
 ## 2. What was completed instead (2026-07-16)
 
-| # | Outcome                                                         | Evidence |
-| - | --------------------------------------------------------------- | -------- |
-| 1 | ADR-012 countersignatures (acting DBA / SEC / BE)               | ADR-012 Approval table |
-| 2 | DBF-001 Freeze v1.0 approval block                              | DBF-001 |
-| 3 | ACF-001 Freeze v1.0 approval block                              | ACF-001 |
-| 4 | FREEZE-ACC-001 → Accepted v1.0 (solo-operator)                  | FREEZE_ACCEPTANCE_IDENTITY_TENANT.md |
-| 5 | ADR-012 superseded for sequencing                               | ADR-012 status + note |
+| #   | Outcome                                           | Evidence                             |
+| --- | ------------------------------------------------- | ------------------------------------ |
+| 1   | ADR-012 countersignatures (acting DBA / SEC / BE) | ADR-012 Approval table               |
+| 2   | DBF-001 Freeze v1.0 approval block                | DBF-001                              |
+| 3   | ACF-001 Freeze v1.0 approval block                | ACF-001                              |
+| 4   | FREEZE-ACC-001 → Accepted v1.0 (solo-operator)    | FREEZE_ACCEPTANCE_IDENTITY_TENANT.md |
+| 5   | ADR-012 superseded for sequencing                 | ADR-012 status + note                |
 
 ---
 
@@ -51,12 +51,12 @@ acting signatures as provisional and optionally re-countersign for peer challeng
 
 ## 4. Sent confirmation (N/A)
 
-| Recipient       | Role               | Disposition                                      |
-| --------------- | ------------------ | ------------------------------------------------ |
-| PM Master       | Database Architect | Acting signature in-repo; no email               |
-| Masoud Salum    | Security Lead      | Acting signature in-repo; no email               |
-| Rashid Mohammed | Backend Lead       | Acting signature in-repo; no email               |
-| Calendar        | All + Host         | Cancelled                                        |
+| Recipient       | Role               | Disposition                        |
+| --------------- | ------------------ | ---------------------------------- |
+| PM Master       | Database Architect | Acting signature in-repo; no email |
+| Masoud Salum    | Security Lead      | Acting signature in-repo; no email |
+| Rashid Mohammed | Backend Lead       | Acting signature in-repo; no email |
+| Calendar        | All + Host         | Cancelled                          |
 
 ---
 

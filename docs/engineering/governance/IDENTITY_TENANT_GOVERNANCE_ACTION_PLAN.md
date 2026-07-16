@@ -3,7 +3,7 @@
 | Field           | Value                                                                                               |
 | --------------- | --------------------------------------------------------------------------------------------------- |
 | Document ID     | `GAP-IT-001`                                                                                        |
-| Status          | **Superseded by SOLO-GOV-001 closure** (2026-07-16) — retain for role “must-see” depth |
+| Status          | **Superseded by SOLO-GOV-001 closure** (2026-07-16) — retain for role “must-see” depth              |
 | Created         | 2026-07-15                                                                                          |
 | Owner           | Principal Architect / Governance Lead                                                               |
 | Source          | [ADR-012](../decisions/ADR-012-exception-identity-tenant-implementation.md) — Next governance steps |
