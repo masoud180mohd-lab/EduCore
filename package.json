@@ -5,7 +5,7 @@
   "type": "module",
   "description": "EduCore Engineering Sprint 0 workspace tooling baseline.",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "workspaces": [
     "apps/*",

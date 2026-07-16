@@ -16,7 +16,7 @@ The immutable EduCore AI Development Kit in `EduCore/` remains authoritative.
 
 ## Prerequisites
 
-- Node.js `>=20` and npm are required. The baseline was verified with Node.js `24.17.0` and npm `11.13.0`.
+- Node.js `>=22` and npm are required (CI uses Node 22; `dependency-cruiser` does not support Node 20). The baseline was verified with Node.js `24.17.0` and npm `11.13.0`.
 - Docker Desktop (or Docker Engine + Compose v2) is required only for the local data platform (`npm run docker:up`).
 - Copy `.env.example` to `.env` only when a task needs local application configuration. `.env` is ignored and must never contain committed secrets.
 - Optional Docker overrides: copy `.env.docker.example` to `.env.docker` (also ignored). Default scripts use `.env.docker.example` for bootstrap simplicity.
