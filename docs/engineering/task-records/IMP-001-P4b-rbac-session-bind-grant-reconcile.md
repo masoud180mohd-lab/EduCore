@@ -69,5 +69,6 @@ Manual local exercise (login → me → refresh → logout + bind unit tests):
 
 ## Residual
 
-- Medium items from review (`/auth/me` roles membership gate, fail-closed logging, me() RBAC unit asserts) remain open by design for a later slice.
-- Formal Freeze signatures still pending.
+- ~~Medium items from review (`/auth/me` roles membership gate, fail-closed logging, me() RBAC unit asserts)~~ → closed in **P4c** + **P4d** (2026-07-16).
+- Formal Freeze signatures: see SOLO-GOV-001 / FREEZE-ACC-001 (solo-operator).
+- Low / later: org-scoped permissions; wire `RequirePermission` on first business route; MFA / ReBAC (kit P5).

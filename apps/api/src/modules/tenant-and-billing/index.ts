@@ -6,6 +6,12 @@
  */
 export { TenantAndBillingModule } from './tenant-and-billing.module.js';
 export { TenantAndBillingApplicationService } from './application/tenant-and-billing.application-service.js';
+export { TenantsService } from './application/tenants.service.js';
+export type {
+  AccessibleTenant,
+  GetAccessibleTenantResult,
+  ListAccessibleTenantsResult,
+} from './application/tenants.service.js';
 export { TenantAndBillingEventNames } from './events/tenant-and-billing.events.js';
 export type { TenantAndBillingSkeletonRegisteredEvent } from './events/tenant-and-billing.events.js';
 export { TENANT_AND_BILLING_SKELETON_DTO } from './dto/tenant-and-billing.dto.js';

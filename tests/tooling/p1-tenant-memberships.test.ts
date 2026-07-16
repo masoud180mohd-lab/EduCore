@@ -64,7 +64,9 @@ describe('IMP-001 P1 tenant_memberships + OpenAPI hardening', () => {
       >;
     };
 
-    expect(doc.info?.description?.toLowerCase()).toMatch(/conditional/);
+    expect(doc.info?.description?.toLowerCase()).toMatch(
+      /accepted freeze v1\.0|solo-operator|implementation-gated/,
+    );
     expect(doc.components?.securitySchemes?.['bearerAuth']).toBeTruthy();
     expect(doc.components?.securitySchemes?.['tenantHeader']).toBeTruthy();
     expect(doc.security).toEqual([{ bearerAuth: [] }]);

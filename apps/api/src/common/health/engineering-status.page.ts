@@ -169,7 +169,8 @@ export const ENGINEERING_STATUS_HTML = `<!DOCTYPE html>
         <li><span class="dot"></span><span>PgPermissionSource (roles → permission codes) behind MembershipAware gate</span></li>
         <li><span class="dot"></span><span>P3 AuthN API: POST /api/v1/auth/login · refresh · logout · me · select-tenant</span></li>
         <li><span class="dot"></span><span>P4 RBAC: system roles (owner/admin/staff), RequirePermission, PolicyEvaluator, /auth/me permissions</span></li>
-        <li><span class="dot"></span><span>P4b: session↔header tenant bind on privileged guards; ops grant reconcile script</span></li>
+        <li><span class="dot"></span><span>P4b: session↔header tenant bind; P4c me() RBAC consistency; P4d fail-closed warn logs</span></li>
+        <li><span class="dot"></span><span>P5 product read: GET /tenants · /tenants/current · /tenants/{id}</span></li>
         <li><span class="dot"></span><span>Governance: SOLO-GOV-001 · DBF/ACF Freeze v1.0 (solo-operator) · ADR-012 superseded for sequencing</span></li>
         <li><span class="dot"></span><span>CI quality gate + module boundary checks</span></li>
       </ul>
@@ -181,7 +182,7 @@ export const ENGINEERING_STATUS_HTML = `<!DOCTYPE html>
       <ul>
         <li><span class="dot off"></span><span>Product web app / login screen (apps/web is empty)</span></li>
         <li><span class="dot off"></span><span>MFA flows</span></li>
-        <li><span class="dot off"></span><span>Tenant or user admin CRUD APIs</span></li>
+        <li><span class="dot off"></span><span>Tenant create / update / delete APIs</span></li>
         <li><span class="dot off"></span><span>Role / permission admin APIs (role.manage HTTP)</span></li>
         <li><span class="dot off"></span><span>Membership invite APIs</span></li>
         <li><span class="dot off"></span><span>Student, Finance, Attendance, and other domain UIs</span></li>

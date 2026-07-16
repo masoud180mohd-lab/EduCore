@@ -71,13 +71,19 @@ export type MeResult = {
   }>;
   readonly activeTenantId: string | null;
   readonly sessionId: string | null;
-  /** Role codes in the active tenant (empty when no tenant / no assignments). */
+  /**
+   * Roles in the active tenant only when membership is active
+   * (same membership gate as `permissions`; empty when unbound / inactive / revoked).
+   */
   readonly roles: ReadonlyArray<{
     readonly code: string;
     readonly name: string;
     readonly isSystem: boolean;
   }>;
-  /** Effective permission codes for active tenant (RBAC; empty when unbound). */
+  /**
+   * Effective permission codes for active tenant only when membership is active
+   * (via MembershipAwarePermissionSource; empty when unbound / inactive / revoked).
+   */
   readonly permissions: ReadonlyArray<string>;
 };
 
@@ -335,16 +341,25 @@ export class AuthService {
     const memberships = await this.sessions.listMembershipSummaries(input.userId);
     const activeTenantId = input.tenantId ?? null;
 
+    // roles[] and permissions[] share one membership gate so they cannot diverge
+    // after revoke (permissions already went through MembershipAwarePermissionSource;
+    // roles used to bypass that and could still list assignments).
     let roles: MeResult['roles'] = [];
     let permissions: ReadonlyArray<string> = [];
 
     if (activeTenantId !== null && isUuid(activeTenantId)) {
-      if (this.rbacRead !== null) {
-        roles = await this.rbacRead.listRolesForUser(input.userId, activeTenantId);
-      }
-      if (this.permissionSource !== null) {
-        const set = await this.permissionSource.getPermissions(input.userId, activeTenantId);
-        permissions = [...set].sort();
+      const membershipActive = await this.sessions.hasActiveMembership(
+        input.userId,
+        activeTenantId,
+      );
+      if (membershipActive) {
+        if (this.rbacRead !== null) {
+          roles = await this.rbacRead.listRolesForUser(input.userId, activeTenantId);
+        }
+        if (this.permissionSource !== null) {
+          const set = await this.permissionSource.getPermissions(input.userId, activeTenantId);
+          permissions = [...set].sort();
+        }
       }
     }
 

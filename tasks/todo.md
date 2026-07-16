@@ -22,6 +22,11 @@
 - [x] P3 improvement: /auth/me, select-tenant, HttpOnly refresh, rate limit backends
 - [x] IMP-001 Phase P4 RBAC foundation (system roles seed, RequirePermission tests, /auth/me permissions) — ADR-012
 - [x] P4b: session↔header tenant bind + system grant reconciler (`rbac:reconcile-grants`)
+- [x] P4c: `/auth/me` roles↔permissions membership consistency
+- [x] P4d: fail-closed AuthZ/membership warn logging (ops visibility)
+- [x] P5 / P5b: `GET /api/v1/tenants` + `GET /api/v1/tenants/{id}`
+- [x] P5c: get-by-id requires `tenant.read` + path/`X-Tenant-Id` match
+- [x] P5d: fail-closed warn-log on tenants repo + OpenAPI/ACF amend (list + get AuthZ)
 - [ ] Manual verify P4b: follow `tasks/manual-test-p4b-rbac.md`
 - [x] **Governance closed (SOLO-GOV-001):** acting countersignatures + DBF/ACF Freeze v1.0 + FREEZE-ACC Accepted — theoretical roles consolidated; outbox send N/A
 - [ ] Next product: gated IMP increments (tenant CRUD / invites) only with explicit plan — freezes do not auto-open every OpenAPI path

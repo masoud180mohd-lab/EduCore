@@ -67,11 +67,15 @@ describe('PgPermissionSource', () => {
     expect(sqlLog.some((s) => s.includes('COMMIT'))).toBe(true);
   });
 
-  it('fails closed on database errors', async () => {
+  it('fails closed on database errors and warns when logger is provided', async () => {
+    const warn = vi.fn();
+    const logger = { info: vi.fn(), warn, error: vi.fn() };
     const pool = mockPool(() => {
       throw new Error('boom');
     });
-    const source = new PgPermissionSource(pool);
+    const source = new PgPermissionSource(pool, logger);
     await expect(source.getPermissions(USER_A, TENANT_A)).resolves.toEqual(new Set());
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn.mock.calls[0]?.[0]).toContain('failed closed');
   });
 });

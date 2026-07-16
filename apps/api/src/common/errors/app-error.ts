@@ -66,6 +66,10 @@ export class AppError extends Error {
     return new AppError('VALIDATION_ERROR', message, undefined, details);
   }
 
+  static notFound(message = 'Resource not found.'): AppError {
+    return new AppError('NOT_FOUND', message);
+  }
+
   static tenantContextRequired(message = 'X-Tenant-Id header is required.'): AppError {
     return new AppError('TENANT_CONTEXT_REQUIRED', message);
   }

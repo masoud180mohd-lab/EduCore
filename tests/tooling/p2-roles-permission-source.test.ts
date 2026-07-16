@@ -41,7 +41,7 @@ describe('IMP-001 P2 roles RBAC scaffolding', () => {
     expect(platform).toContain('EmptyPermissionSource');
   });
 
-  it('does not open identity/tenant business HTTP routes', () => {
+  it('does not open identity placeholder or tenant write routes', () => {
     const identity = readFileSync(
       path.join(
         projectRoot,
@@ -49,14 +49,24 @@ describe('IMP-001 P2 roles RBAC scaffolding', () => {
       ),
       'utf8',
     );
-    const tenant = readFileSync(
+    const tenantPlaceholder = readFileSync(
       path.join(
         projectRoot,
         'apps/api/src/modules/tenant-and-billing/controllers/tenant-and-billing.controller.ts',
       ),
       'utf8',
     );
+    const tenantsProduct = readFileSync(
+      path.join(
+        projectRoot,
+        'apps/api/src/modules/tenant-and-billing/controllers/tenants.controller.ts',
+      ),
+      'utf8',
+    );
     expect(identity).not.toMatch(/@(Get|Post|Put|Patch|Delete)\(/);
-    expect(tenant).not.toMatch(/@(Get|Post|Put|Patch|Delete)\(/);
+    expect(tenantPlaceholder).not.toMatch(/@(Get|Post|Put|Patch|Delete)\(/);
+    // First product read allowed; writes remain closed.
+    expect(tenantsProduct).toMatch(/@Get\(\)/);
+    expect(tenantsProduct).not.toMatch(/@(Post|Put|Patch|Delete)\(/);
   });
 });

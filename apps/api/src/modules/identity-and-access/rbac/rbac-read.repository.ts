@@ -5,6 +5,9 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
 
+import { logFailClosedDbError } from '../../../common/logging/fail-closed-log.js';
+import type { AppLogger } from '../../../common/logging/logger.js';
+import { APP_LOGGER } from '../../../common/logging/logger.tokens.js';
 import { PG_POOL } from '../../../common/persistence/pg.tokens.js';
 import { withTenantTransaction } from '../../../common/persistence/tenant-transaction.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
@@ -17,15 +20,20 @@ export type UserRoleSummary = {
 
 @Injectable()
 export class RbacReadRepository {
-  constructor(@Optional() @Inject(PG_POOL) private readonly pool: Pool | null) {}
+  constructor(
+    @Optional() @Inject(PG_POOL) private readonly pool: Pool | null,
+    @Optional() @Inject(APP_LOGGER) private readonly logger: AppLogger | null = null,
+  ) {}
 
   isAvailable(): boolean {
     return this.pool !== null;
   }
 
   /**
-   * Roles assigned to user in tenant (active membership still required by callers for AuthZ).
-   * Fail-closed: invalid ids / no pool / errors → empty list.
+   * Roles assigned to user in tenant **only if** membership is active.
+   * Matches MembershipAwarePermissionSource / app.user_permission_codes gate so
+   * `/auth/me` roles[] and permissions[] cannot diverge after revoke.
+   * Fail-closed: invalid ids / no pool / errors → empty list (warn on DB errors).
    */
   async listRolesForUser(
     userId: string,
@@ -47,6 +55,10 @@ export class RbacReadRepository {
            INNER JOIN roles r
              ON r.id = ur.role_id
             AND r.tenant_id = ur.tenant_id
+           INNER JOIN tenant_memberships tm
+             ON tm.tenant_id = ur.tenant_id
+            AND tm.user_id = ur.user_id
+            AND tm.status = 'active'
            WHERE ur.tenant_id = $1::uuid
              AND ur.user_id = $2::uuid
            ORDER BY r.code ASC`,
@@ -58,7 +70,10 @@ export class RbacReadRepository {
           isSystem: row.is_system,
         }));
       });
-    } catch {
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'RbacReadRepository', error, {
+        operation: 'listRolesForUser',
+      });
       return [];
     }
   }

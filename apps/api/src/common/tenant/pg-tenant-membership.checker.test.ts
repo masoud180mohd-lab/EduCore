@@ -71,11 +71,15 @@ describe('PgTenantMembershipChecker', () => {
   });
 
   it('returns false and fails closed when the database errors', async () => {
+    const warn = vi.fn();
+    const logger = { info: vi.fn(), warn, error: vi.fn() };
     const { pool } = mockPool(() => {
       throw new Error('connection refused');
     });
-    const checker = new PgTenantMembershipChecker(pool);
+    const checker = new PgTenantMembershipChecker(pool, logger);
     await expect(checker.hasActiveMembership(USER_A, TENANT_B)).resolves.toBe(false);
+    expect(warn).toHaveBeenCalledOnce();
+    expect(String(warn.mock.calls[0]?.[0])).toContain('failed closed');
   });
 });
 

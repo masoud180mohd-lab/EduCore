@@ -57,15 +57,20 @@ describe('IMP-001 P2 request platform structure', () => {
     expect(barrel).toContain('AuditPublisher');
   });
 
-  it('does not open identity/tenant business HTTP routes', () => {
+  it('does not open identity placeholder or tenant write HTTP routes', () => {
     const identityCtrl = read(
       'apps/api/src/modules/identity-and-access/controllers/identity-and-access.controller.ts',
     );
-    const tenantCtrl = read(
+    const tenantPlaceholder = read(
       'apps/api/src/modules/tenant-and-billing/controllers/tenant-and-billing.controller.ts',
     );
+    const tenantsProduct = read(
+      'apps/api/src/modules/tenant-and-billing/controllers/tenants.controller.ts',
+    );
     expect(identityCtrl).not.toMatch(/@(Get|Post|Put|Patch|Delete)\(/);
-    expect(tenantCtrl).not.toMatch(/@(Get|Post|Put|Patch|Delete)\(/);
+    expect(tenantPlaceholder).not.toMatch(/@(Get|Post|Put|Patch|Delete)\(/);
+    expect(tenantsProduct).toMatch(/@Get\(\)/);
+    expect(tenantsProduct).not.toMatch(/@(Post|Put|Patch|Delete)\(/);
   });
 
   it('uses membership factory (DB or DenyAll); token validator lives in Identity module', () => {

@@ -90,26 +90,126 @@ describe('AuthService login', () => {
 });
 
 describe('AuthService me + select-tenant', () => {
+  const userId = '01900000-0000-7000-8000-000000000001';
+  const tenantId = '01900000-0000-7000-8000-0000000000aa';
+  const sessionId = '01900000-0000-7000-8000-000000000099';
+
   it('returns profile and memberships for me', async () => {
     const sessions = {
       isAvailable: () => true,
       getUserProfile: vi.fn().mockResolvedValue({
-        id: 'u1',
+        id: userId,
         email: 'a@b.co',
         displayName: 'A',
         status: 'active',
       }),
       listMembershipSummaries: vi
         .fn()
-        .mockResolvedValue([
-          { tenantId: 't1', status: 'active', joinedAt: '2026-01-01T00:00:00.000Z' },
-        ]),
+        .mockResolvedValue([{ tenantId, status: 'active', joinedAt: '2026-01-01T00:00:00.000Z' }]),
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
     };
     const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
-    const me = await service.me({ userId: 'u1', sessionId: 's1', tenantId: 't1' });
+    const me = await service.me({ userId, sessionId, tenantId });
     expect(me.user.email).toBe('a@b.co');
-    expect(me.activeTenantId).toBe('t1');
+    expect(me.activeTenantId).toBe(tenantId);
     expect(me.memberships).toHaveLength(1);
+    expect(me.roles).toEqual([]);
+    expect(me.permissions).toEqual([]);
+  });
+
+  it('me returns roles and permissions only when membership is active', async () => {
+    const sessions = {
+      isAvailable: () => true,
+      getUserProfile: vi.fn().mockResolvedValue({
+        id: userId,
+        email: 'a@b.co',
+        displayName: 'A',
+        status: 'active',
+      }),
+      listMembershipSummaries: vi
+        .fn()
+        .mockResolvedValue([{ tenantId, status: 'active', joinedAt: '2026-01-01T00:00:00.000Z' }]),
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
+    };
+    const rbacRead = {
+      listRolesForUser: vi
+        .fn()
+        .mockResolvedValue([{ code: 'owner', name: 'Owner', isSystem: true }]),
+    };
+    const permissionSource = {
+      getPermissions: vi.fn().mockResolvedValue(new Set(['tenant.read', 'role.read'])),
+    };
+    // Test doubles: construct then bind private optional deps (avoids cast lint noise).
+    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    Object.assign(service, { rbacRead, permissionSource });
+
+    const me = await service.me({ userId, sessionId, tenantId });
+
+    expect(sessions.hasActiveMembership).toHaveBeenCalledWith(userId, tenantId);
+    expect(rbacRead.listRolesForUser).toHaveBeenCalledWith(userId, tenantId);
+    expect(permissionSource.getPermissions).toHaveBeenCalledWith(userId, tenantId);
+    expect(me.roles).toEqual([{ code: 'owner', name: 'Owner', isSystem: true }]);
+    expect(me.permissions).toEqual(['role.read', 'tenant.read']);
+  });
+
+  it('me returns empty roles and permissions when membership is inactive (consistent)', async () => {
+    const sessions = {
+      isAvailable: () => true,
+      getUserProfile: vi.fn().mockResolvedValue({
+        id: userId,
+        email: 'a@b.co',
+        displayName: 'A',
+        status: 'active',
+      }),
+      listMembershipSummaries: vi
+        .fn()
+        .mockResolvedValue([{ tenantId, status: 'revoked', joinedAt: '2026-01-01T00:00:00.000Z' }]),
+      hasActiveMembership: vi.fn().mockResolvedValue(false),
+    };
+    const rbacRead = {
+      listRolesForUser: vi
+        .fn()
+        .mockResolvedValue([{ code: 'owner', name: 'Owner', isSystem: true }]),
+    };
+    const permissionSource = {
+      getPermissions: vi.fn().mockResolvedValue(new Set(['tenant.read'])),
+    };
+    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    Object.assign(service, { rbacRead, permissionSource });
+
+    const me = await service.me({ userId, sessionId, tenantId });
+
+    expect(me.roles).toEqual([]);
+    expect(me.permissions).toEqual([]);
+    expect(rbacRead.listRolesForUser).not.toHaveBeenCalled();
+    expect(permissionSource.getPermissions).not.toHaveBeenCalled();
+  });
+
+  it('me returns empty RBAC fields when activeTenantId is unbound', async () => {
+    const sessions = {
+      isAvailable: () => true,
+      getUserProfile: vi.fn().mockResolvedValue({
+        id: userId,
+        email: 'a@b.co',
+        displayName: 'A',
+        status: 'active',
+      }),
+      listMembershipSummaries: vi.fn().mockResolvedValue([]),
+      hasActiveMembership: vi.fn(),
+    };
+    const rbacRead = { listRolesForUser: vi.fn() };
+    const permissionSource = { getPermissions: vi.fn() };
+    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    Object.assign(service, { rbacRead, permissionSource });
+
+    const me = await service.me({ userId, sessionId });
+
+    expect(me.activeTenantId).toBeNull();
+    expect(me.roles).toEqual([]);
+    expect(me.permissions).toEqual([]);
+    expect(sessions.hasActiveMembership).not.toHaveBeenCalled();
+    expect(rbacRead.listRolesForUser).not.toHaveBeenCalled();
+    expect(permissionSource.getPermissions).not.toHaveBeenCalled();
   });
 
   it('selectTenant rebinds when membership is active', async () => {

@@ -266,12 +266,15 @@ Security notes:
 
 ### 4.2 Tenants
 
-| Method  | Path                         | Auth                           | Permission                     | Idempotency  | Description                      |
-| ------- | ---------------------------- | ------------------------------ | ------------------------------ | ------------ | -------------------------------- |
-| `POST`  | `/api/v1/tenants`            | Bearer (platform or bootstrap) | platform provision / bootstrap | **Required** | Create tenant + owner membership |
-| `GET`   | `/api/v1/tenants/{tenantId}` | Bearer + tenant                | `tenant.read`                  | —            | Get tenant                       |
-| `PATCH` | `/api/v1/tenants/{tenantId}` | Bearer + tenant                | `tenant.manage`                | Recommended  | Update name/locale/timezone      |
-| `GET`   | `/api/v1/tenants/current`    | Bearer + tenant                | membership                     | —            | Convenience: tenant from header  |
+| Method  | Path                         | Auth                           | Permission                     | Idempotency  | Description                                     |
+| ------- | ---------------------------- | ------------------------------ | ------------------------------ | ------------ | ----------------------------------------------- |
+| `GET`   | `/api/v1/tenants`            | Bearer                         | membership / RLS (no code)     | —            | List tenants visible to caller (picker UX)      |
+| `POST`  | `/api/v1/tenants`            | Bearer (platform or bootstrap) | platform provision / bootstrap | **Required** | Create tenant + owner membership (**not open**) |
+| `GET`   | `/api/v1/tenants/{tenantId}` | Bearer + tenant + session bind | `tenant.read`                  | —            | Get bound tenant (`path` == `X-Tenant-Id`)      |
+| `PATCH` | `/api/v1/tenants/{tenantId}` | Bearer + tenant                | `tenant.manage`                | Recommended  | Update name/locale/timezone (**not open**)      |
+| `GET`   | `/api/v1/tenants/current`    | Bearer + tenant                | `tenant.read`                  | —            | Convenience: tenant from header (**not open**)  |
+
+**Implemented (P5 / P5b / P5c):** `GET /tenants` (membership list) and `GET /tenants/{tenantId}` (`tenant.read` + path/header/session match). Writes remain closed.
 
 `POST /tenants` body:
 
@@ -551,7 +554,10 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 
 **Status:** **API Contract Freeze v1.0 — Identity & Tenant Slice** (solo-operator).
 
-> Honesty: OpenAPI remains the design baseline. Platform AuthN routes under `/api/v1/auth/*` already exist under ADR-012; remaining OpenAPI product paths (tenant CRUD, invites, role-admin) stay **implementation-gated** and are not auto-opened by this signature.
+> Honesty: OpenAPI remains the design baseline. Platform AuthN under `/api/v1/auth/*` and
+> membership-scoped tenant reads (`GET /tenants`, `GET /tenants/{id}` with `tenant.read`) are
+> implemented. Remaining OpenAPI product paths (tenant CRUD writes, invites, role-admin) stay
+> **implementation-gated** and are not auto-opened by Freeze acceptance.
 
 ---
 
@@ -561,3 +567,4 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 | ------- | ---------- | ----------------------------------------------------------------------------------------------- |
 | 1.0     | 2026-07-14 | Initial Identity & Tenant API Contract Freeze proposal                                          |
 | 1.1     | 2026-07-16 | Freeze v1.0 accepted under solo-operator consolidation (SOLO-GOV-001); approval block completed |
+| 1.2     | 2026-07-16 | OpenAPI amend: `GET /tenants` list + get-by-id AuthZ notes (IMP-001 P5d)                        |

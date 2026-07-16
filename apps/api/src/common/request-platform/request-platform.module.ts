@@ -7,6 +7,8 @@ import {
   RequireAuthGuard,
   RequireTenantContextGuard,
 } from '../auth/index.js';
+import type { AppLogger } from '../logging/logger.js';
+import { APP_LOGGER } from '../logging/logger.tokens.js';
 import { DatabaseModule, PG_POOL } from '../persistence/index.js';
 import {
   EmptyPermissionSource,
@@ -34,20 +36,20 @@ import type { TenantMembershipChecker } from '../tenant/tenant-membership.checke
   providers: [
     {
       provide: TENANT_MEMBERSHIP_CHECKER,
-      inject: [PG_POOL],
-      useFactory: (pool: Pool | null): TenantMembershipChecker => {
+      inject: [PG_POOL, APP_LOGGER],
+      useFactory: (pool: Pool | null, logger: AppLogger): TenantMembershipChecker => {
         if (pool !== null) {
-          return new PgTenantMembershipChecker(pool);
+          return new PgTenantMembershipChecker(pool, logger);
         }
         return new DenyAllTenantMembershipChecker();
       },
     },
     {
       provide: MembershipAwarePermissionSource.INNER,
-      inject: [PG_POOL],
-      useFactory: (pool: Pool | null): PermissionSource => {
+      inject: [PG_POOL, APP_LOGGER],
+      useFactory: (pool: Pool | null, logger: AppLogger): PermissionSource => {
         if (pool !== null) {
-          return new PgPermissionSource(pool);
+          return new PgPermissionSource(pool, logger);
         }
         return new EmptyPermissionSource();
       },

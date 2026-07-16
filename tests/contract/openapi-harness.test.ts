@@ -87,6 +87,13 @@ describe('ACF-001 OpenAPI contract harness (P0)', () => {
     expect(schemas).toHaveProperty('ErrorEnvelope');
   });
 
+  it('documents membership list GET /tenants and TenantListEnvelope', () => {
+    const doc = loadOpenApi();
+    const tenants = doc.paths?.['/tenants'] as { get?: { operationId?: string } } | undefined;
+    expect(tenants?.get?.operationId).toBe('listAccessibleTenants');
+    expect(doc.components?.schemas).toHaveProperty('TenantListEnvelope');
+  });
+
   it('accepts a valid error envelope fixture and rejects insecure shapes', () => {
     assertErrorEnvelope({
       error: {

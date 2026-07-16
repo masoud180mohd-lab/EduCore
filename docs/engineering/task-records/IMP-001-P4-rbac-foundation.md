@@ -62,7 +62,7 @@ Writes require `educore_platform` + trusted platform GUCs. Runtime Nest pool rem
 - **Double gate:** `MembershipAwarePermissionSource` + SQL `user_has_active_membership` inside `app.user_permission_codes`.
 - **No privilege write path** for `educore_app` on RBAC tables (INSERT/UPDATE/DELETE revoked).
 - **me()** only resolves RBAC for the bound `activeTenantId` (no cross-tenant catalogue dump).
-- **ADR-012:** Conditional freeze; DBF/ACF not human-accepted; do not claim product Freeze v1.0.
+- **ADR-012 / Freeze:** Historical exception superseded for sequencing; DBF/ACF Accepted v1.0 under SOLO-GOV-001 (solo-operator). Product CRUD still gated.
 
 ## Verification
 
@@ -75,8 +75,8 @@ npm run check
 
 ## Recommended next
 
-1. ADR-012 countersignatures / Freeze v1.0 (DBF-001 + ACF-001).
+1. ~~ADR-012 countersignatures / Freeze v1.0~~ → **Done** under SOLO-GOV-001 (solo-operator).
 2. IMP-001 tenant core routes only after freezes (P4 in master plan is tenant CRUD — do not conflate with this RBAC foundation).
 3. Role-admin APIs after formal Freeze + threat model.
 4. Optional: wire `RequirePermission` on first privileged business route when authorized (session bind is already enforced).
-5. Medium follow-ups: gate `/auth/me` roles via membership; warn-log fail-closed DB errors; me() RBAC field unit tests.
+5. ~~Medium follow-ups: gate `/auth/me` roles; warn-log fail-closed; me() RBAC tests~~ → **P4c + P4d complete**.

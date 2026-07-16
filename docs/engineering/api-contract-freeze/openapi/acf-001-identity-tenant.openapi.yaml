@@ -3,10 +3,13 @@ info:
   title: EduCore API — Identity & Tenant Slice (ACF-001)
   version: 1.0.0
   description: >-
-    API Contract Freeze ACF-001 for Identity And Access + Tenant And Billing (baseline). Status: CONDITIONAL acceptance
-    — design baseline under IMP-001; not a full v1.0 production freeze signature. Domain HTTP routes are not implemented
-    yet; this document governs future implementation. AuthZ stack: Authenticated → Active membership → Permission code →
-    Scope → RLS. Operation extensions: x-permissions (codes), x-authz (stack summary).
+    API Contract Freeze ACF-001 for Identity And Access + Tenant And Billing.
+    Status: Accepted Freeze v1.0 (solo-operator, SOLO-GOV-001). OpenAPI is the binding design
+    baseline; product write routes (tenant create/update, role-admin, invites) remain
+    implementation-gated. Implemented reads include AuthN under /auth/* and membership-scoped
+    GET /tenants (+ permission-gated GET /tenants/{tenantId}). AuthZ stack (typical privileged
+    route): Authenticated → Tenant header → Session tenant bind → Permission code → RLS.
+    Extensions: x-permissions, x-authz.
   contact:
     name: EduCore Engineering
 servers:
@@ -303,6 +306,36 @@ paths:
           - session.revoke
         notes: Requires listed permission codes unless a documented self-service exception applies.
   /tenants:
+    get:
+      tags:
+        - Tenants
+      operationId: listAccessibleTenants
+      summary: List tenants visible to the authenticated principal (active membership)
+      description: |
+        Membership-scoped "my tenants" list for picker / post-login UX.
+        Does **not** require X-Tenant-Id or tenant.read.
+        Visibility is enforced by RLS `can_see_tenant` (active membership).
+        Empty `data: []` when the caller has no accessible tenants or the app DB pool is unavailable.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Accessible tenants (may be empty)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-permissions: []
+      x-authz:
+        stack:
+          - authenticated
+          - rls
+        permissionCodes: []
+        notes: >
+          Self-service membership visibility only. Not an admin catalogue.
+          Implemented under IMP-001 P5.
     post:
       tags:
         - Tenants
@@ -343,7 +376,7 @@ paths:
           - rls
         permissionCodes:
           - tenant.manage
-        notes: Requires listed permission codes unless a documented self-service exception applies.
+        notes: Requires listed permission codes unless a documented self-service exception applies. Not implemented yet (write surface closed).
   /tenants/current:
     get:
       tags:
@@ -383,7 +416,16 @@ paths:
       tags:
         - Tenants
       operationId: getTenant
-      summary: Get tenant by id
+      summary: Get tenant by id (bound tenant + tenant.read)
+      description: |
+        Returns the tenant identified by `{tenantId}` when:
+        - Caller is authenticated with a session bound to that tenant
+        - `X-Tenant-Id` equals `{tenantId}` (and equals session tenant)
+        - Caller has `tenant.read` in that tenant
+        - RLS still allows the row (active membership)
+
+        Path/`X-Tenant-Id` mismatch → 403 (`TENANT_PATH_MISMATCH`).
+        Missing / inaccessible tenant → 404 (no existence leak across tenants).
       security:
         - bearerAuth: []
           tenantHeader: []
@@ -408,13 +450,15 @@ paths:
       x-authz:
         stack:
           - authenticated
-          - active_membership
+          - tenant_header
+          - session_tenant_bind
           - permission_codes
-          - scope
           - rls
         permissionCodes:
           - tenant.read
-        notes: Requires listed permission codes unless a documented self-service exception applies.
+        notes: >
+          Path tenantId MUST equal X-Tenant-Id and the session-bound tenant.
+          Implemented under IMP-001 P5b + P5c.
     patch:
       tags:
         - Tenants
@@ -2316,6 +2360,15 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Tenant'
+    TenantListEnvelope:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tenant'
     CreateTenantRequest:
       type: object
       required:
