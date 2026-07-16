@@ -26,6 +26,13 @@ jobs:
           node-version: '22'
           cache: npm
 
+      - name: Print Node/npm versions
+        run: |
+          node -v
+          npm -v
+          # Fail fast if Actions somehow still lands on Node 20
+          node -e "const m=+process.versions.node.split('.')[0]; if(m<22){console.error('Need Node >=22, got',process.version); process.exit(1)}"
+
       - name: Install dependencies
         run: npm ci
 
