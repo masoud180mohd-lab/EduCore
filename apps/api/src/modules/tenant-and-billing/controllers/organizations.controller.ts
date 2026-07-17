@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 
 import { AUTH_CONTEXT_REQUEST_KEY } from '../../../common/auth/index.js';
@@ -17,7 +17,8 @@ type AuthedRequest = Request & {
 /**
  * Product organizations surface (solo operator / product read increments).
  *
- * GET  /api/v1/organizations — list (auth + X-Tenant-Id + session bind + organization.read).
+ * GET  /api/v1/organizations      — list (auth + X-Tenant-Id + session bind + organization.read).
+ * GET  /api/v1/organizations/:id  — detail (same AuthZ; ACF organizationId).
  * No POST/PATCH/DELETE (create/update/deactivate remain closed).
  */
 @Controller('api/v1/organizations')
@@ -47,5 +48,21 @@ export class OrganizationsController {
       cursor,
       status,
     });
+  }
+
+  @Get(':id')
+  @UseGuards(RequirePermission('organization.read'))
+  async getById(@Req() request: AuthedRequest, @Param('id') id: string): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    // Bound tenant only; missing/cross-tenant → 404 (no enumeration).
+    return this.organizationsService.getForTenant(auth.userId, tenant.tenantId, id);
   }
 }

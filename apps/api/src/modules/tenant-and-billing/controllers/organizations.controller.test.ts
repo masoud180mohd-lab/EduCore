@@ -74,4 +74,51 @@ describe('OrganizationsController', () => {
     });
     expect(organizationsService.listForTenant).not.toHaveBeenCalled();
   });
+
+  it('gets organization by id for bound tenant', async () => {
+    const orgId = '01900000-0000-7000-8000-0000000000a1';
+    const organizationsService = {
+      getForTenant: vi.fn().mockResolvedValue({
+        data: { id: orgId, name: 'School A', status: 'active' },
+      }),
+    };
+    const controller = new OrganizationsController(organizationsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const result = await controller.getById(request as never, orgId);
+    expect(organizationsService.getForTenant).toHaveBeenCalledWith(userId, tenantId, orgId);
+    expect(result).toEqual({
+      data: { id: orgId, name: 'School A', status: 'active' },
+    });
+  });
+
+  it('rejects getById when auth context is missing', async () => {
+    const organizationsService = { getForTenant: vi.fn() };
+    const controller = new OrganizationsController(organizationsService as never);
+    const request = {
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    await expect(
+      controller.getById(request as never, '01900000-0000-7000-8000-0000000000a1'),
+    ).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+    expect(organizationsService.getForTenant).not.toHaveBeenCalled();
+  });
+
+  it('rejects getById when tenant context is missing', async () => {
+    const organizationsService = { getForTenant: vi.fn() };
+    const controller = new OrganizationsController(organizationsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+    };
+    await expect(
+      controller.getById(request as never, '01900000-0000-7000-8000-0000000000a1'),
+    ).rejects.toMatchObject({
+      code: 'TENANT_CONTEXT_REQUIRED',
+    });
+    expect(organizationsService.getForTenant).not.toHaveBeenCalled();
+  });
 });

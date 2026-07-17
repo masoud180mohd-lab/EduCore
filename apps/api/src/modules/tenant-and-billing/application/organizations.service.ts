@@ -17,6 +17,10 @@ export type Organization = OrganizationRow;
 
 export type ListOrganizationsResult = PaginatedResponse<Organization>;
 
+export type GetOrganizationResult = {
+  readonly data: Organization;
+};
+
 const ORG_STATUSES = new Set(['active', 'inactive']);
 
 /**
@@ -26,6 +30,36 @@ const ORG_STATUSES = new Set(['active', 'inactive']);
 @Injectable()
 export class OrganizationsService {
   constructor(private readonly organizations: OrganizationsRepository) {}
+
+  /**
+   * GET /organizations/:id — membership-scoped detail in bound tenant.
+   * Missing, other-tenant, invalid id, or no pool → 404 (no existence leak).
+   */
+  async getForTenant(
+    userId: string,
+    tenantId: string,
+    organizationId: string,
+  ): Promise<GetOrganizationResult> {
+    if (!isUuid(userId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(organizationId)) {
+      throw AppError.notFound('Organization not found.');
+    }
+
+    if (!this.organizations.isAvailable()) {
+      throw AppError.notFound('Organization not found.');
+    }
+
+    const org = await this.organizations.getByIdForTenant(userId, tenantId, organizationId);
+    if (org === null) {
+      throw AppError.notFound('Organization not found.');
+    }
+    return { data: org };
+  }
 
   async listForTenant(
     userId: string,

@@ -117,6 +117,52 @@ export class OrganizationsRepository {
       return { rows: [], nextCursor: null };
     }
   }
+
+  /**
+   * Single organization by id in the bound tenant under RLS.
+   * Returns null when missing, not accessible, invalid ids, no pool, or DB errors
+   * (caller maps to 404 — no existence leak).
+   */
+  async getByIdForTenant(
+    userId: string,
+    tenantId: string,
+    organizationId: string,
+  ): Promise<OrganizationRow | null> {
+    if (!isUuid(userId) || !isUuid(tenantId) || !isUuid(organizationId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(this.pool, { userId, tenantId }, async (client) => {
+        const result = await client.query<{
+          id: string;
+          tenant_id: string;
+          org_type: string;
+          name: string;
+          code: string | null;
+          status: string;
+          parent_organization_id: string | null;
+          created_at: Date;
+          updated_at: Date;
+        }>(
+          `SELECT o.id, o.tenant_id, o.org_type, o.name, o.code, o.status,
+                  o.parent_organization_id, o.created_at, o.updated_at
+           FROM organizations o
+           WHERE o.tenant_id = $1::uuid
+             AND o.id = $2::uuid
+           LIMIT 1`,
+          [tenantId, organizationId],
+        );
+        const row = result.rows[0];
+        return row === undefined ? null : mapOrganizationRow(row);
+      });
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'OrganizationsRepository', error, {
+        operation: 'getByIdForTenant',
+      });
+      return null;
+    }
+  }
 }
 
 function mapOrganizationRow(row: {

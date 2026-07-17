@@ -16,6 +16,67 @@ const orgA = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
+describe('OrganizationsService.getForTenant', () => {
+  it('returns organization when visible in bound tenant', async () => {
+    const organizations = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(orgA),
+    };
+    const service = new OrganizationsService(organizations as never);
+    await expect(service.getForTenant(userId, tenantId, orgA.id)).resolves.toEqual({
+      data: orgA,
+    });
+    expect(organizations.getByIdForTenant).toHaveBeenCalledWith(userId, tenantId, orgA.id);
+  });
+
+  it('returns NOT_FOUND when repository yields null', async () => {
+    const organizations = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new OrganizationsService(organizations as never);
+    await expect(service.getForTenant(userId, tenantId, orgA.id)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      statusCode: 404,
+    });
+  });
+
+  it('returns NOT_FOUND for invalid organization id shape (no enumeration)', async () => {
+    const organizations = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn(),
+    };
+    const service = new OrganizationsService(organizations as never);
+    await expect(service.getForTenant(userId, tenantId, 'not-a-uuid')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(organizations.getByIdForTenant).not.toHaveBeenCalled();
+  });
+
+  it('returns NOT_FOUND when pool is unavailable', async () => {
+    const organizations = {
+      isAvailable: () => false,
+      getByIdForTenant: vi.fn(),
+    };
+    const service = new OrganizationsService(organizations as never);
+    await expect(service.getForTenant(userId, tenantId, orgA.id)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(organizations.getByIdForTenant).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-uuid user ids', async () => {
+    const organizations = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn(),
+    };
+    const service = new OrganizationsService(organizations as never);
+    await expect(service.getForTenant('bad', tenantId, orgA.id)).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+  });
+});
+
 describe('OrganizationsService.listForTenant', () => {
   it('returns paginated organizations from repository', async () => {
     const organizations = {
