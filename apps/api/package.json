@@ -5,8 +5,9 @@
   "type": "module",
   "description": "EduCore NestJS modular-monolith skeleton (PLAT-003).",
   "scripts": {
-    "start": "tsx src/main.ts",
-    "start:dev": "tsx watch src/main.ts"
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "start:dev": "node ../../scripts/api-start-dev.mjs"
   },
   "dependencies": {
     "@nestjs/common": "11.1.28",
