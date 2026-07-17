@@ -11,24 +11,24 @@
 
 ## Increment 1 — `GET /api/v1/organizations` (`organization.read`)
 
-- [ ] Migration: `organizations` table + RLS Pattern A + SELECT-only app grants
-- [ ] Repository + unit tests
-- [ ] Service + unit tests
-- [ ] Controller + unit tests
-- [ ] Wire module
-- [ ] Task record `IMP-001-P6-organizations-list-read.md`
-- [ ] `npm run check`
-- [ ] Atomic commit `feat: ...`
+- [x] Migration: `organizations` table + RLS Pattern A + SELECT-only app grants
+- [x] Repository + unit tests
+- [x] Service + unit tests
+- [x] Controller + unit tests
+- [x] Wire module
+- [x] Task record `IMP-001-P6-organizations-list-read.md`
+- [x] `npm run check`
+- [x] Atomic commit `feat: ...`
 
 **Acceptance:**
 
-- [ ] Happy path returns `{ data, page }` for bound tenant
-- [ ] Unauthenticated → 401 class
-- [ ] Missing tenant context → TENANT_CONTEXT_REQUIRED
-- [ ] Missing permission → 403 (guard)
-- [ ] Empty list stable `{ data: [], page: { nextCursor: null, limit } }`
-- [ ] No write routes
-- [ ] Cross-tenant: queries only under `withTenantTransaction` (tenant GUC)
+- [x] Happy path returns `{ data, page }` for bound tenant
+- [x] Unauthenticated → 401 class
+- [x] Missing tenant context → TENANT_CONTEXT_REQUIRED
+- [x] Missing permission → 403 (guard)
+- [x] Empty list stable `{ data: [], page: { nextCursor: null, limit } }`
+- [x] No write routes
+- [x] Cross-tenant: queries only under `withTenantTransaction` (tenant GUC)
 
 **Verify:** `npm run check`
 
@@ -40,20 +40,20 @@
 
 ## Increment 2 — `GET /api/v1/memberships` (`user.read`)
 
-- [ ] Repository (tenant-scoped list) + tests
-- [ ] Service + tests
-- [ ] Controller + tests
-- [ ] Wire `identity-and-access` module
-- [ ] Task record `IMP-001-P6b-memberships-list-read.md`
-- [ ] `npm run check`
-- [ ] Atomic commit
+- [x] Repository (tenant-scoped list) + tests
+- [x] Service + tests
+- [x] Controller + tests
+- [x] Wire `identity-and-access` module
+- [x] Task record `IMP-001-P6b-memberships-list-read.md`
+- [x] `npm run check`
+- [x] Atomic commit
 
 **Acceptance:**
 
-- [ ] Lists memberships for **bound tenant only** (ACF decision)
-- [ ] AuthZ stack: auth + tenant + bind + `user.read`
-- [ ] Empty / status filter / cursor envelope
-- [ ] No writes
+- [x] Lists memberships for **bound tenant only** (ACF decision)
+- [x] AuthZ stack: auth + tenant + bind + `user.read`
+- [x] Empty / status filter / cursor envelope
+- [x] No writes
 
 **Verify:** `npm run check`
 
@@ -63,19 +63,19 @@
 
 ## Increment 3 — `GET /api/v1/tenant-settings` (`tenant.read`)
 
-- [ ] Migration: `tenant_settings` + `schema_version` + RLS + SELECT-only
-- [ ] Repository / service / controller + tests
-- [ ] Missing row → **404** (documented)
-- [ ] Task record `IMP-001-P6c-tenant-settings-read.md`
-- [ ] `npm run check`
-- [ ] Atomic commit
+- [x] Migration: `tenant_settings` + `schema_version` + RLS + SELECT-only
+- [x] Repository / service / controller + tests
+- [x] Missing row → **404** (documented)
+- [x] Task record `IMP-001-P6c-tenant-settings-read.md`
+- [x] `npm run check`
+- [x] Atomic commit
 
 **Acceptance:**
 
-- [ ] Returns versioned settings document for bound tenant
-- [ ] AuthZ: auth + tenant + bind + `tenant.read`
-- [ ] No PUT route
-- [ ] No secret leakage beyond public settings shape
+- [x] Returns versioned settings document for bound tenant
+- [x] AuthZ: auth + tenant + bind + `tenant.read`
+- [x] No PUT route
+- [x] No secret leakage beyond public settings shape
 
 **Verify:** `npm run check`
 
@@ -85,9 +85,9 @@
 
 ## Phase D — Final
 
-- [ ] Full `npm run check`
-- [ ] Confirm no `@Post`/`@Patch`/`@Put`/`@Delete` on new resource controllers
-- [ ] Final report (prompt §6)
+- [x] Full `npm run check`
+- [x] Confirm no `@Post`/`@Patch`/`@Put`/`@Delete` on new resource controllers
+- [x] Final report (prompt §6)
 
 ## Backlog (do not build)
 
