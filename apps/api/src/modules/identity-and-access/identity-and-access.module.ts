@@ -11,6 +11,7 @@ import type { TokenValidator } from '../../common/auth/token-validator.js';
 import { DatabaseModule, PG_POOL } from '../../common/persistence/index.js';
 import { PlatformOperationsModule } from '../platform-operations/index.js';
 import { IdentityAndAccessApplicationService } from './application/identity-and-access.application-service.js';
+import { MembershipsService } from './application/memberships.service.js';
 import { AuthService } from './auth/auth.service.js';
 import {
   createLoginRateLimiter,
@@ -19,21 +20,23 @@ import {
 } from './auth/login-rate-limiter.js';
 import { AuthController } from './controllers/auth.controller.js';
 import { IdentityAndAccessController } from './controllers/identity-and-access.controller.js';
+import { MembershipsController } from './controllers/memberships.controller.js';
 import { IdentityAndAccessDomainService } from './domain/identity-and-access.domain-service.js';
 import { IdentityAndAccessPolicy } from './policies/identity-and-access.policy.js';
 import { IDENTITY_AND_ACCESS_REPOSITORY } from './repositories/identity-and-access.repository.js';
 import { IdentityAndAccessRepositoryPlaceholder } from './repositories/identity-and-access.repository.placeholder.js';
+import { MembershipsRepository } from './repositories/memberships.repository.js';
 import { RbacReadRepository } from './rbac/rbac-read.repository.js';
 import { SessionRepository } from './repositories/session.repository.js';
 
 /**
  * Bounded context: Identity And Access.
- * P3 AuthN + P4 RBAC read path (no role-admin HTTP under ADR-012).
+ * P3 AuthN + P4 RBAC + membership list read (no role-admin / membership writes under ADR-012).
  */
 @Global()
 @Module({
   imports: [DatabaseModule, PlatformOperationsModule],
-  controllers: [IdentityAndAccessController, AuthController],
+  controllers: [IdentityAndAccessController, AuthController, MembershipsController],
   providers: [
     IdentityAndAccessApplicationService,
     IdentityAndAccessDomainService,
@@ -44,6 +47,8 @@ import { SessionRepository } from './repositories/session.repository.js';
     },
     SessionRepository,
     RbacReadRepository,
+    MembershipsRepository,
+    MembershipsService,
     AuthService,
     {
       provide: LOGIN_RATE_LIMITER,
@@ -68,6 +73,7 @@ import { SessionRepository } from './repositories/session.repository.js';
     AuthService,
     TOKEN_VALIDATOR,
     RbacReadRepository,
+    MembershipsService,
   ],
 })
 export class IdentityAndAccessModule {}
