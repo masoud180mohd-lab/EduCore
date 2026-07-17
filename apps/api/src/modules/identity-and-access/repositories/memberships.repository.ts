@@ -112,6 +112,50 @@ export class MembershipsRepository {
       return { rows: [], nextCursor: null };
     }
   }
+
+  /**
+   * Single membership by id in the bound tenant under RLS.
+   * Returns null when missing, not accessible, invalid ids, no pool, or DB errors
+   * (caller maps to 404 — no existence leak).
+   */
+  async getByIdForTenant(
+    userId: string,
+    tenantId: string,
+    membershipId: string,
+  ): Promise<MembershipRow | null> {
+    if (!isUuid(userId) || !isUuid(tenantId) || !isUuid(membershipId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(this.pool, { userId, tenantId }, async (client) => {
+        const result = await client.query<{
+          id: string;
+          tenant_id: string;
+          user_id: string;
+          status: string;
+          joined_at: Date | null;
+          created_at: Date;
+          updated_at: Date;
+        }>(
+          `SELECT m.id, m.tenant_id, m.user_id, m.status, m.joined_at,
+                  m.created_at, m.updated_at
+           FROM tenant_memberships m
+           WHERE m.tenant_id = $1::uuid
+             AND m.id = $2::uuid
+           LIMIT 1`,
+          [tenantId, membershipId],
+        );
+        const row = result.rows[0];
+        return row === undefined ? null : mapMembershipRow(row);
+      });
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'MembershipsRepository', error, {
+        operation: 'getByIdForTenant',
+      });
+      return null;
+    }
+  }
 }
 
 function mapMembershipRow(row: {

@@ -17,6 +17,10 @@ export type Membership = MembershipRow;
 
 export type ListMembershipsResult = PaginatedResponse<Membership>;
 
+export type GetMembershipResult = {
+  readonly data: Membership;
+};
+
 const MEMBERSHIP_STATUSES = new Set(['invited', 'active', 'suspended', 'removed']);
 
 /**
@@ -27,6 +31,36 @@ const MEMBERSHIP_STATUSES = new Set(['invited', 'active', 'suspended', 'removed'
 @Injectable()
 export class MembershipsService {
   constructor(private readonly memberships: MembershipsRepository) {}
+
+  /**
+   * GET /memberships/:id — membership detail in bound tenant only.
+   * Missing, other-tenant, invalid id, or no pool → 404 (no existence leak).
+   */
+  async getForTenant(
+    userId: string,
+    tenantId: string,
+    membershipId: string,
+  ): Promise<GetMembershipResult> {
+    if (!isUuid(userId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(membershipId)) {
+      throw AppError.notFound('Membership not found.');
+    }
+
+    if (!this.memberships.isAvailable()) {
+      throw AppError.notFound('Membership not found.');
+    }
+
+    const membership = await this.memberships.getByIdForTenant(userId, tenantId, membershipId);
+    if (membership === null) {
+      throw AppError.notFound('Membership not found.');
+    }
+    return { data: membership };
+  }
 
   async listForTenant(
     userId: string,

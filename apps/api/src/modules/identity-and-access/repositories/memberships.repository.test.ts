@@ -75,4 +75,58 @@ describe('MembershipsRepository', () => {
     });
     expect(result.nextCursor).toBe(rowA.id);
   });
+
+  it('returns null for getById without a pool', async () => {
+    const repo = new MembershipsRepository(null);
+    await expect(
+      repo.getByIdForTenant(userId, tenantId, '01900000-0000-7000-8000-0000000000b1'),
+    ).resolves.toBeNull();
+  });
+
+  it('returns null for getById with invalid membership id', async () => {
+    const connect = vi.fn();
+    const repo = new MembershipsRepository({ connect } as never);
+    await expect(repo.getByIdForTenant(userId, tenantId, 'bad')).resolves.toBeNull();
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it('fails closed on getById DB errors and warns', async () => {
+    const warn = vi.fn();
+    const logger = { info: vi.fn(), warn, error: vi.fn() };
+    const connect = vi.fn().mockRejectedValue(new Error('pool down'));
+    const repo = new MembershipsRepository({ connect } as never, logger);
+    await expect(
+      repo.getByIdForTenant(userId, tenantId, '01900000-0000-7000-8000-0000000000b1'),
+    ).resolves.toBeNull();
+    expect(warn).toHaveBeenCalledOnce();
+  });
+
+  it('maps getById row when found', async () => {
+    const rowA = {
+      id: '01900000-0000-7000-8000-0000000000b1',
+      tenant_id: tenantId,
+      user_id: userId,
+      status: 'active',
+      joined_at: new Date('2026-01-01T00:00:00.000Z'),
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      updated_at: new Date('2026-01-02T00:00:00.000Z'),
+    };
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [rowA] });
+    });
+    const connect = vi.fn().mockResolvedValue({
+      query,
+      release: vi.fn(),
+    });
+    const repo = new MembershipsRepository({ connect } as never);
+    await expect(repo.getByIdForTenant(userId, tenantId, rowA.id)).resolves.toMatchObject({
+      id: rowA.id,
+      tenantId,
+      userId,
+      status: 'active',
+    });
+  });
 });

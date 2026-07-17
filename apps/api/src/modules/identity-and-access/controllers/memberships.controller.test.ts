@@ -74,4 +74,51 @@ describe('MembershipsController', () => {
     });
     expect(membershipsService.listForTenant).not.toHaveBeenCalled();
   });
+
+  it('gets membership by id for bound tenant', async () => {
+    const membershipId = '01900000-0000-7000-8000-0000000000b1';
+    const membershipsService = {
+      getForTenant: vi.fn().mockResolvedValue({
+        data: { id: membershipId, userId, status: 'active' },
+      }),
+    };
+    const controller = new MembershipsController(membershipsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const result = await controller.getById(request as never, membershipId);
+    expect(membershipsService.getForTenant).toHaveBeenCalledWith(userId, tenantId, membershipId);
+    expect(result).toEqual({
+      data: { id: membershipId, userId, status: 'active' },
+    });
+  });
+
+  it('rejects getById when auth context is missing', async () => {
+    const membershipsService = { getForTenant: vi.fn() };
+    const controller = new MembershipsController(membershipsService as never);
+    const request = {
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    await expect(
+      controller.getById(request as never, '01900000-0000-7000-8000-0000000000b1'),
+    ).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+    expect(membershipsService.getForTenant).not.toHaveBeenCalled();
+  });
+
+  it('rejects getById when tenant context is missing', async () => {
+    const membershipsService = { getForTenant: vi.fn() };
+    const controller = new MembershipsController(membershipsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+    };
+    await expect(
+      controller.getById(request as never, '01900000-0000-7000-8000-0000000000b1'),
+    ).rejects.toMatchObject({
+      code: 'TENANT_CONTEXT_REQUIRED',
+    });
+    expect(membershipsService.getForTenant).not.toHaveBeenCalled();
+  });
 });

@@ -14,6 +14,67 @@ const membershipA = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
+describe('MembershipsService.getForTenant', () => {
+  it('returns membership when visible in bound tenant', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(membershipA),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(service.getForTenant(userId, tenantId, membershipA.id)).resolves.toEqual({
+      data: membershipA,
+    });
+    expect(memberships.getByIdForTenant).toHaveBeenCalledWith(userId, tenantId, membershipA.id);
+  });
+
+  it('returns NOT_FOUND when repository yields null', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(service.getForTenant(userId, tenantId, membershipA.id)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      statusCode: 404,
+    });
+  });
+
+  it('returns NOT_FOUND for invalid membership id shape (no enumeration)', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn(),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(service.getForTenant(userId, tenantId, 'not-a-uuid')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(memberships.getByIdForTenant).not.toHaveBeenCalled();
+  });
+
+  it('returns NOT_FOUND when pool is unavailable', async () => {
+    const memberships = {
+      isAvailable: () => false,
+      getByIdForTenant: vi.fn(),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(service.getForTenant(userId, tenantId, membershipA.id)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(memberships.getByIdForTenant).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-uuid user ids', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn(),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(service.getForTenant('bad', tenantId, membershipA.id)).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+  });
+});
+
 describe('MembershipsService.listForTenant', () => {
   it('returns paginated memberships from repository', async () => {
     const memberships = {

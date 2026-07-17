@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 
 import { AUTH_CONTEXT_REQUEST_KEY } from '../../../common/auth/index.js';
@@ -17,7 +17,8 @@ type AuthedRequest = Request & {
 /**
  * Product memberships surface (solo operator / product read increments).
  *
- * GET  /api/v1/memberships — list in bound tenant (auth + X-Tenant-Id + session bind + user.read).
+ * GET  /api/v1/memberships      — list in bound tenant (auth + X-Tenant-Id + session bind + user.read).
+ * GET  /api/v1/memberships/:id  — detail (same AuthZ; ACF membershipId).
  * No POST/suspend/reactivate/remove (writes remain closed).
  */
 @Controller('api/v1/memberships')
@@ -47,5 +48,21 @@ export class MembershipsController {
       cursor,
       status,
     });
+  }
+
+  @Get(':id')
+  @UseGuards(RequirePermission('user.read'))
+  async getById(@Req() request: AuthedRequest, @Param('id') id: string): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    // Bound tenant roster only; missing/cross-tenant → 404 (no enumeration).
+    return this.membershipsService.getForTenant(auth.userId, tenant.tenantId, id);
   }
 }
