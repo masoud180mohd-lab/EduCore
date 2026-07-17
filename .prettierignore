@@ -13,3 +13,5 @@ docker-compose.yml
 *.yaml
 docs/engineering/api-contract-freeze/openapi/
 .agents/
+.cursor/
+.orchestra-skills.json

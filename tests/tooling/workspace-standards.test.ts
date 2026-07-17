@@ -105,7 +105,7 @@ describe('workspace standards', () => {
     const manifest = readJsonFile<PackageManifest>('package.json');
     const engines = requireRecord(manifest.engines, 'package.json engines');
 
-    expect(engines['node']).toBe('>=20');
+    expect(engines['node']).toBe('>=22');
   });
 
   it('enforces strict TypeScript compiler settings', () => {
