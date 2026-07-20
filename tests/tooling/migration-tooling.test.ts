@@ -154,4 +154,14 @@ describe('IMP-001 migration tooling', () => {
     const down = read('apps/api/db/migrations/20260720220000_students_update.down.sql');
     expect(down).toContain('DROP FUNCTION');
   });
+
+  it('ships IMP-003-C0 classes list table SELECT-only for educore_app', () => {
+    const up = read('apps/api/db/migrations/20260720230000_classes_list_read.up.sql');
+    expect(up).toMatch(/CREATE TABLE classes/i);
+    expect(up).toContain('REFERENCES academic_years (id)');
+    expect(up).toContain('GRANT SELECT ON TABLE classes TO educore_app');
+    expect(up).toContain('REVOKE INSERT, UPDATE, DELETE ON TABLE classes FROM educore_app');
+    const down = read('apps/api/db/migrations/20260720230000_classes_list_read.down.sql');
+    expect(down).toContain('DROP TABLE IF EXISTS classes');
+  });
 });
