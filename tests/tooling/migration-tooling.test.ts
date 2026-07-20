@@ -83,4 +83,24 @@ describe('IMP-001 migration tooling', () => {
     );
     expect(down).toContain('DROP FUNCTION');
   });
+
+  it('ships IMP-002 students list table SELECT-only for educore_app', () => {
+    const up = read('apps/api/db/migrations/20260720160000_students_list_read.up.sql');
+    expect(up).toMatch(/CREATE TABLE students/i);
+    expect(up).toContain('student.read');
+    expect(up).toContain('GRANT SELECT ON TABLE students TO educore_app');
+    expect(up).toContain('REVOKE INSERT, UPDATE, DELETE ON TABLE students FROM educore_app');
+    const down = read('apps/api/db/migrations/20260720160000_students_list_read.down.sql');
+    expect(down).toContain('DROP TABLE IF EXISTS students');
+  });
+
+  it('ships IMP-002-P2 create_student helper + student.manage', () => {
+    const up = read('apps/api/db/migrations/20260720170000_students_create.up.sql');
+    expect(up).toContain('app.create_student');
+    expect(up).toMatch(/SECURITY DEFINER/i);
+    expect(up).toContain('student.manage');
+    expect(up).toContain('GRANT EXECUTE');
+    const down = read('apps/api/db/migrations/20260720170000_students_create.down.sql');
+    expect(down).toContain('DROP FUNCTION');
+  });
 });
