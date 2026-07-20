@@ -35,6 +35,7 @@ describe('IMP-001 product tenants reads — list + current + get by id', () => {
     expect(repo).toContain('listAccessibleTenants');
     expect(repo).toContain('getAccessibleTenantById');
     expect(repo).toContain('logFailClosedDbError');
+    expect(repo).toContain('ACCESSIBLE_TENANTS_LIST_CAP');
   });
 
   it('OpenAPI documents list + membership-scoped get AuthZ', () => {
@@ -65,9 +66,11 @@ describe('IMP-001 product tenants reads — list + current + get by id', () => {
     const getRecord = read('docs/engineering/task-records/IMP-001-P5b-tenants-get-by-id.md');
     const currentRecord = read('docs/engineering/task-records/IMP-001-P5c-tenants-current.md');
     const p5d = read('docs/engineering/task-records/IMP-001-P5d-tenants-warn-log-openapi.md');
+    const p13 = read('docs/engineering/task-records/IMP-001-P13-low-polish-ilike-tenants-cap.md');
     expect(listRecord).toMatch(/GET \/api\/v1\/tenants/i);
     expect(getRecord).toMatch(/GET \/api\/v1\/tenants\/\{id\}/i);
     expect(currentRecord).toMatch(/GET \/api\/v1\/tenants\/current/i);
     expect(p5d).toMatch(/logFailClosedDbError|OpenAPI/i);
+    expect(p13).toMatch(/ACCESSIBLE_TENANTS_LIST_CAP|unpaginated|ILIKE/i);
   });
 });

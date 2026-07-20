@@ -94,6 +94,22 @@ describe('ACF-001 OpenAPI contract harness (P0)', () => {
     expect(doc.components?.schemas).toHaveProperty('TenantListEnvelope');
   });
 
+  it('documents P8 list query params on organizations, users, memberships', () => {
+    const doc = loadOpenApi();
+    const orgParams = (
+      doc.paths?.['/organizations'] as { get?: { parameters?: { name: string }[] } } | undefined
+    )?.get?.parameters;
+    const userParams = (
+      doc.paths?.['/users'] as { get?: { parameters?: { name: string }[] } } | undefined
+    )?.get?.parameters;
+    const membershipParams = (
+      doc.paths?.['/memberships'] as { get?: { parameters?: { name: string }[] } } | undefined
+    )?.get?.parameters;
+    expect(orgParams?.map((p) => p.name)).toEqual(expect.arrayContaining(['orgType', 'search']));
+    expect(userParams?.map((p) => p.name)).toEqual(expect.arrayContaining(['search']));
+    expect(membershipParams?.map((p) => p.name)).toEqual(expect.arrayContaining(['userId']));
+  });
+
   it('accepts a valid error envelope fixture and rejects insecure shapes', () => {
     assertErrorEnvelope({
       error: {

@@ -27,7 +27,14 @@
 - [x] P5 / P5b: `GET /api/v1/tenants` + `GET /api/v1/tenants/{id}`
 - [x] P5c: get-by-id requires `tenant.read` + path/`X-Tenant-Id` match
 - [x] P5d: fail-closed warn-log on tenants repo + OpenAPI/ACF amend (list + get AuthZ)
+- [x] AUDIT-R4: read increments review (`docs/engineering/task-records/AUDIT-R4-read-increments-review.md`)
+- [x] P10: HTTP AuthZ integration + live read isolation matrix + OpenAPI P8/sync (AUDIT-R4 High)
+- [x] P11: cursor UUID validation + users cursor tenant scope + Q5 invited list
+- [x] P12: `GET /users/{id}` + OpenAPI/ACF honesty update (AUDIT-R4 Medium)
+- [x] P13: shared ILIKE helper + tenants picker unpaginated policy / soft cap (AUDIT-R4 Low)
+- [x] Manual multi-tenant QA script: `tasks/manual-test-product-reads-qa.md` (operator run checklist)
 - [ ] Manual verify P4b: follow `tasks/manual-test-p4b-rbac.md`
+- [ ] Manual verify product reads: follow `tasks/manual-test-product-reads-qa.md`
 - [x] **Governance closed (SOLO-GOV-001):** acting countersignatures + DBF/ACF Freeze v1.0 + FREEZE-ACC Accepted — theoretical roles consolidated; outbox send N/A
 - [ ] Next product: gated IMP increments (tenant CRUD / invites) only with explicit plan — freezes do not auto-open every OpenAPI path
 - [ ] P3 follow-ups: MFA, session list/revoke (optional)

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 
 import { AUTH_CONTEXT_REQUEST_KEY } from '../../../common/auth/index.js';
@@ -17,9 +17,9 @@ type AuthedRequest = Request & {
 /**
  * Product users surface (solo operator / product read increments).
  *
- * GET  /api/v1/users — list users visible via active memberships in bound tenant
- *                      (auth + X-Tenant-Id + session bind + user.read).
- * No POST/PATCH/DELETE; GET by id deferred.
+ * GET  /api/v1/users      — list users visible via memberships in bound tenant
+ * GET  /api/v1/users/:id  — detail (same AuthZ; ACF userId)
+ * No POST/PATCH/DELETE (writes remain closed).
  *
  * List query: limit, cursor, status, search.
  * List response: { data, page: { nextCursor, limit } }.
@@ -53,5 +53,20 @@ export class UsersController {
       status,
       search,
     });
+  }
+
+  @Get(':id')
+  @UseGuards(RequirePermission('user.read'))
+  async getById(@Req() request: AuthedRequest, @Param('id') id: string): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    return this.usersService.getForTenant(auth.userId, tenant.tenantId, id);
   }
 }

@@ -45,10 +45,11 @@ describe('OrganizationsController', () => {
       [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
       [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
     };
-    await controller.list(request as never, '10', 'cursor-id', 'active', 'school', 'campus');
+    const cursorId = '01900000-0000-7000-8000-0000000000a1';
+    await controller.list(request as never, '10', cursorId, 'active', 'school', 'campus');
     expect(organizationsService.listForTenant).toHaveBeenCalledWith(userId, tenantId, {
       limit: '10',
-      cursor: 'cursor-id',
+      cursor: cursorId,
       status: 'active',
       orgType: 'school',
       search: 'campus',

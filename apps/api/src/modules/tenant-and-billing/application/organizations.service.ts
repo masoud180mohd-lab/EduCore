@@ -6,6 +6,7 @@ import {
   parsePaginationQuery,
   type PaginatedResponse,
 } from '../../../common/pagination/index.js';
+import { parseOptionalSearchFilter } from '../../../common/text/index.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
 import {
   OrganizationsRepository,
@@ -23,7 +24,6 @@ export type GetOrganizationResult = {
 
 const ORG_STATUSES = new Set(['active', 'inactive']);
 const ORG_TYPES = new Set(['school', 'campus', 'department']);
-const SEARCH_MAX_LEN = 100;
 
 /**
  * Product read API for organizations in the bound tenant.
@@ -89,7 +89,7 @@ export class OrganizationsService {
     const pagination = parsePaginationQuery(rawQuery);
     const status = parseStatusFilter(rawQuery.status);
     const orgType = parseOrgTypeFilter(rawQuery.orgType);
-    const search = parseSearchFilter(rawQuery.search);
+    const search = parseOptionalSearchFilter(rawQuery.search);
 
     if (!this.organizations.isAvailable()) {
       return buildPaginatedResponse([], pagination.limit, null);
@@ -129,30 +129,4 @@ function parseOrgTypeFilter(raw: unknown): 'school' | 'campus' | 'department' | 
     });
   }
   return raw as 'school' | 'campus' | 'department';
-}
-
-/**
- * Optional free-text search; escapes ILIKE metacharacters for the repository.
- */
-function parseSearchFilter(raw: unknown): string | undefined {
-  if (raw === undefined || raw === null || raw === '') {
-    return undefined;
-  }
-  if (typeof raw !== 'string') {
-    throw AppError.validation('search must be a string.', { field: 'search' });
-  }
-  const trimmed = raw.trim();
-  if (trimmed === '') {
-    return undefined;
-  }
-  if (trimmed.length > SEARCH_MAX_LEN) {
-    throw AppError.validation(`search must be at most ${String(SEARCH_MAX_LEN)} characters.`, {
-      field: 'search',
-    });
-  }
-  return escapeIlikePattern(trimmed);
-}
-
-function escapeIlikePattern(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
 }

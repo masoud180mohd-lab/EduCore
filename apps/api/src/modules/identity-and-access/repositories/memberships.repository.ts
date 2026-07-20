@@ -58,9 +58,6 @@ export class MembershipsRepository {
     if (!isUuid(userId) || !isUuid(tenantId) || this.pool === null) {
       return { rows: [], nextCursor: null };
     }
-    if (query.cursor !== undefined && !isUuid(query.cursor)) {
-      return { rows: [], nextCursor: null };
-    }
 
     try {
       return await withTenantTransaction(this.pool, { userId, tenantId }, async (client) => {

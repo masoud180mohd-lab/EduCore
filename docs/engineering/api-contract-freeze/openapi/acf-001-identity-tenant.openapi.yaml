@@ -316,6 +316,11 @@ paths:
         Does **not** require X-Tenant-Id or tenant.read.
         Visibility is enforced by RLS `can_see_tenant` (active membership).
         Empty `data: []` when the caller has no accessible tenants or the app DB pool is unavailable.
+
+        **Pagination policy:** intentionally **unpaginated** envelope (`{ data }` only) — low
+        cardinality per principal. Soft safety cap equals list max (100); excess rows are
+        truncated with an ops warn. A future admin catalogue (if needed) would use cursor pages
+        under a different operation, not this picker.
       security:
         - bearerAuth: []
       responses:
@@ -404,13 +409,15 @@ paths:
       x-authz:
         stack:
           - authenticated
+          - tenant_header
+          - session_tenant_bind
           - active_membership
           - permission_codes
           - scope
           - rls
         permissionCodes:
           - tenant.read
-        notes: Requires listed permission codes unless a documented self-service exception applies.
+        notes: Session-bound tenant must match X-Tenant-Id. Implemented P5c.
   /tenants/{tenantId}:
     get:
       tags:
@@ -520,6 +527,20 @@ paths:
             enum:
               - active
               - inactive
+        - name: orgType
+          in: query
+          schema:
+            type: string
+            enum:
+              - school
+              - campus
+              - department
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+          description: Case-insensitive substring on name/code (ILIKE; metacharacters escaped server-side).
       responses:
         '200':
           description: Organization page
@@ -536,13 +557,16 @@ paths:
       x-authz:
         stack:
           - authenticated
+          - tenant_header
+          - session_tenant_bind
           - active_membership
           - permission_codes
           - scope
           - rls
         permissionCodes:
           - organization.read
-        notes: Requires listed permission codes unless a documented self-service exception applies.
+        notes: >
+          Session-bound tenant must match X-Tenant-Id. Implemented P6 + P8 filters (orgType, search).
     post:
       tags:
         - Organizations
@@ -613,13 +637,15 @@ paths:
       x-authz:
         stack:
           - authenticated
+          - tenant_header
+          - session_tenant_bind
           - active_membership
           - permission_codes
           - scope
           - rls
         permissionCodes:
           - organization.read
-        notes: Requires listed permission codes unless a documented self-service exception applies.
+        notes: Bound tenant only; missing/cross-tenant → 404. Implemented P7.
     patch:
       tags:
         - Organizations
@@ -726,13 +752,15 @@ paths:
       x-authz:
         stack:
           - authenticated
+          - tenant_header
+          - session_tenant_bind
           - active_membership
           - permission_codes
           - scope
           - rls
         permissionCodes:
           - tenant.read
-        notes: Requires listed permission codes unless a documented self-service exception applies.
+        notes: Session-bound tenant must match X-Tenant-Id. Implemented P5c.
     put:
       tags:
         - TenantSettings
@@ -869,6 +897,12 @@ paths:
               - active
               - disabled
               - locked
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+          description: Case-insensitive substring on displayName/email (ILIKE; escaped server-side).
       responses:
         '200':
           description: User page
@@ -885,13 +919,17 @@ paths:
       x-authz:
         stack:
           - authenticated
+          - tenant_header
+          - session_tenant_bind
           - active_membership
           - permission_codes
           - scope
           - rls
         permissionCodes:
           - user.read
-        notes: Requires listed permission codes unless a documented self-service exception applies.
+        notes: >
+          Active membership users by default; `status=invited` includes invited memberships (ACF Q5).
+          Implemented P9 + P12.
   /users/{userId}:
     get:
       tags:
@@ -922,13 +960,15 @@ paths:
       x-authz:
         stack:
           - authenticated
+          - tenant_header
+          - session_tenant_bind
           - active_membership
           - permission_codes
           - scope
           - rls
         permissionCodes:
           - user.read
-        notes: Requires listed permission codes unless a documented self-service exception applies.
+        notes: Bound tenant only; missing/cross-tenant → 404. Implemented P12.
     patch:
       tags:
         - Users
@@ -1028,6 +1068,11 @@ paths:
               - active
               - suspended
               - removed
+        - name: userId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+          description: Filter roster to a single user in the bound tenant.
       responses:
         '200':
           description: Membership page
@@ -1044,13 +1089,15 @@ paths:
       x-authz:
         stack:
           - authenticated
+          - tenant_header
+          - session_tenant_bind
           - active_membership
           - permission_codes
           - scope
           - rls
         permissionCodes:
           - user.read
-        notes: Requires listed permission codes unless a documented self-service exception applies.
+        notes: Tenant roster list; P8 userId filter. Implemented P6b + P8.
     post:
       tags:
         - Memberships
@@ -1123,13 +1170,15 @@ paths:
       x-authz:
         stack:
           - authenticated
+          - tenant_header
+          - session_tenant_bind
           - active_membership
           - permission_codes
           - scope
           - rls
         permissionCodes:
           - user.read
-        notes: Requires listed permission codes unless a documented self-service exception applies.
+        notes: Bound tenant only; missing/cross-tenant → 404. Implemented P7b.
   /memberships/{membershipId}/suspend:
     post:
       tags:

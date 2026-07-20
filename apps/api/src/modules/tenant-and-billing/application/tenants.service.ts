@@ -26,6 +26,7 @@ export type GetAccessibleTenantResult = {
 
 /**
  * Product read API for tenants the principal can access (active membership).
+ * List is an unpaginated picker envelope (`{ data }`) with a soft safety cap in the repository.
  * No write operations.
  */
 @Injectable()

@@ -266,15 +266,17 @@ Security notes:
 
 ### 4.2 Tenants
 
-| Method  | Path                         | Auth                           | Permission                     | Idempotency  | Description                                     |
-| ------- | ---------------------------- | ------------------------------ | ------------------------------ | ------------ | ----------------------------------------------- |
-| `GET`   | `/api/v1/tenants`            | Bearer                         | membership / RLS (no code)     | —            | List tenants visible to caller (picker UX)      |
-| `POST`  | `/api/v1/tenants`            | Bearer (platform or bootstrap) | platform provision / bootstrap | **Required** | Create tenant + owner membership (**not open**) |
-| `GET`   | `/api/v1/tenants/{tenantId}` | Bearer + tenant + session bind | `tenant.read`                  | —            | Get bound tenant (`path` == `X-Tenant-Id`)      |
-| `PATCH` | `/api/v1/tenants/{tenantId}` | Bearer + tenant                | `tenant.manage`                | Recommended  | Update name/locale/timezone (**not open**)      |
-| `GET`   | `/api/v1/tenants/current`    | Bearer + tenant                | `tenant.read`                  | —            | Convenience: tenant from header (**not open**)  |
+| Method  | Path                         | Auth                           | Permission                     | Idempotency  | Description                                             |
+| ------- | ---------------------------- | ------------------------------ | ------------------------------ | ------------ | ------------------------------------------------------- |
+| `GET`   | `/api/v1/tenants`            | Bearer                         | membership / RLS (no code)     | —            | List tenants visible to caller (picker UX; unpaginated) |
+| `POST`  | `/api/v1/tenants`            | Bearer (platform or bootstrap) | platform provision / bootstrap | **Required** | Create tenant + owner membership (**not open**)         |
+| `GET`   | `/api/v1/tenants/{tenantId}` | Bearer + tenant + session bind | `tenant.read`                  | —            | Get bound tenant (`path` == `X-Tenant-Id`)              |
+| `PATCH` | `/api/v1/tenants/{tenantId}` | Bearer + tenant                | `tenant.manage`                | Recommended  | Update name/locale/timezone (**not open**)              |
+| `GET`   | `/api/v1/tenants/current`    | Bearer + tenant                | `tenant.read`                  | —            | Convenience: tenant from header (**not open**)          |
 
-**Implemented (P5 / P5b / P5c):** `GET /tenants` (membership list) and `GET /tenants/{tenantId}` (`tenant.read` + path/header/session match). Writes remain closed.
+**Picker list policy:** `GET /tenants` returns `{ data }` without `page` (low membership count per user). Soft-capped at 100 rows; cursor pagination is reserved for tenant-scoped catalogues (orgs/users/memberships), not this picker.
+
+**Implemented reads (P5–P13):** tenants, organizations, memberships, tenant-settings, users (list + get-by-id). Writes remain closed.
 
 `POST /tenants` body:
 
@@ -523,13 +525,13 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 
 ## 10. Open questions
 
-| ID  | Question                                          | Default                                                 |
-| --- | ------------------------------------------------- | ------------------------------------------------------- |
-| Q1  | Password login vs pure OIDC                       | Dual-ready login contract; prefer OIDC when chosen      |
-| Q2  | Refresh token transport                           | HttpOnly cookie for web; body token for native optional |
-| Q3  | Platform tenant-provisioning identity             | Platform operator token scheme TBD in security ADR      |
-| Q4  | Exact rate limit numbers                          | Deferred to ops freeze                                  |
-| Q5  | Whether `GET /users` includes invited-only emails | Include with status filter                              |
+| ID  | Question                                          | Default                                                                                         |
+| --- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Q1  | Password login vs pure OIDC                       | Dual-ready login contract; prefer OIDC when chosen                                              |
+| Q2  | Refresh token transport                           | HttpOnly cookie for web; body token for native optional                                         |
+| Q3  | Platform tenant-provisioning identity             | Platform operator token scheme TBD in security ADR                                              |
+| Q4  | Exact rate limit numbers                          | Deferred to ops freeze                                                                          |
+| Q5  | Whether `GET /users` includes invited-only emails | **Resolved (P12):** default = active membership; `?status=invited` includes invited memberships |
 
 ---
 
@@ -555,9 +557,9 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 **Status:** **API Contract Freeze v1.0 — Identity & Tenant Slice** (solo-operator).
 
 > Honesty: OpenAPI remains the design baseline. Platform AuthN under `/api/v1/auth/*` and
-> membership-scoped tenant reads (`GET /tenants`, `GET /tenants/{id}` with `tenant.read`) are
-> implemented. Remaining OpenAPI product paths (tenant CRUD writes, invites, role-admin) stay
-> **implementation-gated** and are not auto-opened by Freeze acceptance.
+> product **read** routes (tenants through users, P5–P12) are implemented with session bind +
+> `RequirePermission` where required. Writes, entitlements, roles-admin, and invites remain
+> **implementation-gated**. Solo-operator freeze ≠ independent peer review.
 
 ---
 
@@ -568,3 +570,5 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 | 1.0     | 2026-07-14 | Initial Identity & Tenant API Contract Freeze proposal                                          |
 | 1.1     | 2026-07-16 | Freeze v1.0 accepted under solo-operator consolidation (SOLO-GOV-001); approval block completed |
 | 1.2     | 2026-07-16 | OpenAPI amend: `GET /tenants` list + get-by-id AuthZ notes (IMP-001 P5d)                        |
+| 1.3     | 2026-07-20 | P10 OpenAPI P8 filters + session bind; P11/P12 users list/get honesty (AUDIT-R4 Medium)         |
+| 1.4     | 2026-07-20 | Tenants picker list policy (unpaginated + soft cap); shared ILIKE helper (P13)                  |

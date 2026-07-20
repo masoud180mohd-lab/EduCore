@@ -50,9 +50,9 @@ ADR-012 remains historical and is **superseded for sequencing** of this slice.
 ## Residual risks (honest)
 
 - Solo-operator signatures lack independent peer challenge — accept consciously.
-- Live isolation matrix T1–T8 product completeness remains partial.
+- Live isolation matrix T1–T8 product completeness remains partial (P10 added org/settings + HTTP matrix; not full entitlements/roles).
 - MFA / production IdP / session admin revoke not done.
-- `RequirePermission` not yet on business routes (P4b bind is ready).
+- Product **read** routes use `RequirePermission` + session bind (P5–P12); **writes** remain closed.
 - Physical Drive-sync workspace relocation remains operator-owned if still open.
 
 ## Sign-off

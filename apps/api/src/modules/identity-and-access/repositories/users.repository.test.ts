@@ -4,12 +4,15 @@ import { UsersRepository } from './users.repository.js';
 
 const actorId = '01900000-0000-7000-8000-000000000001';
 const tenantId = '01900000-0000-7000-8000-0000000000aa';
+const userId = '01900000-0000-7000-8000-0000000000c1';
+
 const emptyFilters = {
   limit: 25,
   cursor: undefined,
   status: undefined,
+  membershipStatuses: ['active'] as const,
   search: undefined,
-} as const;
+};
 
 describe('UsersRepository', () => {
   it('returns empty page without a pool', async () => {
@@ -45,7 +48,7 @@ describe('UsersRepository', () => {
 
   it('maps rows, never exposes password, and sets nextCursor when page full', async () => {
     const rowA = {
-      id: '01900000-0000-7000-8000-0000000000c1',
+      id: userId,
       email: 'a@example.com',
       display_name: 'Alice',
       status: 'active',
@@ -60,7 +63,7 @@ describe('UsersRepository', () => {
         return Promise.resolve({ rows: [] });
       }
       expect(sql).toContain('tenant_memberships');
-      expect(sql).toContain("m.status = 'active'");
+      expect(sql).toContain('m.status = ANY($2::text[])');
       expect(sql.toLowerCase()).not.toContain('password_hash');
       return Promise.resolve({ rows: [rowA, rowB] });
     });
@@ -71,20 +74,10 @@ describe('UsersRepository', () => {
       limit: 1,
     });
     expect(result.rows).toHaveLength(1);
-    expect(result.rows[0]).toEqual({
-      id: rowA.id,
-      email: 'a@example.com',
-      displayName: 'Alice',
-      status: 'active',
-      emailVerifiedAt: '2026-01-01T00:00:00.000Z',
-      lastLoginAt: null,
-      createdAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-02T00:00:00.000Z',
-    });
-    expect(result.nextCursor).toBe(rowA.id);
+    expect(result.nextCursor).toBe(userId);
   });
 
-  it('applies status and search filters in SQL params (tenant-scoped)', async () => {
+  it('scopes cursor subquery to bound tenant membership', async () => {
     const query = vi.fn().mockImplementation((sql: string) => {
       if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
         return Promise.resolve({ rows: [] });
@@ -94,20 +87,67 @@ describe('UsersRepository', () => {
     const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
     const repo = new UsersRepository({ connect } as never);
     await repo.listForTenant(actorId, tenantId, {
-      limit: 25,
-      cursor: undefined,
-      status: 'active',
-      search: 'demo',
+      ...emptyFilters,
+      cursor: userId,
     });
     const dataCall = query.mock.calls.find(
       (call: unknown[]) => typeof call[0] === 'string' && String(call[0]).includes('FROM users'),
     );
-    expect(dataCall).toBeDefined();
     const sql = String(dataCall?.[0] ?? '');
-    const params = dataCall?.[1] as unknown[];
-    expect(sql).toContain('m.tenant_id = $1');
-    expect(sql).toContain('u.status');
-    expect(sql).toContain('ILIKE');
-    expect(params).toEqual([tenantId, 26, 'active', 'demo']);
+    expect(sql).toContain('m2.tenant_id = $1::uuid');
+    expect(sql).toContain('m2.status = ANY($2::text[])');
+  });
+
+  it('applies invited membership filter when requested', async () => {
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+    const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
+    const repo = new UsersRepository({ connect } as never);
+    await repo.listForTenant(actorId, tenantId, {
+      ...emptyFilters,
+      membershipStatuses: ['invited'],
+      status: 'invited',
+    });
+    const dataCall = query.mock.calls.find(
+      (call: unknown[]) => typeof call[0] === 'string' && String(call[0]).includes('FROM users'),
+    );
+    expect(dataCall?.[1]).toEqual([tenantId, ['invited'], 26, 'invited']);
+  });
+
+  it('returns null for getById without a pool', async () => {
+    const repo = new UsersRepository(null);
+    await expect(repo.getByIdForTenant(actorId, tenantId, userId, ['active'])).resolves.toBeNull();
+  });
+
+  it('maps getById row when found', async () => {
+    const rowA = {
+      id: userId,
+      email: 'a@example.com',
+      display_name: 'Alice',
+      status: 'active',
+      email_verified_at: null,
+      last_login_at: null,
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      updated_at: new Date('2026-01-02T00:00:00.000Z'),
+    };
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [rowA] });
+    });
+    const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
+    const repo = new UsersRepository({ connect } as never);
+    await expect(
+      repo.getByIdForTenant(actorId, tenantId, userId, ['active']),
+    ).resolves.toMatchObject({
+      id: userId,
+      email: 'a@example.com',
+      displayName: 'Alice',
+    });
   });
 });

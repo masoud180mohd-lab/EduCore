@@ -132,6 +132,20 @@ describe('MembershipsService.listForTenant', () => {
     });
   });
 
+  it('rejects invalid cursor uuid', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      listForTenant: vi.fn(),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(
+      service.listForTenant(userId, tenantId, { cursor: 'bad-cursor' }),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+    });
+    expect(memberships.listForTenant).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid userId filter', async () => {
     const memberships = {
       isAvailable: () => true,

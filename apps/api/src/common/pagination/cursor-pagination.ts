@@ -1,4 +1,5 @@
 import { AppError } from '../errors/app-error.js';
+import { isUuid } from '../tenant/tenant-context.js';
 
 export const PAGINATION_DEFAULT_LIMIT = 25;
 export const PAGINATION_MIN_LIMIT = 1;
@@ -57,11 +58,15 @@ function parseCursor(raw: unknown): string | undefined {
   if (trimmed.length > 512) {
     throw AppError.validation('cursor is too long.');
   }
-  return trimmed;
+  // Product lists use last-row id as opaque cursor (uuid keyset).
+  if (!isUuid(trimmed)) {
+    throw AppError.validation('cursor must be a valid UUID.', { field: 'cursor' });
+  }
+  return trimmed.toLowerCase();
 }
 
 /**
- * Parse ACF-001 list query: limit (1–100, default 25) + optional opaque cursor.
+ * Parse ACF-001 list query: limit (1–100, default 25) + optional cursor (uuid).
  */
 export function parsePaginationQuery(query: {
   readonly limit?: unknown;

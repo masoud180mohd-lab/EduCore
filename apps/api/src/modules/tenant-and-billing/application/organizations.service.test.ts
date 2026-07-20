@@ -135,6 +135,20 @@ describe('OrganizationsService.listForTenant', () => {
     });
   });
 
+  it('rejects invalid cursor uuid', async () => {
+    const organizations = {
+      isAvailable: () => true,
+      listForTenant: vi.fn(),
+    };
+    const service = new OrganizationsService(organizations as never);
+    await expect(
+      service.listForTenant(userId, tenantId, { cursor: 'bad-cursor' }),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+    });
+    expect(organizations.listForTenant).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid orgType filter', async () => {
     const organizations = {
       isAvailable: () => true,

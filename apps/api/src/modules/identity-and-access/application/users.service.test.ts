@@ -31,6 +31,7 @@ describe('UsersService.listForTenant', () => {
       limit: 25,
       cursor: undefined,
       status: undefined,
+      membershipStatuses: ['active'],
       search: undefined,
     });
   });
@@ -93,7 +94,61 @@ describe('UsersService.listForTenant', () => {
       limit: 10,
       cursor: userA.id,
       status: 'active',
+      membershipStatuses: ['active'],
       search: 'a\\%b\\_c',
+    });
+  });
+
+  it('rejects invalid cursor uuid', async () => {
+    const users = { isAvailable: () => true, listForTenant: vi.fn() };
+    const service = new UsersService(users as never);
+    await expect(
+      service.listForTenant(actorId, tenantId, { cursor: 'not-a-uuid' }),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+    });
+    expect(users.listForTenant).not.toHaveBeenCalled();
+  });
+
+  it('uses invited membership filter when status=invited (ACF Q5)', async () => {
+    const users = {
+      isAvailable: () => true,
+      listForTenant: vi.fn().mockResolvedValue({ rows: [], nextCursor: null }),
+    };
+    const service = new UsersService(users as never);
+    await service.listForTenant(actorId, tenantId, { status: 'invited' });
+    expect(users.listForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      expect.objectContaining({
+        status: 'invited',
+        membershipStatuses: ['invited'],
+      }),
+    );
+  });
+});
+
+describe('UsersService.getForTenant', () => {
+  it('returns user envelope when repository finds row', async () => {
+    const users = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(userA),
+    };
+    const service = new UsersService(users as never);
+    await expect(service.getForTenant(actorId, tenantId, userA.id)).resolves.toEqual({
+      data: userA,
+    });
+    expect(users.getByIdForTenant).toHaveBeenCalledWith(actorId, tenantId, userA.id, ['active']);
+  });
+
+  it('returns 404 when user not visible', async () => {
+    const users = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new UsersService(users as never);
+    await expect(service.getForTenant(actorId, tenantId, userA.id)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
     });
   });
 });

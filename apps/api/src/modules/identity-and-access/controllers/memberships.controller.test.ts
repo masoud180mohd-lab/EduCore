@@ -44,10 +44,11 @@ describe('MembershipsController', () => {
       [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
       [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
     };
-    await controller.list(request as never, '10', 'cursor-id', 'active', userId);
+    const cursorId = '01900000-0000-7000-8000-0000000000b1';
+    await controller.list(request as never, '10', cursorId, 'active', userId);
     expect(membershipsService.listForTenant).toHaveBeenCalledWith(userId, tenantId, {
       limit: '10',
-      cursor: 'cursor-id',
+      cursor: cursorId,
       status: 'active',
       userId,
     });

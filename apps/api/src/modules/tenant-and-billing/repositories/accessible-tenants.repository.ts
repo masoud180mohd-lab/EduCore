@@ -8,9 +8,16 @@ import type { Pool } from 'pg';
 import { logFailClosedDbError } from '../../../common/logging/fail-closed-log.js';
 import type { AppLogger } from '../../../common/logging/logger.js';
 import { APP_LOGGER } from '../../../common/logging/logger.tokens.js';
+import { PAGINATION_MAX_LIMIT } from '../../../common/pagination/index.js';
 import { PG_POOL } from '../../../common/persistence/pg.tokens.js';
 import { withUserRlsTransaction } from '../../../common/persistence/user-rls-transaction.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
+
+/**
+ * Soft safety cap for the unpaginated picker list (AUDIT-R4 Low).
+ * Same ceiling as paginated lists; picker UX is expected to stay far below this.
+ */
+export const ACCESSIBLE_TENANTS_LIST_CAP = PAGINATION_MAX_LIMIT;
 
 export type AccessibleTenantRow = {
   readonly id: string;
@@ -36,6 +43,8 @@ export class AccessibleTenantsRepository {
 
   /**
    * Returns tenants the user may see under RLS (active membership via can_see_tenant).
+   * Intentionally unpaginated envelope (`{ data }`) for post-login picker UX.
+   * Soft-capped at {@link ACCESSIBLE_TENANTS_LIST_CAP}; truncates with a warn if exceeded.
    * Fail-closed: invalid user / no pool / errors → empty list (warn on DB errors).
    */
   async listAccessibleTenants(userId: string): Promise<ReadonlyArray<AccessibleTenantRow>> {
@@ -58,9 +67,22 @@ export class AccessibleTenantsRepository {
           `SELECT t.id, t.code, t.name, t.status, t.primary_locale, t.timezone,
                   t.created_at, t.updated_at
            FROM tenants t
-           ORDER BY t.code ASC`,
+           ORDER BY t.code ASC
+           LIMIT $1`,
+          [ACCESSIBLE_TENANTS_LIST_CAP + 1],
         );
-        return result.rows.map((row) => mapTenantRow(row));
+        const truncated = result.rows.length > ACCESSIBLE_TENANTS_LIST_CAP;
+        const pageRows = truncated
+          ? result.rows.slice(0, ACCESSIBLE_TENANTS_LIST_CAP)
+          : result.rows;
+        if (truncated) {
+          this.logger?.warn('AccessibleTenantsRepository.listAccessibleTenants truncated', {
+            component: 'AccessibleTenantsRepository',
+            operation: 'listAccessibleTenants',
+            cap: ACCESSIBLE_TENANTS_LIST_CAP,
+          });
+        }
+        return pageRows.map((row) => mapTenantRow(row));
       });
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'AccessibleTenantsRepository', error, {

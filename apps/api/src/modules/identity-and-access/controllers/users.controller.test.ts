@@ -44,10 +44,11 @@ describe('UsersController', () => {
       [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
       [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
     };
-    await controller.list(request as never, '10', 'cursor-id', 'active', 'alice');
+    const cursorId = '01900000-0000-7000-8000-0000000000c1';
+    await controller.list(request as never, '10', cursorId, 'active', 'alice');
     expect(usersService.listForTenant).toHaveBeenCalledWith(userId, tenantId, {
       limit: '10',
-      cursor: 'cursor-id',
+      cursor: cursorId,
       status: 'active',
       search: 'alice',
     });
@@ -78,11 +79,30 @@ describe('UsersController', () => {
   });
 
   it('documents read-only surface (no write methods on controller)', () => {
-    // Structure: controller must not register write methods.
     const proto = UsersController.prototype as unknown as Record<string, unknown>;
     expect(typeof proto['list']).toBe('function');
+    expect(typeof proto['getById']).toBe('function');
     expect(proto['create']).toBeUndefined();
     expect(proto['update']).toBeUndefined();
     expect(proto['remove']).toBeUndefined();
+  });
+
+  it('gets user by id for bound tenant', async () => {
+    const targetId = '01900000-0000-7000-8000-0000000000c1';
+    const usersService = {
+      getForTenant: vi.fn().mockResolvedValue({
+        data: { id: targetId, email: 'a@x.com', displayName: 'A', status: 'active' },
+      }),
+    };
+    const controller = new UsersController(usersService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const result = await controller.getById(request as never, targetId);
+    expect(usersService.getForTenant).toHaveBeenCalledWith(userId, tenantId, targetId);
+    expect(result).toEqual({
+      data: { id: targetId, email: 'a@x.com', displayName: 'A', status: 'active' },
+    });
   });
 });

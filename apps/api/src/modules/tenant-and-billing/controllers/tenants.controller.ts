@@ -17,7 +17,7 @@ type AuthedRequest = Request & {
 /**
  * Product tenants surface (solo operator / product read increments).
  *
- * GET  /api/v1/tenants         — list (auth + membership/RLS; picker UX, no tenant.read).
+ * GET  /api/v1/tenants         — list (auth + membership/RLS; picker UX, unpaginated, soft cap).
  * GET  /api/v1/tenants/current — current tenant (auth + X-Tenant-Id + session bind + tenant.read).
  * GET  /api/v1/tenants/:id     — detail (auth + X-Tenant-Id + session bind + tenant.read).
  * No POST/PATCH/DELETE (create/update/delete remain closed).
