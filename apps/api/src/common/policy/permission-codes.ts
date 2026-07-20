@@ -1,6 +1,6 @@
 /**
  * Permission codes from DBF/ACF seed catalogues.
- * Keep in sync with permissions seed migrations (DBF-001 + DBF-002 students).
+ * Keep in sync with permissions seed migrations (DBF-001..003).
  */
 export const PERMISSION_CODES = [
   'tenant.read',
@@ -18,6 +18,7 @@ export const PERMISSION_CODES = [
   'entitlement.manage',
   'student.read',
   'student.manage',
+  'academic.read',
 ] as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[number];

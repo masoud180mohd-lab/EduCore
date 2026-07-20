@@ -28,6 +28,7 @@ describe('system role matrices (IMP-001 P4)', () => {
     const staff = permissionsForSystemRole('staff');
     expect(staff).toContain('tenant.read');
     expect(staff).toContain('student.read');
+    expect(staff).toContain('academic.read');
     expect(staff).not.toContain('student.manage');
     expect(staff).not.toContain('tenant.manage');
     expect(staff).not.toContain('user.manage');
