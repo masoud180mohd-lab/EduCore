@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { DatabaseModule } from '../../common/persistence/index.js';
+import { PlatformOperationsModule } from '../platform-operations/index.js';
 import { OrganizationsService } from './application/organizations.service.js';
 import { TenantAndBillingApplicationService } from './application/tenant-and-billing.application-service.js';
 import { TenantSettingsService } from './application/tenant-settings.service.js';
@@ -19,10 +20,10 @@ import { TenantSettingsRepository } from './repositories/tenant-settings.reposit
 
 /**
  * Bounded context: Tenant And Billing.
- * Product reads: tenants, organizations list, tenant settings. Writes remain closed under ADR-012.
+ * Product reads + gated P14 PUT tenant-settings. Other product writes stay closed.
  */
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, PlatformOperationsModule],
   controllers: [
     TenantAndBillingController,
     TenantsController,

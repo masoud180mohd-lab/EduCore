@@ -1,6 +1,7 @@
 /**
- * Read path: tenant settings document for the bound tenant (RLS Pattern A).
- * No put/replace — product read increments only.
+ * Tenant settings document (RLS Pattern A).
+ * Read: direct SELECT under withTenantTransaction.
+ * Write (P14): SECURITY DEFINER app.replace_tenant_settings (educore_app has no INSERT/UPDATE).
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -67,6 +68,55 @@ export class TenantSettingsRepository {
         operation: 'getForTenant',
       });
       return null;
+    }
+  }
+
+  /**
+   * Replace (UPSERT) settings via SECURITY DEFINER helper.
+   * Returns null when pool unavailable or DB error (caller maps).
+   */
+  async replaceForTenant(
+    actorUserId: string,
+    tenantId: string,
+    schemaVersion: number,
+    settings: Readonly<Record<string, unknown>>,
+  ): Promise<TenantSettingsRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            schema_version: number;
+            settings: unknown;
+            updated_at: Date;
+          }>(
+            `SELECT schema_version, settings, updated_at
+             FROM app.replace_tenant_settings(
+               $1::uuid, $2::uuid, $3::integer, $4::jsonb
+             )`,
+            [actorUserId, tenantId, schemaVersion, JSON.stringify(settings)],
+          );
+          const row = result.rows[0];
+          if (row === undefined) {
+            return null;
+          }
+          return {
+            schemaVersion: row.schema_version,
+            settings: asSettingsObject(row.settings),
+            updatedAt: new Date(row.updated_at).toISOString(),
+          };
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'TenantSettingsRepository', error, {
+        operation: 'replaceForTenant',
+      });
+      throw error;
     }
   }
 }

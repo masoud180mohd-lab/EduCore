@@ -126,4 +126,37 @@ describe('OrganizationsController', () => {
     });
     expect(organizationsService.getForTenant).not.toHaveBeenCalled();
   });
+
+  it('creates organization for bound tenant', async () => {
+    const organizationsService = {
+      createForTenant: vi.fn().mockResolvedValue({
+        data: { id: 'o1', name: 'School A', status: 'active' },
+      }),
+    };
+    const controller = new OrganizationsController(organizationsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const body = { orgType: 'school', name: 'School A' };
+    const result = await controller.create(request as never, body, 'idem-key-abcdefghijkl');
+    expect(organizationsService.createForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      body,
+      'idem-key-abcdefghijkl',
+      'unknown',
+    );
+    expect(result).toEqual({ data: { id: 'o1', name: 'School A', status: 'active' } });
+  });
+
+  it('documents list + create + getById only (no patch/deactivate)', () => {
+    const proto = OrganizationsController.prototype as unknown as Record<string, unknown>;
+    expect(typeof proto['list']).toBe('function');
+    expect(typeof proto['create']).toBe('function');
+    expect(typeof proto['getById']).toBe('function');
+    expect(proto['update']).toBeUndefined();
+    expect(proto['patch']).toBeUndefined();
+    expect(proto['deactivate']).toBeUndefined();
+  });
 });

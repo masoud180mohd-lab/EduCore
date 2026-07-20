@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { InMemoryIdempotencyStore } from '../../../common/idempotency/index.js';
+import { InMemoryAuditPublisher } from '../../platform-operations/index.js';
 import { UsersService } from './users.service.js';
 
 const actorId = '01900000-0000-7000-8000-000000000001';
@@ -15,13 +17,29 @@ const userA = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
+const policyAllowManage = {
+  hasPermission: vi.fn().mockResolvedValue(true),
+};
+const policyDenyManage = {
+  hasPermission: vi.fn().mockResolvedValue(false),
+};
+
+function makeService(
+  users: unknown,
+  policy: unknown = policyAllowManage,
+  idempotency: unknown = null,
+  audit: unknown = null,
+): UsersService {
+  return new UsersService(users as never, policy as never, idempotency as never, audit as never);
+}
+
 describe('UsersService.listForTenant', () => {
   it('returns paginated users from repository', async () => {
     const users = {
       isAvailable: () => true,
       listForTenant: vi.fn().mockResolvedValue({ rows: [userA], nextCursor: null }),
     };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     const result = await service.listForTenant(actorId, tenantId, {});
     expect(result).toEqual({
       data: [userA],
@@ -41,7 +59,7 @@ describe('UsersService.listForTenant', () => {
       isAvailable: () => false,
       listForTenant: vi.fn(),
     };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(service.listForTenant(actorId, tenantId, {})).resolves.toEqual({
       data: [],
       page: { nextCursor: null, limit: 25 },
@@ -51,7 +69,7 @@ describe('UsersService.listForTenant', () => {
 
   it('rejects non-uuid actor', async () => {
     const users = { isAvailable: () => true, listForTenant: vi.fn() };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(service.listForTenant('bad', tenantId, {})).rejects.toMatchObject({
       code: 'UNAUTHORIZED',
     });
@@ -59,7 +77,7 @@ describe('UsersService.listForTenant', () => {
 
   it('rejects invalid status filter', async () => {
     const users = { isAvailable: () => true, listForTenant: vi.fn() };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(
       service.listForTenant(actorId, tenantId, { status: 'suspended' }),
     ).rejects.toMatchObject({
@@ -69,7 +87,7 @@ describe('UsersService.listForTenant', () => {
 
   it('rejects search that is too long', async () => {
     const users = { isAvailable: () => true, listForTenant: vi.fn() };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(
       service.listForTenant(actorId, tenantId, { search: 'x'.repeat(101) }),
     ).rejects.toMatchObject({
@@ -82,7 +100,7 @@ describe('UsersService.listForTenant', () => {
       isAvailable: () => true,
       listForTenant: vi.fn().mockResolvedValue({ rows: [userA], nextCursor: userA.id }),
     };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     const result = await service.listForTenant(actorId, tenantId, {
       limit: '10',
       cursor: userA.id,
@@ -101,7 +119,7 @@ describe('UsersService.listForTenant', () => {
 
   it('rejects invalid cursor uuid', async () => {
     const users = { isAvailable: () => true, listForTenant: vi.fn() };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(
       service.listForTenant(actorId, tenantId, { cursor: 'not-a-uuid' }),
     ).rejects.toMatchObject({
@@ -115,7 +133,7 @@ describe('UsersService.listForTenant', () => {
       isAvailable: () => true,
       listForTenant: vi.fn().mockResolvedValue({ rows: [], nextCursor: null }),
     };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await service.listForTenant(actorId, tenantId, { status: 'invited' });
     expect(users.listForTenant).toHaveBeenCalledWith(
       actorId,
@@ -134,7 +152,7 @@ describe('UsersService.getForTenant', () => {
       isAvailable: () => true,
       getByIdForTenant: vi.fn().mockResolvedValue(userA),
     };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(service.getForTenant(actorId, tenantId, userA.id)).resolves.toEqual({
       data: userA,
     });
@@ -146,7 +164,7 @@ describe('UsersService.getForTenant', () => {
       isAvailable: () => true,
       getByIdForTenant: vi.fn().mockResolvedValue(null),
     };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(service.getForTenant(actorId, tenantId, userA.id)).rejects.toMatchObject({
       code: 'NOT_FOUND',
     });
@@ -158,7 +176,7 @@ describe('UsersService.getForTenant', () => {
       isAvailable: () => true,
       getByIdForTenant: vi.fn().mockResolvedValue(null),
     };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(service.getForTenant(actorId, tenantId, unknownId)).rejects.toMatchObject({
       code: 'NOT_FOUND',
     });
@@ -170,7 +188,7 @@ describe('UsersService.getForTenant', () => {
       isAvailable: () => true,
       getByIdForTenant: vi.fn(),
     };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(service.getForTenant(actorId, tenantId, 'not-a-uuid')).rejects.toMatchObject({
       code: 'NOT_FOUND',
     });
@@ -182,7 +200,7 @@ describe('UsersService.getForTenant', () => {
       isAvailable: () => false,
       getByIdForTenant: vi.fn(),
     };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(service.getForTenant(actorId, tenantId, userA.id)).rejects.toMatchObject({
       code: 'NOT_FOUND',
     });
@@ -191,9 +209,104 @@ describe('UsersService.getForTenant', () => {
 
   it('rejects non-uuid actor', async () => {
     const users = { isAvailable: () => true, getByIdForTenant: vi.fn() };
-    const service = new UsersService(users as never);
+    const service = makeService(users);
     await expect(service.getForTenant('bad', tenantId, userA.id)).rejects.toMatchObject({
       code: 'UNAUTHORIZED',
     });
+  });
+});
+
+describe('UsersService.patchForTenant', () => {
+  const corr = 'corr-user-1';
+  const updated = { ...userA, displayName: 'Alice Updated' };
+
+  it('allows self patch without user.manage', async () => {
+    const users = {
+      isAvailable: () => true,
+      updateDisplayNameForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = makeService(users, policyDenyManage, null, audit);
+    await expect(
+      service.patchForTenant(
+        userA.id,
+        tenantId,
+        userA.id,
+        { displayName: 'Alice Updated' },
+        undefined,
+        corr,
+      ),
+    ).resolves.toEqual({ data: updated });
+    expect(policyDenyManage.hasPermission).not.toHaveBeenCalled();
+    expect(audit.events[0]).toMatchObject({ action: 'user.patch', outcome: 'success' });
+  });
+
+  it('allows manage patch of other user', async () => {
+    const users = {
+      isAvailable: () => true,
+      updateDisplayNameForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const service = makeService(users, policyAllowManage);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        userA.id,
+        { displayName: 'Alice Updated' },
+        undefined,
+        corr,
+      ),
+    ).resolves.toEqual({ data: updated });
+    expect(policyAllowManage.hasPermission).toHaveBeenCalledWith(actorId, tenantId, 'user.manage');
+  });
+
+  it('forbids other user without user.manage', async () => {
+    const users = { isAvailable: () => true, updateDisplayNameForTenant: vi.fn() };
+    const service = makeService(users, policyDenyManage);
+    await expect(
+      service.patchForTenant(actorId, tenantId, userA.id, { displayName: 'X' }, undefined, corr),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(users.updateDisplayNameForTenant).not.toHaveBeenCalled();
+  });
+
+  it('rejects status field on PATCH', async () => {
+    const users = { isAvailable: () => true, updateDisplayNameForTenant: vi.fn() };
+    const service = makeService(users);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        userA.id,
+        { displayName: 'X', status: 'disabled' },
+        undefined,
+        corr,
+      ),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+
+  it('returns 404 when target not visible', async () => {
+    const users = {
+      isAvailable: () => true,
+      updateDisplayNameForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = makeService(users);
+    await expect(
+      service.patchForTenant(actorId, tenantId, userA.id, { displayName: 'X' }, undefined, corr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('replays optional idempotency key', async () => {
+    const users = {
+      isAvailable: () => true,
+      updateDisplayNameForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const store = new InMemoryIdempotencyStore();
+    const service = makeService(users, policyAllowManage, store);
+    const key = 'idem-key-user-patch-000001';
+    const body = { displayName: 'Alice Updated' };
+    const first = await service.patchForTenant(actorId, tenantId, userA.id, body, key, corr);
+    const second = await service.patchForTenant(actorId, tenantId, userA.id, body, key, corr);
+    expect(first).toEqual(second);
+    expect(users.updateDisplayNameForTenant).toHaveBeenCalledOnce();
   });
 });

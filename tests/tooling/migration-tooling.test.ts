@@ -61,4 +61,26 @@ describe('IMP-001 migration tooling', () => {
     expect(gate).toContain('CONDITIONAL GO');
     expect(gate).toContain('P0');
   });
+
+  it('ships P14/P15 product write SECURITY DEFINER helpers', () => {
+    const up = read('apps/api/db/migrations/20260720140000_product_write_helpers.up.sql');
+    expect(up).toContain('app.replace_tenant_settings');
+    expect(up).toContain('app.invite_tenant_membership');
+    expect(up).toContain('app.assign_system_role_codes');
+    expect(up).toMatch(/SECURITY DEFINER/i);
+    expect(up).toContain('GRANT EXECUTE');
+    const down = read('apps/api/db/migrations/20260720140000_product_write_helpers.down.sql');
+    expect(down).toContain('DROP FUNCTION');
+  });
+
+  it('ships P16/P17 org create + user displayName helpers', () => {
+    const up = read('apps/api/db/migrations/20260720150000_org_create_user_patch_helpers.up.sql');
+    expect(up).toContain('app.create_organization');
+    expect(up).toContain('app.update_user_display_name');
+    expect(up).toMatch(/SECURITY DEFINER/i);
+    const down = read(
+      'apps/api/db/migrations/20260720150000_org_create_user_patch_helpers.down.sql',
+    );
+    expect(down).toContain('DROP FUNCTION');
+  });
 });

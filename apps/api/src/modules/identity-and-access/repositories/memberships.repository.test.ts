@@ -168,4 +168,51 @@ describe('MembershipsRepository', () => {
       status: 'active',
     });
   });
+
+  it('inviteForTenant calls SECURITY DEFINER helper and maps row', async () => {
+    const membershipId = '01900000-0000-7000-8000-0000000000b2';
+    const newUserId = '01900000-0000-7000-8000-0000000000c9';
+    const rowA = {
+      id: membershipId,
+      tenant_id: tenantId,
+      user_id: newUserId,
+      status: 'invited',
+      joined_at: null,
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      updated_at: new Date('2026-01-01T00:00:00.000Z'),
+    };
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      if (String(sql).includes('app.invite_tenant_membership')) {
+        return Promise.resolve({ rows: [rowA] });
+      }
+      if (String(sql).includes('app.assign_system_role_codes')) {
+        return Promise.resolve({ rows: [{ assign_system_role_codes: 1 }] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+    const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
+    const repo = new MembershipsRepository({ connect } as never);
+    await expect(
+      repo.inviteForTenant(userId, tenantId, {
+        membershipId,
+        newUserId,
+        email: 'teacher@example.com',
+        displayName: 'Asha',
+        roleCodes: ['staff'],
+      }),
+    ).resolves.toMatchObject({
+      id: membershipId,
+      status: 'invited',
+      userId: newUserId,
+    });
+    expect(
+      query.mock.calls.some((c) => String(c[0]).includes('app.invite_tenant_membership')),
+    ).toBe(true);
+    expect(
+      query.mock.calls.some((c) => String(c[0]).includes('app.assign_system_role_codes')),
+    ).toBe(true);
+  });
 });

@@ -3145,6 +3145,7 @@ components:
           $ref: '#/components/schemas/IsoDateTime'
         expiresAt:
           $ref: '#/components/schemas/IsoDateTime'
+  # Note: student.read is catalogued under ACF-002 / DBF-002 (Student Registry list slice).
   x-permission-catalogue:
     description: DBF-001 / ACF-001 first-slice permission codes (seeded in DB)
     codes:

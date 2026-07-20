@@ -178,4 +178,37 @@ describe('OrganizationsRepository', () => {
       orgType: 'school',
     });
   });
+
+  it('createForTenant calls SECURITY DEFINER helper and maps row', async () => {
+    const orgId = '01900000-0000-7000-8000-0000000000a9';
+    const row = {
+      id: orgId,
+      tenant_id: tenantId,
+      org_type: 'school',
+      name: 'New School',
+      code: 'new',
+      status: 'active',
+      parent_organization_id: null,
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      updated_at: new Date('2026-01-01T00:00:00.000Z'),
+    };
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      expect(sql).toContain('app.create_organization');
+      return Promise.resolve({ rows: [row] });
+    });
+    const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
+    const repo = new OrganizationsRepository({ connect } as never);
+    await expect(
+      repo.createForTenant(userId, tenantId, {
+        id: orgId,
+        orgType: 'school',
+        name: 'New School',
+        code: 'new',
+        parentOrganizationId: undefined,
+      }),
+    ).resolves.toMatchObject({ id: orgId, name: 'New School', status: 'active' });
+  });
 });

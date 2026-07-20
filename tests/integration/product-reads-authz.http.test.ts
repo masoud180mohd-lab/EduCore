@@ -34,7 +34,18 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
 
   beforeAll(async () => {
     const permissionMap = new Map<string, ReadonlySet<string>>([
-      [`${userA}::${tenantA}`, new Set(['organization.read', 'user.read', 'tenant.read'])],
+      [
+        `${userA}::${tenantA}`,
+        new Set([
+          'organization.read',
+          'organization.manage',
+          'user.read',
+          'user.manage',
+          'tenant.read',
+          'tenant.manage',
+          'user.invite',
+        ]),
+      ],
     ]);
 
     const moduleRef = await Test.createTestingModule({
@@ -113,6 +124,105 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     expect(parseErrorBody(response.body).error?.code).toBe('FORBIDDEN');
   });
 
+  it('POST /api/v1/organizations returns 400 without Idempotency-Key when permitted', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/organizations',
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ orgType: 'school', name: 'S' }),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+  });
+
+  it('POST /api/v1/organizations returns 403 without organization.manage', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/organizations',
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-org-create01',
+      },
+      JSON.stringify({ orgType: 'school', name: 'S' }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('POST /api/v1/memberships returns 403 without user.invite', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/memberships',
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-membership01',
+      },
+      JSON.stringify({ email: 'x@example.com' }),
+    );
+    expect(response.statusCode).toBe(403);
+    expect(parseErrorBody(response.body).error?.code).toBe('FORBIDDEN');
+  });
+
+  it('POST /api/v1/memberships returns 400 without Idempotency-Key when permitted', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/memberships',
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ email: 'x@example.com' }),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+  });
+
+  it('PUT /api/v1/tenant-settings returns 403 without tenant.manage', async () => {
+    const response = await httpCall(
+      server,
+      'PUT',
+      '/api/v1/tenant-settings',
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ schemaVersion: 1, settings: {} }),
+    );
+    expect(response.statusCode).toBe(403);
+    expect(parseErrorBody(response.body).error?.code).toBe('FORBIDDEN');
+  });
+
+  it('PUT /api/v1/tenant-settings returns 403 on session/header mismatch', async () => {
+    const response = await httpCall(
+      server,
+      'PUT',
+      '/api/v1/tenant-settings',
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantB,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ schemaVersion: 1, settings: {} }),
+    );
+    expect(response.statusCode).toBe(403);
+    expect(parseErrorBody(response.body).error?.details?.['reason']).toBe(
+      'SESSION_TENANT_MISMATCH',
+    );
+  });
+
   it('GET /api/v1/organizations returns 200 when AuthZ passes', async () => {
     const response = await httpCall(server, 'GET', '/api/v1/organizations', {
       'authorization': harnessBearer(userA, tenantA),
@@ -144,6 +254,37 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     expect(parseErrorBody(response.body).error?.details?.['reason']).toBe(
       'SESSION_TENANT_MISMATCH',
     );
+  });
+
+  it('PATCH /api/v1/users/:id returns 403 for other user without user.manage', async () => {
+    const response = await httpCall(
+      server,
+      'PATCH',
+      `/api/v1/users/${userA}`,
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ displayName: 'Nope' }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('PATCH /api/v1/users/:id returns 400 when body includes status', async () => {
+    const response = await httpCall(
+      server,
+      'PATCH',
+      `/api/v1/users/${userA}`,
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ displayName: 'X', status: 'disabled' }),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('VALIDATION_ERROR');
   });
 
   it('GET /api/v1/users/:id returns 401 without bearer', async () => {
@@ -223,17 +364,30 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     expect(app.get(PERMISSION_SOURCE)).toBeInstanceOf(MembershipAwarePermissionSource);
   });
 
-  it('does not expose write routes on product controllers (structural via 404/405)', async () => {
-    const response = await httpCall(
+  it('does not expose non-gated writes (org PATCH/deactivate, user disable)', async () => {
+    const orgPatch = await httpCall(
+      server,
+      'PATCH',
+      `/api/v1/organizations/${tenantA}`,
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ name: 'x' }),
+    );
+    expect([404, 405]).toContain(orgPatch.statusCode);
+
+    const userDisable = await httpCall(
       server,
       'POST',
-      '/api/v1/organizations',
+      `/api/v1/users/${userA}/disable`,
       {
         'authorization': harnessBearer(userA, tenantA),
         'x-tenant-id': tenantA,
       },
-      JSON.stringify({ name: 'x', orgType: 'school' }),
+      JSON.stringify({}),
     );
-    expect([404, 405]).toContain(response.statusCode);
+    expect([404, 405]).toContain(userDisable.statusCode);
   });
 });

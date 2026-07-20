@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { InMemoryIdempotencyStore } from '../../../common/idempotency/index.js';
+import { InMemoryAuditPublisher } from '../../platform-operations/index.js';
 import { MembershipsService } from './memberships.service.js';
 
 const userId = '01900000-0000-7000-8000-000000000001';
@@ -178,5 +180,119 @@ describe('MembershipsService.listForTenant', () => {
       status: 'active',
       userId,
     });
+  });
+});
+
+describe('MembershipsService.inviteForTenant', () => {
+  const corr = 'corr-invite-1';
+  const invited = {
+    ...membershipA,
+    id: '01900000-0000-7000-8000-0000000000b9',
+    status: 'invited',
+    joinedAt: null,
+  };
+
+  it('requires Idempotency-Key', async () => {
+    const memberships = { isAvailable: () => true, inviteForTenant: vi.fn() };
+    const service = new MembershipsService(memberships as never);
+    await expect(
+      service.inviteForTenant(userId, tenantId, { email: 'a@example.com' }, undefined, corr),
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
+    expect(memberships.inviteForTenant).not.toHaveBeenCalled();
+  });
+
+  it('creates invite and audits success', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      inviteForTenant: vi.fn().mockResolvedValue(invited),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const store = new InMemoryIdempotencyStore();
+    const service = new MembershipsService(memberships as never, store, audit);
+    const key = 'idem-key-membership-invite01';
+    await expect(
+      service.inviteForTenant(
+        userId,
+        tenantId,
+        { email: 'teacher@example.com', displayName: 'Asha', roleCodes: ['staff'] },
+        key,
+        corr,
+      ),
+    ).resolves.toEqual({ data: invited });
+    expect(memberships.inviteForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      expect.objectContaining({
+        email: 'teacher@example.com',
+        displayName: 'Asha',
+        roleCodes: ['staff'],
+      }),
+    );
+    expect(audit.events[0]).toMatchObject({
+      action: 'membership.invite',
+      outcome: 'success',
+      resourceId: invited.id,
+    });
+  });
+
+  it('replays identical idempotent invite without re-writing', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      inviteForTenant: vi.fn().mockResolvedValue(invited),
+    };
+    const store = new InMemoryIdempotencyStore();
+    const service = new MembershipsService(memberships as never, store);
+    const key = 'idem-key-membership-invite02';
+    const body = { email: 'b@example.com' };
+    const first = await service.inviteForTenant(userId, tenantId, body, key, corr);
+    const second = await service.inviteForTenant(userId, tenantId, body, key, corr);
+    expect(first).toEqual(second);
+    expect(memberships.inviteForTenant).toHaveBeenCalledOnce();
+  });
+
+  it('conflicts when idempotency key reused with different body', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      inviteForTenant: vi.fn().mockResolvedValue(invited),
+    };
+    const store = new InMemoryIdempotencyStore();
+    const service = new MembershipsService(memberships as never, store);
+    const key = 'idem-key-membership-invite03';
+    await service.inviteForTenant(userId, tenantId, { email: 'c@example.com' }, key, corr);
+    await expect(
+      service.inviteForTenant(userId, tenantId, { email: 'd@example.com' }, key, corr),
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSE_MISMATCH' });
+  });
+
+  it('maps unique violation to CONFLICT', async () => {
+    const err = Object.assign(new Error('duplicate'), { code: '23505' });
+    const memberships = {
+      isAvailable: () => true,
+      inviteForTenant: vi.fn().mockRejectedValue(err),
+    };
+    const service = new MembershipsService(memberships as never, new InMemoryIdempotencyStore());
+    await expect(
+      service.inviteForTenant(
+        userId,
+        tenantId,
+        { email: 'e@example.com' },
+        'idem-key-membership-invite04',
+        corr,
+      ),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+  });
+
+  it('rejects invalid email', async () => {
+    const memberships = { isAvailable: () => true, inviteForTenant: vi.fn() };
+    const service = new MembershipsService(memberships as never);
+    await expect(
+      service.inviteForTenant(
+        userId,
+        tenantId,
+        { email: 'not-an-email' },
+        'idem-key-membership-invite05',
+        corr,
+      ),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 });

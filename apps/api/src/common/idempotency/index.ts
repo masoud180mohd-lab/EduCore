@@ -3,6 +3,7 @@ export {
   buildIdempotencyScopeKey,
   hashRequestBody,
   IDEMPOTENCY_KEY_HEADER,
+  IDEMPOTENCY_STORE,
   InMemoryIdempotencyStore,
   parseIdempotencyKey,
   resolveIdempotentReplay,

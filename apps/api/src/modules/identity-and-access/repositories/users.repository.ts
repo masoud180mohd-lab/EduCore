@@ -1,7 +1,7 @@
 /**
- * Read path: users visible in the bound tenant via tenant memberships (ACF 4.5 / Q5).
+ * Users visible in the bound tenant via tenant memberships (ACF 4.5 / Q5).
  * Never selects password_hash or other credential columns.
- * No create/update/delete — product read increments only.
+ * Patch (P17): SECURITY DEFINER app.update_user_display_name (displayName only).
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -203,6 +203,54 @@ export class UsersRepository {
         operation: 'getByIdForTenant',
       });
       return null;
+    }
+  }
+
+  /**
+   * Update display_name for a user visible via active membership in bound tenant.
+   * Returns null when not visible / missing (caller → 404).
+   */
+  async updateDisplayNameForTenant(
+    actorUserId: string,
+    tenantId: string,
+    targetUserId: string,
+    displayName: string,
+  ): Promise<UserRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(targetUserId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            email: string;
+            display_name: string;
+            status: string;
+            email_verified_at: Date | null;
+            last_login_at: Date | null;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, email::text AS email, display_name, status,
+                    email_verified_at, last_login_at, created_at, updated_at
+             FROM app.update_user_display_name(
+               $1::uuid, $2::uuid, $3::uuid, $4::text
+             )`,
+            [actorUserId, tenantId, targetUserId, displayName],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapUserRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'UsersRepository', error, {
+        operation: 'updateDisplayNameForTenant',
+      });
+      throw error;
     }
   }
 }

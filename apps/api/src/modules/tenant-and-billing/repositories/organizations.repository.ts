@@ -1,6 +1,6 @@
 /**
- * Read path: organizations visible in the bound tenant (RLS Pattern A).
- * No create/update/delete — product read increments only.
+ * Organizations (RLS Pattern A).
+ * Read: direct SELECT. Create (P16): SECURITY DEFINER app.create_organization.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -175,6 +175,71 @@ export class OrganizationsRepository {
         operation: 'getByIdForTenant',
       });
       return null;
+    }
+  }
+
+  /**
+   * Create organization via SECURITY DEFINER helper.
+   * Throws on unique violation (23505) and missing parent (P0002).
+   */
+  async createForTenant(
+    actorUserId: string,
+    tenantId: string,
+    input: {
+      readonly id: string;
+      readonly orgType: string;
+      readonly name: string;
+      readonly code: string | undefined;
+      readonly parentOrganizationId: string | undefined;
+    },
+  ): Promise<OrganizationRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(input.id) || this.pool === null) {
+      return null;
+    }
+    if (input.parentOrganizationId !== undefined && !isUuid(input.parentOrganizationId)) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            org_type: string;
+            name: string;
+            code: string | null;
+            status: string;
+            parent_organization_id: string | null;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, tenant_id, org_type, name, code, status,
+                    parent_organization_id, created_at, updated_at
+             FROM app.create_organization(
+               $1::uuid, $2::uuid, $3::uuid, $4::text, $5::text, $6::text, $7::uuid
+             )`,
+            [
+              actorUserId,
+              tenantId,
+              input.id,
+              input.orgType,
+              input.name,
+              input.code ?? null,
+              input.parentOrganizationId ?? null,
+            ],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapOrganizationRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'OrganizationsRepository', error, {
+        operation: 'createForTenant',
+      });
+      throw error;
     }
   }
 }

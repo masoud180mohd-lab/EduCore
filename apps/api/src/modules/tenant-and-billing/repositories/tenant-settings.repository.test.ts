@@ -69,4 +69,34 @@ describe('TenantSettingsRepository', () => {
     const repo = new TenantSettingsRepository({ connect } as never);
     await expect(repo.getForTenant(userId, tenantId)).resolves.toBeNull();
   });
+
+  it('replaceForTenant calls SECURITY DEFINER helper and maps row', async () => {
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      expect(sql).toContain('app.replace_tenant_settings');
+      return Promise.resolve({
+        rows: [
+          {
+            schema_version: 1,
+            settings: { locale: 'sw' },
+            updated_at: new Date('2026-01-03T00:00:00.000Z'),
+          },
+        ],
+      });
+    });
+    const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
+    const repo = new TenantSettingsRepository({ connect } as never);
+    await expect(repo.replaceForTenant(userId, tenantId, 1, { locale: 'sw' })).resolves.toEqual({
+      schemaVersion: 1,
+      settings: { locale: 'sw' },
+      updatedAt: '2026-01-03T00:00:00.000Z',
+    });
+  });
+
+  it('replaceForTenant returns null without a pool', async () => {
+    const repo = new TenantSettingsRepository(null);
+    await expect(repo.replaceForTenant(userId, tenantId, 1, {})).resolves.toBeNull();
+  });
 });

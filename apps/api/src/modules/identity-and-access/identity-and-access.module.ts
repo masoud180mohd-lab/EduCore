@@ -34,7 +34,8 @@ import { SessionRepository } from './repositories/session.repository.js';
 
 /**
  * Bounded context: Identity And Access.
- * P3 AuthN + P4 RBAC + membership/users list reads (no role-admin / user writes under ADR-012).
+ * P3 AuthN + P4 RBAC + membership/users reads + gated P15 invite + P17 user patch.
+ * Role-admin / suspend/remove / user disable remain closed.
  */
 @Global()
 @Module({

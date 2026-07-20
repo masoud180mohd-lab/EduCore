@@ -124,4 +124,50 @@ describe('MembershipsController', () => {
     });
     expect(membershipsService.getForTenant).not.toHaveBeenCalled();
   });
+
+  it('creates membership invite for bound tenant', async () => {
+    const membershipsService = {
+      inviteForTenant: vi.fn().mockResolvedValue({
+        data: { id: 'm1', userId, status: 'invited' },
+      }),
+    };
+    const controller = new MembershipsController(membershipsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const body = { email: 'teacher@example.com' };
+    const result = await controller.create(request as never, body, 'idem-key-abcdefghijkl');
+    expect(membershipsService.inviteForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      body,
+      'idem-key-abcdefghijkl',
+      'unknown',
+    );
+    expect(result).toEqual({ data: { id: 'm1', userId, status: 'invited' } });
+  });
+
+  it('rejects create when auth context is missing', async () => {
+    const membershipsService = { inviteForTenant: vi.fn() };
+    const controller = new MembershipsController(membershipsService as never);
+    await expect(
+      controller.create(
+        { [TENANT_CONTEXT_REQUEST_KEY]: { tenantId } } as never,
+        { email: 'a@x.com' },
+        'idem-key-abcdefghijkl',
+      ),
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    expect(membershipsService.inviteForTenant).not.toHaveBeenCalled();
+  });
+
+  it('documents list + create + getById only (no suspend/remove)', () => {
+    const proto = MembershipsController.prototype as unknown as Record<string, unknown>;
+    expect(typeof proto['list']).toBe('function');
+    expect(typeof proto['create']).toBe('function');
+    expect(typeof proto['getById']).toBe('function');
+    expect(proto['suspend']).toBeUndefined();
+    expect(proto['reactivate']).toBeUndefined();
+    expect(proto['remove']).toBeUndefined();
+  });
 });

@@ -7,6 +7,9 @@ const KEY_PATTERN = /^[\w.-]{16,128}$/;
 
 export const IDEMPOTENCY_KEY_HEADER = 'idempotency-key';
 
+/** Nest DI token for the process-local (or future Redis) idempotency store. */
+export const IDEMPOTENCY_STORE = Symbol('IDEMPOTENCY_STORE');
+
 export type IdempotencyScope = {
   readonly actorUserId: string;
   /** Tenant UUID, or the literal `platform` for platform-scoped mutations. */

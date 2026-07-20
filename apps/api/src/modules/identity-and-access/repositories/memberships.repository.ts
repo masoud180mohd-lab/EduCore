@@ -1,6 +1,7 @@
 /**
- * Read path: tenant memberships for the bound tenant (RLS Pattern A + own-row).
- * No invite/suspend/remove — product read increments only.
+ * Tenant memberships (RLS Pattern A + own-row).
+ * Read: direct SELECT under withTenantTransaction.
+ * Invite (P15): SECURITY DEFINER app.invite_tenant_membership (+ optional role assign).
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -158,6 +159,78 @@ export class MembershipsRepository {
         operation: 'getByIdForTenant',
       });
       return null;
+    }
+  }
+
+  /**
+   * Invite: find-or-create user + invited membership via SECURITY DEFINER.
+   * Throws on unique/conflict (23505) for service → 409.
+   */
+  async inviteForTenant(
+    actorUserId: string,
+    tenantId: string,
+    input: {
+      readonly membershipId: string;
+      readonly newUserId: string;
+      readonly email: string;
+      readonly displayName: string | undefined;
+      readonly roleCodes: ReadonlyArray<string>;
+    },
+  ): Promise<MembershipRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) {
+      return null;
+    }
+    if (!isUuid(input.membershipId) || !isUuid(input.newUserId)) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            user_id: string;
+            status: string;
+            joined_at: Date | null;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, tenant_id, user_id, status, joined_at, created_at, updated_at
+             FROM app.invite_tenant_membership(
+               $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::citext, $6::text
+             )`,
+            [
+              actorUserId,
+              tenantId,
+              input.membershipId,
+              input.newUserId,
+              input.email,
+              input.displayName ?? null,
+            ],
+          );
+          const row = result.rows[0];
+          if (row === undefined) {
+            return null;
+          }
+
+          if (input.roleCodes.length > 0) {
+            await client.query(
+              `SELECT app.assign_system_role_codes($1::uuid, $2::uuid, $3::uuid, $4::text[])`,
+              [actorUserId, tenantId, row.user_id, [...input.roleCodes]],
+            );
+          }
+
+          return mapMembershipRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'MembershipsRepository', error, {
+        operation: 'inviteForTenant',
+      });
+      throw error;
     }
   }
 }

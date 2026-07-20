@@ -24,6 +24,7 @@ import {
   TENANT_MEMBERSHIP_CHECKER,
 } from '../tenant/index.js';
 import type { TenantMembershipChecker } from '../tenant/tenant-membership.checker.js';
+import { IDEMPOTENCY_STORE, InMemoryIdempotencyStore } from '../idempotency/index.js';
 
 /**
  * Global request-platform providers (tenant membership, policy, guards).
@@ -34,6 +35,10 @@ import type { TenantMembershipChecker } from '../tenant/tenant-membership.checke
 @Module({
   imports: [DatabaseModule],
   providers: [
+    {
+      provide: IDEMPOTENCY_STORE,
+      useClass: InMemoryIdempotencyStore,
+    },
     {
       provide: TENANT_MEMBERSHIP_CHECKER,
       inject: [PG_POOL, APP_LOGGER],
@@ -65,6 +70,7 @@ import type { TenantMembershipChecker } from '../tenant/tenant-membership.checke
     DevStubTokenValidator,
   ],
   exports: [
+    IDEMPOTENCY_STORE,
     TENANT_MEMBERSHIP_CHECKER,
     PERMISSION_SOURCE,
     PolicyEvaluator,

@@ -191,4 +191,30 @@ describe('UsersRepository', () => {
     expect(warn).toHaveBeenCalledOnce();
     expect(String(warn.mock.calls[0]?.[0])).toContain('failed closed');
   });
+
+  it('updateDisplayNameForTenant calls SECURITY DEFINER helper', async () => {
+    const rowA = {
+      id: userId,
+      email: 'a@example.com',
+      display_name: 'Alice New',
+      status: 'active',
+      email_verified_at: null,
+      last_login_at: null,
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      updated_at: new Date('2026-01-03T00:00:00.000Z'),
+    };
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      expect(sql).toContain('app.update_user_display_name');
+      expect(sql.toLowerCase()).not.toContain('password_hash');
+      return Promise.resolve({ rows: [rowA] });
+    });
+    const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
+    const repo = new UsersRepository({ connect } as never);
+    await expect(
+      repo.updateDisplayNameForTenant(actorId, tenantId, userId, 'Alice New'),
+    ).resolves.toMatchObject({ id: userId, displayName: 'Alice New' });
+  });
 });
