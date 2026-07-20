@@ -8,6 +8,7 @@ import {
   buildIdempotencyScopeKey,
   hashRequestBody,
   IDEMPOTENCY_STORE,
+  parseIdempotencyKey,
   resolveIdempotentReplay,
   type IdempotencyStore,
 } from '../../../common/idempotency/index.js';
@@ -21,7 +22,7 @@ import { isUuid } from '../../../common/tenant/tenant-context.js';
 import { AUDIT_PUBLISHER, type AuditPublisher } from '../../platform-operations/index.js';
 import { StudentsRepository, type StudentRow } from '../repositories/students.repository.js';
 
-/** Public student item (ACF-002 Student allowlist — list + detail + create). */
+/** Public student item (ACF-002 Student allowlist — list + detail + create + patch). */
 export type Student = StudentRow;
 
 export type ListStudentsResult = PaginatedResponse<Student>;
@@ -34,14 +35,19 @@ export type CreateStudentResult = {
   readonly data: Student;
 };
 
+export type PatchStudentResult = {
+  readonly data: Student;
+};
+
 const STUDENT_STATUSES = new Set(['active', 'inactive', 'graduated', 'transferred', 'draft']);
 const CREATE_ROUTE = '/api/v1/students';
+const PATCH_ROUTE_PREFIX = '/api/v1/students/';
 const CODE_PATTERN = /^[A-Za-z0-9._-]{1,64}$/;
 
 /**
  * Product API for students in the bound tenant.
- * GET list (P0) + detail (P1) + POST create (P2).
- * Grade/class filters deferred. No PATCH/DELETE.
+ * GET list (P0) + detail (P1) + POST create (P2) + PATCH (P3).
+ * Grade/class filters deferred. No DELETE.
  */
 @Injectable()
 export class StudentsService {
@@ -234,7 +240,135 @@ export class StudentsService {
       throw new AppError('INTERNAL_ERROR', 'Failed to create student.');
     }
   }
+
+  /**
+   * PATCH /students/:id — partial update (student.manage).
+   * Idempotency-Key optional. Missing/cross-tenant → 404.
+   */
+  async patchForTenant(
+    actorUserId: string,
+    tenantId: string,
+    studentId: string,
+    rawBody: unknown,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<PatchStudentResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(studentId)) {
+      throw AppError.notFound('Student not found.');
+    }
+
+    const parsed = parseUpdateStudentRequest(rawBody);
+    const bodyJson = JSON.stringify({
+      ...(parsed.setDisplayName ? { displayName: parsed.displayName } : {}),
+      ...(parsed.setStudentCode ? { studentCode: parsed.studentCode } : {}),
+      ...(parsed.setStatus ? { status: parsed.status } : {}),
+    });
+
+    const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
+    if (optionalKey !== undefined && this.idempotency !== null) {
+      const key = assertIdempotencyKey(optionalKey);
+      const scopeKey = buildIdempotencyScopeKey(
+        {
+          actorUserId,
+          tenantId,
+          method: 'PATCH',
+          route: `${PATCH_ROUTE_PREFIX}${studentId}`,
+        },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) {
+        return JSON.parse(replay.responseBody) as PatchStudentResult;
+      }
+
+      const result = await this.executePatch(
+        actorUserId,
+        tenantId,
+        studentId,
+        parsed,
+        correlationId,
+      );
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executePatch(actorUserId, tenantId, studentId, parsed, correlationId);
+  }
+
+  private async executePatch(
+    actorUserId: string,
+    tenantId: string,
+    studentId: string,
+    parsed: ParsedStudentPatch,
+    correlationId: string,
+  ): Promise<PatchStudentResult> {
+    if (!this.students.isAvailable()) {
+      throw AppError.notFound('Student not found.');
+    }
+
+    try {
+      const student = await this.students.updateForTenant(actorUserId, tenantId, studentId, {
+        setDisplayName: parsed.setDisplayName,
+        displayName: parsed.displayName,
+        setStudentCode: parsed.setStudentCode,
+        studentCode: parsed.studentCode,
+        setStatus: parsed.setStatus,
+        status: parsed.status,
+      });
+      if (student === null) {
+        throw AppError.notFound('Student not found.');
+      }
+
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: 'student.patch',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'student',
+          resourceId: student.id,
+          metadata: { fields: parsed.fields },
+        });
+      }
+
+      return { data: student };
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      if (isPgUniqueViolation(error)) {
+        throw new AppError('CONFLICT', 'Student code already exists in this tenant.');
+      }
+      if (isPgInvalidParameter(error)) {
+        throw AppError.validation('Invalid student payload.');
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to update student.');
+    }
+  }
 }
+
+type ParsedStudentPatch = {
+  setDisplayName: boolean;
+  displayName: string | null;
+  setStudentCode: boolean;
+  studentCode: string | null;
+  setStatus: boolean;
+  status: string | null;
+  fields: string[];
+};
 
 function parseStatusFilter(
   raw: unknown,
@@ -302,6 +436,87 @@ export function parseCreateStudentRequest(raw: unknown): {
   }
 
   return { displayName, studentCode, status };
+}
+
+export function parseUpdateStudentRequest(raw: unknown): ParsedStudentPatch {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw AppError.validation('Body must be a JSON object.');
+  }
+  const body = raw as Record<string, unknown>;
+  const allowed = new Set(['displayName', 'studentCode', 'status']);
+  for (const key of Object.keys(body)) {
+    if (!allowed.has(key)) {
+      throw AppError.validation(`Unknown field: ${key}.`, { field: key });
+    }
+  }
+
+  const fields: string[] = [];
+  let setDisplayName = false;
+  let displayName: string | null = null;
+  let setStudentCode = false;
+  let studentCode: string | null = null;
+  let setStatus = false;
+  let status: string | null = null;
+
+  if (Object.prototype.hasOwnProperty.call(body, 'displayName')) {
+    if (typeof body['displayName'] !== 'string') {
+      throw AppError.validation('displayName must be a string.', { field: 'displayName' });
+    }
+    const trimmed = body['displayName'].trim();
+    if (trimmed.length < 1 || trimmed.length > 200) {
+      throw AppError.validation('displayName must be 1–200 characters.', { field: 'displayName' });
+    }
+    setDisplayName = true;
+    displayName = trimmed;
+    fields.push('displayName');
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'studentCode')) {
+    setStudentCode = true;
+    fields.push('studentCode');
+    if (body['studentCode'] === null) {
+      studentCode = null;
+    } else if (typeof body['studentCode'] !== 'string') {
+      throw AppError.validation('studentCode must be a string or null.', { field: 'studentCode' });
+    } else {
+      const trimmed = body['studentCode'].trim();
+      if (trimmed === '') {
+        studentCode = null;
+      } else if (!CODE_PATTERN.test(trimmed)) {
+        throw AppError.validation('studentCode must match ^[A-Za-z0-9._-]{1,64}$.', {
+          field: 'studentCode',
+        });
+      } else {
+        studentCode = trimmed;
+      }
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'status')) {
+    if (typeof body['status'] !== 'string' || !STUDENT_STATUSES.has(body['status'])) {
+      throw AppError.validation(
+        'status must be active, inactive, graduated, transferred, or draft.',
+        { field: 'status' },
+      );
+    }
+    setStatus = true;
+    status = body['status'];
+    fields.push('status');
+  }
+
+  if (fields.length === 0) {
+    throw AppError.validation('At least one field is required for patch.');
+  }
+
+  return {
+    setDisplayName,
+    displayName,
+    setStudentCode,
+    studentCode,
+    setStatus,
+    status,
+    fields,
+  };
 }
 
 function isPgUniqueViolation(error: unknown): boolean {

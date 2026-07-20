@@ -6,11 +6,11 @@
 | ------------------- | -------------------------------------------------------------------------------- |
 | Freeze ID           | `DBF-002`                                                                        |
 | Title               | Database Freeze — Student Registry list-read slice                               |
-| Version             | `1.1` (v1.0 list-read; rev 1.1 create helper)                                    |
-| Date                | 2026-07-20                                                                       |
+| Version             | `1.2` (1.0 list; 1.1 create; 1.2 update helper)                                  |
+| Date                | 2026-07-21                                                                       |
 | Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                              |
 | Engine              | PostgreSQL                                                                       |
-| Scope               | Student Registry — `students` table (list/detail read + create write path)       |
+| Scope               | Student Registry — `students` table (list/detail + create + patch helpers)       |
 | Explicitly excluded | Guardians, admissions, enrollments, attendance, marks, academic class/stream FKs |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** independent multi-person external review.
@@ -19,14 +19,15 @@
 
 Authorize the **smallest** tenant-owned schema for student list/detail reads (ACF-002) and **create** via controlled helper (ACF-002 rev 1.2 / IMP-002-P2).
 
-Does **not** authorize PATCH/DELETE students, guardians, or Academic Structure joins.
+Does **not** authorize DELETE students, guardians, or Academic Structure joins.
 
 ## Revision history
 
-| Version | Date       | Notes                                                                                                  |
-| ------- | ---------- | ------------------------------------------------------------------------------------------------------ |
-| 1.0     | 2026-07-20 | Table + SELECT-only for `educore_app`                                                                  |
-| **1.1** | 2026-07-20 | `app.create_student` SECURITY DEFINER; `student.manage` permission; table INSERT stays revoked for app |
+| Version | Date       | Notes                                                                               |
+| ------- | ---------- | ----------------------------------------------------------------------------------- |
+| 1.0     | 2026-07-20 | Table + SELECT-only for `educore_app`                                               |
+| 1.1     | 2026-07-20 | `app.create_student` SECURITY DEFINER; `student.manage`; table INSERT stays revoked |
+| **1.2** | 2026-07-21 | `app.update_student` SECURITY DEFINER; table UPDATE stays revoked for app           |
 
 ## Table `students` (frozen)
 
@@ -53,8 +54,10 @@ Does **not** authorize PATCH/DELETE students, guardians, or Academic Structure j
 
 - FORCE RLS Pattern A (tenant isolation via `app.current_tenant_id()`)
 - `educore_app`: **SELECT only** on table (INSERT/UPDATE/DELETE remain **REVOKED**)
-- Product create (rev 1.1): SECURITY DEFINER `app.create_student(...)` + `GRANT EXECUTE` to `educore_app`
-- Helper re-checks `app.auth_has_active_membership(actor, tenant)` and forces `tenant_id = p_tenant_id`
+- Product create (rev 1.1): SECURITY DEFINER `app.create_student(...)` + `GRANT EXECUTE`
+- Product patch (rev 1.2): SECURITY DEFINER `app.update_student(...)` + `GRANT EXECUTE`
+- Helpers re-check `app.auth_has_active_membership(actor, tenant)` and force `tenant_id = p_tenant_id`
+- Update helper: row must exist in bound tenant; empty return → 404; partial field flags
 - Platform role may have INSERT/UPDATE for seed/ops (not product HTTP)
 
 ### Ownership
@@ -63,10 +66,10 @@ Bounded context: **Student Registry**. Other modules must not write this table (
 
 ## Permission seed (catalog)
 
-| Code             | Description                                                              |
-| ---------------- | ------------------------------------------------------------------------ |
-| `student.read`   | List/view students in tenant                                             |
-| `student.manage` | Create students in tenant (this slice: create only; no PATCH/DELETE yet) |
+| Code             | Description                           |
+| ---------------- | ------------------------------------- |
+| `student.read`   | List/view students in tenant          |
+| `student.manage` | Create and patch students (no DELETE) |
 
 System role posture:
 

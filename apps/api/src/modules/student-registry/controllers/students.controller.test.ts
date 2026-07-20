@@ -74,13 +74,13 @@ describe('StudentsController', () => {
     });
   });
 
-  it('documents list + create + getById surface (no patch/delete)', () => {
+  it('documents list + create + getById + patch surface (no delete)', () => {
     const proto = StudentsController.prototype as unknown as Record<string, unknown>;
     expect(typeof proto['list']).toBe('function');
     expect(typeof proto['create']).toBe('function');
     expect(typeof proto['getById']).toBe('function');
+    expect(typeof proto['patch']).toBe('function');
     expect(proto['update']).toBeUndefined();
-    expect(proto['patch']).toBeUndefined();
     expect(proto['remove']).toBeUndefined();
   });
 
@@ -124,6 +124,29 @@ describe('StudentsController', () => {
     expect(result).toEqual({
       data: { id: targetId, displayName: 'Asha', status: 'active' },
     });
+  });
+
+  it('patches student by id', async () => {
+    const targetId = '01900000-0000-7000-8000-0000000000b1';
+    const studentsService = {
+      patchForTenant: vi.fn().mockResolvedValue({
+        data: { id: targetId, displayName: 'Asha', status: 'inactive' },
+      }),
+    };
+    const controller = new StudentsController(studentsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    await controller.patch(request as never, targetId, { status: 'inactive' }, undefined);
+    expect(studentsService.patchForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      targetId,
+      { status: 'inactive' },
+      undefined,
+      'unknown',
+    );
   });
 
   it('rejects getById when auth context is missing', async () => {

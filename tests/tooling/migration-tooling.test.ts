@@ -145,4 +145,13 @@ describe('IMP-001 migration tooling', () => {
     const down = read('apps/api/db/migrations/20260720210000_terms_create.down.sql');
     expect(down).toContain('DROP FUNCTION');
   });
+
+  it('ships IMP-002-P3 update_student helper (UPDATE revoked on table)', () => {
+    const up = read('apps/api/db/migrations/20260720220000_students_update.up.sql');
+    expect(up).toContain('app.update_student');
+    expect(up).toMatch(/SECURITY DEFINER/i);
+    expect(up).toContain('GRANT EXECUTE');
+    const down = read('apps/api/db/migrations/20260720220000_students_update.down.sql');
+    expect(down).toContain('DROP FUNCTION');
+  });
 });

@@ -2,34 +2,36 @@
 
 ## Freeze status
 
-| Field               | Value                                               |
-| ------------------- | --------------------------------------------------- |
-| Freeze ID           | `ACF-002`                                           |
-| Title               | API Contract Freeze — students list + get + create  |
-| Version             | `1.2`                                               |
-| Date                | 2026-07-20 (v1.0–1.2)                               |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001) |
-| Companion DB freeze | DBF-002 (rev 1.1 write helper)                      |
+| Field               | Value                                                      |
+| ------------------- | ---------------------------------------------------------- |
+| Freeze ID           | `ACF-002`                                                  |
+| Title               | API Contract Freeze — students list + get + create + patch |
+| Version             | `1.3`                                                      |
+| Date                | 2026-07-21                                                 |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)        |
+| Companion DB freeze | DBF-002 (rev 1.2 update helper)                            |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** multi-party external review.
 
 ## Revision history
 
-| Version | Date       | Notes                                          |
-| ------- | ---------- | ---------------------------------------------- |
-| 1.0     | 2026-07-20 | List only (`listStudents`)                     |
-| 1.1     | 2026-07-20 | Add `GET /students/{studentId}` (`getStudent`) |
-| **1.2** | 2026-07-20 | Add `POST /students` (`createStudent`)         |
+| Version | Date       | Notes                                              |
+| ------- | ---------- | -------------------------------------------------- |
+| 1.0     | 2026-07-20 | List only (`listStudents`)                         |
+| 1.1     | 2026-07-20 | Add `GET /students/{studentId}` (`getStudent`)     |
+| 1.2     | 2026-07-20 | Add `POST /students` (`createStudent`)             |
+| **1.3** | 2026-07-21 | Add `PATCH /students/{studentId}` (`patchStudent`) |
 
 ## Scope
 
-| In scope                                            | Out of scope                                |
-| --------------------------------------------------- | ------------------------------------------- |
-| `GET /api/v1/students` list                         | PATCH/DELETE students                       |
-| `GET /api/v1/students/{studentId}` detail (rev 1.1) | Guardians, enrollments, grade/class filters |
-| `POST /api/v1/students` create (rev 1.2)            | Nested expansions                           |
-| Cursor pagination + status/search on list           |                                             |
-| Permissions `student.read`, `student.manage`        |                                             |
+| In scope                                             | Out of scope                                |
+| ---------------------------------------------------- | ------------------------------------------- |
+| `GET /api/v1/students` list                          | DELETE students                             |
+| `GET /api/v1/students/{studentId}` detail            | Guardians, enrollments, grade/class filters |
+| `POST /api/v1/students` create                       | Nested expansions                           |
+| `PATCH /api/v1/students/{studentId}` patch (rev 1.3) |                                             |
+| Cursor pagination + status/search on list            |                                             |
+| Permissions `student.read`, `student.manage`         |                                             |
 
 Identity/Tenant ACF-001 remains unchanged and does **not** cover this path.
 
@@ -175,16 +177,58 @@ Same allowlist as GET detail (`data` Student).
 | Duplicate `studentCode` in tenant      | 409  | `CONFLICT`                       |
 | Idempotency key reuse, different body  | 409  | `IDEMPOTENCY_KEY_REUSE_MISMATCH` |
 
+---
+
+## Endpoint: patch (rev 1.3)
+
+| Method  | Path                           | Auth   | Header                     | AuthZ                                 | Idempotency  |
+| ------- | ------------------------------ | ------ | -------------------------- | ------------------------------------- | ------------ |
+| `PATCH` | `/api/v1/students/{studentId}` | Bearer | `X-Tenant-Id` **required** | `RequirePermission('student.manage')` | **Optional** |
+
+**operationId:** `patchStudent`  
+**Nest param:** `:id`
+
+### Request — `UpdateStudentRequest`
+
+Partial update; **at least one** field required. Allowlist only:
+
+| Field         | Rules                                                               |
+| ------------- | ------------------------------------------------------------------- |
+| `displayName` | optional; string, trim, 1–200                                       |
+| `studentCode` | optional; null clears; unique per tenant when set; format as create |
+| `status`      | optional; enum active\|inactive\|graduated\|transferred\|draft      |
+
+`tenantId` never from body. Unknown keys → `VALIDATION_ERROR`. Empty body → `VALIDATION_ERROR`.
+
+### Success 200 — `StudentEnvelope`
+
+Same allowlist as GET.
+
+### Visibility / errors (patch)
+
+| Condition                                           | HTTP | Code                               |
+| --------------------------------------------------- | ---- | ---------------------------------- |
+| Missing/invalid bearer                              | 401  | `UNAUTHORIZED`                     |
+| Missing `X-Tenant-Id`                               | 400  | `TENANT_CONTEXT_REQUIRED`          |
+| Session mismatch / no `student.manage`              | 403  | `FORBIDDEN`                        |
+| Invalid body / empty patch                          | 400  | `VALIDATION_ERROR`                 |
+| Invalid UUID / missing / other tenant / fail-closed | 404  | `NOT_FOUND` (`Student not found.`) |
+| Duplicate `studentCode`                             | 409  | `CONFLICT`                         |
+| Idempotency key reuse, different body               | 409  | `IDEMPOTENCY_KEY_REUSE_MISMATCH`   |
+
+### Audit
+
+On success: `student.patch` with metadata `{ fields: string[] }` (no PII).
+
 ## Acceptance (solo-operator)
 
-| Role                           | Status | Date       | Notes    |
-| ------------------------------ | ------ | ---------- | -------- |
-| API Contract Guardian (acting) | Signed | 2026-07-20 | v1.0–1.2 |
-| Backend Lead (acting)          | Signed | 2026-07-20 | v1.0–1.2 |
-| Security (acting)              | Signed | 2026-07-20 | v1.0–1.2 |
+| Role                           | Status | Date       | Notes |
+| ------------------------------ | ------ | ---------- | ----- |
+| API Contract Guardian (acting) | Signed | 2026-07-21 | v1.3  |
+| Backend Lead (acting)          | Signed | 2026-07-21 | v1.3  |
+| Security (acting)              | Signed | 2026-07-21 | v1.3  |
 
 ## Related
 
 - DBF-002: [DBF-002-student-registry-list-slice.md](../database-freeze/DBF-002-student-registry-list-slice.md)
-- List: IMP-002-P0; Detail: IMP-002-P1; Create: IMP-002-P2
-- Clone: IMP-001-P15 invite; IMP-001-P16 org create
+- List: IMP-002-P0; Detail: IMP-002-P1; Create: IMP-002-P2; Patch: IMP-002-P3

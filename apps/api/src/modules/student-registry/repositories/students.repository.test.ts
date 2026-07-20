@@ -167,4 +167,42 @@ describe('StudentsRepository', () => {
       }),
     ).resolves.toMatchObject({ id: studentId, displayName: 'Asha', status: 'active' });
   });
+
+  it('updateForTenant calls app.update_student and scopes tenant', async () => {
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      expect(sql).toContain('app.update_student');
+      return Promise.resolve({
+        rows: [
+          {
+            id: studentId,
+            tenant_id: tenantId,
+            student_code: 'STU-1',
+            display_name: 'Asha Updated',
+            status: 'inactive',
+            created_at: new Date('2026-01-01T00:00:00.000Z'),
+            updated_at: new Date('2026-01-02T00:00:00.000Z'),
+          },
+        ],
+      });
+    });
+    const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
+    const repo = new StudentsRepository({ connect } as never);
+    await expect(
+      repo.updateForTenant(actorId, tenantId, studentId, {
+        setDisplayName: true,
+        displayName: 'Asha Updated',
+        setStudentCode: false,
+        studentCode: null,
+        setStatus: true,
+        status: 'inactive',
+      }),
+    ).resolves.toMatchObject({
+      id: studentId,
+      displayName: 'Asha Updated',
+      status: 'inactive',
+    });
+  });
 });

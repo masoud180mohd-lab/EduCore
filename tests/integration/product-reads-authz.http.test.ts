@@ -495,6 +495,37 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     expect(response.statusCode).toBe(403);
   });
 
+  it('PATCH /api/v1/students/:id returns 403 without student.manage', async () => {
+    const response = await httpCall(
+      server,
+      'PATCH',
+      `/api/v1/students/${userA}`,
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ status: 'inactive' }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('PATCH /api/v1/students/:id returns 404 for invalid id shape', async () => {
+    const response = await httpCall(
+      server,
+      'PATCH',
+      '/api/v1/students/not-a-uuid',
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ status: 'inactive' }),
+    );
+    expect(response.statusCode).toBe(404);
+    expect(parseErrorBody(response.body).error?.code).toBe('NOT_FOUND');
+  });
+
   it('GET /api/v1/students returns 200 when AuthZ passes', async () => {
     const response = await httpCall(server, 'GET', '/api/v1/students', {
       'authorization': harnessBearer(userA, tenantA),

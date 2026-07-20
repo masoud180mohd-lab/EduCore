@@ -224,3 +224,103 @@ describe('StudentsService.createForTenant', () => {
     ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 });
+
+describe('StudentsService.patchForTenant', () => {
+  const corr = 'corr-stu-patch';
+
+  it('patches status and audits fields', async () => {
+    const updated = { ...studentA, status: 'inactive' };
+    const students = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new StudentsService(students as never, null, audit);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        studentA.id,
+        { status: 'inactive' },
+        undefined,
+        corr,
+      ),
+    ).resolves.toEqual({ data: updated });
+    expect(students.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      studentA.id,
+      expect.objectContaining({
+        setStatus: true,
+        status: 'inactive',
+        setDisplayName: false,
+        setStudentCode: false,
+      }),
+    );
+    expect(audit.events[0]).toMatchObject({
+      action: 'student.patch',
+      metadata: { fields: ['status'] },
+    });
+  });
+
+  it('maps missing student to 404', async () => {
+    const students = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new StudentsService(students as never);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        studentA.id,
+        { status: 'inactive' },
+        undefined,
+        corr,
+      ),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('rejects empty body', async () => {
+    const students = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new StudentsService(students as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, studentA.id, {}, undefined, corr),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(students.updateForTenant).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid id without repo call', async () => {
+    const students = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new StudentsService(students as never);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        'not-a-uuid',
+        { status: 'active' },
+        undefined,
+        corr,
+      ),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(students.updateForTenant).not.toHaveBeenCalled();
+  });
+
+  it('maps unique violation to CONFLICT', async () => {
+    const students = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockRejectedValue({ code: '23505', message: 'dup' }),
+    };
+    const service = new StudentsService(students as never);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        studentA.id,
+        { studentCode: 'DUP' },
+        undefined,
+        corr,
+      ),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+  });
+});
