@@ -1,6 +1,6 @@
 /**
  * Classes in the bound tenant (RLS Pattern A / DBF-005).
- * List (C0). Detail/create later.
+ * List (C0) + get-by-id (C1) + create (C2 via SECURITY DEFINER).
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -155,6 +155,125 @@ export class ClassesRepository {
         operation: 'listForTenant',
       });
       return { rows: [], nextCursor: null };
+    }
+  }
+
+  /**
+   * Single class by id in bound tenant. Missing/other-tenant/invalid → null (404).
+   */
+  async getByIdForTenant(
+    actorUserId: string,
+    tenantId: string,
+    classId: string,
+  ): Promise<ClassRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(classId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            academic_year_id: string;
+            term_id: string | null;
+            name: string;
+            code: string | null;
+            status: string;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT c.id, c.tenant_id, c.academic_year_id, c.term_id, c.name, c.code,
+                    c.status, c.created_at, c.updated_at
+             FROM classes c
+             WHERE c.tenant_id = $1::uuid
+               AND c.id = $2::uuid
+             LIMIT 1`,
+            [tenantId, classId],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapClassRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'ClassesRepository', error, {
+        operation: 'getByIdForTenant',
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Create class via SECURITY DEFINER helper.
+   */
+  async createForTenant(
+    actorUserId: string,
+    tenantId: string,
+    input: {
+      readonly id: string;
+      readonly academicYearId: string;
+      readonly termId: string | null;
+      readonly name: string;
+      readonly code: string | undefined;
+      readonly status: string;
+    },
+  ): Promise<ClassRow | null> {
+    if (
+      !isUuid(actorUserId) ||
+      !isUuid(tenantId) ||
+      !isUuid(input.id) ||
+      !isUuid(input.academicYearId) ||
+      (input.termId !== null && !isUuid(input.termId)) ||
+      this.pool === null
+    ) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            academic_year_id: string;
+            term_id: string | null;
+            name: string;
+            code: string | null;
+            status: string;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, tenant_id, academic_year_id, term_id, name, code, status,
+                    created_at, updated_at
+             FROM app.create_class(
+               $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid,
+               $6::text, $7::text, $8::text
+             )`,
+            [
+              actorUserId,
+              tenantId,
+              input.id,
+              input.academicYearId,
+              input.termId,
+              input.name,
+              input.code ?? null,
+              input.status,
+            ],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapClassRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'ClassesRepository', error, {
+        operation: 'createForTenant',
+      });
+      throw error;
     }
   }
 }

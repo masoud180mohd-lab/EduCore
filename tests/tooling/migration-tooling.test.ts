@@ -164,4 +164,13 @@ describe('IMP-001 migration tooling', () => {
     const down = read('apps/api/db/migrations/20260720230000_classes_list_read.down.sql');
     expect(down).toContain('DROP TABLE IF EXISTS classes');
   });
+
+  it('ships IMP-003-C2 create_class helper', () => {
+    const up = read('apps/api/db/migrations/20260720240000_classes_create.up.sql');
+    expect(up).toContain('app.create_class');
+    expect(up).toMatch(/SECURITY DEFINER/i);
+    expect(up).toContain('GRANT EXECUTE');
+    const down = read('apps/api/db/migrations/20260720240000_classes_create.down.sql');
+    expect(down).toContain('DROP FUNCTION');
+  });
 });

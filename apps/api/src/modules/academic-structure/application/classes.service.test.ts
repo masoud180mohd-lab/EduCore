@@ -55,3 +55,63 @@ describe('ClassesService.listForTenant', () => {
     });
   });
 });
+
+describe('ClassesService.getForTenant', () => {
+  it('returns envelope when found', async () => {
+    const classes = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(classA),
+    };
+    const service = new ClassesService(classes as never);
+    await expect(service.getForTenant(actorId, tenantId, classA.id)).resolves.toEqual({
+      data: classA,
+    });
+  });
+
+  it('maps missing to 404', async () => {
+    const classes = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new ClassesService(classes as never);
+    await expect(service.getForTenant(actorId, tenantId, classA.id)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+});
+
+describe('ClassesService.createForTenant', () => {
+  it('requires Idempotency-Key', async () => {
+    const classes = { isAvailable: () => true, createForTenant: vi.fn() };
+    const service = new ClassesService(classes as never);
+    await expect(
+      service.createForTenant(
+        actorId,
+        tenantId,
+        { academicYearId: yearId, name: 'Form 1A' },
+        undefined,
+        'c',
+      ),
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
+  });
+
+  it('maps parent year miss to VALIDATION_ERROR', async () => {
+    const classes = {
+      isAvailable: () => true,
+      createForTenant: vi.fn().mockRejectedValue({
+        code: '22023',
+        message: 'parent academic year not found',
+      }),
+    };
+    const service = new ClassesService(classes as never);
+    await expect(
+      service.createForTenant(
+        actorId,
+        tenantId,
+        { academicYearId: yearId, name: 'Form 1A' },
+        'idem-key-class-create01',
+        'c',
+      ),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+});

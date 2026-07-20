@@ -6,12 +6,12 @@
 | ------------------- | ------------------------------------------------------------------------ |
 | Freeze ID           | `DBF-005`                                                                |
 | Title               | Database Freeze — Academic Structure `classes` list-read                 |
-| Version             | `1.0`                                                                    |
+| Version             | `1.1` (1.0 list; 1.1 create helper)                                      |
 | Date                | 2026-07-21                                                               |
 | Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                      |
 | Engine              | PostgreSQL                                                               |
-| Scope               | Academic Structure — `classes` table only (list read)                    |
-| Explicitly excluded | streams, subjects, enrollments, teacher_assignments, class writes (HTTP) |
+| Scope               | Academic Structure — `classes` table + create helper                     |
+| Explicitly excluded | streams, subjects, enrollments, teacher_assignments, class PATCH/DELETE  |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** multi-party external review.
 
@@ -60,6 +60,7 @@ Authorize the smallest tenant-owned schema for `GET /api/v1/classes` under ACF-0
 
 - FORCE RLS Pattern A (`tenant_id = app.current_tenant_id()`)
 - `educore_app`: **SELECT only**; INSERT/UPDATE/DELETE **REVOKED**
+- Product create (rev 1.1): `app.create_class` SECURITY DEFINER; GRANT EXECUTE; membership + parent year (and term if set: same tenant + same academic_year_id)
 - Platform: SELECT/INSERT/UPDATE for seed/ops
 
 ## Permission

@@ -545,6 +545,52 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     expect(body.page.limit).toBe(25);
   });
 
+  it('GET /api/v1/classes/:id returns 404 for invalid id', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/classes/not-a-uuid', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it('POST /api/v1/classes returns 400 without Idempotency-Key', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/classes',
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({
+        academicYearId: '01900000-0000-7000-8000-0000000000c1',
+        name: 'Form 1A',
+      }),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+  });
+
+  it('POST /api/v1/classes returns 403 without academic.manage', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/classes',
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-class-create01',
+      },
+      JSON.stringify({
+        academicYearId: '01900000-0000-7000-8000-0000000000c1',
+        name: 'Form 1A',
+      }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
   it('GET /api/v1/students returns 200 when AuthZ passes', async () => {
     const response = await httpCall(server, 'GET', '/api/v1/students', {
       'authorization': harnessBearer(userA, tenantA),

@@ -1,6 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+
+import { Inject, Injectable, Optional } from '@nestjs/common';
 
 import { AppError } from '../../../common/errors/app-error.js';
+import {
+  assertIdempotencyKey,
+  buildIdempotencyScopeKey,
+  hashRequestBody,
+  IDEMPOTENCY_STORE,
+  resolveIdempotentReplay,
+  type IdempotencyStore,
+} from '../../../common/idempotency/index.js';
 import {
   buildPaginatedResponse,
   parsePaginationQuery,
@@ -8,27 +18,64 @@ import {
 } from '../../../common/pagination/index.js';
 import { parseOptionalSearchFilter } from '../../../common/text/index.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
+import { AUDIT_PUBLISHER, type AuditPublisher } from '../../platform-operations/index.js';
 import { ClassesRepository, type ClassRow } from '../repositories/classes.repository.js';
 
-/** Public class item (ACF-005 allowlist). */
+/** Public class item (ACF-005 allowlist — list + detail + create). */
 export type SchoolClass = ClassRow;
 
 export type ListClassesResult = PaginatedResponse<SchoolClass>;
 
+export type GetClassResult = {
+  readonly data: SchoolClass;
+};
+
+export type CreateClassResult = {
+  readonly data: SchoolClass;
+};
+
 const CLASS_STATUSES = new Set(['draft', 'active', 'closed']);
+const CREATE_ROUTE = '/api/v1/classes';
+const CODE_PATTERN = /^[A-Za-z0-9._/-]{1,64}$/;
 
 /**
  * Product API for classes in the bound tenant.
- * GET list (C0). Detail/create deferred.
+ * GET list (C0) + detail (C1) + POST create (C2).
  */
 @Injectable()
 export class ClassesService {
-  constructor(private readonly classes: ClassesRepository) {}
+  constructor(
+    private readonly classes: ClassesRepository,
+    @Optional()
+    @Inject(IDEMPOTENCY_STORE)
+    private readonly idempotency: IdempotencyStore | null = null,
+    @Optional() @Inject(AUDIT_PUBLISHER) private readonly audit: AuditPublisher | null = null,
+  ) {}
 
-  /**
-   * Cursor list with optional filters.
-   * Query: limit, cursor, academicYearId, termId, status, search.
-   */
+  async getForTenant(
+    actorUserId: string,
+    tenantId: string,
+    classId: string,
+  ): Promise<GetClassResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(classId)) {
+      throw AppError.notFound('Class not found.');
+    }
+    if (!this.classes.isAvailable()) {
+      throw AppError.notFound('Class not found.');
+    }
+    const row = await this.classes.getByIdForTenant(actorUserId, tenantId, classId);
+    if (row === null) {
+      throw AppError.notFound('Class not found.');
+    }
+    return { data: row };
+  }
+
   async listForTenant(
     actorUserId: string,
     tenantId: string,
@@ -69,6 +116,131 @@ export class ClassesService {
 
     return buildPaginatedResponse(page.rows, pagination.limit, page.nextCursor);
   }
+
+  async createForTenant(
+    actorUserId: string,
+    tenantId: string,
+    rawBody: unknown,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<CreateClassResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const key = assertIdempotencyKey(idempotencyKeyHeader);
+    const parsed = parseCreateClassRequest(rawBody);
+    const bodyJson = JSON.stringify({
+      academicYearId: parsed.academicYearId,
+      ...(parsed.termId === null ? {} : { termId: parsed.termId }),
+      name: parsed.name,
+      ...(parsed.code === undefined ? {} : { code: parsed.code }),
+      status: parsed.status,
+    });
+
+    if (this.idempotency !== null) {
+      const scopeKey = buildIdempotencyScopeKey(
+        {
+          actorUserId,
+          tenantId,
+          method: 'POST',
+          route: CREATE_ROUTE,
+        },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) {
+        return JSON.parse(replay.responseBody) as CreateClassResult;
+      }
+
+      const result = await this.executeCreate(actorUserId, tenantId, parsed, correlationId);
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 201,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executeCreate(actorUserId, tenantId, parsed, correlationId);
+  }
+
+  private async executeCreate(
+    actorUserId: string,
+    tenantId: string,
+    parsed: {
+      academicYearId: string;
+      termId: string | null;
+      name: string;
+      code: string | undefined;
+      status: string;
+    },
+    correlationId: string,
+  ): Promise<CreateClassResult> {
+    if (!this.classes.isAvailable()) {
+      throw new AppError('INTERNAL_ERROR', 'Class store unavailable.');
+    }
+
+    try {
+      const row = await this.classes.createForTenant(actorUserId, tenantId, {
+        id: randomUUID(),
+        academicYearId: parsed.academicYearId,
+        termId: parsed.termId,
+        name: parsed.name,
+        code: parsed.code,
+        status: parsed.status,
+      });
+      if (row === null) {
+        throw new AppError('INTERNAL_ERROR', 'Failed to create class.');
+      }
+
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: 'class.create',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'class',
+          resourceId: row.id,
+          metadata: {
+            status: parsed.status,
+            hasCode: parsed.code !== undefined,
+            academicYearId: parsed.academicYearId,
+            hasTermId: parsed.termId !== null,
+          },
+        });
+      }
+
+      return { data: row };
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      if (isPgUniqueViolation(error)) {
+        throw new AppError('CONFLICT', 'Class code already exists for this academic year.');
+      }
+      if (isParentYearNotFound(error)) {
+        throw AppError.validation('academicYearId not found in this tenant.', {
+          field: 'academicYearId',
+        });
+      }
+      if (isParentTermNotFound(error)) {
+        throw AppError.validation('termId not found in this tenant for the academic year.', {
+          field: 'termId',
+        });
+      }
+      if (isPgInvalidParameter(error)) {
+        throw AppError.validation('Invalid class payload.');
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to create class.');
+    }
+  }
 }
 
 function parseStatusFilter(raw: unknown): 'draft' | 'active' | 'closed' | undefined {
@@ -91,4 +263,119 @@ function parseOptionalUuidFilter(raw: unknown, field: string): string | undefine
     throw AppError.validation(`${field} must be a UUID.`, { field });
   }
   return raw;
+}
+
+export function parseCreateClassRequest(raw: unknown): {
+  academicYearId: string;
+  termId: string | null;
+  name: string;
+  code: string | undefined;
+  status: string;
+} {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw AppError.validation('Body must be a JSON object.');
+  }
+  const body = raw as Record<string, unknown>;
+  const allowed = new Set(['academicYearId', 'termId', 'name', 'code', 'status']);
+  for (const key of Object.keys(body)) {
+    if (!allowed.has(key)) {
+      throw AppError.validation(`Unknown field: ${key}.`, { field: key });
+    }
+  }
+
+  if (typeof body['academicYearId'] !== 'string' || !isUuid(body['academicYearId'])) {
+    throw AppError.validation('academicYearId is required and must be a UUID.', {
+      field: 'academicYearId',
+    });
+  }
+  const academicYearId = body['academicYearId'];
+
+  let termId: string | null = null;
+  if (body['termId'] !== undefined && body['termId'] !== null && body['termId'] !== '') {
+    if (typeof body['termId'] !== 'string' || !isUuid(body['termId'])) {
+      throw AppError.validation('termId must be a UUID.', { field: 'termId' });
+    }
+    termId = body['termId'];
+  }
+
+  if (typeof body['name'] !== 'string') {
+    throw AppError.validation('name is required.', { field: 'name' });
+  }
+  const name = body['name'].trim();
+  if (name.length < 1 || name.length > 200) {
+    throw AppError.validation('name must be 1–200 characters.', { field: 'name' });
+  }
+
+  let code: string | undefined;
+  if (body['code'] !== undefined && body['code'] !== null) {
+    if (typeof body['code'] !== 'string') {
+      throw AppError.validation('code must be a string.', { field: 'code' });
+    }
+    const trimmed = body['code'].trim();
+    if (trimmed.length === 0) {
+      code = undefined;
+    } else if (!CODE_PATTERN.test(trimmed)) {
+      throw AppError.validation('code has invalid format.', { field: 'code' });
+    } else {
+      code = trimmed;
+    }
+  }
+
+  let status = 'draft';
+  if (body['status'] !== undefined && body['status'] !== null) {
+    if (typeof body['status'] !== 'string' || !CLASS_STATUSES.has(body['status'])) {
+      throw AppError.validation('status must be draft, active, or closed.', {
+        field: 'status',
+      });
+    }
+    status = body['status'];
+  }
+
+  return { academicYearId, termId, name, code, status };
+}
+
+function isPgUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === '23505'
+  );
+}
+
+function isPgInvalidParameter(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === '22023'
+  );
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'object' && error !== null) {
+    const record = error as Record<string, unknown>;
+    const message = record['message'];
+    if (typeof message === 'string') {
+      return message;
+    }
+  }
+  return String(error);
+}
+
+function isParentYearNotFound(error: unknown): boolean {
+  if (!isPgInvalidParameter(error)) {
+    return false;
+  }
+  return getErrorMessage(error).toLowerCase().includes('parent academic year not found');
+}
+
+function isParentTermNotFound(error: unknown): boolean {
+  if (!isPgInvalidParameter(error)) {
+    return false;
+  }
+  return getErrorMessage(error).toLowerCase().includes('parent term not found');
 }

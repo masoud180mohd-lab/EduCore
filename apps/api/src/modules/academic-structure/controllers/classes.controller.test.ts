@@ -42,4 +42,18 @@ describe('ClassesController', () => {
       controller.list({ [TENANT_CONTEXT_REQUEST_KEY]: { tenantId } } as never),
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
+
+  it('gets class by id', async () => {
+    const classesService = {
+      getForTenant: vi.fn().mockResolvedValue({ data: { id: 'c1', name: 'Form 1A' } }),
+    };
+    const controller = new ClassesController(classesService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const classId = '01900000-0000-7000-8000-0000000000e1';
+    await controller.getById(request as never, classId);
+    expect(classesService.getForTenant).toHaveBeenCalledWith(userId, tenantId, classId);
+  });
 });

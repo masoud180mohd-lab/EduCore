@@ -1,92 +1,72 @@
-# API Contract Freeze — Classes List Slice (ACF-005)
+# API Contract Freeze — Classes List + Detail + Create (ACF-005)
 
 ## Freeze status
 
 | Field               | Value                                               |
 | ------------------- | --------------------------------------------------- |
 | Freeze ID           | `ACF-005`                                           |
-| Title               | API Contract Freeze — classes list-read             |
-| Version             | `1.0`                                               |
+| Title               | API Contract Freeze — classes list + get + create   |
+| Version             | `1.2`                                               |
 | Date                | 2026-07-21                                          |
 | Authority           | Solo-operator provisional acceptance (SOLO-GOV-001) |
-| Companion DB freeze | DBF-005                                             |
+| Companion DB freeze | DBF-005 (+ create helper)                           |
 
-**Honesty qualifier:** Solo-operator provisional — not multi-party external review.
+**Honesty qualifier:** Solo-operator provisional.
 
 ## Revision history
 
-| Version | Date       | Notes                     |
-| ------- | ---------- | ------------------------- |
-| **1.0** | 2026-07-21 | List only (`listClasses`) |
+| Version | Date       | Notes                        |
+| ------- | ---------- | ---------------------------- |
+| 1.0     | 2026-07-21 | List only (`listClasses`)    |
+| 1.1     | 2026-07-21 | `GET /classes/{id}` getClass |
+| **1.2** | 2026-07-21 | `POST /classes` createClass  |
 
 ## Scope
 
-| In scope                        | Out of scope                                   |
-| ------------------------------- | ---------------------------------------------- |
-| `GET /api/v1/classes` list      | POST/PATCH/DELETE (later revs)                 |
-| Filters academicYearId / termId | Nested year/term objects; streams; enrollments |
-| `academic.read`                 | `class.*` permission invention                 |
+| In scope                          | Out of scope                       |
+| --------------------------------- | ---------------------------------- |
+| GET list, GET detail, POST create | PATCH/DELETE, streams, enrollments |
+| academic.read / academic.manage   | class.* invention                  |
 
 ## Endpoint: list
 
-| Method | Path              | Auth   | Header                     | AuthZ                                                     |
-| ------ | ----------------- | ------ | -------------------------- | --------------------------------------------------------- |
-| `GET`  | `/api/v1/classes` | Bearer | `X-Tenant-Id` **required** | `RequirePermission('academic.read')` + session bind + RLS |
+| Method | Path              | AuthZ                              |
+| ------ | ----------------- | ---------------------------------- |
+| GET    | `/api/v1/classes` | academic.read + session bind + RLS |
 
 **operationId:** `listClasses`
 
-### Query
+Query: `limit`, `cursor`, `academicYearId?`, `termId?`, `status?`, `search?`  
+Order: `name ASC, id ASC`  
+Foreign/missing year/term UUID filters → empty page; non-UUID → 400.
 
-| Param            | Behavior                                                                 |
-| ---------------- | ------------------------------------------------------------------------ |
-| `limit`          | 1–100, default 25                                                        |
-| `cursor`         | Opaque last id (keyset `name ASC, id ASC`)                               |
-| `academicYearId` | Optional UUID; filter year in bound tenant; non-UUID → 400; miss → empty |
-| `termId`         | Optional UUID; filter term in bound tenant; non-UUID → 400; miss → empty |
-| `status`         | Optional draft\|active\|closed                                           |
-| `search`         | Optional ILIKE name/code (escaped)                                       |
+## Endpoint: get by id (rev 1.1)
 
-### Success 200 — `ClassListEnvelope`
+| Method | Path                        | AuthZ                              |
+| ------ | --------------------------- | ---------------------------------- |
+| GET    | `/api/v1/classes/{classId}` | academic.read + session bind + RLS |
 
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "tenantId": "uuid",
-      "academicYearId": "uuid",
-      "termId": null,
-      "name": "Form 1A",
-      "code": "F1A",
-      "status": "active",
-      "createdAt": "…",
-      "updatedAt": "…"
-    }
-  ],
-  "page": { "nextCursor": null, "limit": 25 }
-}
-```
+**operationId:** `getClass` — Nest `:id`  
+Miss/cross-tenant/invalid → 404 `Class not found.`
 
-Allowlist only.
+## Endpoint: create (rev 1.2)
 
-### Errors
+| Method | Path              | AuthZ                          | Idempotency  |
+| ------ | ----------------- | ------------------------------ | ------------ |
+| POST   | `/api/v1/classes` | academic.manage + session bind | **Required** |
 
-| Condition                           | HTTP | Code                    |
-| ----------------------------------- | ---- | ----------------------- |
-| No bearer                           | 401  | UNAUTHORIZED            |
-| No X-Tenant-Id                      | 400  | TENANT_CONTEXT_REQUIRED |
-| Session mismatch / no academic.read | 403  | FORBIDDEN               |
-| Invalid limit/status/UUID filters   | 400  | VALIDATION_ERROR        |
-| Fail-closed DB                      | 200  | empty page              |
+**operationId:** `createClass`
+
+Body: `academicYearId` (required UUID), `termId?`, `name` (1–200), `code?`, `status?` default **draft**.  
+Parent year missing/other-tenant → 400 `academicYearId not found in this tenant.`  
+Parent term missing/wrong year/tenant → 400 on `termId`.  
+Duplicate code → 409.  
+Audit: `class.create`.
 
 ## Acceptance (solo-operator)
 
-| Role                         | Status | Date       |
-| ---------------------------- | ------ | ---------- |
-| Backend Lead (acting)        | Signed | 2026-07-21 |
-| Security (acting)            | Signed | 2026-07-21 |
-| Principal Architect (acting) | Signed | 2026-07-21 |
+Signed 2026-07-21 (Backend / Security / Principal acting).
 
 ## Related
 
-- DBF-005; IMP-003-C0
+DBF-005; IMP-003-C0/C1/C2
