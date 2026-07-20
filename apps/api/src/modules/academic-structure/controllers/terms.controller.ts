@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 
 import { AUTH_CONTEXT_REQUEST_KEY } from '../../../common/auth/index.js';
@@ -15,13 +15,15 @@ type AuthedRequest = Request & {
 };
 
 /**
- * Product terms surface (Academic Structure — ACF-004).
+ * Product terms surface (Academic Structure — ACF-004 rev 1.1).
  *
- * GET /api/v1/terms — list (academic.read) — IMP-003-P3
- * No POST/PATCH/DELETE; no get-by-id in this slice.
+ * GET /api/v1/terms      — list (academic.read) — IMP-003-P3
+ * GET /api/v1/terms/:id  — detail (academic.read) — IMP-003-P4
+ * No POST/PATCH/DELETE.
  *
  * List query: limit, cursor, academicYearId, status, search.
  * List response: { data, page: { nextCursor, limit } }.
+ * Detail response: { data: Term }.
  */
 @Controller('api/v1/terms')
 export class TermsController {
@@ -54,5 +56,21 @@ export class TermsController {
       status,
       search,
     });
+  }
+
+  @Get(':id')
+  @UseGuards(RequirePermission('academic.read'))
+  async getById(@Req() request: AuthedRequest, @Param('id') id: string): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    // Bound tenant only; missing/cross-tenant → 404 (no enumeration).
+    return this.termsService.getForTenant(auth.userId, tenant.tenantId, id);
   }
 }

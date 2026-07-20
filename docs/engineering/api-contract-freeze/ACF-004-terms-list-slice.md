@@ -1,31 +1,33 @@
-# API Contract Freeze — Terms List Slice (ACF-004)
+# API Contract Freeze — Terms List + Detail Slice (ACF-004)
 
 ## Freeze status
 
 | Field               | Value                                               |
 | ------------------- | --------------------------------------------------- |
 | Freeze ID           | `ACF-004`                                           |
-| Title               | API Contract Freeze — terms list-read only          |
-| Version             | `1.0`                                               |
-| Date                | 2026-07-20                                          |
+| Title               | API Contract Freeze — terms list + get-by-id        |
+| Version             | `1.1`                                               |
+| Date                | 2026-07-21                                          |
 | Authority           | Solo-operator provisional acceptance (SOLO-GOV-001) |
-| Companion DB freeze | DBF-004                                             |
+| Companion DB freeze | DBF-004 (no table change for detail)                |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** multi-party external review.
 
 ## Revision history
 
-| Version | Date       | Notes                   |
-| ------- | ---------- | ----------------------- |
-| **1.0** | 2026-07-20 | List only (`listTerms`) |
+| Version | Date       | Notes                                 |
+| ------- | ---------- | ------------------------------------- |
+| 1.0     | 2026-07-20 | List only (`listTerms`)               |
+| **1.1** | 2026-07-21 | Add `GET /terms/{termId}` (`getTerm`) |
 
 ## Scope
 
 | In scope                                            | Out of scope                                         |
 | --------------------------------------------------- | ---------------------------------------------------- |
 | `GET /api/v1/terms` list                            | POST/PATCH/DELETE terms                              |
-| Cursor pagination + filters                         | Nested `/academic-years/{id}/terms` path (v1 closed) |
-| Filter by optional `academicYearId`                 | classes, streams, subjects, enrollments              |
+| `GET /api/v1/terms/{termId}` detail (rev 1.1)       | Nested `/academic-years/{id}/terms` path (v1 closed) |
+| Cursor pagination + filters                         | classes, streams, subjects, enrollments              |
+| Filter by optional `academicYearId`                 | Nested academicYear expansion on detail              |
 | Permission **`academic.read`** (reuse; no new code) | `term.read` / `term.manage` invention                |
 
 Identity/Tenant ACF-001, Student ACF-002, Academic Years ACF-003 remain unchanged.
@@ -114,23 +116,72 @@ RLS + `tenant_id` bind ensure other-tenant terms never appear. Prefer empty list
 | Invalid limit / status / year UUID | 400  | `VALIDATION_ERROR`                        |
 | Pool/DB fail-closed                | 200  | empty `{ data: [], page }` (list pattern) |
 
+---
+
+## Endpoint: get by id (rev 1.1)
+
+| Method | Path                     | Auth   | Header                     | AuthZ                                                                                |
+| ------ | ------------------------ | ------ | -------------------------- | ------------------------------------------------------------------------------------ |
+| `GET`  | `/api/v1/terms/{termId}` | Bearer | `X-Tenant-Id` **required** | `RequirePermission('academic.read')` + session↔header bind + active membership + RLS |
+
+**operationId:** `getTerm`  
+**Nest param:** `:id` (registered after list `@Get()`)
+
+### Success 200 — `TermEnvelope`
+
+Same allowlist as list item (`id`, `tenantId`, `academicYearId`, `name`, `code`, `startsOn`, `endsOn`, `status`, `createdAt`, `updatedAt`).
+
+```json
+{
+  "data": {
+    "id": "uuid",
+    "tenantId": "uuid",
+    "academicYearId": "uuid",
+    "name": "Term 1",
+    "code": "T1",
+    "startsOn": "2026-01-15",
+    "endsOn": "2026-04-15",
+    "status": "active",
+    "createdAt": "…",
+    "updatedAt": "…"
+  }
+}
+```
+
+**Allowlist only** — no nested academicYear object.
+
+### Visibility / errors (detail)
+
+| Condition                                           | HTTP | Code                      |
+| --------------------------------------------------- | ---- | ------------------------- |
+| Missing/invalid bearer                              | 401  | `UNAUTHORIZED`            |
+| Missing `X-Tenant-Id`                               | 400  | `TENANT_CONTEXT_REQUIRED` |
+| Session ≠ header / no `academic.read`               | 403  | `FORBIDDEN`               |
+| Invalid UUID / missing / other tenant / fail-closed | 404  | `NOT_FOUND` (generic msg) |
+
+Message: `Term not found.`
+
+Cross-tenant id must **not** return 403 that proves the term exists elsewhere — always 404.
+
 ## Explicit non-goals
 
 - Term writes (POST/PATCH/DELETE)
 - Nested year path
+- Nested academicYear expansion on detail
 - classes / streams / subjects
 - New permission codes
+- Schema change for detail (reuses DBF-004 table + SELECT RLS)
 
 ## Acceptance (solo-operator)
 
 | Role                         | Status | Date       |
 | ---------------------------- | ------ | ---------- |
-| Backend Lead (acting)        | Signed | 2026-07-20 |
-| Security (acting)            | Signed | 2026-07-20 |
-| Principal Architect (acting) | Signed | 2026-07-20 |
+| Backend Lead (acting)        | Signed | 2026-07-21 |
+| Security (acting)            | Signed | 2026-07-21 |
+| Principal Architect (acting) | Signed | 2026-07-21 |
 
 ## Related
 
 - Companion: [DBF-004-terms-list-slice.md](../database-freeze/DBF-004-terms-list-slice.md)
 - Parent list twin: [ACF-003-academic-years-list-slice.md](./ACF-003-academic-years-list-slice.md)
-- Implementation: IMP-003-P3 terms list read
+- Implementation: IMP-003-P3 list; IMP-003-P4 get-by-id

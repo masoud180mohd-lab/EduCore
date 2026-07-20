@@ -10,20 +10,54 @@ import { parseOptionalSearchFilter } from '../../../common/text/index.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
 import { TermsRepository, type TermRow } from '../repositories/terms.repository.js';
 
-/** Public term item (ACF-004 allowlist — list only). */
+/** Public term item (ACF-004 allowlist — list + detail). */
 export type Term = TermRow;
 
 export type ListTermsResult = PaginatedResponse<Term>;
+
+export type GetTermResult = {
+  readonly data: Term;
+};
 
 const TERM_STATUSES = new Set(['draft', 'active', 'closed']);
 
 /**
  * Product API for terms in the bound tenant.
- * GET list (P3) only. Detail/create deferred. Years/classes not here.
+ * GET list (P3) + detail (P4). Create deferred. Years/classes not here.
  */
 @Injectable()
 export class TermsService {
   constructor(private readonly terms: TermsRepository) {}
+
+  /**
+   * GET /terms/:id — detail in bound tenant only.
+   * Missing, other-tenant, invalid id, or no pool → 404 (no existence leak).
+   */
+  async getForTenant(
+    actorUserId: string,
+    tenantId: string,
+    termId: string,
+  ): Promise<GetTermResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(termId)) {
+      throw AppError.notFound('Term not found.');
+    }
+
+    if (!this.terms.isAvailable()) {
+      throw AppError.notFound('Term not found.');
+    }
+
+    const term = await this.terms.getByIdForTenant(actorUserId, tenantId, termId);
+    if (term === null) {
+      throw AppError.notFound('Term not found.');
+    }
+    return { data: term };
+  }
 
   /**
    * Cursor list with optional filters.

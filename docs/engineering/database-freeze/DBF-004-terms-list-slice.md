@@ -21,6 +21,8 @@ Authorize the **smallest** tenant-owned schema needed for `GET /api/v1/terms` un
 
 Does **not** authorize term writes or child resources (classes/streams/subjects).
 
+**Detail note (ACF-004 rev 1.1):** `GET /api/v1/terms/{id}` reuses this table and SELECT-only Pattern A RLS — **no schema change** for get-by-id.
+
 ## Parent dependency
 
 | Artifact | Path                                                                    |

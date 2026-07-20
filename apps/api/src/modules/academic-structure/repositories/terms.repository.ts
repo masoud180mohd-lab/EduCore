@@ -1,6 +1,6 @@
 /**
  * Terms in the bound tenant (RLS Pattern A / DBF-004).
- * List only (P3). No get-by-id / writes.
+ * List (P3) + get-by-id (P4). No writes.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -160,6 +160,57 @@ export class TermsRepository {
         operation: 'listForTenant',
       });
       return { rows: [], nextCursor: null };
+    }
+  }
+
+  /**
+   * Single term by id in the bound tenant under RLS.
+   * Returns null when missing, other-tenant, invalid ids, no pool, or DB errors
+   * (caller maps to 404 — no existence leak).
+   */
+  async getByIdForTenant(
+    actorUserId: string,
+    tenantId: string,
+    termId: string,
+  ): Promise<TermRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(termId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            academic_year_id: string;
+            name: string;
+            code: string | null;
+            starts_on: Date | string | null;
+            ends_on: Date | string | null;
+            status: string;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT t.id, t.tenant_id, t.academic_year_id, t.name, t.code,
+                    t.starts_on, t.ends_on, t.status, t.created_at, t.updated_at
+             FROM terms t
+             WHERE t.tenant_id = $1::uuid
+               AND t.id = $2::uuid
+             LIMIT 1`,
+            [tenantId, termId],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapTermRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'TermsRepository', error, {
+        operation: 'getByIdForTenant',
+      });
+      return null;
     }
   }
 }

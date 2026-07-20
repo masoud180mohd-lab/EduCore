@@ -397,6 +397,34 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     expect(parseErrorBody(response.body).error?.code).toBe('VALIDATION_ERROR');
   });
 
+  it('GET /api/v1/terms/:id returns 404 for invalid id shape (no leak)', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/terms/not-a-uuid', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(404);
+    expect(parseErrorBody(response.body).error?.code).toBe('NOT_FOUND');
+  });
+
+  it('GET /api/v1/terms/:id returns 403 without academic.read', async () => {
+    const response = await httpCall(server, 'GET', `/api/v1/terms/${userA}`, {
+      'authorization': harnessBearer(userNoPerm, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('GET /api/v1/terms/:id returns 403 on session/header mismatch', async () => {
+    const response = await httpCall(server, 'GET', `/api/v1/terms/${userA}`, {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantB,
+    });
+    expect(response.statusCode).toBe(403);
+    expect(parseErrorBody(response.body).error?.details?.['reason']).toBe(
+      'SESSION_TENANT_MISMATCH',
+    );
+  });
+
   it('POST /api/v1/students returns 400 without Idempotency-Key when permitted', async () => {
     const response = await httpCall(
       server,

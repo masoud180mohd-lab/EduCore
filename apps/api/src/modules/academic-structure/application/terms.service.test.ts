@@ -118,3 +118,47 @@ describe('TermsService.listForTenant', () => {
     });
   });
 });
+
+describe('TermsService.getForTenant', () => {
+  it('returns envelope when found', async () => {
+    const terms = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(termA),
+    };
+    const service = new TermsService(terms as never);
+    await expect(service.getForTenant(actorId, tenantId, termA.id)).resolves.toEqual({
+      data: termA,
+    });
+  });
+
+  it('maps missing to 404 with generic message', async () => {
+    const terms = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new TermsService(terms as never);
+    await expect(service.getForTenant(actorId, tenantId, termA.id)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: 'Term not found.',
+    });
+  });
+
+  it('maps invalid uuid to 404 without repo call', async () => {
+    const terms = { isAvailable: () => true, getByIdForTenant: vi.fn() };
+    const service = new TermsService(terms as never);
+    await expect(service.getForTenant(actorId, tenantId, 'not-a-uuid')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: 'Term not found.',
+    });
+    expect(terms.getByIdForTenant).not.toHaveBeenCalled();
+  });
+
+  it('maps no pool to 404 without repo call', async () => {
+    const terms = { isAvailable: () => false, getByIdForTenant: vi.fn() };
+    const service = new TermsService(terms as never);
+    await expect(service.getForTenant(actorId, tenantId, termA.id)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(terms.getByIdForTenant).not.toHaveBeenCalled();
+  });
+});

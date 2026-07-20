@@ -77,4 +77,29 @@ describe('TermsController', () => {
     });
     expect(termsService.listForTenant).not.toHaveBeenCalled();
   });
+
+  it('gets term by id', async () => {
+    const termsService = {
+      getForTenant: vi.fn().mockResolvedValue({ data: { id: 't1', name: 'Term 1' } }),
+    };
+    const controller = new TermsController(termsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const termId = '01900000-0000-7000-8000-0000000000d1';
+    await expect(controller.getById(request as never, termId)).resolves.toEqual({
+      data: { id: 't1', name: 'Term 1' },
+    });
+    expect(termsService.getForTenant).toHaveBeenCalledWith(userId, tenantId, termId);
+  });
+
+  it('rejects getById when auth context is missing', async () => {
+    const termsService = { getForTenant: vi.fn() };
+    const controller = new TermsController(termsService as never);
+    await expect(
+      controller.getById({ [TENANT_CONTEXT_REQUEST_KEY]: { tenantId } } as never, 'x'),
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    expect(termsService.getForTenant).not.toHaveBeenCalled();
+  });
 });

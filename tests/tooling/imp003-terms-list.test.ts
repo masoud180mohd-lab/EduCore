@@ -10,14 +10,17 @@ function read(rel: string): string {
   return readFileSync(path.join(projectRoot, rel), 'utf8');
 }
 
-describe('IMP-003-P3 terms list structural', () => {
-  it('registers GET list with academic.read and no write verbs', () => {
+describe('IMP-003-P3/P4 terms list + detail structural', () => {
+  it('registers GET list + get-by-id with academic.read and no write verbs', () => {
     const ctrl = read('apps/api/src/modules/academic-structure/controllers/terms.controller.ts');
     expect(ctrl).toContain("@Controller('api/v1/terms')");
     expect(ctrl).toContain('@Get()');
+    expect(ctrl).toContain("@Get(':id')");
     expect(ctrl).toContain("RequirePermission('academic.read')");
     expect(ctrl).not.toMatch(/@(Post|Put|Patch|Delete)\(/);
     expect(ctrl).not.toContain('term.read');
+    // List route registered before param route (no shadowing).
+    expect(ctrl.indexOf('@Get()')).toBeLessThan(ctrl.indexOf("@Get(':id')"));
   });
 
   it('wires TermsController/Service/Repository in academic-structure module', () => {
@@ -27,7 +30,7 @@ describe('IMP-003-P3 terms list structural', () => {
     expect(mod).toContain('TermsRepository');
   });
 
-  it('documents freezes and task record; reuses academic.read only', () => {
+  it('documents freezes and task records; reuses academic.read only', () => {
     const dbf = read('docs/engineering/database-freeze/DBF-004-terms-list-slice.md');
     expect(dbf).toContain('DBF-004');
     expect(dbf).toContain('terms');
@@ -36,12 +39,18 @@ describe('IMP-003-P3 terms list structural', () => {
 
     const acf = read('docs/engineering/api-contract-freeze/ACF-004-terms-list-slice.md');
     expect(acf).toContain('listTerms');
+    expect(acf).toContain('getTerm');
+    expect(acf).toContain('1.1');
     expect(acf).toContain('/api/v1/terms');
     expect(acf).toContain('academicYearId');
     expect(acf).toContain('starts_on ASC NULLS LAST');
+    expect(acf).toContain('Term not found.');
 
     expect(read('docs/engineering/task-records/IMP-003-P3-terms-list-read.md')).toContain(
       'IMP-003-P3',
+    );
+    expect(read('docs/engineering/task-records/IMP-003-P4-terms-get-by-id.md')).toContain(
+      'IMP-003-P4',
     );
   });
 
