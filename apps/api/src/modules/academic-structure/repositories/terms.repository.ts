@@ -1,6 +1,7 @@
 /**
  * Terms in the bound tenant (RLS Pattern A / DBF-004).
- * List (P3) + get-by-id (P4). No writes.
+ * List (P3) + get-by-id (P4) + create (P5 via SECURITY DEFINER).
+ * No PATCH/DELETE.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -211,6 +212,81 @@ export class TermsRepository {
         operation: 'getByIdForTenant',
       });
       return null;
+    }
+  }
+
+  /**
+   * Create term via SECURITY DEFINER helper.
+   * Throws on unique violation (23505) for service → 409.
+   * Throws on parent year miss (22023 + message) for service → 400.
+   */
+  async createForTenant(
+    actorUserId: string,
+    tenantId: string,
+    input: {
+      readonly id: string;
+      readonly academicYearId: string;
+      readonly name: string;
+      readonly code: string | undefined;
+      readonly startsOn: string | null;
+      readonly endsOn: string | null;
+      readonly status: string;
+    },
+  ): Promise<TermRow | null> {
+    if (
+      !isUuid(actorUserId) ||
+      !isUuid(tenantId) ||
+      !isUuid(input.id) ||
+      !isUuid(input.academicYearId) ||
+      this.pool === null
+    ) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            academic_year_id: string;
+            name: string;
+            code: string | null;
+            starts_on: Date | string | null;
+            ends_on: Date | string | null;
+            status: string;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, tenant_id, academic_year_id, name, code, starts_on, ends_on,
+                    status, created_at, updated_at
+             FROM app.create_term(
+               $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::text, $6::text,
+               $7::date, $8::date, $9::text
+             )`,
+            [
+              actorUserId,
+              tenantId,
+              input.id,
+              input.academicYearId,
+              input.name,
+              input.code ?? null,
+              input.startsOn,
+              input.endsOn,
+              input.status,
+            ],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapTermRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'TermsRepository', error, {
+        operation: 'createForTenant',
+      });
+      throw error;
     }
   }
 }

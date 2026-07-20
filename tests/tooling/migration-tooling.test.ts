@@ -134,4 +134,15 @@ describe('IMP-001 migration tooling', () => {
     const down = read('apps/api/db/migrations/20260720200000_terms_list_read.down.sql');
     expect(down).toContain('DROP TABLE IF EXISTS terms');
   });
+
+  it('ships IMP-003-P5 create_term helper (no new permission seed)', () => {
+    const up = read('apps/api/db/migrations/20260720210000_terms_create.up.sql');
+    expect(up).toContain('app.create_term');
+    expect(up).toMatch(/SECURITY DEFINER/i);
+    expect(up).toContain('parent academic year not found');
+    expect(up).toContain('GRANT EXECUTE');
+    expect(up).not.toMatch(/INSERT INTO permissions/i);
+    const down = read('apps/api/db/migrations/20260720210000_terms_create.down.sql');
+    expect(down).toContain('DROP FUNCTION');
+  });
 });

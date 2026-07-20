@@ -102,4 +102,27 @@ describe('TermsController', () => {
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
     expect(termsService.getForTenant).not.toHaveBeenCalled();
   });
+
+  it('creates term with idempotency header', async () => {
+    const termsService = {
+      createForTenant: vi.fn().mockResolvedValue({ data: { id: 't1', name: 'Term 1' } }),
+    };
+    const controller = new TermsController(termsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    await controller.create(
+      request as never,
+      { academicYearId: yearId, name: 'Term 1' },
+      'idem-key-term-create-01',
+    );
+    expect(termsService.createForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      { academicYearId: yearId, name: 'Term 1' },
+      'idem-key-term-create-01',
+      'unknown',
+    );
+  });
 });

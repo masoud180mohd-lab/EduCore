@@ -1,15 +1,15 @@
-# API Contract Freeze — Terms List + Detail Slice (ACF-004)
+# API Contract Freeze — Terms List + Detail + Create (ACF-004)
 
 ## Freeze status
 
 | Field               | Value                                               |
 | ------------------- | --------------------------------------------------- |
 | Freeze ID           | `ACF-004`                                           |
-| Title               | API Contract Freeze — terms list + get-by-id        |
-| Version             | `1.1`                                               |
+| Title               | API Contract Freeze — terms list + get + create     |
+| Version             | `1.2`                                               |
 | Date                | 2026-07-21                                          |
 | Authority           | Solo-operator provisional acceptance (SOLO-GOV-001) |
-| Companion DB freeze | DBF-004 (no table change for detail)                |
+| Companion DB freeze | DBF-004 (+ write helper rev 1.1)                    |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** multi-party external review.
 
@@ -18,34 +18,35 @@
 | Version | Date       | Notes                                 |
 | ------- | ---------- | ------------------------------------- |
 | 1.0     | 2026-07-20 | List only (`listTerms`)               |
-| **1.1** | 2026-07-21 | Add `GET /terms/{termId}` (`getTerm`) |
+| 1.1     | 2026-07-21 | Add `GET /terms/{termId}` (`getTerm`) |
+| **1.2** | 2026-07-21 | Add `POST /terms` (`createTerm`)      |
 
 ## Scope
 
-| In scope                                            | Out of scope                                         |
-| --------------------------------------------------- | ---------------------------------------------------- |
-| `GET /api/v1/terms` list                            | POST/PATCH/DELETE terms                              |
-| `GET /api/v1/terms/{termId}` detail (rev 1.1)       | Nested `/academic-years/{id}/terms` path (v1 closed) |
-| Cursor pagination + filters                         | classes, streams, subjects, enrollments              |
-| Filter by optional `academicYearId`                 | Nested academicYear expansion on detail              |
-| Permission **`academic.read`** (reuse; no new code) | `term.read` / `term.manage` invention                |
+| In scope                                        | Out of scope                                         |
+| ----------------------------------------------- | ---------------------------------------------------- |
+| `GET /api/v1/terms` list                        | PATCH/DELETE terms                                   |
+| `GET /api/v1/terms/{termId}` detail             | Nested `/academic-years/{id}/terms` path (v1 closed) |
+| `POST /api/v1/terms` create (rev 1.2)           | classes, streams, subjects, enrollments              |
+| Cursor pagination + filters                     | Nested academicYear expansion                        |
+| Permissions `academic.read` / `academic.manage` | `term.read` / `term.manage` invention                |
 
 Identity/Tenant ACF-001, Student ACF-002, Academic Years ACF-003 remain unchanged.
 
-## Locked product decisions (D1–D10)
+## Locked product decisions (D1–D10 + create)
 
-| #   | Decision                                                               |
-| --- | ---------------------------------------------------------------------- |
-| D1  | Path **`GET /api/v1/terms`** flat (like students / academic-years)     |
-| D2  | Optional query `academicYearId` UUID — filter year **in bound tenant** |
-| D3  | AuthZ: `RequirePermission('academic.read')`                            |
-| D4  | Status enum: `draft` \| `active` \| `closed`                           |
-| D5  | `startsOn` / `endsOn` optional null; both set ⇒ `endsOn >= startsOn`   |
-| D6  | List order: `starts_on ASC NULLS LAST, id ASC`                         |
-| D7  | Cursor: opaque keyset on last row `id` with order D6                   |
-| D8  | Parent: `academic_year_id` FK + denormalized `tenant_id`               |
-| D9  | Writes closed this increment                                           |
-| D10 | `educore_app` SELECT only on `terms`                                   |
+| #   | Decision                                                       |
+| --- | -------------------------------------------------------------- |
+| D1  | Flat paths under `/api/v1/terms`                               |
+| D2  | Optional list filter `academicYearId`; create body requires it |
+| D3  | List/detail: `academic.read`; create: **`academic.manage`**    |
+| D4  | Status enum: `draft` \| `active` \| `closed`                   |
+| D5  | Dates optional; both set ⇒ `endsOn >= startsOn`                |
+| D6  | List order: `starts_on ASC NULLS LAST, id ASC`                 |
+| D7  | Cursor keyset on last row `id`                                 |
+| D8  | Parent year FK + denormalized `tenant_id`                      |
+| D9  | PATCH/DELETE closed; POST open (rev 1.2)                       |
+| D10 | `educore_app` table INSERT remains REVOKED (helper only)       |
 
 ## Endpoint: list
 
@@ -65,56 +66,27 @@ Identity/Tenant ACF-001, Student ACF-002, Academic Years ACF-003 remain unchange
 | `status`         | Optional: `draft` \| `active` \| `closed`                                     |
 | `search`         | Optional: ILIKE on `name` / `code` (metachar escape)                          |
 
-### Cross-tenant / missing year (security)
+### Cross-tenant / missing year (list)
 
-| Input                                            | Response                                                          |
-| ------------------------------------------------ | ----------------------------------------------------------------- |
-| `academicYearId` not a UUID                      | **400** `VALIDATION_ERROR` (strict query validation)              |
-| Valid UUID for year missing or other-tenant year | **200 empty page** — no 403/404 that proves year exists elsewhere |
-
-RLS + `tenant_id` bind ensure other-tenant terms never appear. Prefer empty list over existence leak.
+| Input                                            | Response                   |
+| ------------------------------------------------ | -------------------------- |
+| `academicYearId` not a UUID                      | **400** `VALIDATION_ERROR` |
+| Valid UUID for year missing or other-tenant year | **200 empty page**         |
 
 ### Success 200 — `TermListEnvelope`
 
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "tenantId": "uuid",
-      "academicYearId": "uuid",
-      "name": "Term 1",
-      "code": "T1",
-      "startsOn": "2026-01-15",
-      "endsOn": "2026-04-15",
-      "status": "active",
-      "createdAt": "…",
-      "updatedAt": "…"
-    }
-  ],
-  "page": { "nextCursor": null, "limit": 25 }
-}
-```
+Allowlist fields: `id`, `tenantId`, `academicYearId`, `name`, `code`, `startsOn`, `endsOn`, `status`, `createdAt`, `updatedAt`.
 
-| Field            | Notes                           |
-| ---------------- | ------------------------------- |
-| `academicYearId` | Parent year UUID                |
-| `startsOn`       | ISO date `YYYY-MM-DD` or `null` |
-| `endsOn`         | ISO date `YYYY-MM-DD` or `null` |
-| `code`           | string or `null`                |
+### Errors (list)
 
-**Allowlist only** — no nested year/classes/streams.
-
-### Errors
-
-| Condition                          | HTTP | Code                                      |
-| ---------------------------------- | ---- | ----------------------------------------- |
-| Missing/invalid bearer             | 401  | `UNAUTHORIZED`                            |
-| Missing `X-Tenant-Id`              | 400  | `TENANT_CONTEXT_REQUIRED`                 |
-| Session ≠ header tenant            | 403  | `FORBIDDEN` (+ session mismatch reason)   |
-| No `academic.read`                 | 403  | `FORBIDDEN`                               |
-| Invalid limit / status / year UUID | 400  | `VALIDATION_ERROR`                        |
-| Pool/DB fail-closed                | 200  | empty `{ data: [], page }` (list pattern) |
+| Condition                          | HTTP | Code                      |
+| ---------------------------------- | ---- | ------------------------- |
+| Missing/invalid bearer             | 401  | `UNAUTHORIZED`            |
+| Missing `X-Tenant-Id`              | 400  | `TENANT_CONTEXT_REQUIRED` |
+| Session ≠ header tenant            | 403  | `FORBIDDEN`               |
+| No `academic.read`                 | 403  | `FORBIDDEN`               |
+| Invalid limit / status / year UUID | 400  | `VALIDATION_ERROR`        |
+| Pool/DB fail-closed                | 200  | empty page                |
 
 ---
 
@@ -125,52 +97,82 @@ RLS + `tenant_id` bind ensure other-tenant terms never appear. Prefer empty list
 | `GET`  | `/api/v1/terms/{termId}` | Bearer | `X-Tenant-Id` **required** | `RequirePermission('academic.read')` + session↔header bind + active membership + RLS |
 
 **operationId:** `getTerm`  
-**Nest param:** `:id` (registered after list `@Get()`)
+**Nest param:** `:id`
 
 ### Success 200 — `TermEnvelope`
 
-Same allowlist as list item (`id`, `tenantId`, `academicYearId`, `name`, `code`, `startsOn`, `endsOn`, `status`, `createdAt`, `updatedAt`).
-
-```json
-{
-  "data": {
-    "id": "uuid",
-    "tenantId": "uuid",
-    "academicYearId": "uuid",
-    "name": "Term 1",
-    "code": "T1",
-    "startsOn": "2026-01-15",
-    "endsOn": "2026-04-15",
-    "status": "active",
-    "createdAt": "…",
-    "updatedAt": "…"
-  }
-}
-```
-
-**Allowlist only** — no nested academicYear object.
-
-### Visibility / errors (detail)
+Same allowlist as list item. Message on miss: `Term not found.`
 
 | Condition                                           | HTTP | Code                      |
 | --------------------------------------------------- | ---- | ------------------------- |
 | Missing/invalid bearer                              | 401  | `UNAUTHORIZED`            |
 | Missing `X-Tenant-Id`                               | 400  | `TENANT_CONTEXT_REQUIRED` |
 | Session ≠ header / no `academic.read`               | 403  | `FORBIDDEN`               |
-| Invalid UUID / missing / other tenant / fail-closed | 404  | `NOT_FOUND` (generic msg) |
+| Invalid UUID / missing / other tenant / fail-closed | 404  | `NOT_FOUND`               |
 
-Message: `Term not found.`
+---
 
-Cross-tenant id must **not** return 403 that proves the term exists elsewhere — always 404.
+## Endpoint: create (rev 1.2)
+
+| Method | Path            | Auth   | Header                     | AuthZ                                                                                  | Idempotency  |
+| ------ | --------------- | ------ | -------------------------- | -------------------------------------------------------------------------------------- | ------------ |
+| `POST` | `/api/v1/terms` | Bearer | `X-Tenant-Id` **required** | `RequirePermission('academic.manage')` + session↔header bind + active membership + RLS | **Required** |
+
+**operationId:** `createTerm`  
+**Nest route order:** `@Post()` after list `@Get()`, **before** `@Get(':id')`.
+
+### Body — `CreateTermRequest`
+
+| Field            | Rules                                                     |
+| ---------------- | --------------------------------------------------------- |
+| `academicYearId` | **required**; UUID; parent year **in bound tenant**       |
+| `name`           | required; string; length 1–200                            |
+| `code`           | optional; unique per (tenant, academic year) when set     |
+| `startsOn`       | optional; ISO date `YYYY-MM-DD`                           |
+| `endsOn`         | optional; ISO date; if both set, `endsOn >= startsOn`     |
+| `status`         | optional; default **`draft`**; enum draft\|active\|closed |
+
+`tenantId` **never** from body. Unknown keys → `VALIDATION_ERROR`.
+
+### Parent year resolution (security)
+
+| Condition                                    | HTTP | Code               |
+| -------------------------------------------- | ---- | ------------------ |
+| `academicYearId` missing / not UUID          | 400  | `VALIDATION_ERROR` |
+| Parent year missing **or** other-tenant year | 400  | `VALIDATION_ERROR` |
+
+Message (create): `academicYearId not found in this tenant.`  
+Field detail: `academicYearId`.  
+Does **not** use 403 that would distinguish foreign years.
+
+### Success 201 — `TermEnvelope`
+
+Same allowlist as GET. Created via `app.create_term` (SECURITY DEFINER).
+
+### Errors (create)
+
+| Condition                               | HTTP | Code family                |
+| --------------------------------------- | ---- | -------------------------- |
+| Missing/invalid bearer                  | 401  | `UNAUTHORIZED`             |
+| Missing `X-Tenant-Id`                   | 400  | `TENANT_CONTEXT_REQUIRED`  |
+| Session mismatch / no `academic.manage` | 403  | `FORBIDDEN`                |
+| Missing Idempotency-Key                 | 400  | `IDEMPOTENCY_KEY_REQUIRED` |
+| Body validation / parent year           | 400  | `VALIDATION_ERROR`         |
+| Duplicate code in year                  | 409  | `CONFLICT`                 |
+| Store unavailable / unexpected DB       | 500  | `INTERNAL_ERROR`           |
+
+### Audit
+
+On success: `term.create` with metadata `{ status, hasCode, academicYearId }` (no excess PII).
 
 ## Explicit non-goals
 
-- Term writes (POST/PATCH/DELETE)
+- PATCH/DELETE terms
 - Nested year path
-- Nested academicYear expansion on detail
+- Nested academicYear expansion
 - classes / streams / subjects
-- New permission codes
-- Schema change for detail (reuses DBF-004 table + SELECT RLS)
+- New permission codes (`term.*`)
+- Table INSERT grant to `educore_app`
 
 ## Acceptance (solo-operator)
 
@@ -184,4 +186,4 @@ Cross-tenant id must **not** return 403 that proves the term exists elsewhere �
 
 - Companion: [DBF-004-terms-list-slice.md](../database-freeze/DBF-004-terms-list-slice.md)
 - Parent list twin: [ACF-003-academic-years-list-slice.md](./ACF-003-academic-years-list-slice.md)
-- Implementation: IMP-003-P3 list; IMP-003-P4 get-by-id
+- Implementation: IMP-003-P3 list; P4 detail; P5 create

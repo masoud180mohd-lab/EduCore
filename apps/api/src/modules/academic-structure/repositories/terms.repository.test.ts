@@ -86,4 +86,47 @@ describe('TermsRepository', () => {
     await expect(repo.getByIdForTenant(actorId, tenantId, termId)).resolves.toBeNull();
     expect(warn).toHaveBeenCalledOnce();
   });
+
+  it('createForTenant calls app.create_term with parent year and maps row', async () => {
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      expect(sql).toContain('app.create_term');
+      return Promise.resolve({
+        rows: [
+          {
+            id: termId,
+            tenant_id: tenantId,
+            academic_year_id: yearId,
+            name: 'Term 1',
+            code: 'T1',
+            starts_on: '2026-01-15',
+            ends_on: '2026-04-15',
+            status: 'draft',
+            created_at: new Date('2026-01-01T00:00:00.000Z'),
+            updated_at: new Date('2026-01-01T00:00:00.000Z'),
+          },
+        ],
+      });
+    });
+    const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
+    const repo = new TermsRepository({ connect } as never);
+    await expect(
+      repo.createForTenant(actorId, tenantId, {
+        id: termId,
+        academicYearId: yearId,
+        name: 'Term 1',
+        code: 'T1',
+        startsOn: '2026-01-15',
+        endsOn: '2026-04-15',
+        status: 'draft',
+      }),
+    ).resolves.toMatchObject({
+      id: termId,
+      academicYearId: yearId,
+      name: 'Term 1',
+      status: 'draft',
+    });
+  });
 });

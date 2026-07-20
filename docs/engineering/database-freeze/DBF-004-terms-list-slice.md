@@ -1,25 +1,25 @@
-# Database Freeze — Terms List Slice (DBF-004)
+# Database Freeze — Terms Slice (DBF-004)
 
 ## Freeze status
 
-| Field               | Value                                                                     |
-| ------------------- | ------------------------------------------------------------------------- |
-| Freeze ID           | `DBF-004`                                                                 |
-| Title               | Database Freeze — Academic Structure `terms` list-read                    |
-| Version             | `1.0`                                                                     |
-| Date                | 2026-07-20                                                                |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                       |
-| Engine              | PostgreSQL                                                                |
-| Scope               | Academic Structure — `terms` table only (list read)                       |
-| Explicitly excluded | classes, streams, subjects, teacher_assignments, enrollments, term writes |
+| Field               | Value                                                                      |
+| ------------------- | -------------------------------------------------------------------------- |
+| Freeze ID           | `DBF-004`                                                                  |
+| Title               | Database Freeze — Academic Structure `terms` (list + create helper)        |
+| Version             | `1.1` (1.0 list-read; 1.1 create helper)                                   |
+| Date                | 2026-07-21                                                                 |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                        |
+| Engine              | PostgreSQL                                                                 |
+| Scope               | Academic Structure — `terms` table + `app.create_term`                     |
+| Explicitly excluded | classes, streams, subjects, teacher_assignments, enrollments, PATCH/DELETE |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** independent multi-person external review.
 
 ## Purpose
 
-Authorize the **smallest** tenant-owned schema needed for `GET /api/v1/terms` under ACF-004.
+Authorize the tenant-owned schema and write helper for `GET/POST /api/v1/terms` under ACF-004.
 
-Does **not** authorize term writes or child resources (classes/streams/subjects).
+Does **not** authorize PATCH/DELETE or child resources (classes/streams/subjects).
 
 **Detail note (ACF-004 rev 1.1):** `GET /api/v1/terms/{id}` reuses this table and SELECT-only Pattern A RLS — **no schema change** for get-by-id.
 
@@ -57,18 +57,31 @@ Does **not** authorize term writes or child resources (classes/streams/subjects)
 
 ### Integrity note (tenant_id ↔ parent year)
 
-- Application/helper on **future writes** must ensure `term.tenant_id = parent year.tenant_id`.
-- Optional DB trigger CHECK is **out of scope** for P3 list-read.
-- For list-read: FK to `academic_years` + denormalized `tenant_id` + Pattern A RLS is sufficient.
-  Rows seeded/inserted out-of-band with mismatched tenant would still be filtered by RLS on `tenant_id`.
+- **Write helper (rev 1.1)** enforces parent year exists with `y.tenant_id = p_tenant` before INSERT.
+- `term.tenant_id` is always set to `p_tenant` (bound tenant) — must match parent year.
+- Optional DB trigger CHECK remains out of scope.
 
 ### RLS
 
 - FORCE RLS Pattern A (`tenant_id = app.current_tenant_id()`)
 - `educore_app`: **SELECT only** on table
 - INSERT/UPDATE/DELETE for app role: **REVOKED** on table
+- Product create via SECURITY DEFINER `app.create_term` (rev 1.1)
 - Platform role may have INSERT/UPDATE for seed/ops (not product HTTP)
-- No SECURITY DEFINER write helper in this freeze
+
+### Write helper (rev 1.1)
+
+`app.create_term(actor, tenant, term_id, academic_year_id, name, code, starts_on, ends_on, status)`
+
+- SECURITY DEFINER; `SET search_path = public, app`
+- Re-checks `app.auth_has_active_membership(actor, tenant)`
+- Parent year check:  
+  `EXISTS (SELECT 1 FROM academic_years y WHERE y.id = p_academic_year_id AND y.tenant_id = p_tenant_id)`  
+  If missing → `RAISE` invalid_parameter (`22023`) with message `parent academic year not found`  
+  (mapped to HTTP 400 VALIDATION_ERROR — no cross-tenant existence leak via 403/200)
+- INSERT with `tenant_id = p_tenant` only
+- GRANT EXECUTE to `educore_app`; table INSERT remains REVOKED
+- Down migration drops function only (not table)
 
 ### Ownership
 
@@ -76,30 +89,31 @@ Bounded context: **Academic Structure**. Other modules must not write this table
 
 ## Permission seed
 
-**No new permission codes.** Product list reuses `academic.read` seeded in DBF-003 / migration `20260720180000_academic_years_list_read`.
+**No new permission codes.**
 
-| Code            | Source  | Notes                                              |
-| --------------- | ------- | -------------------------------------------------- |
-| `academic.read` | DBF-003 | List/view academic structure (includes terms list) |
+| Code              | Source  | Notes                                                        |
+| ----------------- | ------- | ------------------------------------------------------------ |
+| `academic.read`   | DBF-003 | List/view terms                                              |
+| `academic.manage` | DBF-003 | Create terms (P5); already seeded owner/admin, **not** staff |
 
-No `term.read` / `term.manage` in P3.
+No `term.read` / `term.manage`.
 
 ## Exclusions
 
 - classes, streams, subjects, enrollments
-- Term POST/PATCH/DELETE product HTTP
+- Term PATCH/DELETE product HTTP
 - Nested path under academic-years (v1 uses flat `/terms`)
 
 ## Acceptance (solo-operator)
 
 | Role                         | Status | Date       |
 | ---------------------------- | ------ | ---------- |
-| Database Architect (acting)  | Signed | 2026-07-20 |
-| Security (acting)            | Signed | 2026-07-20 |
-| Principal Architect (acting) | Signed | 2026-07-20 |
+| Database Architect (acting)  | Signed | 2026-07-21 |
+| Security (acting)            | Signed | 2026-07-21 |
+| Principal Architect (acting) | Signed | 2026-07-21 |
 
 ## Related
 
 - Companion: [ACF-004-terms-list-slice.md](../api-contract-freeze/ACF-004-terms-list-slice.md)
 - Parent: [DBF-003-academic-years-list-slice.md](./DBF-003-academic-years-list-slice.md)
-- Implementation: IMP-003-P3 terms list read
+- Implementation: IMP-003-P3 list; P4 detail; P5 create

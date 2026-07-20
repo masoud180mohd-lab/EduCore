@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { InMemoryIdempotencyStore } from '../../../common/idempotency/index.js';
+import { InMemoryAuditPublisher } from '../../platform-operations/index.js';
 import { TermsService } from './terms.service.js';
 
 const actorId = '01900000-0000-7000-8000-000000000001';
@@ -160,5 +162,133 @@ describe('TermsService.getForTenant', () => {
       code: 'NOT_FOUND',
     });
     expect(terms.getByIdForTenant).not.toHaveBeenCalled();
+  });
+});
+
+describe('TermsService.createForTenant', () => {
+  it('creates with idempotency and audit', async () => {
+    const terms = {
+      isAvailable: () => true,
+      createForTenant: vi.fn().mockResolvedValue(termA),
+    };
+    const idempotency = new InMemoryIdempotencyStore();
+    const audit = new InMemoryAuditPublisher();
+    const service = new TermsService(terms as never, idempotency, audit);
+    const key = 'idem-key-term-create01';
+    const body = {
+      academicYearId: yearId,
+      name: 'Term 1',
+      status: 'active',
+      code: 'T1',
+    };
+    const first = await service.createForTenant(actorId, tenantId, body, key, 'corr-1');
+    expect(first.data).toEqual(termA);
+    expect(audit.events).toHaveLength(1);
+    expect(audit.events[0]).toMatchObject({ action: 'term.create', outcome: 'success' });
+
+    terms.createForTenant.mockClear();
+    const second = await service.createForTenant(actorId, tenantId, body, key, 'corr-1');
+    expect(second).toEqual(first);
+    expect(terms.createForTenant).not.toHaveBeenCalled();
+  });
+
+  it('requires Idempotency-Key', async () => {
+    const terms = { isAvailable: () => true, createForTenant: vi.fn() };
+    const service = new TermsService(terms as never);
+    await expect(
+      service.createForTenant(
+        actorId,
+        tenantId,
+        { academicYearId: yearId, name: 'T' },
+        undefined,
+        'c',
+      ),
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
+  });
+
+  it('rejects unknown body fields including tenantId', async () => {
+    const terms = { isAvailable: () => true, createForTenant: vi.fn() };
+    const service = new TermsService(terms as never);
+    await expect(
+      service.createForTenant(
+        actorId,
+        tenantId,
+        { academicYearId: yearId, name: 'T', tenantId },
+        'idem-key-term-create02',
+        'c',
+      ),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+
+  it('requires academicYearId UUID', async () => {
+    const terms = { isAvailable: () => true, createForTenant: vi.fn() };
+    const service = new TermsService(terms as never);
+    await expect(
+      service.createForTenant(actorId, tenantId, { name: 'Term 1' }, 'idem-key-term-create03', 'c'),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+
+  it('maps parent year not found to VALIDATION_ERROR', async () => {
+    const terms = {
+      isAvailable: () => true,
+      createForTenant: vi.fn().mockRejectedValue({
+        code: '22023',
+        message: 'parent academic year not found',
+      }),
+    };
+    const service = new TermsService(terms as never);
+    await expect(
+      service.createForTenant(
+        actorId,
+        tenantId,
+        { academicYearId: yearId, name: 'Term 1' },
+        'idem-key-term-create04',
+        'c',
+      ),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+      message: 'academicYearId not found in this tenant.',
+    });
+  });
+
+  it('maps unique violation to CONFLICT', async () => {
+    const terms = {
+      isAvailable: () => true,
+      createForTenant: vi.fn().mockRejectedValue({ code: '23505', message: 'duplicate' }),
+    };
+    const service = new TermsService(terms as never);
+    await expect(
+      service.createForTenant(
+        actorId,
+        tenantId,
+        { academicYearId: yearId, name: 'Term 1', code: 'T1' },
+        'idem-key-term-create05',
+        'c',
+      ),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+  });
+
+  it('defaults status to draft', async () => {
+    const terms = {
+      isAvailable: () => true,
+      createForTenant: vi.fn().mockResolvedValue({ ...termA, status: 'draft' }),
+    };
+    const service = new TermsService(terms as never);
+    await service.createForTenant(
+      actorId,
+      tenantId,
+      { academicYearId: yearId, name: 'Term 1' },
+      'idem-key-term-create06',
+      'c',
+    );
+    expect(terms.createForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      expect.objectContaining({
+        academicYearId: yearId,
+        name: 'Term 1',
+        status: 'draft',
+      }),
+    );
   });
 });

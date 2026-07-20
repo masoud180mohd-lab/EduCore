@@ -17,7 +17,8 @@ import { TermsRepository } from './repositories/terms.repository.js';
 
 /**
  * Bounded context: Academic Structure.
- * Years: GET list/detail + POST create. Terms: GET list (P3). PATCH/DELETE closed.
+ * Years: GET list/detail + POST create.
+ * Terms: GET list/detail + POST create (P3–P5). PATCH/DELETE closed.
  */
 @Module({
   imports: [DatabaseModule, PlatformOperationsModule],

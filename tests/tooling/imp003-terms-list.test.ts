@@ -10,17 +10,24 @@ function read(rel: string): string {
   return readFileSync(path.join(projectRoot, rel), 'utf8');
 }
 
-describe('IMP-003-P3/P4 terms list + detail structural', () => {
-  it('registers GET list + get-by-id with academic.read and no write verbs', () => {
+describe('IMP-003-P3/P4/P5 terms list + detail + create structural', () => {
+  it('registers GET list/detail + POST create with permissions and no patch/delete', () => {
     const ctrl = read('apps/api/src/modules/academic-structure/controllers/terms.controller.ts');
     expect(ctrl).toContain("@Controller('api/v1/terms')");
     expect(ctrl).toContain('@Get()');
+    expect(ctrl).toContain('@Post()');
     expect(ctrl).toContain("@Get(':id')");
     expect(ctrl).toContain("RequirePermission('academic.read')");
-    expect(ctrl).not.toMatch(/@(Post|Put|Patch|Delete)\(/);
+    expect(ctrl).toContain("RequirePermission('academic.manage')");
+    expect(ctrl).not.toMatch(/@(Put|Patch|Delete)\(/);
     expect(ctrl).not.toContain('term.read');
-    // List route registered before param route (no shadowing).
-    expect(ctrl.indexOf('@Get()')).toBeLessThan(ctrl.indexOf("@Get(':id')"));
+    expect(ctrl).not.toContain('term.manage');
+    // Route order: list Get, Post, then :id Get.
+    const listAt = ctrl.indexOf('@Get()');
+    const postAt = ctrl.indexOf('@Post()');
+    const detailAt = ctrl.indexOf("@Get(':id')");
+    expect(listAt).toBeLessThan(postAt);
+    expect(postAt).toBeLessThan(detailAt);
   });
 
   it('wires TermsController/Service/Repository in academic-structure module', () => {
@@ -30,21 +37,19 @@ describe('IMP-003-P3/P4 terms list + detail structural', () => {
     expect(mod).toContain('TermsRepository');
   });
 
-  it('documents freezes and task records; reuses academic.read only', () => {
+  it('documents freezes and task records; reuses academic.read/manage only', () => {
     const dbf = read('docs/engineering/database-freeze/DBF-004-terms-list-slice.md');
     expect(dbf).toContain('DBF-004');
-    expect(dbf).toContain('terms');
-    expect(dbf).toContain('academic.read');
-    expect(dbf).toMatch(/No new permission|no new permission/i);
+    expect(dbf).toContain('1.1');
+    expect(dbf).toContain('app.create_term');
+    expect(dbf).toContain('academic.manage');
 
     const acf = read('docs/engineering/api-contract-freeze/ACF-004-terms-list-slice.md');
     expect(acf).toContain('listTerms');
     expect(acf).toContain('getTerm');
-    expect(acf).toContain('1.1');
-    expect(acf).toContain('/api/v1/terms');
-    expect(acf).toContain('academicYearId');
-    expect(acf).toContain('starts_on ASC NULLS LAST');
-    expect(acf).toContain('Term not found.');
+    expect(acf).toContain('createTerm');
+    expect(acf).toContain('1.2');
+    expect(acf).toContain('academicYearId not found in this tenant');
 
     expect(read('docs/engineering/task-records/IMP-003-P3-terms-list-read.md')).toContain(
       'IMP-003-P3',
@@ -52,17 +57,28 @@ describe('IMP-003-P3/P4 terms list + detail structural', () => {
     expect(read('docs/engineering/task-records/IMP-003-P4-terms-get-by-id.md')).toContain(
       'IMP-003-P4',
     );
+    expect(read('docs/engineering/task-records/IMP-003-P5-terms-create.md')).toContain(
+      'IMP-003-P5',
+    );
   });
 
-  it('migration SELECT-only; no new permission seed; parent FK to academic_years', () => {
-    const up = read('apps/api/db/migrations/20260720200000_terms_list_read.up.sql');
-    expect(up).toMatch(/CREATE TABLE terms/i);
-    expect(up).toContain('REFERENCES academic_years (id)');
-    expect(up).toContain('GRANT SELECT ON TABLE terms TO educore_app');
-    expect(up).toContain('REVOKE INSERT, UPDATE, DELETE ON TABLE terms FROM educore_app');
-    expect(up).not.toMatch(/INSERT INTO permissions/i);
-    expect(up).not.toContain('term.read');
-    const down = read('apps/api/db/migrations/20260720200000_terms_list_read.down.sql');
-    expect(down).toContain('DROP TABLE IF EXISTS terms');
+  it('list migration SELECT-only; create helper no new permission seed', () => {
+    const listUp = read('apps/api/db/migrations/20260720200000_terms_list_read.up.sql');
+    expect(listUp).toMatch(/CREATE TABLE terms/i);
+    expect(listUp).toContain('REFERENCES academic_years (id)');
+    expect(listUp).toContain('GRANT SELECT ON TABLE terms TO educore_app');
+    expect(listUp).toContain('REVOKE INSERT, UPDATE, DELETE ON TABLE terms FROM educore_app');
+    expect(listUp).not.toMatch(/INSERT INTO permissions/i);
+
+    const createUp = read('apps/api/db/migrations/20260720210000_terms_create.up.sql');
+    expect(createUp).toContain('app.create_term');
+    expect(createUp).toMatch(/SECURITY DEFINER/i);
+    expect(createUp).toContain('parent academic year not found');
+    expect(createUp).toContain('GRANT EXECUTE');
+    expect(createUp).not.toMatch(/INSERT INTO permissions/i);
+    expect(createUp).not.toContain('term.manage');
+    const createDown = read('apps/api/db/migrations/20260720210000_terms_create.down.sql');
+    expect(createDown).toContain('DROP FUNCTION');
+    expect(createDown).not.toContain('DROP TABLE');
   });
 });

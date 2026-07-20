@@ -425,6 +425,44 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     );
   });
 
+  it('POST /api/v1/terms returns 400 without Idempotency-Key when permitted', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/terms',
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({
+        academicYearId: '01900000-0000-7000-8000-0000000000c1',
+        name: 'Term 1',
+      }),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+  });
+
+  it('POST /api/v1/terms returns 403 without academic.manage', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/terms',
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-term-create01',
+      },
+      JSON.stringify({
+        academicYearId: '01900000-0000-7000-8000-0000000000c1',
+        name: 'Term 1',
+      }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
   it('POST /api/v1/students returns 400 without Idempotency-Key when permitted', async () => {
     const response = await httpCall(
       server,
