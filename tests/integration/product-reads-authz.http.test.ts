@@ -47,6 +47,7 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
           'student.read',
           'student.manage',
           'academic.read',
+          'academic.manage',
         ]),
       ],
     ]);
@@ -306,6 +307,55 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     const body = JSON.parse(response.body) as { data: unknown[]; page: { limit: number } };
     expect(Array.isArray(body.data)).toBe(true);
     expect(body.page.limit).toBe(25);
+  });
+
+  it('GET /api/v1/academic-years/:id returns 404 for invalid id shape (no leak)', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/academic-years/not-a-uuid', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(404);
+    expect(parseErrorBody(response.body).error?.code).toBe('NOT_FOUND');
+  });
+
+  it('GET /api/v1/academic-years/:id returns 403 without academic.read', async () => {
+    const response = await httpCall(server, 'GET', `/api/v1/academic-years/${userA}`, {
+      'authorization': harnessBearer(userNoPerm, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('POST /api/v1/academic-years returns 400 without Idempotency-Key when permitted', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/academic-years',
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ name: '2026/2027' }),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+  });
+
+  it('POST /api/v1/academic-years returns 403 without academic.manage', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/academic-years',
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-ay-create01',
+      },
+      JSON.stringify({ name: '2026/2027' }),
+    );
+    expect(response.statusCode).toBe(403);
   });
 
   it('POST /api/v1/students returns 400 without Idempotency-Key when permitted', async () => {

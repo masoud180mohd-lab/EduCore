@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { DatabaseModule } from '../../common/persistence/index.js';
+import { PlatformOperationsModule } from '../platform-operations/index.js';
 import { AcademicStructureApplicationService } from './application/academic-structure.application-service.js';
 import { AcademicYearsService } from './application/academic-years.service.js';
 import { AcademicStructureController } from './controllers/academic-structure.controller.js';
@@ -13,10 +14,10 @@ import { AcademicYearsRepository } from './repositories/academic-years.repositor
 
 /**
  * Bounded context: Academic Structure.
- * Product: GET /api/v1/academic-years list (IMP-003-P0). Writes closed.
+ * Product: GET list/detail (P0/P1) + POST create (P2). PATCH/DELETE closed.
  */
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, PlatformOperationsModule],
   controllers: [AcademicStructureController, AcademicYearsController],
   providers: [
     AcademicStructureApplicationService,

@@ -1,6 +1,7 @@
 /**
  * Academic years in the bound tenant (RLS Pattern A / DBF-003).
- * List (IMP-003-P0) only. No writes.
+ * List (P0) + get-by-id (P1) + create (P2 via SECURITY DEFINER).
+ * No PATCH/DELETE.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -148,6 +149,124 @@ export class AcademicYearsRepository {
         operation: 'listForTenant',
       });
       return { rows: [], nextCursor: null };
+    }
+  }
+
+  /**
+   * Single academic year by id in the bound tenant under RLS.
+   * Returns null when missing, other-tenant, invalid ids, no pool, or DB errors
+   * (caller maps to 404 — no existence leak).
+   */
+  async getByIdForTenant(
+    actorUserId: string,
+    tenantId: string,
+    academicYearId: string,
+  ): Promise<AcademicYearRow | null> {
+    if (
+      !isUuid(actorUserId) ||
+      !isUuid(tenantId) ||
+      !isUuid(academicYearId) ||
+      this.pool === null
+    ) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            name: string;
+            code: string | null;
+            starts_on: Date | string | null;
+            ends_on: Date | string | null;
+            status: string;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT y.id, y.tenant_id, y.name, y.code, y.starts_on, y.ends_on, y.status,
+                    y.created_at, y.updated_at
+             FROM academic_years y
+             WHERE y.tenant_id = $1::uuid
+               AND y.id = $2::uuid
+             LIMIT 1`,
+            [tenantId, academicYearId],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapAcademicYearRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'AcademicYearsRepository', error, {
+        operation: 'getByIdForTenant',
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Create academic year via SECURITY DEFINER helper.
+   * Throws on unique violation (23505) for service → 409.
+   */
+  async createForTenant(
+    actorUserId: string,
+    tenantId: string,
+    input: {
+      readonly id: string;
+      readonly name: string;
+      readonly code: string | undefined;
+      readonly startsOn: string | null;
+      readonly endsOn: string | null;
+      readonly status: string;
+    },
+  ): Promise<AcademicYearRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(input.id) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            name: string;
+            code: string | null;
+            starts_on: Date | string | null;
+            ends_on: Date | string | null;
+            status: string;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, tenant_id, name, code, starts_on, ends_on, status, created_at, updated_at
+             FROM app.create_academic_year(
+               $1::uuid, $2::uuid, $3::uuid, $4::text, $5::text, $6::date, $7::date, $8::text
+             )`,
+            [
+              actorUserId,
+              tenantId,
+              input.id,
+              input.name,
+              input.code ?? null,
+              input.startsOn,
+              input.endsOn,
+              input.status,
+            ],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapAcademicYearRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'AcademicYearsRepository', error, {
+        operation: 'createForTenant',
+      });
+      throw error;
     }
   }
 }

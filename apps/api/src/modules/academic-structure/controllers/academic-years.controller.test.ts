@@ -74,4 +74,39 @@ describe('AcademicYearsController', () => {
     });
     expect(academicYearsService.listForTenant).not.toHaveBeenCalled();
   });
+
+  it('gets academic year by id', async () => {
+    const academicYearsService = {
+      getForTenant: vi.fn().mockResolvedValue({ data: { id: 'y1', name: '2026/2027' } }),
+    };
+    const controller = new AcademicYearsController(academicYearsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const yearId = '01900000-0000-7000-8000-0000000000c1';
+    await expect(controller.getById(request as never, yearId)).resolves.toEqual({
+      data: { id: 'y1', name: '2026/2027' },
+    });
+    expect(academicYearsService.getForTenant).toHaveBeenCalledWith(userId, tenantId, yearId);
+  });
+
+  it('creates academic year with idempotency header', async () => {
+    const academicYearsService = {
+      createForTenant: vi.fn().mockResolvedValue({ data: { id: 'y1', name: '2026/2027' } }),
+    };
+    const controller = new AcademicYearsController(academicYearsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    await controller.create(request as never, { name: '2026/2027' }, 'idem-key-ay-create-01');
+    expect(academicYearsService.createForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      { name: '2026/2027' },
+      'idem-key-ay-create-01',
+      'unknown',
+    );
+  });
 });

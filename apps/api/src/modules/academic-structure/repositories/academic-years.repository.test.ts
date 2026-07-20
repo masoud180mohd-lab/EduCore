@@ -93,4 +93,51 @@ describe('AcademicYearsRepository', () => {
     ).resolves.toEqual({ rows: [], nextCursor: null });
     expect(connect).not.toHaveBeenCalled();
   });
+
+  it('returns null for getById without a pool', async () => {
+    const repo = new AcademicYearsRepository(null);
+    await expect(repo.getByIdForTenant(actorId, tenantId, yearId)).resolves.toBeNull();
+  });
+
+  it('returns null for getById with non-uuid ids without querying', async () => {
+    const connect = vi.fn();
+    const repo = new AcademicYearsRepository({ connect } as never);
+    await expect(repo.getByIdForTenant('bad', tenantId, yearId)).resolves.toBeNull();
+    await expect(repo.getByIdForTenant(actorId, tenantId, 'not-a-uuid')).resolves.toBeNull();
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it('maps getById row when found and scopes to bound tenant', async () => {
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      expect(sql).toContain('FROM academic_years');
+      expect(sql).toContain('y.tenant_id = $1::uuid');
+      expect(sql).toContain('y.id = $2::uuid');
+      return Promise.resolve({
+        rows: [
+          {
+            id: yearId,
+            tenant_id: tenantId,
+            name: '2026/2027',
+            code: null,
+            starts_on: null,
+            ends_on: null,
+            status: 'draft',
+            created_at: new Date('2026-01-01T00:00:00.000Z'),
+            updated_at: new Date('2026-01-01T00:00:00.000Z'),
+          },
+        ],
+      });
+    });
+    const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
+    const repo = new AcademicYearsRepository({ connect } as never);
+    await expect(repo.getByIdForTenant(actorId, tenantId, yearId)).resolves.toMatchObject({
+      id: yearId,
+      tenantId,
+      name: '2026/2027',
+      status: 'draft',
+    });
+  });
 });

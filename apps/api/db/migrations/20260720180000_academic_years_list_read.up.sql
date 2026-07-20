@@ -73,7 +73,7 @@ CREATE POLICY rls_academic_years_update_platform ON academic_years
 
 INSERT INTO permissions (id, code, description) VALUES
   (
-    '01900000-0001-7000-8000-00000000000f',
+    '01900000-0001-7000-8000-000000000010',
     'academic.read',
     'List and view academic structure in tenant'
   )

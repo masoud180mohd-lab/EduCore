@@ -113,4 +113,14 @@ describe('IMP-001 migration tooling', () => {
     const down = read('apps/api/db/migrations/20260720180000_academic_years_list_read.down.sql');
     expect(down).toContain('DROP TABLE IF EXISTS academic_years');
   });
+
+  it('ships IMP-003-P2 create_academic_year helper + academic.manage', () => {
+    const up = read('apps/api/db/migrations/20260720190000_academic_years_create.up.sql');
+    expect(up).toContain('app.create_academic_year');
+    expect(up).toMatch(/SECURITY DEFINER/i);
+    expect(up).toContain('academic.manage');
+    expect(up).toContain('GRANT EXECUTE');
+    const down = read('apps/api/db/migrations/20260720190000_academic_years_create.down.sql');
+    expect(down).toContain('DROP FUNCTION');
+  });
 });

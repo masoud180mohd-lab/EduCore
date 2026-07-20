@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { InMemoryIdempotencyStore } from '../../../common/idempotency/index.js';
+import { InMemoryAuditPublisher } from '../../platform-operations/index.js';
 import { AcademicYearsService } from './academic-years.service.js';
 
 const actorId = '01900000-0000-7000-8000-000000000001';
@@ -80,5 +82,83 @@ describe('AcademicYearsService.listForTenant', () => {
     await expect(service.listForTenant('bad', tenantId, {})).rejects.toMatchObject({
       code: 'UNAUTHORIZED',
     });
+  });
+});
+
+describe('AcademicYearsService.getForTenant', () => {
+  it('returns envelope when found', async () => {
+    const academicYears = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(yearA),
+    };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(service.getForTenant(actorId, tenantId, yearA.id)).resolves.toEqual({
+      data: yearA,
+    });
+  });
+
+  it('maps missing to 404', async () => {
+    const academicYears = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(service.getForTenant(actorId, tenantId, yearA.id)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('maps invalid uuid to 404 without repo call', async () => {
+    const academicYears = { isAvailable: () => true, getByIdForTenant: vi.fn() };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(service.getForTenant(actorId, tenantId, 'not-a-uuid')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(academicYears.getByIdForTenant).not.toHaveBeenCalled();
+  });
+});
+
+describe('AcademicYearsService.createForTenant', () => {
+  it('creates with idempotency and audit', async () => {
+    const academicYears = {
+      isAvailable: () => true,
+      createForTenant: vi.fn().mockResolvedValue(yearA),
+    };
+    const idempotency = new InMemoryIdempotencyStore();
+    const audit = new InMemoryAuditPublisher();
+    const service = new AcademicYearsService(academicYears as never, idempotency, audit);
+    const key = 'idem-key-academic-year-create01';
+    const body = { name: '2026/2027', status: 'active', code: '2026-27' };
+    const first = await service.createForTenant(actorId, tenantId, body, key, 'corr-1');
+    expect(first.data).toEqual(yearA);
+    expect(audit.events).toHaveLength(1);
+    expect(audit.events[0]).toMatchObject({ action: 'academic_year.create', outcome: 'success' });
+
+    academicYears.createForTenant.mockClear();
+    const second = await service.createForTenant(actorId, tenantId, body, key, 'corr-1');
+    expect(second).toEqual(first);
+    expect(academicYears.createForTenant).not.toHaveBeenCalled();
+  });
+
+  it('requires Idempotency-Key', async () => {
+    const academicYears = { isAvailable: () => true, createForTenant: vi.fn() };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(
+      service.createForTenant(actorId, tenantId, { name: 'Y' }, undefined, 'c'),
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
+  });
+
+  it('rejects unknown body fields', async () => {
+    const academicYears = { isAvailable: () => true, createForTenant: vi.fn() };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(
+      service.createForTenant(
+        actorId,
+        tenantId,
+        { name: 'Y', tenantId },
+        'idem-key-academic-year-create02',
+        'c',
+      ),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 });
