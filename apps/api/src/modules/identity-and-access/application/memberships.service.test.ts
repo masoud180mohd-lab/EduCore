@@ -91,6 +91,7 @@ describe('MembershipsService.listForTenant', () => {
       limit: 25,
       cursor: undefined,
       status: undefined,
+      userId: undefined,
     });
   });
 
@@ -131,21 +132,37 @@ describe('MembershipsService.listForTenant', () => {
     });
   });
 
-  it('passes status and pagination to repository', async () => {
+  it('rejects invalid userId filter', async () => {
     const memberships = {
       isAvailable: () => true,
-      listForTenant: vi.fn().mockResolvedValue({ rows: [], nextCursor: null }),
+      listForTenant: vi.fn(),
     };
     const service = new MembershipsService(memberships as never);
-    await service.listForTenant(userId, tenantId, {
+    await expect(
+      service.listForTenant(userId, tenantId, { userId: 'not-a-uuid' }),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+    });
+  });
+
+  it('passes status, userId, and pagination to repository', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      listForTenant: vi.fn().mockResolvedValue({ rows: [], nextCursor: membershipA.id }),
+    };
+    const service = new MembershipsService(memberships as never);
+    const result = await service.listForTenant(userId, tenantId, {
       limit: '10',
       cursor: membershipA.id,
       status: 'active',
+      userId: userId,
     });
+    expect(result.page).toEqual({ nextCursor: membershipA.id, limit: 10 });
     expect(memberships.listForTenant).toHaveBeenCalledWith(userId, tenantId, {
       limit: 10,
       cursor: membershipA.id,
       status: 'active',
+      userId,
     });
   });
 });

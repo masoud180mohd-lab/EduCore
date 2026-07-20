@@ -22,6 +22,8 @@ export type GetOrganizationResult = {
 };
 
 const ORG_STATUSES = new Set(['active', 'inactive']);
+const ORG_TYPES = new Set(['school', 'campus', 'department']);
+const SEARCH_MAX_LEN = 100;
 
 /**
  * Product read API for organizations in the bound tenant.
@@ -61,10 +63,21 @@ export class OrganizationsService {
     return { data: org };
   }
 
+  /**
+   * Cursor list with optional filters.
+   * Query: limit (1–100, default 25), cursor, status, orgType, search.
+   * Response: `{ data, page: { nextCursor, limit } }`.
+   */
   async listForTenant(
     userId: string,
     tenantId: string,
-    rawQuery: { readonly limit?: unknown; readonly cursor?: unknown; readonly status?: unknown },
+    rawQuery: {
+      readonly limit?: unknown;
+      readonly cursor?: unknown;
+      readonly status?: unknown;
+      readonly search?: unknown;
+      readonly orgType?: unknown;
+    },
   ): Promise<ListOrganizationsResult> {
     if (!isUuid(userId)) {
       throw AppError.unauthorized();
@@ -75,6 +88,8 @@ export class OrganizationsService {
 
     const pagination = parsePaginationQuery(rawQuery);
     const status = parseStatusFilter(rawQuery.status);
+    const orgType = parseOrgTypeFilter(rawQuery.orgType);
+    const search = parseSearchFilter(rawQuery.search);
 
     if (!this.organizations.isAvailable()) {
       return buildPaginatedResponse([], pagination.limit, null);
@@ -84,6 +99,8 @@ export class OrganizationsService {
       limit: pagination.limit,
       cursor: pagination.cursor,
       status,
+      search,
+      orgType,
     });
 
     return buildPaginatedResponse(page.rows, pagination.limit, page.nextCursor);
@@ -100,4 +117,42 @@ function parseStatusFilter(raw: unknown): 'active' | 'inactive' | undefined {
     });
   }
   return raw as 'active' | 'inactive';
+}
+
+function parseOrgTypeFilter(raw: unknown): 'school' | 'campus' | 'department' | undefined {
+  if (raw === undefined || raw === null || raw === '') {
+    return undefined;
+  }
+  if (typeof raw !== 'string' || !ORG_TYPES.has(raw)) {
+    throw AppError.validation('orgType must be school, campus, or department.', {
+      field: 'orgType',
+    });
+  }
+  return raw as 'school' | 'campus' | 'department';
+}
+
+/**
+ * Optional free-text search; escapes ILIKE metacharacters for the repository.
+ */
+function parseSearchFilter(raw: unknown): string | undefined {
+  if (raw === undefined || raw === null || raw === '') {
+    return undefined;
+  }
+  if (typeof raw !== 'string') {
+    throw AppError.validation('search must be a string.', { field: 'search' });
+  }
+  const trimmed = raw.trim();
+  if (trimmed === '') {
+    return undefined;
+  }
+  if (trimmed.length > SEARCH_MAX_LEN) {
+    throw AppError.validation(`search must be at most ${String(SEARCH_MAX_LEN)} characters.`, {
+      field: 'search',
+    });
+  }
+  return escapeIlikePattern(trimmed);
+}
+
+function escapeIlikePattern(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
 }

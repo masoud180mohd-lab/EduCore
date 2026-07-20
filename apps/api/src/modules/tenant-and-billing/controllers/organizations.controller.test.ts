@@ -27,6 +27,8 @@ describe('OrganizationsController', () => {
       limit: undefined,
       cursor: undefined,
       status: undefined,
+      orgType: undefined,
+      search: undefined,
     });
     expect(result).toEqual({
       data: [{ id: 'o1', name: 'School A', status: 'active' }],
@@ -34,7 +36,7 @@ describe('OrganizationsController', () => {
     });
   });
 
-  it('forwards query params', async () => {
+  it('forwards pagination and filter query params', async () => {
     const organizationsService = {
       listForTenant: vi.fn().mockResolvedValue({ data: [], page: { nextCursor: null, limit: 10 } }),
     };
@@ -43,11 +45,13 @@ describe('OrganizationsController', () => {
       [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
       [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
     };
-    await controller.list(request as never, '10', 'cursor-id', 'active');
+    await controller.list(request as never, '10', 'cursor-id', 'active', 'school', 'campus');
     expect(organizationsService.listForTenant).toHaveBeenCalledWith(userId, tenantId, {
       limit: '10',
       cursor: 'cursor-id',
       status: 'active',
+      orgType: 'school',
+      search: 'campus',
     });
   });
 

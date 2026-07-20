@@ -28,6 +28,9 @@ export type ListOrganizationsQuery = {
   readonly limit: number;
   readonly cursor: string | undefined;
   readonly status: 'active' | 'inactive' | undefined;
+  /** Case-insensitive substring match on name/code (already sanitized by service). */
+  readonly search: string | undefined;
+  readonly orgType: 'school' | 'campus' | 'department' | undefined;
 };
 
 export type ListOrganizationsResult = {
@@ -74,6 +77,20 @@ export class OrganizationsRepository {
         if (query.status !== undefined) {
           params.push(query.status);
           sql += ` AND o.status = $${String(params.length)}`;
+        }
+
+        if (query.orgType !== undefined) {
+          params.push(query.orgType);
+          sql += ` AND o.org_type = $${String(params.length)}`;
+        }
+
+        if (query.search !== undefined) {
+          // ESCAPE so user %/_ cannot widen the match unexpectedly.
+          params.push(query.search);
+          sql += ` AND (
+            o.name ILIKE '%' || $${String(params.length)} || '%' ESCAPE '\\'
+            OR (o.code IS NOT NULL AND o.code ILIKE '%' || $${String(params.length)} || '%' ESCAPE '\\')
+          )`;
         }
 
         if (query.cursor !== undefined) {

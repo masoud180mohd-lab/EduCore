@@ -17,9 +17,12 @@ type AuthedRequest = Request & {
 /**
  * Product organizations surface (solo operator / product read increments).
  *
- * GET  /api/v1/organizations      — list (auth + X-Tenant-Id + session bind + organization.read).
+ * GET  /api/v1/organizations      — list (cursor page + filters; organization.read).
  * GET  /api/v1/organizations/:id  — detail (same AuthZ; ACF organizationId).
  * No POST/PATCH/DELETE (create/update/deactivate remain closed).
+ *
+ * List query: limit, cursor, status, orgType, search.
+ * List response: { data, page: { nextCursor, limit } }.
  */
 @Controller('api/v1/organizations')
 export class OrganizationsController {
@@ -32,6 +35,8 @@ export class OrganizationsController {
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
     @Query('status') status?: string,
+    @Query('orgType') orgType?: string,
+    @Query('search') search?: string,
   ): Promise<unknown> {
     const auth = request[AUTH_CONTEXT_REQUEST_KEY];
     const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
@@ -47,6 +52,8 @@ export class OrganizationsController {
       limit,
       cursor,
       status,
+      orgType,
+      search,
     });
   }
 

@@ -26,6 +26,8 @@ export type ListMembershipsQuery = {
   readonly limit: number;
   readonly cursor: string | undefined;
   readonly status: 'invited' | 'active' | 'suspended' | 'removed' | undefined;
+  /** Optional filter: memberships for a single user in the bound tenant. */
+  readonly userId: string | undefined;
 };
 
 export type ListMembershipsResult = {
@@ -72,6 +74,11 @@ export class MembershipsRepository {
         if (query.status !== undefined) {
           params.push(query.status);
           sql += ` AND m.status = $${String(params.length)}`;
+        }
+
+        if (query.userId !== undefined) {
+          params.push(query.userId);
+          sql += ` AND m.user_id = $${String(params.length)}::uuid`;
         }
 
         if (query.cursor !== undefined) {

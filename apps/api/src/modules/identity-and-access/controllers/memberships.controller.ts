@@ -17,9 +17,12 @@ type AuthedRequest = Request & {
 /**
  * Product memberships surface (solo operator / product read increments).
  *
- * GET  /api/v1/memberships      — list in bound tenant (auth + X-Tenant-Id + session bind + user.read).
+ * GET  /api/v1/memberships      — list in bound tenant (cursor page + filters; user.read).
  * GET  /api/v1/memberships/:id  — detail (same AuthZ; ACF membershipId).
  * No POST/suspend/reactivate/remove (writes remain closed).
+ *
+ * List query: limit, cursor, status, userId.
+ * List response: { data, page: { nextCursor, limit } }.
  */
 @Controller('api/v1/memberships')
 export class MembershipsController {
@@ -32,6 +35,7 @@ export class MembershipsController {
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
     @Query('status') status?: string,
+    @Query('userId') filterUserId?: string,
   ): Promise<unknown> {
     const auth = request[AUTH_CONTEXT_REQUEST_KEY];
     const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
@@ -47,6 +51,7 @@ export class MembershipsController {
       limit,
       cursor,
       status,
+      userId: filterUserId,
     });
   }
 

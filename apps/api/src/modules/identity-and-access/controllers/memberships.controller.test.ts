@@ -27,6 +27,7 @@ describe('MembershipsController', () => {
       limit: undefined,
       cursor: undefined,
       status: undefined,
+      userId: undefined,
     });
     expect(result).toEqual({
       data: [{ id: 'm1', userId, status: 'active' }],
@@ -34,7 +35,7 @@ describe('MembershipsController', () => {
     });
   });
 
-  it('forwards query params', async () => {
+  it('forwards pagination and filter query params', async () => {
     const membershipsService = {
       listForTenant: vi.fn().mockResolvedValue({ data: [], page: { nextCursor: null, limit: 10 } }),
     };
@@ -43,11 +44,12 @@ describe('MembershipsController', () => {
       [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
       [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
     };
-    await controller.list(request as never, '10', 'cursor-id', 'active');
+    await controller.list(request as never, '10', 'cursor-id', 'active', userId);
     expect(membershipsService.listForTenant).toHaveBeenCalledWith(userId, tenantId, {
       limit: '10',
       cursor: 'cursor-id',
       status: 'active',
+      userId,
     });
   });
 

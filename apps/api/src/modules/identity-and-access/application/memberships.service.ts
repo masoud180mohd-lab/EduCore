@@ -62,10 +62,20 @@ export class MembershipsService {
     return { data: membership };
   }
 
+  /**
+   * Cursor list with optional filters.
+   * Query: limit (1–100, default 25), cursor, status, userId.
+   * Response: `{ data, page: { nextCursor, limit } }`.
+   */
   async listForTenant(
     userId: string,
     tenantId: string,
-    rawQuery: { readonly limit?: unknown; readonly cursor?: unknown; readonly status?: unknown },
+    rawQuery: {
+      readonly limit?: unknown;
+      readonly cursor?: unknown;
+      readonly status?: unknown;
+      readonly userId?: unknown;
+    },
   ): Promise<ListMembershipsResult> {
     if (!isUuid(userId)) {
       throw AppError.unauthorized();
@@ -76,6 +86,7 @@ export class MembershipsService {
 
     const pagination = parsePaginationQuery(rawQuery);
     const status = parseStatusFilter(rawQuery.status);
+    const filterUserId = parseUserIdFilter(rawQuery.userId);
 
     if (!this.memberships.isAvailable()) {
       return buildPaginatedResponse([], pagination.limit, null);
@@ -85,6 +96,7 @@ export class MembershipsService {
       limit: pagination.limit,
       cursor: pagination.cursor,
       status,
+      userId: filterUserId,
     });
 
     return buildPaginatedResponse(page.rows, pagination.limit, page.nextCursor);
@@ -103,4 +115,14 @@ function parseStatusFilter(
     });
   }
   return raw as 'invited' | 'active' | 'suspended' | 'removed';
+}
+
+function parseUserIdFilter(raw: unknown): string | undefined {
+  if (raw === undefined || raw === null || raw === '') {
+    return undefined;
+  }
+  if (typeof raw !== 'string' || !isUuid(raw.trim())) {
+    throw AppError.validation('userId must be a uuid.', { field: 'userId' });
+  }
+  return raw.trim().toLowerCase();
 }
