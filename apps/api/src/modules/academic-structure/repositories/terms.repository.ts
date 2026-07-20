@@ -1,0 +1,205 @@
+/**
+ * Terms in the bound tenant (RLS Pattern A / DBF-004).
+ * List only (P3). No get-by-id / writes.
+ */
+import { Inject, Injectable, Optional } from '@nestjs/common';
+import type { Pool } from 'pg';
+
+import { logFailClosedDbError } from '../../../common/logging/fail-closed-log.js';
+import type { AppLogger } from '../../../common/logging/logger.js';
+import { APP_LOGGER } from '../../../common/logging/logger.tokens.js';
+import { PG_POOL } from '../../../common/persistence/pg.tokens.js';
+import { withTenantTransaction } from '../../../common/persistence/tenant-transaction.js';
+import { isUuid } from '../../../common/tenant/tenant-context.js';
+
+export type TermRow = {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly academicYearId: string;
+  readonly name: string;
+  readonly code: string | null;
+  readonly startsOn: string | null;
+  readonly endsOn: string | null;
+  readonly status: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type ListTermsQuery = {
+  readonly limit: number;
+  readonly cursor: string | undefined;
+  readonly academicYearId: string | undefined;
+  readonly status: 'draft' | 'active' | 'closed' | undefined;
+  readonly search: string | undefined;
+};
+
+export type ListTermsResult = {
+  readonly rows: ReadonlyArray<TermRow>;
+  readonly nextCursor: string | null;
+};
+
+@Injectable()
+export class TermsRepository {
+  constructor(
+    @Optional() @Inject(PG_POOL) private readonly pool: Pool | null,
+    @Optional() @Inject(APP_LOGGER) private readonly logger: AppLogger | null = null,
+  ) {}
+
+  isAvailable(): boolean {
+    return this.pool !== null;
+  }
+
+  /**
+   * Cursor page of terms for the bound tenant under RLS.
+   * Order: starts_on ASC NULLS LAST, id ASC (ACF-004 / DBF-004).
+   * Fail-closed: invalid ids / no pool / errors → empty page.
+   * academicYearId (when set) must already be a valid UUID; missing/other-tenant year → empty.
+   */
+  async listForTenant(
+    actorUserId: string,
+    tenantId: string,
+    query: ListTermsQuery,
+  ): Promise<ListTermsResult> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) {
+      return { rows: [], nextCursor: null };
+    }
+    if (query.cursor !== undefined && !isUuid(query.cursor)) {
+      return { rows: [], nextCursor: null };
+    }
+    if (query.academicYearId !== undefined && !isUuid(query.academicYearId)) {
+      return { rows: [], nextCursor: null };
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const params: unknown[] = [tenantId, query.limit + 1];
+          let sql = `
+            SELECT t.id, t.tenant_id, t.academic_year_id, t.name, t.code,
+                   t.starts_on, t.ends_on, t.status, t.created_at, t.updated_at
+            FROM terms t
+            WHERE t.tenant_id = $1::uuid`;
+
+          if (query.academicYearId !== undefined) {
+            params.push(query.academicYearId);
+            sql += ` AND t.academic_year_id = $${String(params.length)}::uuid`;
+          }
+
+          if (query.status !== undefined) {
+            params.push(query.status);
+            sql += ` AND t.status = $${String(params.length)}`;
+          }
+
+          if (query.search !== undefined) {
+            params.push(query.search);
+            sql += ` AND (
+              t.name ILIKE '%' || $${String(params.length)} || '%' ESCAPE '\\'
+              OR (
+                t.code IS NOT NULL
+                AND t.code ILIKE '%' || $${String(params.length)} || '%' ESCAPE '\\'
+              )
+            )`;
+          }
+
+          if (query.cursor !== undefined) {
+            params.push(query.cursor);
+            // Keyset for ORDER BY starts_on ASC NULLS LAST, id ASC
+            sql += `
+              AND EXISTS (
+                SELECT 1
+                FROM terms c
+                WHERE c.id = $${String(params.length)}::uuid
+                  AND c.tenant_id = $1::uuid
+                  AND (
+                    (
+                      c.starts_on IS NOT NULL
+                      AND (
+                        (t.starts_on IS NOT NULL AND t.starts_on > c.starts_on)
+                        OR (t.starts_on IS NOT NULL AND t.starts_on = c.starts_on AND t.id > c.id)
+                        OR t.starts_on IS NULL
+                      )
+                    )
+                    OR (
+                      c.starts_on IS NULL
+                      AND t.starts_on IS NULL
+                      AND t.id > c.id
+                    )
+                  )
+              )`;
+          }
+
+          sql += ` ORDER BY t.starts_on ASC NULLS LAST, t.id ASC LIMIT $2`;
+
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            academic_year_id: string;
+            name: string;
+            code: string | null;
+            starts_on: Date | string | null;
+            ends_on: Date | string | null;
+            status: string;
+            created_at: Date;
+            updated_at: Date;
+          }>(sql, params);
+
+          const hasMore = result.rows.length > query.limit;
+          const pageRows = hasMore ? result.rows.slice(0, query.limit) : result.rows;
+          const mapped = pageRows.map(mapTermRow);
+          const last = mapped[mapped.length - 1];
+          return {
+            rows: mapped,
+            nextCursor: hasMore && last !== undefined ? last.id : null,
+          };
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'TermsRepository', error, {
+        operation: 'listForTenant',
+      });
+      return { rows: [], nextCursor: null };
+    }
+  }
+}
+
+function mapTermRow(row: {
+  id: string;
+  tenant_id: string;
+  academic_year_id: string;
+  name: string;
+  code: string | null;
+  starts_on: Date | string | null;
+  ends_on: Date | string | null;
+  status: string;
+  created_at: Date;
+  updated_at: Date;
+}): TermRow {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    academicYearId: row.academic_year_id,
+    name: row.name,
+    code: row.code,
+    startsOn: formatDateOnly(row.starts_on),
+    endsOn: formatDateOnly(row.ends_on),
+    status: row.status,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+/** ISO date YYYY-MM-DD or null (no time component in public envelope). */
+function formatDateOnly(value: Date | string | null): string | null {
+  if (value === null) {
+    return null;
+  }
+  if (typeof value === 'string') {
+    return value.slice(0, 10);
+  }
+  const y = value.getUTCFullYear();
+  const m = String(value.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(value.getUTCDate()).padStart(2, '0');
+  return `${String(y)}-${m}-${d}`;
+}

@@ -358,6 +358,45 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     expect(response.statusCode).toBe(403);
   });
 
+  it('GET /api/v1/terms returns 403 on session/header mismatch', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/terms', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantB,
+    });
+    expect(response.statusCode).toBe(403);
+    expect(parseErrorBody(response.body).error?.details?.['reason']).toBe(
+      'SESSION_TENANT_MISMATCH',
+    );
+  });
+
+  it('GET /api/v1/terms returns 403 without academic.read', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/terms', {
+      'authorization': harnessBearer(userNoPerm, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('GET /api/v1/terms returns 200 when AuthZ passes', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/terms', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body) as { data: unknown[]; page: { limit: number } };
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.page.limit).toBe(25);
+  });
+
+  it('GET /api/v1/terms returns 400 for non-uuid academicYearId', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/terms?academicYearId=not-a-uuid', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('VALIDATION_ERROR');
+  });
+
   it('POST /api/v1/students returns 400 without Idempotency-Key when permitted', async () => {
     const response = await httpCall(
       server,
