@@ -146,6 +146,61 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     );
   });
 
+  it('GET /api/v1/users/:id returns 401 without bearer', async () => {
+    const response = await httpCall(server, 'GET', `/api/v1/users/${userA}`, {
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(401);
+    expect(parseErrorBody(response.body).error?.code).toBe('UNAUTHORIZED');
+  });
+
+  it('GET /api/v1/users/:id returns 400 without X-Tenant-Id', async () => {
+    const response = await httpCall(server, 'GET', `/api/v1/users/${userA}`, {
+      authorization: harnessBearer(userA, tenantA),
+    });
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('TENANT_CONTEXT_REQUIRED');
+  });
+
+  it('GET /api/v1/users/:id returns 403 on session/header mismatch', async () => {
+    const response = await httpCall(server, 'GET', `/api/v1/users/${userA}`, {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantB,
+    });
+    expect(response.statusCode).toBe(403);
+    expect(parseErrorBody(response.body).error?.details?.['reason']).toBe(
+      'SESSION_TENANT_MISMATCH',
+    );
+  });
+
+  it('GET /api/v1/users/:id returns 403 without user.read', async () => {
+    const response = await httpCall(server, 'GET', `/api/v1/users/${userA}`, {
+      'authorization': harnessBearer(userNoPerm, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(403);
+    expect(parseErrorBody(response.body).error?.code).toBe('FORBIDDEN');
+  });
+
+  it('GET /api/v1/users/:id returns 404 for invalid id shape (no leak)', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/users/not-a-uuid', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(404);
+    expect(parseErrorBody(response.body).error?.code).toBe('NOT_FOUND');
+  });
+
+  it('GET /api/v1/users/:id returns 404 for well-formed unknown UUID (no leak)', async () => {
+    const unknownUser = '01900000-0000-7000-8000-00000000dead';
+    const response = await httpCall(server, 'GET', `/api/v1/users/${unknownUser}`, {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(404);
+    expect(parseErrorBody(response.body).error?.code).toBe('NOT_FOUND');
+  });
+
   it('GET /api/v1/tenants/:id returns 403 when path tenant differs from X-Tenant-Id', async () => {
     const response = await httpCall(server, 'GET', `/api/v1/tenants/${tenantB}`, {
       'authorization': harnessBearer(userA, tenantA),

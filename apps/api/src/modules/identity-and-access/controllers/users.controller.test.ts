@@ -105,4 +105,32 @@ describe('UsersController', () => {
       data: { id: targetId, email: 'a@x.com', displayName: 'A', status: 'active' },
     });
   });
+
+  it('rejects getById when auth context is missing', async () => {
+    const usersService = { getForTenant: vi.fn() };
+    const controller = new UsersController(usersService as never);
+    const request = {
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    await expect(
+      controller.getById(request as never, '01900000-0000-7000-8000-0000000000c1'),
+    ).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+    expect(usersService.getForTenant).not.toHaveBeenCalled();
+  });
+
+  it('rejects getById when tenant context is missing', async () => {
+    const usersService = { getForTenant: vi.fn() };
+    const controller = new UsersController(usersService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+    };
+    await expect(
+      controller.getById(request as never, '01900000-0000-7000-8000-0000000000c1'),
+    ).rejects.toMatchObject({
+      code: 'TENANT_CONTEXT_REQUIRED',
+    });
+    expect(usersService.getForTenant).not.toHaveBeenCalled();
+  });
 });

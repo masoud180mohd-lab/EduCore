@@ -123,7 +123,17 @@ describe('UsersRepository', () => {
     await expect(repo.getByIdForTenant(actorId, tenantId, userId, ['active'])).resolves.toBeNull();
   });
 
-  it('maps getById row when found', async () => {
+  it('returns null for getById with non-uuid ids without querying', async () => {
+    const connect = vi.fn();
+    const repo = new UsersRepository({ connect } as never);
+    await expect(repo.getByIdForTenant('bad', tenantId, userId, ['active'])).resolves.toBeNull();
+    await expect(
+      repo.getByIdForTenant(actorId, tenantId, 'not-a-uuid', ['active']),
+    ).resolves.toBeNull();
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it('maps getById row when found and scopes to tenant membership', async () => {
     const rowA = {
       id: userId,
       email: 'a@example.com',
@@ -138,6 +148,11 @@ describe('UsersRepository', () => {
       if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
         return Promise.resolve({ rows: [] });
       }
+      expect(sql).toContain('tenant_memberships');
+      expect(sql).toContain('m.tenant_id = $1::uuid');
+      expect(sql).toContain('m.status = ANY($2::text[])');
+      expect(sql).toContain('u.id = $3::uuid');
+      expect(sql.toLowerCase()).not.toContain('password_hash');
       return Promise.resolve({ rows: [rowA] });
     });
     const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
@@ -149,5 +164,31 @@ describe('UsersRepository', () => {
       email: 'a@example.com',
       displayName: 'Alice',
     });
+    const dataCall = query.mock.calls.find(
+      (call: unknown[]) => typeof call[0] === 'string' && String(call[0]).includes('FROM users'),
+    );
+    expect(dataCall?.[1]).toEqual([tenantId, ['active'], userId]);
+  });
+
+  it('returns null for getById when no membership row (cross-tenant isolation)', async () => {
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql === 'BEGIN' || sql.startsWith('SELECT set_config') || sql === 'COMMIT') {
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+    const connect = vi.fn().mockResolvedValue({ query, release: vi.fn() });
+    const repo = new UsersRepository({ connect } as never);
+    await expect(repo.getByIdForTenant(actorId, tenantId, userId, ['active'])).resolves.toBeNull();
+  });
+
+  it('fails closed on getById DB errors and warns', async () => {
+    const warn = vi.fn();
+    const logger = { info: vi.fn(), warn, error: vi.fn() };
+    const connect = vi.fn().mockRejectedValue(new Error('pool down'));
+    const repo = new UsersRepository({ connect } as never, logger);
+    await expect(repo.getByIdForTenant(actorId, tenantId, userId, ['active'])).resolves.toBeNull();
+    expect(warn).toHaveBeenCalledOnce();
+    expect(String(warn.mock.calls[0]?.[0])).toContain('failed closed');
   });
 });

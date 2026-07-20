@@ -141,7 +141,7 @@ describe('UsersService.getForTenant', () => {
     expect(users.getByIdForTenant).toHaveBeenCalledWith(actorId, tenantId, userA.id, ['active']);
   });
 
-  it('returns 404 when user not visible', async () => {
+  it('returns 404 when user not visible (missing or cross-tenant)', async () => {
     const users = {
       isAvailable: () => true,
       getByIdForTenant: vi.fn().mockResolvedValue(null),
@@ -149,6 +149,51 @@ describe('UsersService.getForTenant', () => {
     const service = new UsersService(users as never);
     await expect(service.getForTenant(actorId, tenantId, userA.id)).rejects.toMatchObject({
       code: 'NOT_FOUND',
+    });
+  });
+
+  it('returns 404 for well-formed UUID that repository cannot see', async () => {
+    const unknownId = '01900000-0000-7000-8000-00000000dead';
+    const users = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new UsersService(users as never);
+    await expect(service.getForTenant(actorId, tenantId, unknownId)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(users.getByIdForTenant).toHaveBeenCalledWith(actorId, tenantId, unknownId, ['active']);
+  });
+
+  it('returns 404 for invalid target UUID without calling repository', async () => {
+    const users = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn(),
+    };
+    const service = new UsersService(users as never);
+    await expect(service.getForTenant(actorId, tenantId, 'not-a-uuid')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(users.getByIdForTenant).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when pool unavailable (no existence leak)', async () => {
+    const users = {
+      isAvailable: () => false,
+      getByIdForTenant: vi.fn(),
+    };
+    const service = new UsersService(users as never);
+    await expect(service.getForTenant(actorId, tenantId, userA.id)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(users.getByIdForTenant).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-uuid actor', async () => {
+    const users = { isAvailable: () => true, getByIdForTenant: vi.fn() };
+    const service = new UsersService(users as never);
+    await expect(service.getForTenant('bad', tenantId, userA.id)).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
     });
   });
 });
