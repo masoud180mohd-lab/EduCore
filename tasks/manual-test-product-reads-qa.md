@@ -15,17 +15,17 @@ Audience: any engineer with Postgres roles from DEV-001 / Docker.
 
 ## Important limits (read before testing)
 
-| Fact | Implication |
-| ---- | ----------- |
-| Seed creates **one** tenant + owner | Cross-tenant tests need a second tenant (Test 8 SQL) or rely on random UUIDs → 404 |
-| `GET /tenants` is picker-only | No `X-Tenant-Id`, no `page` envelope; soft-capped at 100 |
-| Orgs / settings may be empty | Seed does not create organizations or tenant_settings — empty list / 404 is OK |
-| Live automated suite | Prefer `RUN_LIVE_DB_TESTS=1` + `tests/isolation/product-reads.live.test.ts` for CI-adjacent proof |
+| Fact                                | Implication                                                                                       |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Seed creates **one** tenant + owner | Cross-tenant tests need a second tenant (Test 8 SQL) or rely on random UUIDs → 404                |
+| `GET /tenants` is picker-only       | No `X-Tenant-Id`, no `page` envelope; soft-capped at 100                                          |
+| Orgs / settings may be empty        | Seed does not create organizations or tenant_settings — empty list / 404 is OK                    |
+| Live automated suite                | Prefer `RUN_LIVE_DB_TESTS=1` + `tests/isolation/product-reads.live.test.ts` for CI-adjacent proof |
 
 Default seed IDs:
 
-| Entity | UUID |
-| ------ | ---- |
+| Entity | UUID                                   |
+| ------ | -------------------------------------- |
 | Tenant | `01900000-0010-7000-8000-000000000001` |
 | User   | `01900000-0010-7000-8000-000000000002` |
 
@@ -146,11 +146,11 @@ $bound = @{
 }
 ```
 
-| Check | Expected |
-| ----- | -------- |
-| Status | `200` |
-| `accessToken` | non-empty |
-| `tenantId` | seed tenant |
+| Check         | Expected    |
+| ------------- | ----------- |
+| Status        | `200`       |
+| `accessToken` | non-empty   |
+| `tenantId`    | seed tenant |
 
 ---
 
@@ -166,10 +166,10 @@ $mismatch.Json.error.code
 $mismatch.Json.error.details.reason
 ```
 
-| Check | Expected |
-| ----- | -------- |
-| Status | `403` |
-| `error.code` | `FORBIDDEN` |
+| Check            | Expected                  |
+| ---------------- | ------------------------- |
+| Status           | `403`                     |
+| `error.code`     | `FORBIDDEN`               |
 | `details.reason` | `SESSION_TENANT_MISMATCH` |
 
 Repeat quickly on `/api/v1/users`, `/api/v1/memberships`, `/api/v1/tenant-settings` — same 403/reason.
@@ -184,10 +184,10 @@ Repeat quickly on `/api/v1/users`, `/api/v1/memberships`, `/api/v1/tenant-settin
 (Invoke-Api -Path '/api/v1/tenants').Status                          # 401
 ```
 
-| Route | No Bearer | Bearer, no `X-Tenant-Id` |
-| ----- | --------- | ------------------------ |
-| `GET /organizations` | 401 | 400 |
-| `GET /tenants` (picker) | 401 | **200** (header not required) |
+| Route                   | No Bearer | Bearer, no `X-Tenant-Id`      |
+| ----------------------- | --------- | ----------------------------- |
+| `GET /organizations`    | 401       | 400                           |
+| `GET /tenants` (picker) | 401       | **200** (header not required) |
 
 ---
 
@@ -211,12 +211,12 @@ $pathMismatch.Status
 $pathMismatch.Json.error.details.reason   # TENANT_PATH_MISMATCH → 403
 ```
 
-| Check | Expected |
-| ----- | -------- |
-| List envelope | `{ data: [...] }` — **no** `page` |
-| List includes seed | yes |
-| `current` / `:id` | 200 when bound |
-| Path ≠ header | 403 `TENANT_PATH_MISMATCH` |
+| Check              | Expected                          |
+| ------------------ | --------------------------------- |
+| List envelope      | `{ data: [...] }` — **no** `page` |
+| List includes seed | yes                               |
+| `current` / `:id`  | 200 when bound                    |
+| Path ≠ header      | 403 `TENANT_PATH_MISMATCH`        |
 
 ---
 
@@ -239,11 +239,11 @@ $org404 = Invoke-Api -Path "/api/v1/organizations/$fakeOrg" -Headers $bound
 $org404.Status                 # 404
 ```
 
-| Check | Expected |
-| ----- | -------- |
-| List | 200 + `{ data, page }` |
-| Bad cursor | 400 |
-| Unknown id | 404 |
+| Check      | Expected               |
+| ---------- | ---------------------- |
+| List       | 200 + `{ data, page }` |
+| Bad cursor | 400                    |
+| Unknown id | 404                    |
 
 Optional filters (after you insert an org — Test 8): `?status=active&orgType=school&search=demo`.
 
@@ -277,12 +277,12 @@ $user404 = Invoke-Api -Path '/api/v1/users/01900000-0000-7000-8000-00000000dead'
 $user404.Status                # 404
 ```
 
-| Check | Expected |
-| ----- | -------- |
-| Memberships list | includes seed membership |
-| Users list | includes seed admin (active membership) |
-| `GET /users/{id}` | 200 for seed user |
-| Unknown ids | 404 |
+| Check             | Expected                                |
+| ----------------- | --------------------------------------- |
+| Memberships list  | includes seed membership                |
+| Users list        | includes seed admin (active membership) |
+| `GET /users/{id}` | 200 for seed user                       |
+| Unknown ids       | 404                                     |
 
 ---
 
@@ -295,9 +295,9 @@ $settings.Status
 # Must NOT return another tenant's document
 ```
 
-| Check | Expected |
-| ----- | -------- |
-| Status | `200` or `404` |
+| Check              | Expected       |
+| ------------------ | -------------- |
+| Status             | `200` or `404` |
 | On mismatch header | `403` (Test 2) |
 
 ---
@@ -371,19 +371,19 @@ $postOrg.Status   # 404 or 405 — never 201
 
 Copy and fill after a run:
 
-| # | Test | Pass? | Notes |
-| - | ---- | ----- | ----- |
-| 1 | Login | ☐ | |
-| 2 | Session/header mismatch → 403 | ☐ | |
-| 3 | 401 / 400 / tenants picker without header | ☐ | |
-| 4 | Tenants list / current / path mismatch | ☐ | |
-| 5 | Orgs list, bad cursor, 404 | ☐ | |
-| 6 | Memberships + users list/detail | ☐ | |
-| 7 | Tenant settings 200/404 | ☐ | |
-| 8 | Foreign org 404 (optional) | ☐ | |
-| 9 | POST organizations closed | ☐ | |
-| A | `npm run check` | ☐ | |
-| B | Live `product-reads.live.test.ts` (optional) | ☐ | |
+| #   | Test                                         | Pass? | Notes |
+| --- | -------------------------------------------- | ----- | ----- |
+| 1   | Login                                        | ☐     |       |
+| 2   | Session/header mismatch → 403                | ☐     |       |
+| 3   | 401 / 400 / tenants picker without header    | ☐     |       |
+| 4   | Tenants list / current / path mismatch       | ☐     |       |
+| 5   | Orgs list, bad cursor, 404                   | ☐     |       |
+| 6   | Memberships + users list/detail              | ☐     |       |
+| 7   | Tenant settings 200/404                      | ☐     |       |
+| 8   | Foreign org 404 (optional)                   | ☐     |       |
+| 9   | POST organizations closed                    | ☐     |       |
+| A   | `npm run check`                              | ☐     |       |
+| B   | Live `product-reads.live.test.ts` (optional) | ☐     |       |
 
 **Operator:** _________________ **Date:** _________________
 
