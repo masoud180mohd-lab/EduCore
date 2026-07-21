@@ -34,6 +34,16 @@ describe('MarksService', () => {
     });
   });
 
+  it('returns 404 for unknown exam subject', async () => {
+    const service = makeService({
+      isAvailable: () => true,
+      getExamSubject: vi.fn().mockResolvedValue(null),
+    });
+    await expect(
+      service.getExamSubjectForTenant(actorUserId, tenantId, examSubjectId),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
   it('rejects exam create without idempotency key', async () => {
     const service = makeService({ isAvailable: () => true });
     await expect(

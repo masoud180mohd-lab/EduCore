@@ -41,6 +41,7 @@ type AuthedRequest = Request & {
  * GET  /api/v1/exams/:examId                            — detail (marks.read)
  * GET  /api/v1/exams/:examId/subjects                   — list subjects (marks.read)
  * POST /api/v1/exams/:examId/subjects                   — create subject (marks.manage)
+ * GET  /api/v1/exam-subjects/:examSubjectId             — detail (marks.read)
  * GET  /api/v1/exam-subjects/:examSubjectId/marks       — list marks (marks.read)
  * PUT  /api/v1/exam-subjects/:examSubjectId/marks       — upsert marks (marks.manage)
  * POST /api/v1/exam-subjects/:examSubjectId/submit      — draft→submitted (marks.manage)
@@ -103,6 +104,16 @@ export class MarksController {
   ): Promise<unknown> {
     const { auth, tenant } = requireAuthTenant(request);
     return this.marksService.listExamSubjectsForTenant(auth.userId, tenant.tenantId, examId);
+  }
+
+  @Get('api/v1/exam-subjects/:examSubjectId')
+  @UseGuards(RequirePermission('marks.read'))
+  async getExamSubject(
+    @Req() request: AuthedRequest,
+    @Param('examSubjectId') examSubjectId: string,
+  ): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.marksService.getExamSubjectForTenant(auth.userId, tenant.tenantId, examSubjectId);
   }
 
   @Post('api/v1/exams/:examId/subjects')

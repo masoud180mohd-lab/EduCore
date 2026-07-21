@@ -72,11 +72,15 @@ Login as owner/admin → admin home; staff → teacher attendance.
 
 ## Residual
 
-- No roles admin UI / OpenAPI YAML for ACF-010 yet
+- No roles admin UI (no `/roles` HTTP yet)
 - No parent portal auth
 - Playwright e2e not run
 - Existing tenants need migrate + `rbac:reconcile-grants` for guardian perms
 
+## Residual fixed (follow-up)
+
+- OpenAPI YAML for ACF-010 (shared file with ACF-011)
+
 ## Next
 
-Marks/assessment UI, fees, parent portal, or ASSURE live FE e2e.
+Fees/finance foundation, parent portal, or ASSURE live FE e2e.

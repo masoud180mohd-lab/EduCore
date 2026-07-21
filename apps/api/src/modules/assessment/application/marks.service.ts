@@ -111,6 +111,21 @@ export class MarksService {
     return { data: row };
   }
 
+  async getExamSubjectForTenant(
+    actorUserId: string,
+    tenantId: string,
+    examSubjectId: string,
+  ): Promise<{ readonly data: ExamSubjectRow }> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    if (!isUuid(examSubjectId)) throw AppError.notFound('Exam subject not found.');
+    if (!this.marks.isAvailable()) throw AppError.notFound('Exam subject not found.');
+
+    const row = await this.marks.getExamSubject(actorUserId, tenantId, examSubjectId);
+    if (row === null) throw AppError.notFound('Exam subject not found.');
+    return { data: row };
+  }
+
   async createExamForTenant(
     actorUserId: string,
     tenantId: string,

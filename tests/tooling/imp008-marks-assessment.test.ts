@@ -37,6 +37,7 @@ describe('IMP-008 marks assessment', () => {
     );
     expect(ctrl).toContain("RequirePermission('marks.manage')");
     expect(ctrl).toContain('exam-subjects');
+    expect(ctrl).toContain("Get('api/v1/exam-subjects/:examSubjectId')");
   });
 
   it('ships teacher marks UI routes', () => {

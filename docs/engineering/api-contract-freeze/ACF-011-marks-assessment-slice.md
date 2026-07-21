@@ -3,7 +3,7 @@
 | Field     | Value                                    |
 | --------- | ---------------------------------------- |
 | Freeze ID | `ACF-011`                                |
-| Version   | `1.0`                                    |
+| Version   | `1.1`                                    |
 | Date      | 2026-07-21                               |
 | Companion | DBF-011                                  |
 | Authority | Solo-operator provisional (SOLO-GOV-001) |
@@ -13,7 +13,7 @@
 | In scope                      | Out of scope       |
 | ----------------------------- | ------------------ |
 | Exams list/get/create         | Report cards       |
-| Exam subjects list/create     | Parent results BFF |
+| Exam subjects list/get/create | Parent results BFF |
 | Marks get + bulk PUT          | Offline sync       |
 | Submit / approve exam-subject | Nested student PII |
 
@@ -36,6 +36,7 @@ All routes: Bearer + `X-Tenant-Id`. Marks payloads are ids-only.
 | GET    | `/api/v1/exams/{examId}`                        | marks.read                       |
 | GET    | `/api/v1/exams/{examId}/subjects`               | marks.read                       |
 | POST   | `/api/v1/exams/{examId}/subjects`               | marks.manage (+ Idempotency-Key) |
+| GET    | `/api/v1/exam-subjects/{examSubjectId}`         | marks.read                       |
 | GET    | `/api/v1/exam-subjects/{examSubjectId}/marks`   | marks.read                       |
 | PUT    | `/api/v1/exam-subjects/{examSubjectId}/marks`   | marks.manage (+ Idempotency-Key) |
 | POST   | `/api/v1/exam-subjects/{examSubjectId}/submit`  | marks.manage                     |

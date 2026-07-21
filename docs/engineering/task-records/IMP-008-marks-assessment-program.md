@@ -29,6 +29,7 @@
 | GET/POST | `/api/v1/exams`                      | marks.read / manage |
 | GET      | `/api/v1/exams/{id}`                 | marks.read          |
 | GET/POST | `/api/v1/exams/{id}/subjects`        | marks.read / manage |
+| GET      | `/api/v1/exam-subjects/{id}`         | marks.read          |
 | GET/PUT  | `/api/v1/exam-subjects/{id}/marks`   | marks.read / manage |
 | POST     | `/api/v1/exam-subjects/{id}/submit`  | marks.manage        |
 | POST     | `/api/v1/exam-subjects/{id}/approve` | marks.approve       |
@@ -37,7 +38,7 @@
 
 - `/t/[tenantId]/teacher/marks`
 - `/t/[tenantId]/teacher/marks/exams/[examId]`
-- `/t/[tenantId]/teacher/marks/subjects/[examSubjectId]?examId=`
+- `/t/[tenantId]/teacher/marks/subjects/[examSubjectId]`
 
 ## Run
 
@@ -50,10 +51,14 @@ npm run dev:web
 
 ## Residual
 
-- No report cards / offline marks queue
-- No GET `/exam-subjects/{id}` (UI uses examId query)
-- OpenAPI YAML deferred
+- Report cards / offline marks queue deferred
 - Playwright e2e not run
+- Existing tenants need `npm run db:migrate` + `npm run rbac:reconcile-grants`
+
+## Residual fixed (follow-up)
+
+- GET `/api/v1/exam-subjects/{id}` (ACF-011 rev 1.1); teacher UI no longer needs `?examId=`
+- OpenAPI YAML for ACF-010 + ACF-011
 
 ## Next
 

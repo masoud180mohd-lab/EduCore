@@ -142,10 +142,7 @@ export default function ExamDetailPage() {
       <ul className="list">
         {subjects.map((s) => (
           <li key={s.id}>
-            <Link
-              className="card"
-              href={`/t/${tenantId}/teacher/marks/subjects/${s.id}?examId=${examId}`}
-            >
+            <Link className="card" href={`/t/${tenantId}/teacher/marks/subjects/${s.id}`}>
               <strong>{names[s.subjectId] ?? s.subjectId}</strong>{' '}
               <span className={`chip chip-${s.status === 'draft' ? 'open' : 'closed'}`}>
                 {s.status}

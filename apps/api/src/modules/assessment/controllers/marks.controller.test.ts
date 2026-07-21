@@ -65,16 +65,24 @@ describe('MarksController', () => {
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  it('rejects create without tenant context', async () => {
-    const marksService = { createExamForTenant: vi.fn() };
+  it('gets exam subject for authenticated principal', async () => {
+    const examSubjectId = '01900000-0000-7000-8000-0000000000f1';
+    const marksService = {
+      getExamSubjectForTenant: vi.fn().mockResolvedValue({
+        data: { id: examSubjectId, examId, status: 'draft' },
+      }),
+    };
     const controller = new MarksController(marksService as never);
-    await expect(
-      controller.createExam(
-        {
-          [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
-        } as never,
-        { name: 'Midterm' },
-      ),
-    ).rejects.toMatchObject({ code: 'TENANT_CONTEXT_REQUIRED' });
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const result = await controller.getExamSubject(request as never, examSubjectId);
+    expect(marksService.getExamSubjectForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      examSubjectId,
+    );
+    expect(result).toMatchObject({ data: { id: examSubjectId } });
   });
 });

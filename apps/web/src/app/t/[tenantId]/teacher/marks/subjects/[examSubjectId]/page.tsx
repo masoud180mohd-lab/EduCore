@@ -1,7 +1,7 @@
 'use client';
 
-import { useParams, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 
 import { TeacherShell } from '@/components/TeacherShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
@@ -31,21 +31,8 @@ type Draft = {
 };
 
 export default function MarkEntryPage() {
-  const params = useParams<{ tenantId: string }>();
-  return (
-    <TeacherShell tenantId={params.tenantId}>
-      <Suspense fallback={<p className="muted">Loading…</p>}>
-        <MarkEntryInner />
-      </Suspense>
-    </TeacherShell>
-  );
-}
-
-function MarkEntryInner() {
-  const params = useParams<{ examSubjectId: string }>();
-  const search = useSearchParams();
-  const examIdParam = search.get('examId');
-  const { examSubjectId } = params;
+  const params = useParams<{ tenantId: string; examSubjectId: string }>();
+  const { tenantId, examSubjectId } = params;
   const [subject, setSubject] = useState<ExamSubject | null>(null);
   const [examName, setExamName] = useState('');
   const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -63,31 +50,25 @@ function MarkEntryInner() {
     setLoading(true);
     setError(null);
     try {
-      if (examIdParam === null || examIdParam === '') {
-        setError('Missing exam context. Open marks from the exam page.');
-        return;
-      }
-      const [examRes, subsRes] = await Promise.all([
-        apiRequest<{ data: Exam }>(`/api/v1/exams/${examIdParam}`, { auth }),
-        apiRequest<{ data: ExamSubject[] }>(`/api/v1/exams/${examIdParam}/subjects`, { auth }),
-      ]);
-      const found = (subsRes.data ?? []).find((s) => s.id === examSubjectId);
-      if (found === undefined) {
-        setError('Exam subject not found.');
-        return;
-      }
+      const subjectRes = await apiRequest<{ data: ExamSubject }>(
+        `/api/v1/exam-subjects/${examSubjectId}`,
+        { auth },
+      );
+      const found = subjectRes.data;
       setSubject(found);
-      setExamName(examRes.data.name);
 
-      const [marksRes, enrollRes] = await Promise.all([
+      const [examRes, marksRes] = await Promise.all([
+        apiRequest<{ data: Exam }>(`/api/v1/exams/${found.examId}`, { auth }),
         apiRequest<{ data: MarkRow[] }>(`/api/v1/exam-subjects/${examSubjectId}/marks`, {
           auth,
         }),
-        apiRequest<{ data: Enrollment[] }>(
-          `/api/v1/enrollments?classId=${encodeURIComponent(examRes.data.classId)}&status=active&limit=100`,
-          { auth },
-        ),
       ]);
+      setExamName(examRes.data.name);
+
+      const enrollRes = await apiRequest<{ data: Enrollment[] }>(
+        `/api/v1/enrollments?classId=${encodeURIComponent(examRes.data.classId)}&status=active&limit=100`,
+        { auth },
+      );
 
       const markMap = new Map((marksRes.data ?? []).map((m) => [m.studentId, m] as const));
       const next: Draft[] = [];
@@ -116,7 +97,7 @@ function MarkEntryInner() {
     } finally {
       setLoading(false);
     }
-  }, [examIdParam, examSubjectId]);
+  }, [examSubjectId]);
 
   useEffect(() => {
     void load();
@@ -195,7 +176,7 @@ function MarkEntryInner() {
   }
 
   return (
-    <>
+    <TeacherShell tenantId={tenantId}>
       <h1>Enter marks</h1>
       <p className="muted">
         {examName}
@@ -282,6 +263,6 @@ function MarkEntryInner() {
           </button>
         ) : null}
       </div>
-    </>
+    </TeacherShell>
   );
 }
