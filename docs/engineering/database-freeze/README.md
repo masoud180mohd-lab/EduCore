@@ -11,10 +11,11 @@ This directory holds **downstream database design freeze** packages. These are e
 
 ## Records
 
-| ID      | Slice                            | Document                                                               | Status                            |
-| ------- | -------------------------------- | ---------------------------------------------------------------------- | --------------------------------- |
-| DBF-001 | Identity & Tenant / Organization | [DBF-001-identity-tenant-slice.md](./DBF-001-identity-tenant-slice.md) | **Accepted v1.0 (solo-operator)** |
-| DBF-010 | Guardians                        | [DBF-010-guardians-slice.md](./DBF-010-guardians-slice.md)             | Provisional (IMP-007)             |
+| ID      | Slice                            | Document                                                                 | Status                            |
+| ------- | -------------------------------- | ------------------------------------------------------------------------ | --------------------------------- |
+| DBF-001 | Identity & Tenant / Organization | [DBF-001-identity-tenant-slice.md](./DBF-001-identity-tenant-slice.md)   | **Accepted v1.0 (solo-operator)** |
+| DBF-010 | Guardians                        | [DBF-010-guardians-slice.md](./DBF-010-guardians-slice.md)               | Provisional (IMP-007)             |
+| DBF-011 | Marks / Assessment               | [DBF-011-marks-assessment-slice.md](./DBF-011-marks-assessment-slice.md) | Provisional (IMP-008)             |
 
 ## Rules
 
