@@ -184,6 +184,8 @@ On success: `term.create` with metadata `{ status, hasCode, academicYearId }` (n
 
 ## Related
 
+- OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-002-007-students-academic.openapi.yaml` (ASSURE-001; solo-operator, no re-sign)
+
 - Companion: [DBF-004-terms-list-slice.md](../database-freeze/DBF-004-terms-list-slice.md)
 - Parent list twin: [ACF-003-academic-years-list-slice.md](./ACF-003-academic-years-list-slice.md)
 - Implementation: IMP-003-P3 list; P4 detail; P5 create

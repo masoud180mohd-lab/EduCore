@@ -69,4 +69,5 @@ Signed 2026-07-21 (Backend / Security / Principal acting).
 
 ## Related
 
-DBF-005; IMP-003-C0/C1/C2
+- OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-002-007-students-academic.openapi.yaml` (ASSURE-001; solo-operator, no re-sign)
+- DBF-005; IMP-003-C0/C1/C2

@@ -27,3 +27,7 @@ Parent class missing/other-tenant → 400 `classId not found in this tenant.`
 ### Allowlist
 
 id, tenantId, classId, name, code, status, createdAt, updatedAt.
+
+## Related
+
+- OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-002-007-students-academic.openapi.yaml` (ASSURE-001; solo-operator, no re-sign)

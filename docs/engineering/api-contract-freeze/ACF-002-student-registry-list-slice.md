@@ -230,5 +230,7 @@ On success: `student.patch` with metadata `{ fields: string[] }` (no PII).
 
 ## Related
 
+- OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-002-007-students-academic.openapi.yaml` (ASSURE-001; solo-operator, no re-sign)
+
 - DBF-002: [DBF-002-student-registry-list-slice.md](../database-freeze/DBF-002-student-registry-list-slice.md)
 - List: IMP-002-P0; Detail: IMP-002-P1; Create: IMP-002-P2; Patch: IMP-002-P3

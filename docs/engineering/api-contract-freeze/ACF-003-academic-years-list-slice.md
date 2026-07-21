@@ -175,5 +175,7 @@ Permission: `academic.manage` — owner + admin only (not staff).
 
 ## Related
 
+- OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-002-007-students-academic.openapi.yaml` (ASSURE-001; solo-operator, no re-sign)
+
 - DBF-003: [DBF-003-academic-years-list-slice.md](../database-freeze/DBF-003-academic-years-list-slice.md)
 - Clone pattern: IMP-002-P0 students list

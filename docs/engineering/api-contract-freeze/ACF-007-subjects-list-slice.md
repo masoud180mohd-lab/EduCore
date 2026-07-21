@@ -26,3 +26,7 @@
 ### Allowlist
 
 id, tenantId, name, code, status, createdAt, updatedAt.
+
+## Related
+
+- OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-002-007-students-academic.openapi.yaml` (ASSURE-001; solo-operator, no re-sign)

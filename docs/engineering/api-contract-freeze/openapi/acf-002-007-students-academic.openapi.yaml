@@ -1,0 +1,1531 @@
+openapi: 3.1.0
+info:
+  title: EduCore API — Students & Academic Structure (ACF-002…007)
+  version: 1.0.0
+  description: >-
+    Machine-readable contract for students (ACF-002) and academic structure
+    (ACF-003…007): academic years, terms, classes, streams, subjects.
+    Solo-operator provisional (SOLO-GOV-001). Binding design baseline for
+    implemented product HTTP; not freeze re-acceptance.
+    AuthZ stack (typical privileged route): Authenticated → Tenant header →
+    Session tenant bind → Permission code → RLS. Extensions: x-permissions, x-authz.
+  contact:
+    name: EduCore Engineering
+servers:
+  - url: /api/v1
+    description: Versioned API root
+tags:
+  - name: Students
+  - name: AcademicYears
+  - name: Terms
+  - name: Classes
+  - name: Streams
+  - name: Subjects
+paths:
+  /students:
+    get:
+      tags:
+        - Students
+      operationId: listStudents
+      summary: List students in bound tenant
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/StudentStatus'
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Case-insensitive match on displayName or studentCode.
+      responses:
+        '200':
+          description: Student page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - student.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - student.read
+        notes: Non-UUID cursor → 400. Invalid status → 400.
+    post:
+      tags:
+        - Students
+      operationId: createStudent
+      summary: Create student
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStudentRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - student.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - student.manage
+        notes: >-
+          displayName required. Duplicate studentCode in tenant → 409.
+          Idempotency-Key required. No nested PII.
+  /students/{studentId}:
+    get:
+      tags:
+        - Students
+      operationId: getStudent
+      summary: Get student by id
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/StudentId'
+      responses:
+        '200':
+          description: Student
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions:
+        - student.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - student.read
+        notes: Missing/cross-tenant → 404 Student not found.
+    patch:
+      tags:
+        - Students
+      operationId: patchStudent
+      summary: Patch student fields
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/StudentId'
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchStudentRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - student.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - student.manage
+        notes: >-
+          At least one of displayName, studentCode, status. studentCode null clears.
+          Idempotency optional. Duplicate studentCode → 409.
+  /academic-years:
+    get:
+      tags:
+        - AcademicYears
+      operationId: listAcademicYears
+      summary: List academic years in bound tenant
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/AcademicLifecycleStatus'
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Case-insensitive match on name or code.
+      responses:
+        '200':
+          description: Academic year page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - academic.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.read
+        notes: status draft|active|closed. Invalid status → 400.
+    post:
+      tags:
+        - AcademicYears
+      operationId: createAcademicYear
+      summary: Create academic year
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAcademicYearRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          name required; status defaults to draft. Duplicate code → 409.
+          Idempotency-Key required.
+  /academic-years/{academicYearId}:
+    get:
+      tags:
+        - AcademicYears
+      operationId: getAcademicYear
+      summary: Get academic year by id
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/AcademicYearId'
+      responses:
+        '200':
+          description: Academic year
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions:
+        - academic.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.read
+        notes: Missing/cross-tenant → 404 Academic year not found.
+  /terms:
+    get:
+      tags:
+        - Terms
+      operationId: listTerms
+      summary: List terms in bound tenant
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - name: academicYearId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/AcademicLifecycleStatus'
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Term page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - academic.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.read
+        notes: Non-UUID academicYearId → 400. Foreign UUID filter → empty page.
+    post:
+      tags:
+        - Terms
+      operationId: createTerm
+      summary: Create term
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTermRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          academicYearId and name required; status defaults to draft.
+          academicYearId tenant-scoped. Idempotency-Key required.
+  /terms/{termId}:
+    get:
+      tags:
+        - Terms
+      operationId: getTerm
+      summary: Get term by id
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/TermId'
+      responses:
+        '200':
+          description: Term
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions:
+        - academic.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.read
+        notes: Missing/cross-tenant → 404 Term not found.
+  /classes:
+    get:
+      tags:
+        - Classes
+      operationId: listClasses
+      summary: List classes in bound tenant
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - name: academicYearId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: termId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/AcademicLifecycleStatus'
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Class page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - academic.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.read
+        notes: Non-UUID filters → 400. Foreign UUID filters → empty page.
+    post:
+      tags:
+        - Classes
+      operationId: createClass
+      summary: Create class
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClassRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          academicYearId and name required; termId optional; status defaults to draft.
+          Idempotency-Key required.
+  /classes/{classId}:
+    get:
+      tags:
+        - Classes
+      operationId: getClass
+      summary: Get class by id
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/ClassId'
+      responses:
+        '200':
+          description: Class
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions:
+        - academic.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.read
+        notes: Missing/cross-tenant → 404 Class not found.
+  /streams:
+    get:
+      tags:
+        - Streams
+      operationId: listStreams
+      summary: List streams in bound tenant
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - name: classId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/AcademicLifecycleStatus'
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stream page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - academic.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.read
+        notes: Non-UUID classId → 400. Foreign UUID filter → empty page.
+    post:
+      tags:
+        - Streams
+      operationId: createStream
+      summary: Create stream
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStreamRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          classId and name required; status defaults to draft. classId tenant-scoped.
+          Idempotency-Key required.
+  /streams/{streamId}:
+    get:
+      tags:
+        - Streams
+      operationId: getStream
+      summary: Get stream by id
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/StreamId'
+      responses:
+        '200':
+          description: Stream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions:
+        - academic.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.read
+        notes: Missing/cross-tenant → 404 Stream not found.
+  /subjects:
+    get:
+      tags:
+        - Subjects
+      operationId: listSubjects
+      summary: List subjects in bound tenant
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/AcademicLifecycleStatus'
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subject page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubjectListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions:
+        - academic.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.read
+        notes: Invalid status → 400.
+    post:
+      tags:
+        - Subjects
+      operationId: createSubject
+      summary: Create subject
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubjectRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubjectEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          name required; status defaults to draft. Duplicate code → 409.
+          Idempotency-Key required.
+  /subjects/{subjectId}:
+    get:
+      tags:
+        - Subjects
+      operationId: getSubject
+      summary: Get subject by id
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/SubjectId'
+      responses:
+        '200':
+          description: Subject
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubjectEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions:
+        - academic.read
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.read
+        notes: Missing/cross-tenant → 404 Subject not found.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    tenantHeader:
+      type: apiKey
+      in: header
+      name: X-Tenant-Id
+  parameters:
+    TenantIdHeader:
+      name: X-Tenant-Id
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    IdempotencyKeyRequired:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    IdempotencyKeyOptional:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+        format: uuid
+      description: Opaque UUID keyset cursor (last row id).
+    StudentId:
+      name: studentId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    AcademicYearId:
+      name: academicYearId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    TermId:
+      name: termId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    ClassId:
+      name: classId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    StreamId:
+      name: streamId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    SubjectId:
+      name: subjectId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+  responses:
+    BadRequest:
+      description: Validation or tenant context error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Forbidden:
+      description: Permission or session-tenant mismatch
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Resource not found (no existence leak)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Conflict:
+      description: Duplicate or invalid state transition
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+    StudentStatus:
+      type: string
+      enum:
+        - active
+        - inactive
+        - graduated
+        - transferred
+        - draft
+    AcademicLifecycleStatus:
+      type: string
+      enum:
+        - draft
+        - active
+        - closed
+    PageMeta:
+      type: object
+      additionalProperties: false
+      required:
+        - nextCursor
+        - limit
+      properties:
+        nextCursor:
+          type: string
+          format: uuid
+          nullable: true
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required:
+            - code
+            - message
+            - requestId
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            requestId:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+    Student:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - studentCode
+        - displayName
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        studentCode:
+          type: string
+          nullable: true
+        displayName:
+          type: string
+        status:
+          $ref: '#/components/schemas/StudentStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    StudentEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Student'
+    StudentListEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - page
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Student'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    CreateStudentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - displayName
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 200
+        studentCode:
+          type: string
+          pattern: '^[A-Za-z0-9._-]{1,64}$'
+        status:
+          $ref: '#/components/schemas/StudentStatus'
+    PatchStudentRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 200
+        studentCode:
+          type: string
+          nullable: true
+          pattern: '^[A-Za-z0-9._-]{1,64}$'
+        status:
+          $ref: '#/components/schemas/StudentStatus'
+    AcademicYear:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - name
+        - code
+        - startsOn
+        - endsOn
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+        code:
+          type: string
+          nullable: true
+        startsOn:
+          type: string
+          format: date
+          nullable: true
+        endsOn:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AcademicYearEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/AcademicYear'
+    AcademicYearListEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - page
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicYear'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    CreateAcademicYearRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+        code:
+          type: string
+        startsOn:
+          type: string
+          format: date
+        endsOn:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
+          default: draft
+    Term:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - academicYearId
+        - name
+        - code
+        - startsOn
+        - endsOn
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        academicYearId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+        code:
+          type: string
+          nullable: true
+        startsOn:
+          type: string
+          format: date
+          nullable: true
+        endsOn:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TermEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Term'
+    TermListEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - page
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Term'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    CreateTermRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - academicYearId
+        - name
+      properties:
+        academicYearId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+          minLength: 1
+        code:
+          type: string
+        startsOn:
+          type: string
+          format: date
+        endsOn:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
+          default: draft
+    Class:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - academicYearId
+        - termId
+        - name
+        - code
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        academicYearId:
+          $ref: '#/components/schemas/Uuid'
+        termId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        code:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ClassEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Class'
+    ClassListEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - page
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Class'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    CreateClassRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - academicYearId
+        - name
+      properties:
+        academicYearId:
+          $ref: '#/components/schemas/Uuid'
+        termId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+          minLength: 1
+        code:
+          type: string
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
+          default: draft
+    Stream:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - classId
+        - name
+        - code
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        classId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+        code:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    StreamEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Stream'
+    StreamListEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - page
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stream'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    CreateStreamRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - classId
+        - name
+      properties:
+        classId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+          minLength: 1
+        code:
+          type: string
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
+          default: draft
+    Subject:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - name
+        - code
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+        code:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SubjectEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Subject'
+    SubjectListEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - page
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subject'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    CreateSubjectRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+        code:
+          type: string
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
+          default: draft
