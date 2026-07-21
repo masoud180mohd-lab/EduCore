@@ -1,10 +1,10 @@
 # Database Freeze — Attendance (DBF-009)
 
-| Field | Value |
-| ----- | ----- |
-| Freeze ID | `DBF-009` |
-| Version | `1.1` (1.0 tables; 1.1 write helpers) |
-| Date | 2026-07-21 |
+| Field     | Value                                    |
+| --------- | ---------------------------------------- |
+| Freeze ID | `DBF-009`                                |
+| Version   | `1.1` (1.0 tables; 1.1 write helpers)    |
+| Date      | 2026-07-21                               |
 | Authority | Solo-operator provisional (SOLO-GOV-001) |
 
 ## Tables

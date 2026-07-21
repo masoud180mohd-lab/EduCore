@@ -24,11 +24,13 @@ describe('system role matrices (IMP-001 P4)', () => {
     expect(permissionsForSystemRole('staff')).not.toContain('entitlement.manage');
   });
 
-  it('keeps staff read-oriented', () => {
+  it('keeps staff read-oriented except attendance.manage', () => {
     const staff = permissionsForSystemRole('staff');
     expect(staff).toContain('tenant.read');
     expect(staff).toContain('student.read');
     expect(staff).toContain('academic.read');
+    expect(staff).toContain('attendance.read');
+    expect(staff).toContain('attendance.manage');
     expect(staff).not.toContain('academic.manage');
     expect(staff).not.toContain('student.manage');
     expect(staff).not.toContain('tenant.manage');

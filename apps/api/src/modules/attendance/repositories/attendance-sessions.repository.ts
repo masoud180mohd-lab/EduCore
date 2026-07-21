@@ -41,6 +41,34 @@ export type AttendanceRecordRow = {
   readonly updatedAt: string;
 };
 
+type AttendanceSessionDbRow = {
+  id: string;
+  tenant_id: string;
+  class_id: string;
+  stream_id: string | null;
+  academic_year_id: string;
+  term_id: string | null;
+  session_date: Date | string;
+  status: string;
+  notes: string | null;
+  created_by_user_id: string | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+type AttendanceRecordDbRow = {
+  id: string;
+  tenant_id: string;
+  session_id: string;
+  student_id: string;
+  status: string;
+  note: string | null;
+  marked_at: Date;
+  marked_by_user_id: string | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
 @Injectable()
 export class AttendanceSessionsRepository {
   constructor(
@@ -105,7 +133,7 @@ export class AttendanceSessionsRepository {
               )`;
           }
           sql += ` ORDER BY s.session_date DESC, s.id ASC LIMIT $2`;
-          const result = await client.query(sql, params);
+          const result = await client.query<AttendanceSessionDbRow>(sql, params);
           const hasMore = result.rows.length > query.limit;
           const page = hasMore ? result.rows.slice(0, query.limit) : result.rows;
           const mapped = page.map(mapSession);
@@ -137,7 +165,7 @@ export class AttendanceSessionsRepository {
         this.pool,
         { userId: actorUserId, tenantId },
         async (client) => {
-          const result = await client.query(
+          const result = await client.query<AttendanceSessionDbRow>(
             `SELECT s.id, s.tenant_id, s.class_id, s.stream_id, s.academic_year_id, s.term_id,
                     s.session_date, s.status, s.notes, s.created_by_user_id, s.created_at, s.updated_at
              FROM attendance_sessions s
@@ -173,7 +201,7 @@ export class AttendanceSessionsRepository {
         this.pool,
         { userId: actorUserId, tenantId },
         async (client) => {
-          const result = await client.query(
+          const result = await client.query<AttendanceSessionDbRow>(
             `SELECT id, tenant_id, class_id, stream_id, academic_year_id, term_id,
                     session_date, status, notes, created_by_user_id, created_at, updated_at
              FROM app.create_attendance_session(
@@ -214,7 +242,7 @@ export class AttendanceSessionsRepository {
         this.pool,
         { userId: actorUserId, tenantId },
         async (client) => {
-          const result = await client.query(
+          const result = await client.query<AttendanceSessionDbRow>(
             `SELECT id, tenant_id, class_id, stream_id, academic_year_id, term_id,
                     session_date, status, notes, created_by_user_id, created_at, updated_at
              FROM app.close_attendance_session($1::uuid, $2::uuid, $3::uuid)`,
@@ -245,7 +273,7 @@ export class AttendanceSessionsRepository {
         this.pool,
         { userId: actorUserId, tenantId },
         async (client) => {
-          const result = await client.query(
+          const result = await client.query<AttendanceRecordDbRow>(
             `SELECT r.id, r.tenant_id, r.session_id, r.student_id, r.status, r.note,
                     r.marked_at, r.marked_by_user_id, r.created_at, r.updated_at
              FROM attendance_records r
@@ -280,21 +308,13 @@ export class AttendanceSessionsRepository {
         async (client) => {
           const out: AttendanceRecordRow[] = [];
           for (const rec of records) {
-            const result = await client.query(
+            const result = await client.query<AttendanceRecordDbRow>(
               `SELECT id, tenant_id, session_id, student_id, status, note,
                       marked_at, marked_by_user_id, created_at, updated_at
                FROM app.upsert_attendance_record(
                  $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::text, $7::text
                )`,
-              [
-                actorUserId,
-                tenantId,
-                randomUUID(),
-                sessionId,
-                rec.studentId,
-                rec.status,
-                rec.note,
-              ],
+              [actorUserId, tenantId, randomUUID(), sessionId, rec.studentId, rec.status, rec.note],
             );
             const row = result.rows[0];
             if (row !== undefined) out.push(mapRecord(row));
@@ -319,40 +339,34 @@ function formatDate(value: Date | string): string {
   return `${String(y)}-${m}-${d}`;
 }
 
-function mapSession(row: Record<string, unknown>): AttendanceSessionRow {
+function mapSession(row: AttendanceSessionDbRow): AttendanceSessionRow {
   return {
-    id: String(row['id']),
-    tenantId: String(row['tenant_id']),
-    classId: String(row['class_id']),
-    streamId: row['stream_id'] === null || row['stream_id'] === undefined ? null : String(row['stream_id']),
-    academicYearId: String(row['academic_year_id']),
-    termId: row['term_id'] === null || row['term_id'] === undefined ? null : String(row['term_id']),
-    sessionDate: formatDate(row['session_date'] as Date | string),
-    status: String(row['status']),
-    notes: row['notes'] === null || row['notes'] === undefined ? null : String(row['notes']),
-    createdByUserId:
-      row['created_by_user_id'] === null || row['created_by_user_id'] === undefined
-        ? null
-        : String(row['created_by_user_id']),
-    createdAt: new Date(row['created_at'] as Date).toISOString(),
-    updatedAt: new Date(row['updated_at'] as Date).toISOString(),
+    id: row.id,
+    tenantId: row.tenant_id,
+    classId: row.class_id,
+    streamId: row.stream_id,
+    academicYearId: row.academic_year_id,
+    termId: row.term_id,
+    sessionDate: formatDate(row.session_date),
+    status: row.status,
+    notes: row.notes,
+    createdByUserId: row.created_by_user_id,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
   };
 }
 
-function mapRecord(row: Record<string, unknown>): AttendanceRecordRow {
+function mapRecord(row: AttendanceRecordDbRow): AttendanceRecordRow {
   return {
-    id: String(row['id']),
-    tenantId: String(row['tenant_id']),
-    sessionId: String(row['session_id']),
-    studentId: String(row['student_id']),
-    status: String(row['status']),
-    note: row['note'] === null || row['note'] === undefined ? null : String(row['note']),
-    markedAt: new Date(row['marked_at'] as Date).toISOString(),
-    markedByUserId:
-      row['marked_by_user_id'] === null || row['marked_by_user_id'] === undefined
-        ? null
-        : String(row['marked_by_user_id']),
-    createdAt: new Date(row['created_at'] as Date).toISOString(),
-    updatedAt: new Date(row['updated_at'] as Date).toISOString(),
+    id: row.id,
+    tenantId: row.tenant_id,
+    sessionId: row.session_id,
+    studentId: row.student_id,
+    status: row.status,
+    note: row.note,
+    markedAt: row.marked_at.toISOString(),
+    markedByUserId: row.marked_by_user_id,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
   };
 }

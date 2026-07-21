@@ -1,10 +1,10 @@
 # API Contract Freeze — Attendance (ACF-009)
 
-| Field | Value |
-| ----- | ----- |
-| Freeze ID | `ACF-009` |
-| Version | `1.3` |
-| Date | 2026-07-21 |
+| Field     | Value                     |
+| --------- | ------------------------- |
+| Freeze ID | `ACF-009`                 |
+| Version   | `1.3`                     |
+| Date      | 2026-07-21                |
 | Authority | Solo-operator provisional |
 
 ## History
@@ -13,21 +13,21 @@
 
 ## Permissions
 
-| Code | Roles |
-| ---- | ----- |
-| attendance.read | owner, admin, staff |
+| Code              | Roles               |
+| ----------------- | ------------------- |
+| attendance.read   | owner, admin, staff |
 | attendance.manage | owner, admin, staff |
 
 ## Endpoints
 
-| Method | Path | AuthZ | Notes |
-| ------ | ---- | ----- | ----- |
-| GET | `/api/v1/attendance-sessions` | attendance.read | filters: classId, sessionDate, status, limit, cursor |
-| GET | `/api/v1/attendance-sessions/{id}` | attendance.read | 404 Session not found. |
-| POST | `/api/v1/attendance-sessions` | attendance.manage | Idempotency required; body classId, streamId?, sessionDate, notes? |
-| POST | `/api/v1/attendance-sessions/{id}/close` | attendance.manage | Idempotency recommended |
-| GET | `/api/v1/attendance-sessions/{id}/records` | attendance.read | |
-| PUT | `/api/v1/attendance-sessions/{id}/records` | attendance.manage | Idempotency required; body `{ "records": [{ studentId, status, note? }] }` |
+| Method | Path                                       | AuthZ             | Notes                                                                      |
+| ------ | ------------------------------------------ | ----------------- | -------------------------------------------------------------------------- |
+| GET    | `/api/v1/attendance-sessions`              | attendance.read   | filters: classId, sessionDate, status, limit, cursor                       |
+| GET    | `/api/v1/attendance-sessions/{id}`         | attendance.read   | 404 Session not found.                                                     |
+| POST   | `/api/v1/attendance-sessions`              | attendance.manage | Idempotency required; body classId, streamId?, sessionDate, notes?         |
+| POST   | `/api/v1/attendance-sessions/{id}/close`   | attendance.manage | Idempotency recommended                                                    |
+| GET    | `/api/v1/attendance-sessions/{id}/records` | attendance.read   |                                                                            |
+| PUT    | `/api/v1/attendance-sessions/{id}/records` | attendance.manage | Idempotency required; body `{ "records": [{ studentId, status, note? }] }` |
 
 ## Rules
 

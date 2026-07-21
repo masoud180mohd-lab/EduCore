@@ -48,6 +48,8 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
           'student.manage',
           'academic.read',
           'academic.manage',
+          'attendance.read',
+          'attendance.manage',
         ]),
       ],
     ]);
@@ -707,6 +709,89 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
         'content-type': 'application/json',
       },
       JSON.stringify({ status: 'withdrawn' }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('GET /api/v1/attendance-sessions returns 200 when AuthZ passes', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/attendance-sessions', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body) as { data: unknown[]; page: { limit: number } };
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.page.limit).toBe(25);
+  });
+
+  it('GET /api/v1/attendance-sessions returns 403 without attendance.read', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/attendance-sessions', {
+      'authorization': harnessBearer(userNoPerm, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('GET /api/v1/attendance-sessions/:id returns 404 for invalid id', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/attendance-sessions/not-a-uuid', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it('POST /api/v1/attendance-sessions returns 400 without Idempotency-Key', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/attendance-sessions',
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({
+        classId: '01900000-0000-7000-8000-0000000000e1',
+        sessionDate: '2026-07-21',
+      }),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+  });
+
+  it('POST /api/v1/attendance-sessions returns 403 without attendance.manage', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/attendance-sessions',
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-attendance-create01',
+      },
+      JSON.stringify({
+        classId: '01900000-0000-7000-8000-0000000000e1',
+        sessionDate: '2026-07-21',
+      }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('PUT /api/v1/attendance-sessions/:id/records returns 403 without attendance.manage', async () => {
+    const response = await httpCall(
+      server,
+      'PUT',
+      `/api/v1/attendance-sessions/${userA}/records`,
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-attendance-records01',
+      },
+      JSON.stringify({
+        records: [{ studentId: '01900000-0000-7000-8000-0000000000b1', status: 'present' }],
+      }),
     );
     expect(response.statusCode).toBe(403);
   });

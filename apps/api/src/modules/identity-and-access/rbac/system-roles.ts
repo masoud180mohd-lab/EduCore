@@ -13,13 +13,15 @@ export type SystemRoleDefinition = {
   readonly permissions: ReadonlyArray<PermissionCode>;
 };
 
-/** Read-heavy baseline for classroom / ops staff (≈ teacher). */
+/** Classroom staff baseline: reads + attendance.manage for teacher mark flow. */
 const STAFF_PERMISSIONS: ReadonlyArray<PermissionCode> = [
   'tenant.read',
   'organization.read',
   'user.read',
   'student.read',
   'academic.read',
+  'attendance.read',
+  'attendance.manage',
   'role.read',
   'audit.read',
   'entitlement.read',
