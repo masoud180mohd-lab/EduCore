@@ -32,11 +32,11 @@ EDUCORE_ENABLE_APP_DB=1      # set by suite for HTTP
 
 ## Transcript (this session)
 
-| Command                     | Result                                                                             |
-| --------------------------- | ---------------------------------------------------------------------------------- |
-| `npm run check`             | (recorded after suite lands)                                                       |
-| Live suite without Postgres | **SKIP** (describe.skipIf) — residual: isolation **unverified** until Postgres run |
-| `RUN_LIVE_DB_TESTS=1`       | Run when local Postgres available; do not claim PASS without transcript            |
+| Command                     | Result                                                               |
+| --------------------------- | -------------------------------------------------------------------- |
+| `npm run check`             | **PASS** (113 files; 698 passed \| 3 skipped)                        |
+| Live suite without Postgres | **SKIP** (`describe.skipIf`) — isolation **unverified** this session |
+| `RUN_LIVE_DB_TESTS=1`       | **NOT RUN** (`DATABASE_URL` / Postgres env unset)                    |
 
 ## Residual risk
 
