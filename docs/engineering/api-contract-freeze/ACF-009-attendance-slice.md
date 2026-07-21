@@ -40,3 +40,4 @@
 
 - OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-008-009-enrollments-attendance.openapi.yaml`
 - DBF-009; IMP-005; AUDIT-R5 High backlog (OpenAPI expansion)
+- **IMP-006** consumes this contract for teacher UI (no API change).
