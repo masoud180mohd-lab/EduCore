@@ -52,6 +52,10 @@ a {
   padding-bottom: 5rem;
 }
 
+.app-shell-wide {
+  max-width: 56rem;
+}
+
 .top-nav {
   display: flex;
   gap: var(--space-3);

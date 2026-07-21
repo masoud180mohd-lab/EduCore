@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { type FormEvent, useState } from 'react';
 
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { resolvePostLoginPath } from '@/lib/auth/routing';
 import { writeSession } from '@/lib/auth/session';
 
 type LoginResponse = {
@@ -57,8 +58,10 @@ export default function LoginPage() {
   const [pendingToken, setPendingToken] = useState<string | null>(null);
 
   async function finish(accessToken: string, boundTenant: string) {
-    writeSession({ accessToken, tenantId: boundTenant });
-    router.replace(`/t/${boundTenant}/teacher`);
+    const auth = { accessToken, tenantId: boundTenant };
+    writeSession(auth);
+    const path = await resolvePostLoginPath(auth);
+    router.replace(path);
   }
 
   async function onSubmit(event: FormEvent) {
