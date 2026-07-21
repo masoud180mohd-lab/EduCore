@@ -173,4 +173,19 @@ describe('IMP-001 migration tooling', () => {
     const down = read('apps/api/db/migrations/20260720240000_classes_create.down.sql');
     expect(down).toContain('DROP FUNCTION');
   });
+
+  it('ships IMP-003 streams + subjects tables and create helpers', () => {
+    const streamsList = read('apps/api/db/migrations/20260720250000_streams_list_read.up.sql');
+    expect(streamsList).toMatch(/CREATE TABLE streams/i);
+    expect(streamsList).toContain('GRANT SELECT ON TABLE streams TO educore_app');
+    expect(read('apps/api/db/migrations/20260720260000_streams_create.up.sql')).toContain(
+      'app.create_stream',
+    );
+    const subjectsList = read('apps/api/db/migrations/20260720270000_subjects_list_read.up.sql');
+    expect(subjectsList).toMatch(/CREATE TABLE subjects/i);
+    expect(subjectsList).toContain('GRANT SELECT ON TABLE subjects TO educore_app');
+    expect(read('apps/api/db/migrations/20260720280000_subjects_create.up.sql')).toContain(
+      'app.create_subject',
+    );
+  });
 });

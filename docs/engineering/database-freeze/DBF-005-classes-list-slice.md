@@ -2,16 +2,16 @@
 
 ## Freeze status
 
-| Field               | Value                                                                    |
-| ------------------- | ------------------------------------------------------------------------ |
-| Freeze ID           | `DBF-005`                                                                |
-| Title               | Database Freeze — Academic Structure `classes` list-read                 |
-| Version             | `1.1` (1.0 list; 1.1 create helper)                                      |
-| Date                | 2026-07-21                                                               |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                      |
-| Engine              | PostgreSQL                                                               |
-| Scope               | Academic Structure — `classes` table + create helper                     |
-| Explicitly excluded | streams, subjects, enrollments, teacher_assignments, class PATCH/DELETE  |
+| Field               | Value                                                                   |
+| ------------------- | ----------------------------------------------------------------------- |
+| Freeze ID           | `DBF-005`                                                               |
+| Title               | Database Freeze — Academic Structure `classes` list-read                |
+| Version             | `1.1` (1.0 list; 1.1 create helper)                                     |
+| Date                | 2026-07-21                                                              |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                     |
+| Engine              | PostgreSQL                                                              |
+| Scope               | Academic Structure — `classes` table + create helper                    |
+| Explicitly excluded | streams, subjects, enrollments, teacher_assignments, class PATCH/DELETE |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** multi-party external review.
 

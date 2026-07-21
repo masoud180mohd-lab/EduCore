@@ -5,10 +5,14 @@ import { PlatformOperationsModule } from '../platform-operations/index.js';
 import { AcademicStructureApplicationService } from './application/academic-structure.application-service.js';
 import { AcademicYearsService } from './application/academic-years.service.js';
 import { ClassesService } from './application/classes.service.js';
+import { StreamsService } from './application/streams.service.js';
+import { SubjectsService } from './application/subjects.service.js';
 import { TermsService } from './application/terms.service.js';
 import { AcademicStructureController } from './controllers/academic-structure.controller.js';
 import { AcademicYearsController } from './controllers/academic-years.controller.js';
 import { ClassesController } from './controllers/classes.controller.js';
+import { StreamsController } from './controllers/streams.controller.js';
+import { SubjectsController } from './controllers/subjects.controller.js';
 import { TermsController } from './controllers/terms.controller.js';
 import { AcademicStructureDomainService } from './domain/academic-structure.domain-service.js';
 import { AcademicStructurePolicy } from './policies/academic-structure.policy.js';
@@ -16,11 +20,13 @@ import { ACADEMIC_STRUCTURE_REPOSITORY } from './repositories/academic-structure
 import { AcademicStructureRepositoryPlaceholder } from './repositories/academic-structure.repository.placeholder.js';
 import { AcademicYearsRepository } from './repositories/academic-years.repository.js';
 import { ClassesRepository } from './repositories/classes.repository.js';
+import { StreamsRepository } from './repositories/streams.repository.js';
+import { SubjectsRepository } from './repositories/subjects.repository.js';
 import { TermsRepository } from './repositories/terms.repository.js';
 
 /**
  * Bounded context: Academic Structure.
- * Years + terms product surfaces; classes list (C0). PATCH/DELETE closed where not opened.
+ * Years, terms, classes, streams, subjects product surfaces.
  */
 @Module({
   imports: [DatabaseModule, PlatformOperationsModule],
@@ -29,6 +35,8 @@ import { TermsRepository } from './repositories/terms.repository.js';
     AcademicYearsController,
     TermsController,
     ClassesController,
+    StreamsController,
+    SubjectsController,
   ],
   providers: [
     AcademicStructureApplicationService,
@@ -44,6 +52,10 @@ import { TermsRepository } from './repositories/terms.repository.js';
     TermsService,
     ClassesRepository,
     ClassesService,
+    StreamsRepository,
+    StreamsService,
+    SubjectsRepository,
+    SubjectsService,
   ],
   exports: [
     AcademicStructureApplicationService,
@@ -51,6 +63,8 @@ import { TermsRepository } from './repositories/terms.repository.js';
     AcademicYearsService,
     TermsService,
     ClassesService,
+    StreamsService,
+    SubjectsService,
   ],
 })
 export class AcademicStructureModule {}

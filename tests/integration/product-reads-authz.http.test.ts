@@ -591,6 +591,46 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     expect(response.statusCode).toBe(403);
   });
 
+  it('GET /api/v1/streams returns 200 when AuthZ passes', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/streams', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(200);
+  });
+
+  it('GET /api/v1/streams returns 403 without academic.read', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/streams', {
+      'authorization': harnessBearer(userNoPerm, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('GET /api/v1/subjects returns 200 when AuthZ passes', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/subjects', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(200);
+  });
+
+  it('POST /api/v1/subjects returns 403 without academic.manage', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/subjects',
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-subject-create01',
+      },
+      JSON.stringify({ name: 'Math' }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
   it('GET /api/v1/students returns 200 when AuthZ passes', async () => {
     const response = await httpCall(server, 'GET', '/api/v1/students', {
       'authorization': harnessBearer(userA, tenantA),
