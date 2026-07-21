@@ -31,6 +31,8 @@ describe('system role matrices (IMP-001 P4)', () => {
     expect(staff).toContain('academic.read');
     expect(staff).toContain('attendance.read');
     expect(staff).toContain('attendance.manage');
+    expect(staff).toContain('guardian.read');
+    expect(staff).not.toContain('guardian.manage');
     expect(staff).not.toContain('academic.manage');
     expect(staff).not.toContain('student.manage');
     expect(staff).not.toContain('tenant.manage');

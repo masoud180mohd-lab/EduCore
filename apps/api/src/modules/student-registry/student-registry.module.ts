@@ -2,23 +2,26 @@ import { Module } from '@nestjs/common';
 
 import { DatabaseModule } from '../../common/persistence/index.js';
 import { PlatformOperationsModule } from '../platform-operations/index.js';
+import { GuardiansService } from './application/guardians.service.js';
 import { StudentRegistryApplicationService } from './application/student-registry.application-service.js';
 import { StudentsService } from './application/students.service.js';
+import { GuardiansController } from './controllers/guardians.controller.js';
 import { StudentRegistryController } from './controllers/student-registry.controller.js';
 import { StudentsController } from './controllers/students.controller.js';
 import { StudentRegistryDomainService } from './domain/student-registry.domain-service.js';
 import { StudentRegistryPolicy } from './policies/student-registry.policy.js';
+import { GuardiansRepository } from './repositories/guardians.repository.js';
 import { STUDENT_REGISTRY_REPOSITORY } from './repositories/student-registry.repository.js';
 import { StudentRegistryRepositoryPlaceholder } from './repositories/student-registry.repository.placeholder.js';
 import { StudentsRepository } from './repositories/students.repository.js';
 
 /**
  * Bounded context: Student Registry.
- * Product: GET list/detail (P0/P1) + POST create (P2). PATCH/DELETE closed.
+ * Product: students (ACF-002) + guardians/links (ACF-010).
  */
 @Module({
   imports: [DatabaseModule, PlatformOperationsModule],
-  controllers: [StudentRegistryController, StudentsController],
+  controllers: [StudentRegistryController, StudentsController, GuardiansController],
   providers: [
     StudentRegistryApplicationService,
     StudentRegistryDomainService,
@@ -29,7 +32,14 @@ import { StudentsRepository } from './repositories/students.repository.js';
     },
     StudentsRepository,
     StudentsService,
+    GuardiansRepository,
+    GuardiansService,
   ],
-  exports: [StudentRegistryApplicationService, STUDENT_REGISTRY_REPOSITORY, StudentsService],
+  exports: [
+    StudentRegistryApplicationService,
+    STUDENT_REGISTRY_REPOSITORY,
+    StudentsService,
+    GuardiansService,
+  ],
 })
 export class StudentRegistryModule {}

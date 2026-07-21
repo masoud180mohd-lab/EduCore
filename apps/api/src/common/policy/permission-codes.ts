@@ -22,6 +22,8 @@ export const PERMISSION_CODES = [
   'academic.manage',
   'attendance.read',
   'attendance.manage',
+  'guardian.read',
+  'guardian.manage',
 ] as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[number];
