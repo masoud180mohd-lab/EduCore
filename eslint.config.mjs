@@ -10,6 +10,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/build/**',
       '**/.next/**',
+      'apps/web/**',
       'EduCore/**',
       'eslint.config.mjs',
       '.dependency-cruiser.cjs',

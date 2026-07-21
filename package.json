@@ -32,7 +32,8 @@
     "start:dev": "npm run start:dev -w apps/api",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit --project tsconfig.json"
+    "typecheck": "tsc --noEmit --project tsconfig.json && npm run typecheck -w @educore/web",
+    "dev:web": "npm run dev -w @educore/web"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

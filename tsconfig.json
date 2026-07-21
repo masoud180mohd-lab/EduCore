@@ -22,11 +22,11 @@
     "verbatimModuleSyntax": true
   },
   "include": [
-    "apps/**/*.ts",
+    "apps/api/**/*.ts",
     "packages/**/*.ts",
     "scripts/**/*.ts",
     "tests/**/*.ts",
     "vitest.config.ts"
   ],
-  "exclude": ["node_modules", "coverage", "dist", "build"]
+  "exclude": ["node_modules", "coverage", "dist", "build", "apps/web"]
 }
