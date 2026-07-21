@@ -30,14 +30,28 @@ SEED_ADMIN_PASS              # seed login
 EDUCORE_ENABLE_APP_DB=1      # set by suite for HTTP
 ```
 
-## Transcript (this session)
+## Transcript
 
-| Command                     | Result                                                               |
-| --------------------------- | -------------------------------------------------------------------- |
-| `npm run check`             | **PASS** (113 files; 698 passed \| 3 skipped)                        |
-| Live suite without Postgres | **SKIP** (`describe.skipIf`) — isolation **unverified** this session |
-| `RUN_LIVE_DB_TESTS=1`       | **NOT RUN** (`DATABASE_URL` / Postgres env unset)                    |
+| Command                                 | Result                                        |
+| --------------------------------------- | --------------------------------------------- |
+| `npm run check` (suite land)            | **PASS** (113 files; 698 passed \| 3 skipped) |
+| Live run 2026-07-21 (local Postgres 16) | **PASS** — 18 passed \| 2 skipped             |
+
+```text
+RUN_LIVE_DB_TESTS=1
+DATABASE_URL=SET (127.0.0.1:5432)
+SEED_ADMIN_PASS=SET
+EDUCORE_ENABLE_APP_DB=1
+
+npx vitest run tests/isolation/product-students-academic.live.test.ts \
+              tests/isolation/product-reads.live.test.ts
+
+→ Test Files  2 passed (2)
+→ Tests      18 passed | 2 skipped (20)
+```
+
+Proven: SQL RLS for `students`/`classes`; HTTP AuthZ + cross-tenant 404/403 for students/academic; P10 orgs/settings live matrix re-verified.
 
 ## Residual risk
 
-Until `RUN_LIVE_DB_TESTS=1` passes on operator Postgres: tenancy for students/academic rests on unit + CI HTTP AuthZ harness + this suite’s skip path — **not** live proof.
+None for ASSURE-001-L evidence on this operator machine. CI without Postgres still skips (by design).
