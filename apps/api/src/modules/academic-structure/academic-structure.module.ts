@@ -5,12 +5,14 @@ import { PlatformOperationsModule } from '../platform-operations/index.js';
 import { AcademicStructureApplicationService } from './application/academic-structure.application-service.js';
 import { AcademicYearsService } from './application/academic-years.service.js';
 import { ClassesService } from './application/classes.service.js';
+import { EnrollmentsService } from './application/enrollments.service.js';
 import { StreamsService } from './application/streams.service.js';
 import { SubjectsService } from './application/subjects.service.js';
 import { TermsService } from './application/terms.service.js';
 import { AcademicStructureController } from './controllers/academic-structure.controller.js';
 import { AcademicYearsController } from './controllers/academic-years.controller.js';
 import { ClassesController } from './controllers/classes.controller.js';
+import { EnrollmentsController } from './controllers/enrollments.controller.js';
 import { StreamsController } from './controllers/streams.controller.js';
 import { SubjectsController } from './controllers/subjects.controller.js';
 import { TermsController } from './controllers/terms.controller.js';
@@ -20,13 +22,14 @@ import { ACADEMIC_STRUCTURE_REPOSITORY } from './repositories/academic-structure
 import { AcademicStructureRepositoryPlaceholder } from './repositories/academic-structure.repository.placeholder.js';
 import { AcademicYearsRepository } from './repositories/academic-years.repository.js';
 import { ClassesRepository } from './repositories/classes.repository.js';
+import { EnrollmentsRepository } from './repositories/enrollments.repository.js';
 import { StreamsRepository } from './repositories/streams.repository.js';
 import { SubjectsRepository } from './repositories/subjects.repository.js';
 import { TermsRepository } from './repositories/terms.repository.js';
 
 /**
  * Bounded context: Academic Structure.
- * Years, terms, classes, streams, subjects product surfaces.
+ * Years, terms, classes, streams, subjects, enrollments product surfaces.
  */
 @Module({
   imports: [DatabaseModule, PlatformOperationsModule],
@@ -37,6 +40,7 @@ import { TermsRepository } from './repositories/terms.repository.js';
     ClassesController,
     StreamsController,
     SubjectsController,
+    EnrollmentsController,
   ],
   providers: [
     AcademicStructureApplicationService,
@@ -56,6 +60,8 @@ import { TermsRepository } from './repositories/terms.repository.js';
     StreamsService,
     SubjectsRepository,
     SubjectsService,
+    EnrollmentsRepository,
+    EnrollmentsService,
   ],
   exports: [
     AcademicStructureApplicationService,
@@ -65,6 +71,7 @@ import { TermsRepository } from './repositories/terms.repository.js';
     ClassesService,
     StreamsService,
     SubjectsService,
+    EnrollmentsService,
   ],
 })
 export class AcademicStructureModule {}

@@ -631,6 +631,86 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     expect(response.statusCode).toBe(403);
   });
 
+  it('GET /api/v1/enrollments returns 200 when AuthZ passes', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/enrollments', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body) as { data: unknown[]; page: { limit: number } };
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.page.limit).toBe(25);
+  });
+
+  it('GET /api/v1/enrollments returns 403 without academic.read', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/enrollments', {
+      'authorization': harnessBearer(userNoPerm, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('GET /api/v1/enrollments/:id returns 404 for invalid id', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/enrollments/not-a-uuid', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it('POST /api/v1/enrollments returns 400 without Idempotency-Key', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/enrollments',
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({
+        studentId: '01900000-0000-7000-8000-0000000000b1',
+        classId: '01900000-0000-7000-8000-0000000000e1',
+      }),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+  });
+
+  it('POST /api/v1/enrollments returns 403 without academic.manage', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/enrollments',
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-enrollment-create01',
+      },
+      JSON.stringify({
+        studentId: '01900000-0000-7000-8000-0000000000b1',
+        classId: '01900000-0000-7000-8000-0000000000e1',
+      }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('PATCH /api/v1/enrollments/:id returns 403 without academic.manage', async () => {
+    const response = await httpCall(
+      server,
+      'PATCH',
+      `/api/v1/enrollments/${userA}`,
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({ status: 'withdrawn' }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
   it('GET /api/v1/students returns 200 when AuthZ passes', async () => {
     const response = await httpCall(server, 'GET', '/api/v1/students', {
       'authorization': harnessBearer(userA, tenantA),

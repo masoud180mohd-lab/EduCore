@@ -188,4 +188,15 @@ describe('IMP-001 migration tooling', () => {
       'app.create_subject',
     );
   });
+
+  it('ships IMP-004 enrollments table SELECT-only + write helpers', () => {
+    const list = read('apps/api/db/migrations/20260720290000_enrollments_list_read.up.sql');
+    expect(list).toMatch(/CREATE TABLE enrollments/i);
+    expect(list).toContain('GRANT SELECT ON TABLE enrollments TO educore_app');
+    expect(list).toContain('REVOKE INSERT, UPDATE, DELETE ON TABLE enrollments FROM educore_app');
+    const write = read('apps/api/db/migrations/20260720300000_enrollments_write_helpers.up.sql');
+    expect(write).toContain('app.create_enrollment');
+    expect(write).toContain('app.update_enrollment_status');
+    expect(write).toMatch(/SECURITY DEFINER/i);
+  });
 });
