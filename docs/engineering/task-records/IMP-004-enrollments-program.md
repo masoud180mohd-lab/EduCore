@@ -14,12 +14,12 @@ Student ↔ class enrollment API under Academic Structure: list, detail, create,
 
 ## Surfaces
 
-| Method | Path | Permission |
-| ------ | ---- | ---------- |
-| GET | `/api/v1/enrollments` | academic.read |
-| GET | `/api/v1/enrollments/:id` | academic.read |
-| POST | `/api/v1/enrollments` | academic.manage |
-| PATCH | `/api/v1/enrollments/:id` | academic.manage |
+| Method | Path                      | Permission      |
+| ------ | ------------------------- | --------------- |
+| GET    | `/api/v1/enrollments`     | academic.read   |
+| GET    | `/api/v1/enrollments/:id` | academic.read   |
+| POST   | `/api/v1/enrollments`     | academic.manage |
+| PATCH  | `/api/v1/enrollments/:id` | academic.manage |
 
 ## Migrations
 
