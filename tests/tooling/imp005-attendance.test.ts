@@ -58,4 +58,11 @@ describe('IMP-005 attendance structural', () => {
     expect(helpers).toContain('app.upsert_attendance_record');
     expect(helpers).toContain('student not enrolled');
   });
+
+  it('points ACF freezes at machine OpenAPI for enrollments+attendance', () => {
+    const acf8 = read('docs/engineering/api-contract-freeze/ACF-008-enrollments-slice.md');
+    const acf9 = read('docs/engineering/api-contract-freeze/ACF-009-attendance-slice.md');
+    expect(acf8).toContain('acf-008-009-enrollments-attendance.openapi.yaml');
+    expect(acf9).toContain('acf-008-009-enrollments-attendance.openapi.yaml');
+  });
 });

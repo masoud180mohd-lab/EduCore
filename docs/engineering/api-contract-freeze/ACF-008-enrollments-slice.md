@@ -92,4 +92,6 @@ Signed 2026-07-21 (Backend / Security / Principal acting).
 
 ## Related
 
-DBF-008; IMP-004-E0 … E4
+- OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-008-009-enrollments-attendance.openapi.yaml`
+- DBF-008; IMP-004-E0 … E4
+- AUDIT-R5 High backlog (OpenAPI expansion)

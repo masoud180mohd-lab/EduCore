@@ -35,3 +35,8 @@
 - Record upsert requires active enrollment for session class.
 - Closed session rejects record PUT (409).
 - Allowlist: ids only for relations (no nested student objects).
+
+## Related
+
+- OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-008-009-enrollments-attendance.openapi.yaml`
+- DBF-009; IMP-005; AUDIT-R5 High backlog (OpenAPI expansion)
