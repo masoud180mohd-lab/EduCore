@@ -36,6 +36,7 @@ export function TeacherShell({
   }
 
   const attendHref = `/t/${tenantId}/teacher/attendance`;
+  const marksHref = `/t/${tenantId}/teacher/marks`;
   const homeHref = `/t/${tenantId}/teacher`;
 
   return (
@@ -51,6 +52,9 @@ export function TeacherShell({
             aria-current={pathname?.includes('/attendance') ? 'page' : undefined}
           >
             Attend
+          </Link>
+          <Link href={marksHref} aria-current={pathname?.includes('/marks') ? 'page' : undefined}>
+            Marks
           </Link>
         </nav>
         <button
