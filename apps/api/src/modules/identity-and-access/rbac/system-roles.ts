@@ -25,6 +25,8 @@ const STAFF_PERMISSIONS: ReadonlyArray<PermissionCode> = [
   'guardian.read',
   'marks.read',
   'marks.manage',
+  'finance.read',
+  'finance.manage',
   'role.read',
   'audit.read',
   'entitlement.read',

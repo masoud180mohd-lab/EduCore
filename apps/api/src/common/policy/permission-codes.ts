@@ -27,6 +27,9 @@ export const PERMISSION_CODES = [
   'marks.read',
   'marks.manage',
   'marks.approve',
+  'finance.read',
+  'finance.manage',
+  'finance.reconcile',
 ] as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[number];
