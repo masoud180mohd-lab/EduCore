@@ -25,8 +25,9 @@ Engineering design freezes for public HTTP contracts. These refine `EduCore/06_A
 | ACF-009 | Attendance        | [ACF-009-attendance-slice.md](./ACF-009-attendance-slice.md)                       | [openapi/acf-008-009-enrollments-attendance.openapi.yaml](./openapi/acf-008-009-enrollments-attendance.openapi.yaml) | Provisional + OpenAPI (no re-sign)             |
 | ACF-010 | Guardians         | [ACF-010-guardians-slice.md](./ACF-010-guardians-slice.md)                         | [openapi/acf-010-011-guardians-marks.openapi.yaml](./openapi/acf-010-011-guardians-marks.openapi.yaml)               | Provisional + OpenAPI (no re-sign)             |
 | ACF-011 | Marks/Assessment  | [ACF-011-marks-assessment-slice.md](./ACF-011-marks-assessment-slice.md)           | [openapi/acf-010-011-guardians-marks.openapi.yaml](./openapi/acf-010-011-guardians-marks.openapi.yaml)               | Provisional + OpenAPI (rev 1.1; no re-sign)    |
+| ACF-012 | Finance / Fees    | [ACF-012-finance-fees-slice.md](./ACF-012-finance-fees-slice.md)                   | [openapi/acf-012-finance-fees.openapi.yaml](./openapi/acf-012-finance-fees.openapi.yaml)                             | Provisional + OpenAPI (IMP-009; rev 1.2)       |
 
-**Layout note (ASSURE-001 D1):** ACF-002…007 share one combined OpenAPI file for reviewability. ACF-008/009 share another. ACF-010/011 share another. ACF-001 remains its own file.
+**Layout note (ASSURE-001 D1):** ACF-002…007 share one combined OpenAPI file for reviewability. ACF-008/009 share another. ACF-010/011 share another. ACF-012 is its own file (money surface). ACF-001 remains its own file.
 
 ## Rules
 
