@@ -25,16 +25,16 @@ Revenue on **invoice issue** (Dr receivable / Cr revenue). Cash posts Cr receiva
 
 ## Waves
 
-| Wave  | Work                             | Status   |
-| ----- | -------------------------------- | -------- |
-| A0    | Freezes + schema + perms + CoA   | Done     |
-| A1/A2 | Structures + invoices GET        | Done     |
-| B     | Create structure + draft/issue   | Done     |
-| C     | Manual payment + receipts        | Done     |
-| D     | Void / reverse                   | Done     |
-| G     | Fake provider + events (minimal) | Done     |
-| H     | OpenAPI + AuthZ tooling + review | Done     |
-| R     | Reconcile (`finance.reconcile`)  | Deferred |
+| Wave  | Work                             | Status |
+| ----- | -------------------------------- | ------ |
+| A0    | Freezes + schema + perms + CoA   | Done   |
+| A1/A2 | Structures + invoices GET        | Done   |
+| B     | Create structure + draft/issue   | Done   |
+| C     | Manual payment + receipts        | Done   |
+| D     | Void / reverse                   | Done   |
+| G     | Fake provider + events (minimal) | Done   |
+| H     | OpenAPI + AuthZ tooling + review | Done   |
+| R     | Reconcile (`finance.reconcile`)  | Done   |
 
 ### Wave D — Void / reverse
 
@@ -60,11 +60,16 @@ Revenue on **invoice issue** (Dr receivable / Cr revenue). Cash posts Cr receiva
 - OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-012-finance-fees.openapi.yaml` (rev 1.2 paths + AuthZ extensions).
 - Index: DBF README + ACF README list DBF-012 / ACF-012.
 - Structural tooling: `tests/tooling/imp009-finance-fees.test.ts` (freezes, permissions, SELECT-only, DEFINER helpers, Fake DI, OpenAPI path matrix).
-- Wave R (reconcile) deferred — permission seeded for owner/admin; no product route yet.
+- HTTP AuthZ: `tests/integration/product-reads-authz.http.test.ts` covers finance.read/manage/reconcile fail-closed + idempotency.
+
+### Wave R — Reconcile
+
+- Migration `20260721160400_finance_reconcile_helpers` adds `payment_reconciliations`, gateway event amount/outcome columns, and `app.reconcile_payment`.
+- `POST /api/v1/payments/{id}/reconcile` — `finance.reconcile` + Idempotency-Key; records matched / amount_mismatch / missing_event / status_mismatch without mutating ledger.
+- Unit tests cover idempotency/404/success; OpenAPI ACF-012 rev 1.3.
 
 ## Residual risks (honest)
 
-- Fake webhook stores events only; does not complete pending gateway attempts (no initiate→pending product path yet).
-- No live HTTP AuthZ matrix against a running API for finance (unit + structural only).
-- Multi-currency and parent pay UX out of scope; real MoMo blocked on superseding PAY-PROVIDER brief.
-- Reconcile route not shipped (Wave R deferred).
+- Fake webhook stores events only; does **not** complete pending gateway attempts (no initiate→pending product path yet).
+- Parent pay UX and multi-currency out of scope; real MoMo blocked on superseding PAY-PROVIDER brief.
+- Existing tenants need `npm run db:migrate` (+ `rbac:reconcile-grants` if finance.* grants missing).

@@ -57,11 +57,27 @@ export type RecordGatewayEventInput = {
   readonly providerEventId: string;
   readonly payloadSha256: string;
   readonly paymentAttemptId: string | null;
+  readonly amountMinor: number;
+  readonly providerOutcome: 'succeeded' | 'failed';
 };
 
 export type RecordGatewayEventResult = {
   readonly id: string;
   readonly inserted: boolean;
+};
+
+/** ACF-012 Reconciliation allowlist (Wave R). */
+export type ReconciliationRow = {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly paymentAttemptId: string;
+  readonly gatewayEventId: string | null;
+  readonly outcome: string;
+  readonly attemptAmountMinor: number;
+  readonly attemptStatus: string;
+  readonly eventAmountMinor: number | null;
+  readonly eventOutcome: string | null;
+  readonly createdAt: string;
 };
 
 const PAYMENT_SELECT = `
@@ -157,7 +173,7 @@ export class PaymentAttemptsRepository {
     });
   }
 
-  /** Wave G / DBF-012 rev 1.2: dedupes gateway events on (tenant, provider, event id). */
+  /** Wave G / DBF-012: dedupes gateway events on (tenant, provider, event id). */
   async recordGatewayEvent(
     actorUserId: string,
     tenantId: string,
@@ -167,7 +183,8 @@ export class PaymentAttemptsRepository {
     return withTenantTransaction(this.pool, { userId: actorUserId, tenantId }, async (client) => {
       const result = await client.query<{ id: string; inserted: boolean }>(
         `SELECT id, inserted FROM app.record_gateway_event(
-           $1::uuid, $2::uuid, $3::uuid, $4::text, $5::text, $6::text, $7::uuid
+           $1::uuid, $2::uuid, $3::uuid, $4::text, $5::text, $6::text, $7::uuid,
+           $8::bigint, $9::text
          )`,
         [
           actorUserId,
@@ -177,11 +194,60 @@ export class PaymentAttemptsRepository {
           input.providerEventId,
           input.payloadSha256,
           input.paymentAttemptId,
+          input.amountMinor,
+          input.providerOutcome,
         ],
       );
       const row = result.rows[0];
       if (row === undefined) throw new Error('record_gateway_event returned no row');
       return { id: row.id, inserted: row.inserted };
+    });
+  }
+
+  /** Wave R / DBF-012: compare attempt vs latest gateway event; record immutable row. */
+  async reconcilePayment(
+    actorUserId: string,
+    tenantId: string,
+    reconciliationId: string,
+    paymentId: string,
+  ): Promise<ReconciliationRow> {
+    if (this.pool === null) throw new Error('database unavailable');
+    return withTenantTransaction(this.pool, { userId: actorUserId, tenantId }, async (client) => {
+      const result = await client.query<{
+        id: string;
+        tenant_id: string;
+        payment_attempt_id: string;
+        gateway_event_id: string | null;
+        outcome: string;
+        attempt_amount_minor: string | number;
+        attempt_status: string;
+        event_amount_minor: string | number | null;
+        event_outcome: string | null;
+        created_at: Date;
+      }>(
+        `SELECT id, tenant_id, payment_attempt_id, gateway_event_id, outcome,
+                attempt_amount_minor, attempt_status, event_amount_minor, event_outcome,
+                created_at
+         FROM app.reconcile_payment($1::uuid, $2::uuid, $3::uuid, $4::uuid)`,
+        [actorUserId, tenantId, reconciliationId, paymentId],
+      );
+      const row = result.rows[0];
+      if (row === undefined) throw new Error('reconcile_payment returned no row');
+      return {
+        id: row.id,
+        tenantId: row.tenant_id,
+        paymentAttemptId: row.payment_attempt_id,
+        gatewayEventId: row.gateway_event_id,
+        outcome: row.outcome,
+        attemptAmountMinor: Number(row.attempt_amount_minor),
+        attemptStatus: row.attempt_status,
+        eventAmountMinor:
+          row.event_amount_minor === null || row.event_amount_minor === undefined
+            ? null
+            : Number(row.event_amount_minor),
+        eventOutcome: row.event_outcome,
+        createdAt: row.created_at.toISOString(),
+      };
     });
   }
 

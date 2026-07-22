@@ -50,6 +50,9 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
           'academic.manage',
           'attendance.read',
           'attendance.manage',
+          'finance.read',
+          'finance.manage',
+          'finance.reconcile',
         ]),
       ],
     ]);
@@ -730,6 +733,120 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
       'x-tenant-id': tenantA,
     });
     expect(response.statusCode).toBe(403);
+  });
+
+  it('GET /api/v1/fee-structures returns 200 when finance.read passes', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/fee-structures', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body) as { data: unknown[] };
+    expect(Array.isArray(body.data)).toBe(true);
+  });
+
+  it('GET /api/v1/fee-structures returns 403 without finance.read', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/fee-structures', {
+      'authorization': harnessBearer(userNoPerm, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('GET /api/v1/invoices returns 401 without bearer', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/invoices', {
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('GET /api/v1/invoices returns 403 on session/header mismatch', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/invoices', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantB,
+    });
+    expect(response.statusCode).toBe(403);
+    expect(parseErrorBody(response.body).error?.details?.['reason']).toBe(
+      'SESSION_TENANT_MISMATCH',
+    );
+  });
+
+  it('POST /api/v1/payments returns 400 without Idempotency-Key', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/payments',
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+      },
+      JSON.stringify({
+        invoiceId: '01900000-0000-7000-8000-0000000000f1',
+        method: 'cash',
+        amountMinor: 100,
+      }),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+  });
+
+  it('POST /api/v1/payments returns 403 without finance.manage', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/payments',
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-finance-pay-00001',
+      },
+      JSON.stringify({
+        invoiceId: '01900000-0000-7000-8000-0000000000f1',
+        method: 'cash',
+        amountMinor: 100,
+      }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('POST /api/v1/payments/:id/reconcile returns 403 without finance.reconcile', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      `/api/v1/payments/${userA}/reconcile`,
+      {
+        'authorization': harnessBearer(userNoPerm, tenantA),
+        'x-tenant-id': tenantA,
+        'idempotency-key': 'idem-key-http-finance-rec-00001',
+      },
+      JSON.stringify({}),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('POST /api/v1/payments/:id/reconcile returns 400 without Idempotency-Key when permitted', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      `/api/v1/payments/${userA}/reconcile`,
+      {
+        'authorization': harnessBearer(userA, tenantA),
+        'x-tenant-id': tenantA,
+      },
+      JSON.stringify({}),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(parseErrorBody(response.body).error?.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+  });
+
+  it('GET /api/v1/receipts returns 200 when finance.read passes', async () => {
+    const response = await httpCall(server, 'GET', '/api/v1/receipts', {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    expect(response.statusCode).toBe(200);
   });
 
   it('GET /api/v1/attendance-sessions/:id returns 404 for invalid id', async () => {

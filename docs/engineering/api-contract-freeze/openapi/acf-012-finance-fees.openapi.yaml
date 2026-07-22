@@ -1,11 +1,11 @@
 openapi: 3.1.0
 info:
   title: EduCore API — Finance / Fees (ACF-012)
-  version: 1.2.0
+  version: 1.3.0
   description: >-
     Machine-readable contract for fee structures, invoices, manual payments,
-    receipts, void/reverse, and Fake webhook stub (ACF-012 rev 1.2 / DBF-012).
-    Solo-operator provisional (SOLO-GOV-001). Program IMP-009.
+    receipts, void/reverse, Fake webhook stub, and reconcile (ACF-012 rev 1.3 /
+    DBF-012). Solo-operator provisional (SOLO-GOV-001). Program IMP-009.
     Amounts are integer minor units only; balanceMinor is derived (ADR-004).
     No real MoMo vendor (PAY-PROVIDER-001 / Fake only).
     AuthZ stack: Authenticated → Tenant header → Session tenant bind →
@@ -505,6 +505,45 @@ paths:
           - rls
         permissionCodes: [finance.manage]
         notes: Only status=succeeded. Double-reverse → 409.
+  /payments/{paymentId}/reconcile:
+    post:
+      tags: [Payments]
+      operationId: reconcilePayment
+      summary: Compare payment vs last gateway event; record reconciliation
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/PaymentId'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      responses:
+        '200':
+          description: Reconciliation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconciliationEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions: [finance.reconcile]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.reconcile]
+        notes: Does not mutate ledger. Outcomes matched|amount_mismatch|missing_event|status_mismatch.
   /payments/webhooks/fake:
     post:
       tags: [Webhooks]
@@ -1146,3 +1185,50 @@ components:
               type: boolean
             duplicate:
               type: boolean
+    Reconciliation:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - paymentAttemptId
+        - outcome
+        - attemptAmountMinor
+        - attemptStatus
+        - createdAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        paymentAttemptId:
+          $ref: '#/components/schemas/Uuid'
+        gatewayEventId:
+          $ref: '#/components/schemas/Uuid'
+          nullable: true
+        outcome:
+          type: string
+          enum: [matched, amount_mismatch, missing_event, status_mismatch]
+        attemptAmountMinor:
+          type: integer
+          minimum: 1
+        attemptStatus:
+          $ref: '#/components/schemas/PaymentStatus'
+        eventAmountMinor:
+          type: integer
+          nullable: true
+          minimum: 1
+        eventOutcome:
+          type: string
+          nullable: true
+          enum: [succeeded, failed]
+        createdAt:
+          type: string
+          format: date-time
+    ReconciliationEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Reconciliation'

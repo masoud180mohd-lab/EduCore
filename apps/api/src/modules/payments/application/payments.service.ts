@@ -41,10 +41,25 @@ export type GetReceiptResult = { readonly data: Receipt };
 export type FakeWebhookResult = {
   readonly data: { readonly accepted: true; readonly duplicate: boolean };
 };
+export type ReconcilePaymentResult = {
+  readonly data: {
+    readonly id: string;
+    readonly tenantId: string;
+    readonly paymentAttemptId: string;
+    readonly gatewayEventId: string | null;
+    readonly outcome: string;
+    readonly attemptAmountMinor: number;
+    readonly attemptStatus: string;
+    readonly eventAmountMinor: number | null;
+    readonly eventOutcome: string | null;
+    readonly createdAt: string;
+  };
+};
 
 const PAYMENT_METHODS = new Set(['cash', 'bank', 'cheque', 'other', 'mobile_money']);
 const PAYMENTS_ROUTE = '/api/v1/payments';
 const REVERSE_SUFFIX = '/reverse';
+const RECONCILE_SUFFIX = '/reconcile';
 const WEBHOOK_OUTCOMES = new Set(['succeeded', 'failed']);
 
 @Injectable()
@@ -136,7 +151,49 @@ export class PaymentsService {
   }
 
   /**
-   * Wave G / DBF-012 rev 1.2. Minimal Fake webhook stub: dedupes on
+   * Wave R / DBF-012 rev 1.3. Compare payment attempt vs latest linked gateway
+   * event and record an immutable reconciliation row. Requires finance.reconcile
+   * at the controller; does not mutate ledger or payment status.
+   */
+  async reconcileForTenant(
+    actorUserId: string,
+    tenantId: string,
+    paymentId: string,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<ReconcilePaymentResult> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    if (!isUuid(paymentId)) throw AppError.notFound('Payment not found.');
+
+    const key = assertIdempotencyKey(idempotencyKeyHeader);
+    const route = `${PAYMENTS_ROUTE}/${paymentId}${RECONCILE_SUFFIX}`;
+    const bodyJson = '{}';
+
+    if (this.idempotency !== null) {
+      const scopeKey = buildIdempotencyScopeKey(
+        { actorUserId, tenantId, method: 'POST', route },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) return JSON.parse(replay.responseBody) as ReconcilePaymentResult;
+
+      const result = await this.executeReconcile(actorUserId, tenantId, paymentId, correlationId);
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executeReconcile(actorUserId, tenantId, paymentId, correlationId);
+  }
+
+  /**
+   * Wave G / DBF-012. Minimal Fake webhook stub: dedupes on
    * (tenant, provider, eventId) via the SECURITY DEFINER helper and reports
    * whether the event was already seen. Deliberately does not chain into a
    * payment-completion path — no gateway-initiated pending flow exists yet.
@@ -163,6 +220,8 @@ export class PaymentsService {
         providerEventId: parsed.eventId,
         payloadSha256,
         paymentAttemptId: parsed.paymentAttemptId,
+        amountMinor: parsed.amountMinor,
+        providerOutcome: parsed.outcome,
       });
       const duplicate = !result.inserted;
 
@@ -329,6 +388,44 @@ export class PaymentsService {
         );
       }
       throw new AppError('INTERNAL_ERROR', 'Failed to reverse payment.');
+    }
+  }
+
+  private async executeReconcile(
+    actorUserId: string,
+    tenantId: string,
+    paymentId: string,
+    correlationId: string,
+  ): Promise<ReconcilePaymentResult> {
+    if (!this.payments.isAvailable()) {
+      throw AppError.notFound('Payment not found.');
+    }
+    try {
+      const row = await this.payments.reconcilePayment(
+        actorUserId,
+        tenantId,
+        randomUUID(),
+        paymentId,
+      );
+
+      await this.safeAudit({
+        action: 'payment.reconcile',
+        outcome: 'success',
+        correlationId,
+        actorUserId,
+        tenantId,
+        resourceType: 'payment_reconciliation',
+        resourceId: row.id,
+        metadata: { paymentAttemptId: paymentId, outcome: row.outcome },
+      });
+      return { data: row };
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      if (isPgCode(error, 'P0002')) throw AppError.notFound('Payment not found.');
+      if (isPgCode(error, '42501')) {
+        throw AppError.forbidden('Active membership required for this tenant.');
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to reconcile payment.');
     }
   }
 

@@ -217,3 +217,47 @@ describe('PaymentsService.handleFakeWebhookForTenant', () => {
     ).rejects.toBeInstanceOf(AppError);
   });
 });
+
+describe('PaymentsService.reconcileForTenant', () => {
+  it('rejects reconcile without idempotency key', async () => {
+    const service = makeService({ isAvailable: () => true });
+    await expect(
+      service.reconcileForTenant(actorUserId, tenantId, paymentId, undefined, 'corr'),
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
+  });
+
+  it('returns 404 when reconciling an unknown payment', async () => {
+    const service = makeService({
+      isAvailable: () => true,
+      reconcilePayment: vi.fn().mockRejectedValue({ code: 'P0002' }),
+    });
+    await expect(
+      service.reconcileForTenant(actorUserId, tenantId, paymentId, idempotencyKey, 'corr'),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('records matched reconciliation outcome', async () => {
+    const reconcilePayment = vi.fn().mockResolvedValue({
+      id: '01900000-0000-7000-8000-0000000000r1',
+      tenantId,
+      paymentAttemptId: paymentId,
+      gatewayEventId: '01900000-0000-7000-8000-0000000000g1',
+      outcome: 'matched',
+      attemptAmountMinor: 1000,
+      attemptStatus: 'succeeded',
+      eventAmountMinor: 1000,
+      eventOutcome: 'succeeded',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+    const service = makeService({ isAvailable: () => true, reconcilePayment });
+    const result = await service.reconcileForTenant(
+      actorUserId,
+      tenantId,
+      paymentId,
+      idempotencyKey,
+      'corr',
+    );
+    expect(result.data.outcome).toBe('matched');
+    expect(reconcilePayment).toHaveBeenCalledOnce();
+  });
+});

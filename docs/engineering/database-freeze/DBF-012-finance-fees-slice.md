@@ -3,8 +3,8 @@
 | Field     | Value                                                                    |
 | --------- | ------------------------------------------------------------------------ |
 | Freeze ID | `DBF-012`                                                                |
-| Version   | `1.2`                                                                    |
-| Date      | 2026-07-22 (rev 1.1/1.2; v1.0 on 2026-07-21)                             |
+| Version   | `1.3`                                                                    |
+| Date      | 2026-07-22 (rev 1.3 reconcile; 1.1/1.2 void/gateway; v1.0 on 2026-07-21) |
 | Companion | ACF-012                                                                  |
 | Program   | **IMP-009** (prompt labeled IMP-007; that ID is already Admin/Guardians) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                                 |
@@ -99,6 +99,13 @@ and writes `payment_allocations` + `receipts`. **Never** mutate a stored balance
 - No new tables or columns — `payment_gateway_events` and its unique constraint were already defined in v1.0's `20260721160000_finance_fees_create`.
 - `educore_app`: EXECUTE granted; PUBLIC revoked.
 - Provider binding: `PAYMENT_PROVIDER_PORT` resolves to `FakePaymentProvider` only (PAY-PROVIDER-001) — no schema impact.
+
+## Rev 1.3 — Reconcile (Wave R, migration `20260721160400`)
+
+- Columns on `payment_gateway_events`: `amount_minor`, `provider_outcome` (for amount/status compare).
+- Table `payment_reconciliations` — immutable audit of compare outcomes; SELECT-only for `educore_app`.
+- `app.record_gateway_event` 9-arg overload (amount + outcome); prior 7-arg dropped.
+- `app.reconcile_payment` — compare attempt vs latest linked event; outcomes `matched` | `amount_mismatch` | `missing_event` | `status_mismatch`. Does **not** post journals or mutate payment status.
 
 ## Solo-operator honesty
 

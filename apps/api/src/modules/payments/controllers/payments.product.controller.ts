@@ -92,6 +92,24 @@ export class PaymentsProductController {
     );
   }
 
+  @Post('api/v1/payments/:paymentId/reconcile')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('finance.reconcile'))
+  async reconcilePayment(
+    @Req() request: AuthedRequest,
+    @Param('paymentId') paymentId: string,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.paymentsService.reconcileForTenant(
+      auth.userId,
+      tenant.tenantId,
+      paymentId,
+      idempotencyKey,
+      resolveCorrelationId(request),
+    );
+  }
+
   @Get('api/v1/invoices/:invoiceId/payments')
   @UseGuards(RequirePermission('finance.read'))
   async listPaymentsByInvoice(

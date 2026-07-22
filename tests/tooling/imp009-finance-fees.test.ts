@@ -99,6 +99,8 @@ describe('IMP-009 finance fees foundation', () => {
     );
     expect(payments).toContain("Post('api/v1/payments')");
     expect(payments).toContain("Post('api/v1/payments/:paymentId/reverse')");
+    expect(payments).toContain("Post('api/v1/payments/:paymentId/reconcile')");
+    expect(payments).toContain("RequirePermission('finance.reconcile')");
     expect(payments).toContain("Get('api/v1/receipts')");
 
     const webhooks = readFileSync(
@@ -167,6 +169,7 @@ describe('IMP-009 finance fees foundation', () => {
       '/payments',
       '/payments/{paymentId}',
       '/payments/{paymentId}/reverse',
+      '/payments/{paymentId}/reconcile',
       '/payments/webhooks/fake',
       '/receipts',
       '/receipts/{receiptId}',
@@ -176,6 +179,9 @@ describe('IMP-009 finance fees foundation', () => {
     expect(permissionCodes('/fee-structures', 'get')).toContain('finance.read');
     expect(permissionCodes('/payments', 'post')).toContain('finance.manage');
     expect(permissionCodes('/invoices/{invoiceId}/void', 'post')).toContain('finance.manage');
+    expect(permissionCodes('/payments/{paymentId}/reconcile', 'post')).toContain(
+      'finance.reconcile',
+    );
     expect(authzStack('/invoices/{invoiceId}', 'get')).toContain('session_tenant_bind');
     expect(permissionCodes('/payments/webhooks/fake', 'post')).toContain('finance.manage');
   });
