@@ -1,0 +1,1148 @@
+openapi: 3.1.0
+info:
+  title: EduCore API — Finance / Fees (ACF-012)
+  version: 1.2.0
+  description: >-
+    Machine-readable contract for fee structures, invoices, manual payments,
+    receipts, void/reverse, and Fake webhook stub (ACF-012 rev 1.2 / DBF-012).
+    Solo-operator provisional (SOLO-GOV-001). Program IMP-009.
+    Amounts are integer minor units only; balanceMinor is derived (ADR-004).
+    No real MoMo vendor (PAY-PROVIDER-001 / Fake only).
+    AuthZ stack: Authenticated → Tenant header → Session tenant bind →
+    Permission code → RLS. Extensions: x-permissions, x-authz.
+  contact:
+    name: EduCore Engineering
+servers:
+  - url: /api/v1
+    description: Versioned API root
+tags:
+  - name: FeeStructures
+  - name: Invoices
+  - name: Payments
+  - name: Receipts
+  - name: Webhooks
+paths:
+  /fee-structures:
+    get:
+      tags: [FeeStructures]
+      operationId: listFeeStructures
+      summary: List fee structures in bound tenant
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - name: academicYearId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/FeeStructureStatus'
+      responses:
+        '200':
+          description: Fee structure page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeStructureListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions: [finance.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.read]
+    post:
+      tags: [FeeStructures]
+      operationId: createFeeStructure
+      summary: Create fee structure with items
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFeeStructureRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeStructureEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions: [finance.manage]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.manage]
+  /fee-structures/{feeStructureId}:
+    get:
+      tags: [FeeStructures]
+      operationId: getFeeStructure
+      summary: Get fee structure detail with items
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/FeeStructureId'
+      responses:
+        '200':
+          description: Fee structure detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeStructureDetailEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions: [finance.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.read]
+  /invoices:
+    get:
+      tags: [Invoices]
+      operationId: listInvoices
+      summary: List invoices with derived balanceMinor
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - name: studentId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: academicYearId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/InvoiceStatus'
+      responses:
+        '200':
+          description: Invoice page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions: [finance.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.read]
+    post:
+      tags: [Invoices]
+      operationId: createInvoice
+      summary: Create draft invoice from structure and/or lines
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvoiceRequest'
+      responses:
+        '201':
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions: [finance.manage]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.manage]
+  /invoices/{invoiceId}:
+    get:
+      tags: [Invoices]
+      operationId: getInvoice
+      summary: Get invoice with lines and derived balanceMinor
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/InvoiceId'
+      responses:
+        '200':
+          description: Invoice detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceDetailEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions: [finance.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.read]
+  /invoices/{invoiceId}/issue:
+    post:
+      tags: [Invoices]
+      operationId: issueInvoice
+      summary: Issue draft invoice (posts AR/revenue journal)
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/InvoiceId'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      responses:
+        '200':
+          description: Issued (or idempotent replay)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions: [finance.manage]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.manage]
+        notes: Revenue recognized on issue (DBF-012). Re-issue → 409.
+  /invoices/{invoiceId}/void:
+    post:
+      tags: [Invoices]
+      operationId: voidInvoice
+      summary: Void issued unpaid invoice (reversing journal)
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/InvoiceId'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      responses:
+        '200':
+          description: Voided (balanceMinor 0)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions: [finance.manage]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.manage]
+        notes: Only status=issued with zero active allocations. Partial/paid → 409.
+  /invoices/{invoiceId}/payments:
+    get:
+      tags: [Payments]
+      operationId: listInvoicePayments
+      summary: List payment attempts for an invoice
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/InvoiceId'
+      responses:
+        '200':
+          description: Payment list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions: [finance.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.read]
+  /payments:
+    post:
+      tags: [Payments]
+      operationId: createManualPayment
+      summary: Record office/manual payment (attempt + journal + allocation + receipt)
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '201':
+          description: Payment recorded with receipt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions: [finance.manage]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.manage]
+        notes: >-
+          Overpay / draft invoice → 400. amountMinor must be positive integer.
+          Receipt only after succeeded payment + balanced journal.
+  /payments/{paymentId}:
+    get:
+      tags: [Payments]
+      operationId: getPayment
+      summary: Get payment attempt detail
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/PaymentId'
+      responses:
+        '200':
+          description: Payment detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions: [finance.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.read]
+  /payments/{paymentId}/reverse:
+    post:
+      tags: [Payments]
+      operationId: reversePayment
+      summary: Reverse succeeded payment (reversing journal + de-allocate)
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/PaymentId'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      responses:
+        '200':
+          description: Reversed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions: [finance.manage]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.manage]
+        notes: Only status=succeeded. Double-reverse → 409.
+  /payments/webhooks/fake:
+    post:
+      tags: [Webhooks]
+      operationId: fakePaymentWebhook
+      summary: Fake provider webhook stub (dedupe only; no vendor)
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FakeWebhookRequest'
+      responses:
+        '200':
+          description: Event accepted (or duplicate acknowledged)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FakeWebhookEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions: [finance.manage]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.manage]
+        notes: >-
+          PAY-PROVIDER-001 Fake only. Dedupe by provider event id.
+          v1 does not complete pending gateway payments.
+  /receipts:
+    get:
+      tags: [Receipts]
+      operationId: listReceipts
+      summary: List receipts
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Receipt page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions: [finance.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.read]
+  /receipts/{receiptId}:
+    get:
+      tags: [Receipts]
+      operationId: getReceipt
+      summary: Get receipt detail
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/ReceiptId'
+      responses:
+        '200':
+          description: Receipt detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions: [finance.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.read]
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    tenantHeader:
+      type: apiKey
+      in: header
+      name: X-Tenant-Id
+  parameters:
+    TenantIdHeader:
+      name: X-Tenant-Id
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    IdempotencyKeyRequired:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+        format: uuid
+      description: Opaque UUID keyset cursor (last row id).
+    FeeStructureId:
+      name: feeStructureId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    InvoiceId:
+      name: invoiceId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    PaymentId:
+      name: paymentId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    ReceiptId:
+      name: receiptId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+  responses:
+    BadRequest:
+      description: Validation or tenant context error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Forbidden:
+      description: Permission or session-tenant mismatch
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Resource not found (no existence leak)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Conflict:
+      description: Duplicate or invalid state transition
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+    MinorUnits:
+      type: integer
+      minimum: 1
+      description: Integer minor units only (no floats).
+    Currency:
+      type: string
+      enum: [TZS]
+    FeeStructureStatus:
+      type: string
+      enum: [draft, active, archived]
+    InvoiceStatus:
+      type: string
+      enum: [draft, issued, partially_paid, paid, void]
+    PaymentMethod:
+      type: string
+      enum: [cash, bank, cheque, other, mobile_money]
+    PaymentStatus:
+      type: string
+      enum: [created, initiated, pending, succeeded, failed, expired, reversed, disputed]
+    ReceiptStatus:
+      type: string
+      enum: [issued, reversed]
+    PageMeta:
+      type: object
+      additionalProperties: false
+      required: [nextCursor, limit]
+      properties:
+        nextCursor:
+          type: string
+          format: uuid
+          nullable: true
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, requestId]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            requestId:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+    FeeStructureItem:
+      type: object
+      additionalProperties: false
+      required: [id, feeStructureId, name, amountMinor, sortOrder]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        feeStructureId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+        amountMinor:
+          $ref: '#/components/schemas/MinorUnits'
+        sortOrder:
+          type: integer
+          minimum: 0
+    FeeStructure:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - academicYearId
+        - name
+        - status
+        - currency
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        academicYearId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/FeeStructureStatus'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    FeeStructureEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/FeeStructure'
+    FeeStructureDetailEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          allOf:
+            - $ref: '#/components/schemas/FeeStructure'
+            - type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/FeeStructureItem'
+    FeeStructureListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeeStructure'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    CreateFeeStructureRequest:
+      type: object
+      additionalProperties: false
+      required: [academicYearId, name, items]
+      properties:
+        academicYearId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        status:
+          $ref: '#/components/schemas/FeeStructureStatus'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required: [name, amountMinor]
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 200
+              amountMinor:
+                $ref: '#/components/schemas/MinorUnits'
+              sortOrder:
+                type: integer
+                minimum: 0
+    InvoiceLine:
+      type: object
+      additionalProperties: false
+      required: [id, invoiceId, description, amountMinor]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        invoiceId:
+          $ref: '#/components/schemas/Uuid'
+        description:
+          type: string
+        amountMinor:
+          $ref: '#/components/schemas/MinorUnits'
+        feeStructureItemId:
+          $ref: '#/components/schemas/Uuid'
+          nullable: true
+    Invoice:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - studentId
+        - academicYearId
+        - status
+        - currency
+        - totalMinor
+        - balanceMinor
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        studentId:
+          $ref: '#/components/schemas/Uuid'
+        academicYearId:
+          $ref: '#/components/schemas/Uuid'
+        feeStructureId:
+          $ref: '#/components/schemas/Uuid'
+          nullable: true
+        status:
+          $ref: '#/components/schemas/InvoiceStatus'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        totalMinor:
+          type: integer
+          minimum: 0
+        balanceMinor:
+          type: integer
+          minimum: 0
+          description: Derived — never a writable source of truth (ADR-004).
+        issuedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    InvoiceEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Invoice'
+    InvoiceDetailEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          allOf:
+            - $ref: '#/components/schemas/Invoice'
+            - type: object
+              required: [lines]
+              properties:
+                lines:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/InvoiceLine'
+    InvoiceListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invoice'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    CreateInvoiceRequest:
+      type: object
+      additionalProperties: false
+      required: [studentId, academicYearId]
+      properties:
+        studentId:
+          $ref: '#/components/schemas/Uuid'
+        academicYearId:
+          $ref: '#/components/schemas/Uuid'
+        feeStructureId:
+          $ref: '#/components/schemas/Uuid'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        lines:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [description, amountMinor]
+            properties:
+              description:
+                type: string
+                minLength: 1
+                maxLength: 200
+              amountMinor:
+                $ref: '#/components/schemas/MinorUnits'
+              feeStructureItemId:
+                $ref: '#/components/schemas/Uuid'
+    Payment:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - invoiceId
+        - method
+        - amountMinor
+        - currency
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        invoiceId:
+          $ref: '#/components/schemas/Uuid'
+        method:
+          $ref: '#/components/schemas/PaymentMethod'
+        amountMinor:
+          $ref: '#/components/schemas/MinorUnits'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        receiptId:
+          $ref: '#/components/schemas/Uuid'
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PaymentEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Payment'
+    PaymentListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+    CreatePaymentRequest:
+      type: object
+      additionalProperties: false
+      required: [invoiceId, method, amountMinor]
+      properties:
+        invoiceId:
+          $ref: '#/components/schemas/Uuid'
+        method:
+          $ref: '#/components/schemas/PaymentMethod'
+        amountMinor:
+          $ref: '#/components/schemas/MinorUnits'
+        currency:
+          $ref: '#/components/schemas/Currency'
+    Receipt:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - paymentAttemptId
+        - receiptNumber
+        - status
+        - issuedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        paymentAttemptId:
+          $ref: '#/components/schemas/Uuid'
+        receiptNumber:
+          type: string
+        status:
+          $ref: '#/components/schemas/ReceiptStatus'
+        issuedAt:
+          type: string
+          format: date-time
+    ReceiptEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Receipt'
+    ReceiptListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Receipt'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    FakeWebhookRequest:
+      type: object
+      additionalProperties: false
+      required: [eventId, amountMinor, outcome]
+      properties:
+        eventId:
+          type: string
+          minLength: 1
+          maxLength: 200
+        paymentAttemptId:
+          $ref: '#/components/schemas/Uuid'
+        amountMinor:
+          $ref: '#/components/schemas/MinorUnits'
+        outcome:
+          type: string
+          enum: [succeeded, failed]
+    FakeWebhookEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [accepted, duplicate]
+          properties:
+            accepted:
+              type: boolean
+            duplicate:
+              type: boolean
