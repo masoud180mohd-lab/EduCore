@@ -55,7 +55,8 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 ## Non-goals
 
-- Parent portal, fees, marks, AI
+- Parent portal, marks, AI
+- Fees / bursar chrome — deferred to **DSF-004** (IMP-010)
 - Roles/permissions admin CRUD (`/roles` HTTP missing)
 - MFA enrollment
 - Full offline sync
