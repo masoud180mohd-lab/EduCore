@@ -45,27 +45,29 @@ npm run seed:parent-demo
 
 ## Wave 4 — Manual QA
 
-Checklist: `tasks/manual-test-parent-demo-qa.md`.
+Checklist: `tasks/manual-test-parent-demo-qa.md` (live **2026-07-23**, API `:3000` + web `:3001`).
 
-Executed in this environment:
-
-| Check                                  | Result                                                        |
-| -------------------------------------- | ------------------------------------------------------------- |
-| db:migrate                             | Pass (no pending)                                             |
-| seed:parent-demo                       | Pass (user/guardian/student/link created)                     |
-| Bind picker code                       | Pass (tooling + page)                                         |
-| Full browser login → /parent → invoice | Residual — needs running API+web + bursar invoice for student |
-| Isolation                              | Residual — same (server ACF-013 already enforced)             |
-| MoMo blocked                           | Pass (no pay UI; docs cite PAY-PROVIDER-001)                  |
+| Check | Result |
+| ----- | ------ |
+| db:migrate | Pass (no pending) |
+| seed:admin + seed:parent-demo | Pass (bound guardian …022 ↔ parent …020) |
+| Bind picker | Pass — `GET /users` includes parent; guardian page HTTP 200 |
+| Parent login → `/parent` | Pass — login 200; `prefersParentHome` via perms; `/parent` HTTP 200 |
+| Linked student | Pass — active link to student …023 |
+| Invoice path | Pass — issued invoice; parent list n=1; detail balance 50000 |
+| Isolation | Pass — unknown invoice **404**; other studentId **403** |
+| Parent cannot manage | Pass — parent POST issue → **403** |
+| MoMo blocked | Pass — PAY-PROVIDER-001 banners; no pay UI |
+| Residual | `/auth/me` `roles` empty (perms OK); GUI clicks not run (no browser MCP) |
 
 ## Doubt checks
 
-| Check                             | Answer                       |
-| --------------------------------- | ---------------------------- |
-| Admin bind without UUID paste?    | Yes — picker primary         |
-| Seed+migrate demo &lt;15 min?     | Yes, after seed:admin        |
-| Parent see other student invoice? | Must not (ACF-013 allowlist) |
-| MoMo blocked?                     | Yes                          |
+| Check | Answer |
+| ----- | ------ |
+| Admin bind without UUID paste? | Yes — picker primary |
+| Seed+migrate demo &lt;15 min? | Yes, after seed:admin |
+| Parent see other student invoice? | **No** — live 404/403 |
+| MoMo blocked? | Yes |
 
 ## Verification
 
