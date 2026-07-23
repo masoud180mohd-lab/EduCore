@@ -2,9 +2,21 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { load } from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
+
+const openApiPath = path.join(
+  root,
+  'docs/engineering/api-contract-freeze/openapi/acf-013-parent-portal.openapi.yaml',
+);
+
+function loadOpenApi(): {
+  paths?: Record<string, Record<string, { 'x-authz'?: { permissionCodes?: string[] } }>>;
+} {
+  return load(readFileSync(openApiPath, 'utf8')) as ReturnType<typeof loadOpenApi>;
+}
 
 describe('IMP-011-PX parent portal bind', () => {
   it('has DBF-011 ACF-013 DSF-006 freezes', () => {
@@ -28,6 +40,27 @@ describe('IMP-011-PX parent portal bind', () => {
     expect(acf).toContain('parent.finance.read');
     expect(acf).toContain('/api/v1/me/fees/invoices');
     expect(acf).toContain('PAY-PROVIDER-001');
+    expect(acf).toContain('acf-013-parent-portal.openapi.yaml');
+  });
+
+  it('OpenAPI ACF-013 covers bind + parent fees with scoped permissions', () => {
+    expect(existsSync(openApiPath)).toBe(true);
+    const doc = loadOpenApi();
+    expect(
+      doc.paths?.['/guardians/{guardianId}/bind-user']?.post?.['x-authz']?.permissionCodes,
+    ).toEqual(['guardian.manage']);
+    expect(doc.paths?.['/me/guardian']?.get?.['x-authz']?.permissionCodes).toEqual([
+      'parent.guardian.read',
+    ]);
+    expect(doc.paths?.['/me/fees/invoices']?.get?.['x-authz']?.permissionCodes).toEqual([
+      'parent.finance.read',
+    ]);
+    expect(doc.paths?.['/me/fees/invoices/{invoiceId}']?.get?.['x-authz']?.permissionCodes).toEqual(
+      ['parent.finance.read'],
+    );
+    const text = readFileSync(openApiPath, 'utf8');
+    expect(text).toContain('PAY-PROVIDER-001');
+    expect(text).not.toMatch(/\/me\/fees\/[\s\S]*?\n\s+post:/);
   });
 
   it('ships migration and parent permissions', () => {

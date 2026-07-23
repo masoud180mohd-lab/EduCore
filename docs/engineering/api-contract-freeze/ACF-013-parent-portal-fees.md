@@ -12,6 +12,8 @@
 
 **Honesty:** Provisional. Prefer dedicated `/me/*` routes over widening `finance.read`.
 
+**OpenAPI:** [`openapi/acf-013-parent-portal.openapi.yaml`](./openapi/acf-013-parent-portal.openapi.yaml)
+
 ## Auth stack
 
 Bearer + `X-Tenant-Id` → session↔tenant bind → active membership → permission → RLS.

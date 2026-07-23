@@ -27,6 +27,8 @@ npm run db:migrate
 npm run check
 ```
 
+OpenAPI: `docs/engineering/api-contract-freeze/openapi/acf-013-parent-portal.openapi.yaml`
+
 ## Manual
 
 1. Invite/create user with active membership (no staff role needed).
