@@ -19,6 +19,7 @@
     "db:migrate:down": "tsx scripts/db-migrate.ts --down",
     "db:test-lifecycle": "tsx scripts/db-test-lifecycle.ts",
     "seed:admin": "tsx scripts/seed-local-admin.ts",
+    "seed:parent-demo": "tsx scripts/seed-parent-demo.ts",
     "rbac:reconcile-grants": "tsx scripts/reconcile-system-role-grants.ts",
     "docker:down": "docker compose --env-file .env.docker.example down",
     "docker:logs": "docker compose --env-file .env.docker.example logs -f",

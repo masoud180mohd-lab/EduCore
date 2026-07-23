@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+import { type BindUserOption, formatUserBindLabel } from '@/lib/guardians/bind-user-label';
 
 type Guardian = {
   readonly id: string;
@@ -34,12 +35,42 @@ export default function AdminGuardianDetailPage() {
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [students, setStudents] = useState<StudentRow[]>([]);
+  const [users, setUsers] = useState<BindUserOption[]>([]);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [studentId, setStudentId] = useState('');
   const [relationshipType, setRelationshipType] = useState('guardian');
   const [bindUserId, setBindUserId] = useState('');
+  const [showAdvancedUuid, setShowAdvancedUuid] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const loadUsers = useCallback(async () => {
+    const auth = readSession();
+    if (auth === null) return;
+    setUsersLoading(true);
+    setUsersError(null);
+    try {
+      const result = await apiRequest<{ data: BindUserOption[] }>('/api/v1/users?limit=50', {
+        auth,
+      });
+      setUsers(result.data ?? []);
+    } catch (err) {
+      setUsers([]);
+      if (err instanceof ApiClientError && err.status === 403) {
+        setUsersError(
+          'Cannot load users for the picker (needs user.read). Use advanced UUID paste or ask an admin.',
+        );
+      } else if (err instanceof ApiClientError) {
+        setUsersError(teacherFriendlyMessage(err));
+      } else {
+        setUsersError('Could not load users.');
+      }
+    } finally {
+      setUsersLoading(false);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     const auth = readSession();
@@ -77,7 +108,8 @@ export default function AdminGuardianDetailPage() {
 
   useEffect(() => {
     void load();
-  }, [load]);
+    void loadUsers();
+  }, [load, loadUsers]);
 
   async function onLink(event: FormEvent) {
     event.preventDefault();
@@ -131,26 +163,36 @@ export default function AdminGuardianDetailPage() {
   async function onBind(event: FormEvent) {
     event.preventDefault();
     const auth = readSession();
-    if (auth === null || bindUserId.trim() === '') return;
+    const userId = bindUserId.trim();
+    if (auth === null || userId === '') return;
     setBusy(true);
     setError(null);
     setInfo(null);
-    const actionKey = `guardian.bind:${guardianId}:${bindUserId.trim()}`;
+    const actionKey = `guardian.bind:${guardianId}:${userId}`;
     const idem = readOrCreateIdempotencyKey(actionKey);
     try {
       await apiRequest(`/api/v1/guardians/${guardianId}/bind-user`, {
         method: 'POST',
         auth,
-        body: { userId: bindUserId.trim() },
+        body: { userId },
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
       setInfo('Portal user bound. They can sign in and open Parent fees.');
       setBindUserId('');
+      setShowAdvancedUuid(false);
       await load();
+      await loadUsers();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
-      else setError('Could not bind user.');
+      if (err instanceof ApiClientError && err.status === 409) {
+        setError(
+          'Cannot bind: this guardian or user is already bound (conflict). Unbind first or pick another user.',
+        );
+      } else if (err instanceof ApiClientError) {
+        setError(teacherFriendlyMessage(err));
+      } else {
+        setError('Could not bind user.');
+      }
     } finally {
       setBusy(false);
     }
@@ -181,6 +223,12 @@ export default function AdminGuardianDetailPage() {
       setBusy(false);
     }
   }
+
+  const boundUser =
+    guardian?.userId !== null && guardian?.userId !== undefined
+      ? (users.find((u) => u.id === guardian.userId) ?? { id: guardian.userId })
+      : null;
+  const boundLabel = boundUser !== null ? formatUserBindLabel(boundUser) : null;
 
   return (
     <AdminShell tenantId={tenantId}>
@@ -213,9 +261,17 @@ export default function AdminGuardianDetailPage() {
       <p className="muted">
         Bind an existing school user (active membership) so they can open the parent fees portal.
       </p>
+      {usersError !== null ? (
+        <div className="banner banner-error" role="alert">
+          {usersError}
+        </div>
+      ) : null}
       {guardian?.userId !== null && guardian?.userId !== undefined ? (
         <div className="card stack">
-          <div className="muted">Bound user: {guardian.userId}</div>
+          <div>
+            <strong>{boundLabel ?? 'Bound user'}</strong>
+            <div className="muted">{guardian.userId}</div>
+          </div>
           <button
             type="button"
             className="btn btn-secondary"
@@ -227,16 +283,53 @@ export default function AdminGuardianDetailPage() {
         </div>
       ) : (
         <form className="stack card" onSubmit={(e) => void onBind(e)}>
+          {!usersLoading && usersError === null && users.length === 0 ? (
+            <div className="banner banner-info" role="status">
+              No users returned for this school. Create a membership first, or use advanced UUID
+              paste.
+            </div>
+          ) : null}
           <div className="field">
-            <label htmlFor="bindUserId">User ID (UUID)</label>
-            <input
-              id="bindUserId"
-              required
-              value={bindUserId}
+            <label htmlFor="bindUserSelect">School user</label>
+            <select
+              id="bindUserSelect"
+              value={showAdvancedUuid ? '' : bindUserId}
+              disabled={usersLoading || users.length === 0 || showAdvancedUuid}
               onChange={(e) => setBindUserId(e.target.value)}
-              placeholder="User UUID with active membership"
-            />
+              required={!showAdvancedUuid}
+            >
+              <option value="">{usersLoading ? 'Loading users…' : 'Select user to bind'}</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {formatUserBindLabel(u)}
+                </option>
+              ))}
+            </select>
           </div>
+          <div>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => {
+                setShowAdvancedUuid((v) => !v);
+                setBindUserId('');
+              }}
+            >
+              {showAdvancedUuid ? 'Hide advanced UUID' : 'Advanced: paste user UUID'}
+            </button>
+          </div>
+          {showAdvancedUuid ? (
+            <div className="field">
+              <label htmlFor="bindUserId">User ID (UUID)</label>
+              <input
+                id="bindUserId"
+                required
+                value={bindUserId}
+                onChange={(e) => setBindUserId(e.target.value)}
+                placeholder="User UUID with active membership"
+              />
+            </div>
+          ) : null}
           <button type="submit" className="btn btn-primary" disabled={busy || bindUserId === ''}>
             {busy ? 'Saving…' : 'Bind portal user'}
           </button>

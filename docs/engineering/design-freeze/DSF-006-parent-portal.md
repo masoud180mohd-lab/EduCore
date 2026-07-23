@@ -3,11 +3,11 @@
 | Field     | Value                                     |
 | --------- | ----------------------------------------- |
 | Freeze ID | `DSF-006`                                 |
-| Version   | `1.0`                                     |
+| Version   | `1.1`                                     |
 | Date      | 2026-07-23                                |
 | Audience  | Bound guardian (parent) desktop-first     |
 | Authority | Solo-operator provisional (SOLO-GOV-001)  |
-| Program   | **IMP-011-PX**                            |
+| Program   | **IMP-011-PX** / **IMP-011-PX1**          |
 | Contracts | ACF-013 + DBF-011; reuses DSF-005 screens |
 
 **Honesty:** Provisional. Does not accept kit-wide Design System Freeze.
@@ -35,7 +35,13 @@ Persistent banner: pay at school office; mobile money not enabled (PAY-PROVIDER-
 
 ## Admin UX (bind)
 
-On guardian detail: bind/unbind userId when `guardian.manage` (staff). Honest empty if user has no membership.
+On guardian detail (**Portal bind**):
+
+- **Primary:** select a tenant user from `GET /api/v1/users` (label = displayName + email; value = user id). Requires `user.read`.
+- **Bound state:** show resolved displayName/email when known; muted user id meta; Unbind with confirm.
+- **Advanced (optional):** paste UUID only if user missing from list.
+- Honest empty (no users), 403 (no user.read), 409 (already bound).
+- Server still requires active membership on bind (ACF-013 / DBF-011).
 
 ## Non-goals
 

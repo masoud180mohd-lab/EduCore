@@ -47,17 +47,17 @@ describe('IMP-011-PX parent portal bind', () => {
     expect(existsSync(openApiPath)).toBe(true);
     const doc = loadOpenApi();
     expect(
-      doc.paths?.['/guardians/{guardianId}/bind-user']?.post?.['x-authz']?.permissionCodes,
+      doc.paths?.['/guardians/{guardianId}/bind-user']?.['post']?.['x-authz']?.permissionCodes,
     ).toEqual(['guardian.manage']);
-    expect(doc.paths?.['/me/guardian']?.get?.['x-authz']?.permissionCodes).toEqual([
+    expect(doc.paths?.['/me/guardian']?.['get']?.['x-authz']?.permissionCodes).toEqual([
       'parent.guardian.read',
     ]);
-    expect(doc.paths?.['/me/fees/invoices']?.get?.['x-authz']?.permissionCodes).toEqual([
+    expect(doc.paths?.['/me/fees/invoices']?.['get']?.['x-authz']?.permissionCodes).toEqual([
       'parent.finance.read',
     ]);
-    expect(doc.paths?.['/me/fees/invoices/{invoiceId}']?.get?.['x-authz']?.permissionCodes).toEqual(
-      ['parent.finance.read'],
-    );
+    expect(
+      doc.paths?.['/me/fees/invoices/{invoiceId}']?.['get']?.['x-authz']?.permissionCodes,
+    ).toEqual(['parent.finance.read']);
     const text = readFileSync(openApiPath, 'utf8');
     expect(text).toContain('PAY-PROVIDER-001');
     expect(text).not.toMatch(/\/me\/fees\/[\s\S]*?\n\s+post:/);
