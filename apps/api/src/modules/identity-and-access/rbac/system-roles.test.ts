@@ -9,9 +9,14 @@ import {
 } from './system-roles.js';
 
 describe('system role matrices (IMP-001 P4)', () => {
-  it('defines DBF-001 baseline codes owner/admin/staff', () => {
-    expect([...SYSTEM_ROLE_CODES]).toEqual(['owner', 'admin', 'staff']);
-    expect(SYSTEM_ROLE_DEFINITIONS.map((d) => d.code)).toEqual(['owner', 'admin', 'staff']);
+  it('defines system codes owner/admin/staff/parent', () => {
+    expect([...SYSTEM_ROLE_CODES]).toEqual(['owner', 'admin', 'staff', 'parent']);
+    expect(SYSTEM_ROLE_DEFINITIONS.map((d) => d.code)).toEqual([
+      'owner',
+      'admin',
+      'staff',
+      'parent',
+    ]);
   });
 
   it('gives owner the full permission catalogue', () => {
@@ -41,6 +46,14 @@ describe('system role matrices (IMP-001 P4)', () => {
     expect(staff).not.toContain('tenant.manage');
     expect(staff).not.toContain('user.manage');
     expect(staff).not.toContain('role.manage');
+  });
+
+  it('keeps parent portal-scoped without bursar finance.read', () => {
+    const parent = permissionsForSystemRole('parent');
+    expect(parent).toEqual(['parent.guardian.read', 'parent.finance.read']);
+    expect(parent).not.toContain('finance.read');
+    expect(parent).not.toContain('guardian.manage');
+    expect(isSystemRoleCode('parent')).toBe(true);
   });
 
   it('type-guards system role codes', () => {

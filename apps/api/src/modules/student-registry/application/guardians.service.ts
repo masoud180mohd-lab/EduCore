@@ -354,6 +354,201 @@ export class GuardiansService {
     return { data: ended };
   }
 
+  async bindUserForGuardian(
+    actorUserId: string,
+    tenantId: string,
+    guardianId: string,
+    body: Record<string, unknown>,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<{ readonly data: Guardian }> {
+    assertActorTenant(actorUserId, tenantId);
+    const key = assertIdempotencyKey(idempotencyKeyHeader);
+    if (!isUuid(guardianId)) throw AppError.notFound('Guardian not found.');
+    const userId = parseBindUserBody(body);
+    const bodyJson = JSON.stringify({ userId });
+    const bodyHash = hashRequestBody(bodyJson);
+
+    if (this.idempotency !== null) {
+      const scopeKey = buildIdempotencyScopeKey(
+        {
+          actorUserId,
+          tenantId,
+          method: 'POST',
+          route: `${LINK_ROUTE_PREFIX}${guardianId}/bind-user`,
+        },
+        key,
+      );
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) {
+        return JSON.parse(replay.responseBody) as { data: Guardian };
+      }
+
+      const result = await this.executeBind(
+        actorUserId,
+        tenantId,
+        guardianId,
+        userId,
+        correlationId,
+      );
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executeBind(actorUserId, tenantId, guardianId, userId, correlationId);
+  }
+
+  private async executeBind(
+    actorUserId: string,
+    tenantId: string,
+    guardianId: string,
+    userId: string,
+    correlationId: string,
+  ): Promise<{ readonly data: Guardian }> {
+    if (!this.guardians.isAvailable()) {
+      throw AppError.notFound('Guardian not found.');
+    }
+    let bound: Guardian;
+    try {
+      bound = await this.guardians.bindUserForTenant(actorUserId, tenantId, guardianId, userId);
+    } catch (error: unknown) {
+      mapWriteError(error);
+      throw error;
+    }
+    await this.safeAudit({
+      action: 'guardian.user.bind',
+      outcome: 'success',
+      correlationId,
+      actorUserId,
+      tenantId,
+      resourceType: 'guardian',
+      resourceId: guardianId,
+    });
+    return { data: bound };
+  }
+
+  async unbindUserForGuardian(
+    actorUserId: string,
+    tenantId: string,
+    guardianId: string,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<{ readonly data: Guardian }> {
+    assertActorTenant(actorUserId, tenantId);
+    const key = assertIdempotencyKey(idempotencyKeyHeader);
+    if (!isUuid(guardianId)) throw AppError.notFound('Guardian not found.');
+    const bodyJson = JSON.stringify({ guardianId });
+    const bodyHash = hashRequestBody(bodyJson);
+
+    if (this.idempotency !== null) {
+      const scopeKey = buildIdempotencyScopeKey(
+        {
+          actorUserId,
+          tenantId,
+          method: 'POST',
+          route: `${LINK_ROUTE_PREFIX}${guardianId}/unbind-user`,
+        },
+        key,
+      );
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) {
+        return JSON.parse(replay.responseBody) as { data: Guardian };
+      }
+
+      const result = await this.executeUnbind(actorUserId, tenantId, guardianId, correlationId);
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executeUnbind(actorUserId, tenantId, guardianId, correlationId);
+  }
+
+  private async executeUnbind(
+    actorUserId: string,
+    tenantId: string,
+    guardianId: string,
+    correlationId: string,
+  ): Promise<{ readonly data: Guardian }> {
+    if (!this.guardians.isAvailable()) {
+      throw AppError.notFound('Guardian not found.');
+    }
+    let unbound: Guardian | null;
+    try {
+      unbound = await this.guardians.unbindUserForTenant(actorUserId, tenantId, guardianId);
+    } catch (error: unknown) {
+      mapWriteError(error);
+      throw error;
+    }
+    if (unbound === null) throw AppError.notFound('Guardian not found.');
+    await this.safeAudit({
+      action: 'guardian.user.unbind',
+      outcome: 'success',
+      correlationId,
+      actorUserId,
+      tenantId,
+      resourceType: 'guardian',
+      resourceId: guardianId,
+    });
+    return { data: unbound };
+  }
+
+  async getMeGuardian(actorUserId: string, tenantId: string): Promise<{ readonly data: Guardian }> {
+    assertActorTenant(actorUserId, tenantId);
+    if (!this.guardians.isAvailable()) {
+      throw AppError.notFound('Guardian not found.');
+    }
+    const row = await this.guardians.getByUserIdForTenant(actorUserId, tenantId, actorUserId);
+    if (row === null) throw AppError.notFound('Guardian not found.');
+    return { data: row };
+  }
+
+  async listMeGuardianLinks(
+    actorUserId: string,
+    tenantId: string,
+  ): Promise<{ readonly data: ReadonlyArray<StudentGuardianLink> }> {
+    assertActorTenant(actorUserId, tenantId);
+    if (!this.guardians.isAvailable()) {
+      return { data: [] };
+    }
+    const guardian = await this.guardians.getByUserIdForTenant(actorUserId, tenantId, actorUserId);
+    if (guardian === null) throw AppError.notFound('Guardian not found.');
+    const links = await this.guardians.listLinksForGuardianWithNames(
+      actorUserId,
+      tenantId,
+      guardian.id,
+    );
+    return { data: links };
+  }
+
+  /** Active linked student IDs for the caller’s bound guardian (ACF-013 isolation). */
+  async resolveActiveLinkedStudentIds(
+    actorUserId: string,
+    tenantId: string,
+  ): Promise<ReadonlySet<string>> {
+    assertActorTenant(actorUserId, tenantId);
+    if (!this.guardians.isAvailable()) {
+      throw AppError.notFound('Guardian not found.');
+    }
+    const guardian = await this.guardians.getByUserIdForTenant(actorUserId, tenantId, actorUserId);
+    if (guardian === null) {
+      throw AppError.notFound('Guardian not found.');
+    }
+    const links = await this.guardians.listLinksForGuardian(actorUserId, tenantId, guardian.id);
+    return new Set(
+      links.filter((l) => l.status === 'active').map((l) => l.studentId.toLowerCase()),
+    );
+  }
+
   private async safeAudit(input: {
     readonly action: string;
     readonly outcome: 'success' | 'failure';
@@ -542,10 +737,26 @@ function optionalEmail(value: unknown): string | null {
   return trimmed;
 }
 
+function parseBindUserBody(body: Record<string, unknown>): string {
+  const allowed = new Set(['userId']);
+  for (const key of Object.keys(body)) {
+    if (!allowed.has(key)) {
+      throw AppError.validation(`Unknown field: ${key}.`, { field: key });
+    }
+  }
+  if (typeof body['userId'] !== 'string' || !isUuid(body['userId'])) {
+    throw AppError.validation('userId must be a UUID.', { field: 'userId' });
+  }
+  return body['userId'].toLowerCase();
+}
+
 function mapWriteError(error: unknown): void {
   const code = pgErrorCode(error);
   const message = pgErrorMessage(error);
   if (code === '23505') {
+    if (/already bound/i.test(message)) {
+      throw new AppError('CONFLICT', 'Guardian or user is already bound.');
+    }
     throw new AppError('CONFLICT', 'Duplicate guardian email or active link already exists.');
   }
   if (code === '22023') {
@@ -554,6 +765,11 @@ function mapWriteError(error: unknown): void {
     }
     if (/guardian not found/i.test(message)) {
       throw AppError.validation('Guardian not found in this school.', { field: 'guardianId' });
+    }
+    if (/active membership/i.test(message)) {
+      throw AppError.validation('User must have an active membership in this school.', {
+        field: 'userId',
+      });
     }
     throw AppError.validation('Invalid guardian write.');
   }

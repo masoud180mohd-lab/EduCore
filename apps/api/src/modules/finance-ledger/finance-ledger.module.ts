@@ -1,13 +1,17 @@
 import { Module } from '@nestjs/common';
 
 import { DatabaseModule } from '../../common/persistence/index.js';
+import { PaymentsModule } from '../payments/index.js';
 import { PlatformOperationsModule } from '../platform-operations/index.js';
+import { StudentRegistryModule } from '../student-registry/index.js';
 import { FeeStructuresService } from './application/fee-structures.service.js';
 import { FinanceLedgerApplicationService } from './application/finance-ledger.application-service.js';
 import { InvoicesService } from './application/invoices.service.js';
+import { ParentFeesService } from './application/parent-fees.service.js';
 import { FeeStructuresController } from './controllers/fee-structures.controller.js';
 import { FinanceLedgerController } from './controllers/finance-ledger.controller.js';
 import { InvoicesController } from './controllers/invoices.controller.js';
+import { ParentFeesController } from './controllers/parent-fees.controller.js';
 import { FinanceLedgerDomainService } from './domain/finance-ledger.domain-service.js';
 import { FinanceLedgerPolicy } from './policies/finance-ledger.policy.js';
 import { FinanceRepository } from './repositories/finance.repository.js';
@@ -16,13 +20,16 @@ import { FinanceLedgerRepositoryPlaceholder } from './repositories/finance-ledge
 
 /**
  * Bounded context: Finance Ledger.
- * Fee structures + invoices product surfaces (IMP-009 / ACF-012 / DBF-012).
- * The PLAT-003 skeleton (FinanceLedgerController + FINANCE_LEDGER_REPOSITORY) is
- * kept intact for future ledger reporting slices beyond fees/invoices.
+ * Fee structures + invoices + parent-scoped fee reads (ACF-013).
  */
 @Module({
-  imports: [DatabaseModule, PlatformOperationsModule],
-  controllers: [FinanceLedgerController, FeeStructuresController, InvoicesController],
+  imports: [DatabaseModule, PlatformOperationsModule, StudentRegistryModule, PaymentsModule],
+  controllers: [
+    FinanceLedgerController,
+    FeeStructuresController,
+    InvoicesController,
+    ParentFeesController,
+  ],
   providers: [
     FinanceLedgerApplicationService,
     FinanceLedgerDomainService,
@@ -34,6 +41,7 @@ import { FinanceLedgerRepositoryPlaceholder } from './repositories/finance-ledge
     FinanceRepository,
     FeeStructuresService,
     InvoicesService,
+    ParentFeesService,
   ],
   exports: [
     FinanceLedgerApplicationService,

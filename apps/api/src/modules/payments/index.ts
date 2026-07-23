@@ -6,6 +6,7 @@
  */
 export { PaymentsModule } from './payments.module.js';
 export { PaymentsApplicationService } from './application/payments.application-service.js';
+export { PaymentsService } from './application/payments.service.js';
 export { PaymentsEventNames } from './events/payments.events.js';
 export type { PaymentsSkeletonRegisteredEvent } from './events/payments.events.js';
 export { PAYMENTS_SKELETON_DTO } from './dto/payments.dto.js';

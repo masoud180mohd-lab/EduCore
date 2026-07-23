@@ -6,6 +6,7 @@
  */
 export { StudentRegistryModule } from './student-registry.module.js';
 export { StudentRegistryApplicationService } from './application/student-registry.application-service.js';
+export { GuardiansService } from './application/guardians.service.js';
 export { StudentRegistryEventNames } from './events/student-registry.events.js';
 export type { StudentRegistrySkeletonRegisteredEvent } from './events/student-registry.events.js';
 export { STUDENT_REGISTRY_SKELETON_DTO } from './dto/student-registry.dto.js';

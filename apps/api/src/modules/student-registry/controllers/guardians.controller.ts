@@ -145,6 +145,58 @@ export class GuardiansController {
     );
   }
 
+  @Post('api/v1/guardians/:id/bind-user')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('guardian.manage'))
+  async bindUser(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.guardiansService.bindUserForGuardian(
+      auth.userId,
+      tenant.tenantId,
+      id,
+      asRecord(body),
+      idempotencyKey,
+      resolveCorrelationId(request),
+    );
+  }
+
+  @Post('api/v1/guardians/:id/unbind-user')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('guardian.manage'))
+  async unbindUser(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.guardiansService.unbindUserForGuardian(
+      auth.userId,
+      tenant.tenantId,
+      id,
+      idempotencyKey,
+      resolveCorrelationId(request),
+    );
+  }
+
+  @Get('api/v1/me/guardian')
+  @UseGuards(RequirePermission('parent.guardian.read'))
+  async meGuardian(@Req() request: AuthedRequest): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.guardiansService.getMeGuardian(auth.userId, tenant.tenantId);
+  }
+
+  @Get('api/v1/me/guardian/links')
+  @UseGuards(RequirePermission('parent.guardian.read'))
+  async meGuardianLinks(@Req() request: AuthedRequest): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.guardiansService.listMeGuardianLinks(auth.userId, tenant.tenantId);
+  }
+
   @Get('api/v1/students/:studentId/guardians')
   @UseGuards(RequirePermission('guardian.read'))
   async listForStudent(

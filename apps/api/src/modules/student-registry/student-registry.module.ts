@@ -17,7 +17,7 @@ import { StudentsRepository } from './repositories/students.repository.js';
 
 /**
  * Bounded context: Student Registry.
- * Product: students (ACF-002) + guardians/links (ACF-010).
+ * Product: students (ACF-002) + guardians/links (ACF-010) + portal bind (ACF-013).
  */
 @Module({
   imports: [DatabaseModule, PlatformOperationsModule],

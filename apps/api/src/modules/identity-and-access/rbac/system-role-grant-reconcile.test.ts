@@ -13,6 +13,7 @@ describe('reconcileSystemRoleGrantsForTenant', () => {
       owner: 'r-owner',
       admin: 'r-admin',
       staff: 'r-staff',
+      parent: 'r-parent',
     };
     const deleteCalls: Array<{ roleId: string; allowed: string[] }> = [];
     const insertCodes: string[] = [];
@@ -44,11 +45,12 @@ describe('reconcileSystemRoleGrantsForTenant', () => {
     const result = await reconcileSystemRoleGrantsForTenant(client, { tenantId: 't1' });
 
     expect(result.tenantId).toBe('t1');
-    expect(result.roles.map((r) => r.code)).toEqual(['owner', 'admin', 'staff']);
-    expect(deleteCalls).toHaveLength(3);
+    expect(result.roles.map((r) => r.code)).toEqual(['owner', 'admin', 'staff', 'parent']);
+    expect(deleteCalls).toHaveLength(4);
     expect(deleteCalls[0]?.allowed).toEqual([...PERMISSION_CODES]);
     expect(deleteCalls[1]?.allowed).toEqual([...permissionsForSystemRole('admin')]);
     expect(deleteCalls[2]?.allowed).toEqual([...permissionsForSystemRole('staff')]);
+    expect(deleteCalls[3]?.allowed).toEqual([...permissionsForSystemRole('parent')]);
     expect(result.roles[0]?.removedCodes).toEqual(['stale.permission']);
     expect(insertCodes).toContain('tenant.read');
     expect(insertCodes).toContain('entitlement.manage');

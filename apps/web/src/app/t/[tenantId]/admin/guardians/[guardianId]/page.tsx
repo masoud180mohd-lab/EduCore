@@ -14,6 +14,7 @@ type Guardian = {
   readonly phone: string | null;
   readonly email: string | null;
   readonly status: string;
+  readonly userId: string | null;
 };
 
 type LinkRow = {
@@ -35,6 +36,7 @@ export default function AdminGuardianDetailPage() {
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [studentId, setStudentId] = useState('');
   const [relationshipType, setRelationshipType] = useState('guardian');
+  const [bindUserId, setBindUserId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -126,6 +128,60 @@ export default function AdminGuardianDetailPage() {
     }
   }
 
+  async function onBind(event: FormEvent) {
+    event.preventDefault();
+    const auth = readSession();
+    if (auth === null || bindUserId.trim() === '') return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `guardian.bind:${guardianId}:${bindUserId.trim()}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      await apiRequest(`/api/v1/guardians/${guardianId}/bind-user`, {
+        method: 'POST',
+        auth,
+        body: { userId: bindUserId.trim() },
+        idempotencyKey: idem,
+      });
+      clearIdempotencyKey(actionKey);
+      setInfo('Portal user bound. They can sign in and open Parent fees.');
+      setBindUserId('');
+      await load();
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+      else setError('Could not bind user.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onUnbind() {
+    const auth = readSession();
+    if (auth === null) return;
+    if (!window.confirm('Unbind portal user from this guardian?')) return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `guardian.unbind:${guardianId}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      await apiRequest(`/api/v1/guardians/${guardianId}/unbind-user`, {
+        method: 'POST',
+        auth,
+        idempotencyKey: idem,
+      });
+      clearIdempotencyKey(actionKey);
+      setInfo('Portal user unbound.');
+      await load();
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+      else setError('Could not unbind user.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <AdminShell tenantId={tenantId}>
       <h1>{guardian?.displayName ?? 'Guardian'}</h1>
@@ -152,6 +208,40 @@ export default function AdminGuardianDetailPage() {
           {info}
         </div>
       ) : null}
+
+      <h2 style={{ fontSize: '1.1rem' }}>Portal bind</h2>
+      <p className="muted">
+        Bind an existing school user (active membership) so they can open the parent fees portal.
+      </p>
+      {guardian?.userId !== null && guardian?.userId !== undefined ? (
+        <div className="card stack">
+          <div className="muted">Bound user: {guardian.userId}</div>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={busy}
+            onClick={() => void onUnbind()}
+          >
+            Unbind user
+          </button>
+        </div>
+      ) : (
+        <form className="stack card" onSubmit={(e) => void onBind(e)}>
+          <div className="field">
+            <label htmlFor="bindUserId">User ID (UUID)</label>
+            <input
+              id="bindUserId"
+              required
+              value={bindUserId}
+              onChange={(e) => setBindUserId(e.target.value)}
+              placeholder="User UUID with active membership"
+            />
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={busy || bindUserId === ''}>
+            {busy ? 'Saving…' : 'Bind portal user'}
+          </button>
+        </form>
+      )}
 
       <h2 style={{ fontSize: '1.1rem' }}>Linked students</h2>
       {links.length === 0 ? <div className="banner banner-info">No links yet.</div> : null}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { prefersAdminHome } from './home-preference.js';
+import { prefersAdminHome, prefersParentHome, prefersStaffHome } from './home-preference.js';
 
 describe('prefersAdminHome', () => {
   it('routes owner/admin roles to admin', () => {
@@ -20,5 +20,20 @@ describe('prefersAdminHome', () => {
   it('routes user.invite / tenant.manage to admin', () => {
     expect(prefersAdminHome({ roles: [], permissions: ['user.invite'] })).toBe(true);
     expect(prefersAdminHome({ roles: [], permissions: ['tenant.manage'] })).toBe(true);
+  });
+});
+
+describe('prefersStaffHome / prefersParentHome', () => {
+  it('prefers staff over bare parent when finance.read present', () => {
+    expect(prefersStaffHome({ roles: [], permissions: ['finance.read'] })).toBe(true);
+    expect(
+      prefersParentHome({ roles: [{ code: 'parent' }], permissions: ['parent.finance.read'] }),
+    ).toBe(true);
+  });
+
+  it('detects parent role and parent.* permissions', () => {
+    expect(prefersParentHome({ roles: [{ code: 'parent' }], permissions: [] })).toBe(true);
+    expect(prefersParentHome({ roles: [], permissions: ['parent.guardian.read'] })).toBe(true);
+    expect(prefersParentHome({ roles: [{ code: 'staff' }], permissions: [] })).toBe(false);
   });
 });

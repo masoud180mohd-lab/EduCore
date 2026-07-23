@@ -4,7 +4,7 @@
  */
 import { PERMISSION_CODES, type PermissionCode } from '../../../common/policy/permission-codes.js';
 
-export const SYSTEM_ROLE_CODES = ['owner', 'admin', 'staff'] as const;
+export const SYSTEM_ROLE_CODES = ['owner', 'admin', 'staff', 'parent'] as const;
 export type SystemRoleCode = (typeof SYSTEM_ROLE_CODES)[number];
 
 export type SystemRoleDefinition = {
@@ -32,10 +32,17 @@ const STAFF_PERMISSIONS: ReadonlyArray<PermissionCode> = [
   'entitlement.read',
 ];
 
+/** Bound guardian portal (DBF-011 / ACF-013) — no bursar finance.read. */
+const PARENT_PERMISSIONS: ReadonlyArray<PermissionCode> = [
+  'parent.guardian.read',
+  'parent.finance.read',
+];
+
 /**
  * Owner holds full identity/tenant admin catalogue.
  * Admin matches owner except entitlement.manage (owner-only).
- * Staff is read-oriented.
+ * Staff is classroom/bursar-oriented.
+ * Parent is portal-scoped only.
  */
 export const SYSTEM_ROLE_DEFINITIONS: ReadonlyArray<SystemRoleDefinition> = [
   {
@@ -52,6 +59,11 @@ export const SYSTEM_ROLE_DEFINITIONS: ReadonlyArray<SystemRoleDefinition> = [
     code: 'staff',
     name: 'Staff',
     permissions: STAFF_PERMISSIONS,
+  },
+  {
+    code: 'parent',
+    name: 'Parent',
+    permissions: PARENT_PERMISSIONS,
   },
 ];
 

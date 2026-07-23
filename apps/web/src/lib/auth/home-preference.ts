@@ -15,3 +15,23 @@ export function prefersAdminHome(me: MeLike): boolean {
     perms.has('organization.manage')
   );
 }
+
+/** Staff classroom/bursar surface — wins over parent when both apply. */
+export function prefersStaffHome(me: MeLike): boolean {
+  const roles = me.roles ?? [];
+  if (roles.some((r) => r.code === 'staff')) return true;
+  const perms = new Set(me.permissions ?? []);
+  return (
+    perms.has('attendance.manage') ||
+    perms.has('finance.read') ||
+    perms.has('finance.manage') ||
+    perms.has('marks.manage')
+  );
+}
+
+export function prefersParentHome(me: MeLike): boolean {
+  const roles = me.roles ?? [];
+  if (roles.some((r) => r.code === 'parent')) return true;
+  const perms = new Set(me.permissions ?? []);
+  return perms.has('parent.guardian.read') || perms.has('parent.finance.read');
+}

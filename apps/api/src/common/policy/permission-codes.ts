@@ -30,6 +30,8 @@ export const PERMISSION_CODES = [
   'finance.read',
   'finance.manage',
   'finance.reconcile',
+  'parent.guardian.read',
+  'parent.finance.read',
 ] as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[number];

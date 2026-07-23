@@ -19,6 +19,7 @@ export type GuardianRow = {
   readonly phone: string | null;
   readonly email: string | null;
   readonly status: string;
+  readonly userId: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 };
@@ -31,6 +32,7 @@ export type StudentGuardianLinkRow = {
   readonly relationshipType: string;
   readonly isPrimary: boolean;
   readonly status: string;
+  readonly studentDisplayName?: string;
   readonly createdAt: string;
   readonly updatedAt: string;
 };
@@ -67,7 +69,7 @@ export class GuardiansRepository {
           const params: unknown[] = [tenantId, query.limit + 1];
           let sql = `
             SELECT g.id, g.tenant_id, g.display_name, g.phone, g.email, g.status,
-                   g.created_at, g.updated_at
+                   g.user_id, g.created_at, g.updated_at
             FROM guardians g
             WHERE g.tenant_id = $1::uuid`;
           if (query.status !== undefined) {
@@ -118,7 +120,8 @@ export class GuardiansRepository {
         { userId: actorUserId, tenantId },
         async (client) => {
           const result = await client.query<DbGuardian>(
-            `SELECT id, tenant_id, display_name, phone, email, status, created_at, updated_at
+            `SELECT id, tenant_id, display_name, phone, email, status, user_id,
+                    created_at, updated_at
              FROM guardians WHERE id = $1::uuid AND tenant_id = $2::uuid`,
             [guardianId, tenantId],
           );
@@ -148,7 +151,8 @@ export class GuardiansRepository {
     }
     return withTenantTransaction(this.pool, { userId: actorUserId, tenantId }, async (client) => {
       const result = await client.query<DbGuardian>(
-        `SELECT id, tenant_id, display_name, phone, email, status, created_at, updated_at
+        `SELECT id, tenant_id, display_name, phone, email, status,
+                NULL::uuid AS user_id, created_at, updated_at
          FROM app.create_guardian($1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7)`,
         [
           actorUserId,
@@ -162,8 +166,88 @@ export class GuardiansRepository {
       );
       const row = result.rows[0];
       if (row === undefined) throw new Error('create_guardian returned no row');
+      return mapGuardian({ ...row, user_id: row.user_id ?? null });
+    });
+  }
+
+  async getByUserIdForTenant(
+    actorUserId: string,
+    tenantId: string,
+    userId: string,
+  ): Promise<GuardianRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(userId) || this.pool === null) {
+      return null;
+    }
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<DbGuardian>(
+            `SELECT id, tenant_id, display_name, phone, email, status, user_id,
+                    created_at, updated_at
+             FROM guardians
+             WHERE tenant_id = $1::uuid AND user_id = $2::uuid
+             LIMIT 1`,
+            [tenantId, userId],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapGuardian(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'GuardiansRepository', error, {
+        operation: 'getByUserId',
+      });
+      return null;
+    }
+  }
+
+  async bindUserForTenant(
+    actorUserId: string,
+    tenantId: string,
+    guardianId: string,
+    userId: string,
+  ): Promise<GuardianRow> {
+    if (this.pool === null) throw new Error('database unavailable');
+    return withTenantTransaction(this.pool, { userId: actorUserId, tenantId }, async (client) => {
+      const result = await client.query<DbGuardian>(
+        `SELECT id, tenant_id, display_name, phone, email, status, user_id,
+                created_at, updated_at
+         FROM app.bind_guardian_user($1::uuid, $2::uuid, $3::uuid, $4::uuid)`,
+        [actorUserId, tenantId, guardianId, userId],
+      );
+      const row = result.rows[0];
+      if (row === undefined) throw new Error('bind_guardian_user returned no row');
       return mapGuardian(row);
     });
+  }
+
+  async unbindUserForTenant(
+    actorUserId: string,
+    tenantId: string,
+    guardianId: string,
+  ): Promise<GuardianRow | null> {
+    if (this.pool === null) return null;
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<DbGuardian>(
+            `SELECT id, tenant_id, display_name, phone, email, status, user_id,
+                    created_at, updated_at
+             FROM app.unbind_guardian_user($1::uuid, $2::uuid, $3::uuid)`,
+            [actorUserId, tenantId, guardianId],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapGuardian(row);
+        },
+      );
+    } catch (error: unknown) {
+      if (pgCode(error) === 'P0002') return null;
+      throw error;
+    }
   }
 
   async updateForTenant(
@@ -188,11 +272,16 @@ export class GuardiansRepository {
         { userId: actorUserId, tenantId },
         async (client) => {
           const result = await client.query<DbGuardian>(
-            `SELECT id, tenant_id, display_name, phone, email, status, created_at, updated_at
-             FROM app.update_guardian(
-              $1::uuid, $2::uuid, $3::uuid,
-              $4, $5, $6, $7, $8, $9, $10, $11
-            )`,
+            `WITH updated AS (
+               SELECT id FROM app.update_guardian(
+                $1::uuid, $2::uuid, $3::uuid,
+                $4, $5, $6, $7, $8, $9, $10, $11
+               )
+             )
+             SELECT g.id, g.tenant_id, g.display_name, g.phone, g.email, g.status, g.user_id,
+                    g.created_at, g.updated_at
+             FROM guardians g
+             INNER JOIN updated u ON u.id = g.id`,
             [
               actorUserId,
               tenantId,
@@ -244,6 +333,40 @@ export class GuardiansRepository {
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'GuardiansRepository', error, {
         operation: 'listLinksForGuardian',
+      });
+      return [];
+    }
+  }
+
+  async listLinksForGuardianWithNames(
+    actorUserId: string,
+    tenantId: string,
+    guardianId: string,
+  ): Promise<ReadonlyArray<StudentGuardianLinkRow>> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(guardianId) || this.pool === null) {
+      return [];
+    }
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<DbLinkNamed>(
+            `SELECT sg.id, sg.tenant_id, sg.student_id, sg.guardian_id, sg.relationship_type,
+                    sg.is_primary, sg.status, sg.created_at, sg.updated_at,
+                    s.display_name AS student_display_name
+             FROM student_guardians sg
+             LEFT JOIN students s ON s.id = sg.student_id AND s.tenant_id = sg.tenant_id
+             WHERE sg.tenant_id = $1::uuid AND sg.guardian_id = $2::uuid
+             ORDER BY sg.created_at DESC, sg.id ASC`,
+            [tenantId, guardianId],
+          );
+          return result.rows.map((row) => mapLinkNamed(row));
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'GuardiansRepository', error, {
+        operation: 'listLinksForGuardianWithNames',
       });
       return [];
     }
@@ -360,6 +483,7 @@ type DbGuardian = {
   phone: string | null;
   email: string | null;
   status: string;
+  user_id: string | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -376,6 +500,10 @@ type DbLink = {
   updated_at: Date;
 };
 
+type DbLinkNamed = DbLink & {
+  student_display_name: string | null;
+};
+
 function mapGuardian(row: DbGuardian): GuardianRow {
   return {
     id: row.id,
@@ -384,6 +512,7 @@ function mapGuardian(row: DbGuardian): GuardianRow {
     phone: row.phone,
     email: row.email,
     status: row.status,
+    userId: row.user_id ?? null,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
   };
@@ -400,5 +529,12 @@ function mapLink(row: DbLink): StudentGuardianLinkRow {
     status: row.status,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
+  };
+}
+
+function mapLinkNamed(row: DbLinkNamed): StudentGuardianLinkRow {
+  return {
+    ...mapLink(row),
+    studentDisplayName: row.student_display_name ?? row.student_id,
   };
 }
