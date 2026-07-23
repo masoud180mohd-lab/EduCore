@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   canIssueInvoice,
   canRecordPayment,
+  canReconcilePayment,
   canReversePayment,
   canVoidInvoice,
+  reconcileOutcomeLabel,
 } from './invoice-actions.js';
 
 describe('invoice action enablement', () => {
@@ -34,5 +36,19 @@ describe('invoice action enablement', () => {
     expect(canReversePayment('succeeded')).toBe(true);
     expect(canReversePayment('reversed')).toBe(false);
     expect(canReversePayment('pending')).toBe(false);
+  });
+
+  it('allows reconcile for recorded payments (not empty/created)', () => {
+    expect(canReconcilePayment('succeeded')).toBe(true);
+    expect(canReconcilePayment('pending')).toBe(true);
+    expect(canReconcilePayment('failed')).toBe(true);
+    expect(canReconcilePayment('created')).toBe(false);
+    expect(canReconcilePayment('')).toBe(false);
+  });
+
+  it('labels reconcile outcomes for operators', () => {
+    expect(reconcileOutcomeLabel('matched')).toBe('Matched');
+    expect(reconcileOutcomeLabel('missing_event')).toBe('No gateway event');
+    expect(reconcileOutcomeLabel('amount_mismatch')).toBe('Amount mismatch');
   });
 });

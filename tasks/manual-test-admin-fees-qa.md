@@ -1,6 +1,6 @@
 # Manual QA — IMP-010 Admin Fees UI
 
-Prerequisites: API on `:3000`, web on `:3001`, migrated DB, local admin with `finance.read` / `finance.manage`.
+Prerequisites: API on `:3000`, web on `:3001`, migrated DB, local admin with `finance.read` / `finance.manage` / `finance.reconcile` (owner/admin).
 
 ```bash
 npm run db:migrate
@@ -29,6 +29,8 @@ npm run dev:web
 | Void after payment         | Void disabled when balance < total / not issued unpaid |
 | Void unpaid issued         | Confirm → void; balance 0                              |
 | Reverse succeeded payment  | Confirm → reversed; invoice balance restored           |
+| Reconcile payment (owner)  | Banner with outcome; **no** balance/ledger change      |
+| Without finance.reconcile  | “You do not have finance reconcile access.”            |
 | Double-click pay           | Same Idempotency-Key → safe replay                     |
 | User without finance.*     | Lists show “You do not have finance access.”           |
 | Mobile money               | Note only; no MoMo method in office form               |
@@ -36,5 +38,5 @@ npm run dev:web
 ## Residual
 
 - No Playwright e2e in CI for this program.
-- Reconcile / Fake webhook UI not in MVP (Wave X).
+- Fake webhook UI not in MVP (Wave X2).
 - MoMo blocked (PAY-PROVIDER-001).

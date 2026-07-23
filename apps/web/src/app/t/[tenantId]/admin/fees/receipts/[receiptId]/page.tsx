@@ -6,7 +6,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
-import { readSession } from '@/lib/auth/session';
+import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+import { canReconcilePayment, reconcileOutcomeLabel } from '@/lib/finance/invoice-actions';
 import { formatTzsMinor } from '@/lib/finance/money';
 
 type ReceiptDetail = {
@@ -26,8 +27,21 @@ type PaymentDetail = {
   readonly status: string;
 };
 
-function financeMessage(err: ApiClientError): string {
-  if (err.status === 403) return 'You do not have finance access.';
+type ReconciliationRow = {
+  readonly id: string;
+  readonly outcome: string;
+  readonly attemptAmountMinor: number;
+  readonly attemptStatus: string;
+  readonly eventAmountMinor: number | null;
+  readonly eventOutcome: string | null;
+};
+
+function financeMessage(err: ApiClientError, action?: 'reconcile'): string {
+  if (err.status === 403) {
+    return action === 'reconcile'
+      ? 'You do not have finance reconcile access.'
+      : 'You do not have finance access.';
+  }
   return teacherFriendlyMessage(err);
 }
 
@@ -37,7 +51,9 @@ export default function AdminReceiptDetailPage() {
   const [receipt, setReceipt] = useState<ReceiptDetail | null>(null);
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const auth = readSession();
@@ -70,6 +86,43 @@ export default function AdminReceiptDetailPage() {
     void load();
   }, [load]);
 
+  async function onReconcile() {
+    if (payment === null) return;
+    const auth = readSession();
+    if (auth === null) return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `payment.reconcile:${payment.id}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      const result = await apiRequest<{ data: ReconciliationRow }>(
+        `/api/v1/payments/${payment.id}/reconcile`,
+        {
+          method: 'POST',
+          auth,
+          idempotencyKey: idem,
+        },
+      );
+      clearIdempotencyKey(actionKey);
+      const row = result.data;
+      const eventBit =
+        row.eventAmountMinor !== null
+          ? ` Event ${formatTzsMinor(row.eventAmountMinor)}${
+              row.eventOutcome !== null ? ` (${row.eventOutcome})` : ''
+            }.`
+          : '';
+      setInfo(
+        `Reconcile: ${reconcileOutcomeLabel(row.outcome)} — compare only (no ledger change). Attempt ${formatTzsMinor(row.attemptAmountMinor)} (${row.attemptStatus}).${eventBit}`,
+      );
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(financeMessage(err, 'reconcile'));
+      else setError('Could not reconcile payment.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
@@ -80,6 +133,11 @@ export default function AdminReceiptDetailPage() {
       {error !== null ? (
         <div className="banner banner-error" role="alert">
           {error}
+        </div>
+      ) : null}
+      {info !== null ? (
+        <div className="banner banner-info" role="status">
+          {info}
         </div>
       ) : null}
       {receipt !== null ? (
@@ -101,6 +159,21 @@ export default function AdminReceiptDetailPage() {
                 <Link href={`/t/${tenantId}/admin/fees/invoices/${payment.invoiceId}`}>
                   Open invoice
                 </Link>
+              </p>
+              {canReconcilePayment(payment.status) ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  disabled={busy}
+                  onClick={() => void onReconcile()}
+                  title="Compare payment to last gateway event. Does not change ledger or balances."
+                >
+                  {busy ? 'Reconciling…' : 'Reconcile payment'}
+                </button>
+              ) : null}
+              <p className="muted" style={{ fontSize: '0.875rem' }}>
+                Reconcile records a compare-only outcome (matched / mismatch / missing event). It
+                does not post journals or change balances.
               </p>
             </>
           ) : (

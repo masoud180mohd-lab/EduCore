@@ -10,10 +10,12 @@ import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/
 import {
   canIssueInvoice,
   canRecordPayment,
+  canReconcilePayment,
   canReversePayment,
   canVoidInvoice,
   invoiceStatusLabel,
   paymentStatusLabel,
+  reconcileOutcomeLabel,
 } from '@/lib/finance/invoice-actions';
 import { formatTzsMinor, parseMajorToMinor } from '@/lib/finance/money';
 
@@ -46,10 +48,25 @@ type PaymentRow = {
   readonly receiptId: string | null;
 };
 
+type ReconciliationRow = {
+  readonly id: string;
+  readonly paymentAttemptId: string;
+  readonly outcome: string;
+  readonly attemptAmountMinor: number;
+  readonly attemptStatus: string;
+  readonly eventAmountMinor: number | null;
+  readonly eventOutcome: string | null;
+  readonly createdAt: string;
+};
+
 const OFFICE_METHODS = ['cash', 'bank', 'cheque', 'other'] as const;
 
-function financeMessage(err: ApiClientError): string {
-  if (err.status === 403) return 'You do not have finance access.';
+function financeMessage(err: ApiClientError, action?: 'reconcile'): string {
+  if (err.status === 403) {
+    return action === 'reconcile'
+      ? 'You do not have finance reconcile access.'
+      : 'You do not have finance access.';
+  }
   return teacherFriendlyMessage(err);
 }
 
@@ -231,6 +248,42 @@ export default function AdminInvoiceDetailPage() {
     }
   }
 
+  async function onReconcile(paymentId: string) {
+    const auth = readSession();
+    if (auth === null) return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `payment.reconcile:${paymentId}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      const result = await apiRequest<{ data: ReconciliationRow }>(
+        `/api/v1/payments/${paymentId}/reconcile`,
+        {
+          method: 'POST',
+          auth,
+          idempotencyKey: idem,
+        },
+      );
+      clearIdempotencyKey(actionKey);
+      const row = result.data;
+      const eventBit =
+        row.eventAmountMinor !== null
+          ? ` Event ${formatTzsMinor(row.eventAmountMinor)}${
+              row.eventOutcome !== null ? ` (${row.eventOutcome})` : ''
+            }.`
+          : '';
+      setInfo(
+        `Reconcile: ${reconcileOutcomeLabel(row.outcome)} — compare only (no ledger change). Attempt ${formatTzsMinor(row.attemptAmountMinor)} (${row.attemptStatus}).${eventBit}`,
+      );
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(financeMessage(err, 'reconcile'));
+      else setError('Could not reconcile payment.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const issueOk = invoice !== null && canIssueInvoice(invoice.status);
   const voidOk =
     invoice !== null && canVoidInvoice(invoice.status, invoice.balanceMinor, invoice.totalMinor);
@@ -369,9 +422,21 @@ export default function AdminInvoiceDetailPage() {
                     className="btn btn-secondary"
                     disabled={busy}
                     onClick={() => void onReverse(p.id)}
-                    style={{ marginTop: '0.5rem' }}
+                    style={{ marginTop: '0.5rem', marginRight: '0.5rem' }}
                   >
                     Reverse
+                  </button>
+                ) : null}
+                {canReconcilePayment(p.status) ? (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    disabled={busy}
+                    onClick={() => void onReconcile(p.id)}
+                    style={{ marginTop: '0.5rem' }}
+                    title="Compare payment to last gateway event. Does not change ledger or balances."
+                  >
+                    Reconcile
                   </button>
                 ) : null}
               </li>

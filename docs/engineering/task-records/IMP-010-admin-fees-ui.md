@@ -27,7 +27,8 @@
 | U2   | Invoices list/create/detail + issue/void        | Done    |
 | U3   | Office pay + payments list + receipts + reverse | Done    |
 | U4   | Money/action unit tests + tooling + manual QA   | Done    |
-| X    | Reconcile / Fake webhook UI                     | Skipped |
+| X1   | Reconcile operator UI (`finance.reconcile`)     | Done    |
+| X2   | Fake webhook UI                                 | Skipped |
 
 ## Routes (web)
 
@@ -83,10 +84,10 @@
 ## Residual
 
 - No Playwright e2e
-- Wave X reconcile / Fake webhook not built
+- Wave X2 Fake webhook UI not built
 - MoMo still blocked (PAY-PROVIDER-001)
 - Existing tenants need finance grants if not reconciled
 
 ## Next
 
-Parent fees view **or** real MoMo adapter (after PAY-PROVIDER supersede) **or** reconcile operator UI.
+Parent fees view **or** real MoMo adapter (after PAY-PROVIDER supersede).

@@ -241,8 +241,7 @@ export class PaymentAttemptsRepository {
         outcome: row.outcome,
         attemptAmountMinor: Number(row.attempt_amount_minor),
         attemptStatus: row.attempt_status,
-        eventAmountMinor:
-          row.event_amount_minor === null ? null : Number(row.event_amount_minor),
+        eventAmountMinor: row.event_amount_minor === null ? null : Number(row.event_amount_minor),
         eventOutcome: row.event_outcome,
         createdAt: row.created_at.toISOString(),
       };

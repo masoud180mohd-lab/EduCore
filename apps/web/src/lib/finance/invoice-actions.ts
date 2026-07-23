@@ -36,6 +36,32 @@ export function canReversePayment(status: PaymentStatus): boolean {
   return status === 'succeeded';
 }
 
+/**
+ * Reconcile compares attempt vs last gateway event (ACF-012).
+ * Allowed for any known payment; outcome is display-only (no ledger mutation).
+ */
+export function canReconcilePayment(status: PaymentStatus): boolean {
+  return status !== '' && status !== 'created';
+}
+
+export type ReconcileOutcome =
+  'matched' | 'amount_mismatch' | 'missing_event' | 'status_mismatch' | string;
+
+export function reconcileOutcomeLabel(outcome: ReconcileOutcome): string {
+  switch (outcome) {
+    case 'matched':
+      return 'Matched';
+    case 'amount_mismatch':
+      return 'Amount mismatch';
+    case 'missing_event':
+      return 'No gateway event';
+    case 'status_mismatch':
+      return 'Status mismatch';
+    default:
+      return outcome;
+  }
+}
+
 export function invoiceStatusLabel(status: InvoiceStatus): string {
   switch (status) {
     case 'draft':

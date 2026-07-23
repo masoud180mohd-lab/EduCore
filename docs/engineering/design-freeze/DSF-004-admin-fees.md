@@ -45,9 +45,9 @@ Same as DSF-002:
 2. **Fee structures list** — `GET /fee-structures` + create form (`POST`, Idempotency-Key)
 3. **Fee structure detail** — `GET /fee-structures/{id}` with items
 4. **Invoices list** — `GET /invoices` + create draft form (student + year + lines; optional structure)
-5. **Invoice detail** — lines, balance; **Issue** (draft); **Void** (issued, unpaid); **Record office payment**; payments list; **Reverse** on succeeded payment
+5. **Invoice detail** — lines, balance; **Issue** (draft); **Void** (issued, unpaid); **Record office payment**; payments list; **Reverse** on succeeded payment; **Reconcile** (Wave X — `finance.reconcile`) outcome display only
 6. **Receipts list** — `GET /receipts`
-7. **Receipt detail** — `GET /receipts/{id}`
+7. **Receipt detail** — `GET /receipts/{id}` + optional **Reconcile** on linked payment
 
 ## Status vocabulary (chips)
 
@@ -83,8 +83,9 @@ Permissions used (seeded; not UI-gated beyond API failures):
 
 - `finance.read` — lists/details
 - `finance.manage` — create, issue, void, pay, reverse
+- `finance.reconcile` — Wave X reconcile button (owner/admin); 403 → “You do not have finance reconcile access.”
 
-`finance.reconcile` and Fake webhook are **out of MVP UI**.
+Fake webhook remains **out of MVP UI**.
 
 ## Nav & routes
 
@@ -108,7 +109,7 @@ Same as DSF-001/002: Bearer + `X-Tenant-Id` in `sessionStorage`. Mutations use `
 - Parent portal pay UI
 - Gateway initiate → pending → complete / Fake webhook operator console
 - Multi-currency beyond TZS; writable balance fields
-- Reconcile UI (`finance.reconcile`)
+- Claiming reconcile mutates ledger or payment status (outcome is compare-only)
 - Full offline finance sync
 - Nest API feature creep
 
