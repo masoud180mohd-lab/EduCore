@@ -93,7 +93,8 @@ export class AuthService {
     private readonly sessions: SessionRepository,
     @Inject(LOGIN_RATE_LIMITER) private readonly rateLimiter: LoginRateLimiter,
     @Optional() @Inject(AUDIT_PUBLISHER) private readonly audit: AuditPublisher | null = null,
-    @Optional() private readonly rbacRead: RbacReadRepository | null = null,
+    /** Required: same module provider — must not silently skip roles on /auth/me. */
+    private readonly rbacRead: RbacReadRepository,
     @Optional()
     @Inject(PERMISSION_SOURCE)
     private readonly permissionSource: PermissionSource | null = null,
@@ -353,9 +354,7 @@ export class AuthService {
         activeTenantId,
       );
       if (membershipActive) {
-        if (this.rbacRead !== null) {
-          roles = await this.rbacRead.listRolesForUser(input.userId, activeTenantId);
-        }
+        roles = await this.rbacRead.listRolesForUser(input.userId, activeTenantId);
         if (this.permissionSource !== null) {
           const set = await this.permissionSource.getPermissions(input.userId, activeTenantId);
           permissions = [...set].sort();

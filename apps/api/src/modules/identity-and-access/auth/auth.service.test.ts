@@ -5,12 +5,19 @@ import { AuthService } from './auth.service.js';
 import { InMemoryLoginRateLimiter } from './login-rate-limiter.js';
 import { hashPassword } from './password-hasher.js';
 
+const stubRbac = { listRolesForUser: vi.fn().mockResolvedValue([]) };
+
 describe('AuthService login', () => {
   it('rejects when session store is unavailable', async () => {
     const sessions = {
       isAvailable: () => false,
     };
-    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    const service = new AuthService(
+      sessions as never,
+      new InMemoryLoginRateLimiter(),
+      null,
+      stubRbac as never,
+    );
     await expect(
       service.login({
         email: 'a@example.com',
@@ -25,7 +32,12 @@ describe('AuthService login', () => {
       isAvailable: () => true,
       lookupUserByEmail: vi.fn().mockResolvedValue(null),
     };
-    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    const service = new AuthService(
+      sessions as never,
+      new InMemoryLoginRateLimiter(),
+      null,
+      stubRbac as never,
+    );
     await expect(
       service.login({
         email: 'missing@example.com',
@@ -51,7 +63,12 @@ describe('AuthService login', () => {
       createSession: vi.fn().mockResolvedValue('sess-id'),
     };
     const audit = { publish: vi.fn().mockResolvedValue(undefined) };
-    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), audit);
+    const service = new AuthService(
+      sessions as never,
+      new InMemoryLoginRateLimiter(),
+      audit,
+      stubRbac as never,
+    );
 
     const result = await service.login({
       email: 'user@example.com',
@@ -76,7 +93,7 @@ describe('AuthService login', () => {
       isAvailable: () => true,
       lookupUserByEmail: vi.fn().mockResolvedValue(null),
     };
-    const service = new AuthService(sessions as never, limiter, null);
+    const service = new AuthService(sessions as never, limiter, null, stubRbac as never);
     const cmd = {
       email: 'a@example.com',
       password: 'password12',
@@ -108,7 +125,12 @@ describe('AuthService me + select-tenant', () => {
         .mockResolvedValue([{ tenantId, status: 'active', joinedAt: '2026-01-01T00:00:00.000Z' }]),
       hasActiveMembership: vi.fn().mockResolvedValue(true),
     };
-    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    const service = new AuthService(
+      sessions as never,
+      new InMemoryLoginRateLimiter(),
+      null,
+      stubRbac as never,
+    );
     const me = await service.me({ userId, sessionId, tenantId });
     expect(me.user.email).toBe('a@b.co');
     expect(me.activeTenantId).toBe(tenantId);
@@ -139,9 +161,13 @@ describe('AuthService me + select-tenant', () => {
     const permissionSource = {
       getPermissions: vi.fn().mockResolvedValue(new Set(['tenant.read', 'role.read'])),
     };
-    // Test doubles: construct then bind private optional deps (avoids cast lint noise).
-    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
-    Object.assign(service, { rbacRead, permissionSource });
+    const service = new AuthService(
+      sessions as never,
+      new InMemoryLoginRateLimiter(),
+      null,
+      rbacRead as never,
+      permissionSource,
+    );
 
     const me = await service.me({ userId, sessionId, tenantId });
 
@@ -174,8 +200,13 @@ describe('AuthService me + select-tenant', () => {
     const permissionSource = {
       getPermissions: vi.fn().mockResolvedValue(new Set(['tenant.read'])),
     };
-    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
-    Object.assign(service, { rbacRead, permissionSource });
+    const service = new AuthService(
+      sessions as never,
+      new InMemoryLoginRateLimiter(),
+      null,
+      rbacRead as never,
+      permissionSource,
+    );
 
     const me = await service.me({ userId, sessionId, tenantId });
 
@@ -199,8 +230,13 @@ describe('AuthService me + select-tenant', () => {
     };
     const rbacRead = { listRolesForUser: vi.fn() };
     const permissionSource = { getPermissions: vi.fn() };
-    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
-    Object.assign(service, { rbacRead, permissionSource });
+    const service = new AuthService(
+      sessions as never,
+      new InMemoryLoginRateLimiter(),
+      null,
+      rbacRead as never,
+      permissionSource,
+    );
 
     const me = await service.me({ userId, sessionId });
 
@@ -219,7 +255,12 @@ describe('AuthService me + select-tenant', () => {
       rebindSessionTenant: vi.fn().mockResolvedValue(true),
     };
     const audit = { publish: vi.fn().mockResolvedValue(undefined) };
-    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), audit);
+    const service = new AuthService(
+      sessions as never,
+      new InMemoryLoginRateLimiter(),
+      audit,
+      stubRbac as never,
+    );
     await expect(
       service.selectTenant({
         userId: '01900000-0000-7000-8000-000000000001',
@@ -236,7 +277,12 @@ describe('AuthService me + select-tenant', () => {
       isAvailable: () => true,
       hasActiveMembership: vi.fn().mockResolvedValue(false),
     };
-    const service = new AuthService(sessions as never, new InMemoryLoginRateLimiter(), null);
+    const service = new AuthService(
+      sessions as never,
+      new InMemoryLoginRateLimiter(),
+      null,
+      stubRbac as never,
+    );
     await expect(
       service.selectTenant({
         userId: '01900000-0000-7000-8000-000000000001',

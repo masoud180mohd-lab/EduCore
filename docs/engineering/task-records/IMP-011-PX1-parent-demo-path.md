@@ -47,27 +47,27 @@ npm run seed:parent-demo
 
 Checklist: `tasks/manual-test-parent-demo-qa.md` (live **2026-07-23**, API `:3000` + web `:3001`).
 
-| Check | Result |
-| ----- | ------ |
-| db:migrate | Pass (no pending) |
-| seed:admin + seed:parent-demo | Pass (bound guardian …022 ↔ parent …020) |
-| Bind picker | Pass — `GET /users` includes parent; guardian page HTTP 200 |
-| Parent login → `/parent` | Pass — login 200; `prefersParentHome` via perms; `/parent` HTTP 200 |
-| Linked student | Pass — active link to student …023 |
-| Invoice path | Pass — issued invoice; parent list n=1; detail balance 50000 |
-| Isolation | Pass — unknown invoice **404**; other studentId **403** |
-| Parent cannot manage | Pass — parent POST issue → **403** |
-| MoMo blocked | Pass — PAY-PROVIDER-001 banners; no pay UI |
-| Residual | `/auth/me` `roles` empty (perms OK); GUI clicks not run (no browser MCP) |
+| Check                         | Result                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| db:migrate                    | Pass (no pending)                                                        |
+| seed:admin + seed:parent-demo | Pass (bound guardian …022 ↔ parent …020)                                 |
+| Bind picker                   | Pass — `GET /users` includes parent; guardian page HTTP 200              |
+| Parent login → `/parent`      | Pass — login 200; `prefersParentHome` via perms; `/parent` HTTP 200      |
+| Linked student                | Pass — active link to student …023                                       |
+| Invoice path                  | Pass — issued invoice; parent list n=1; detail balance 50000             |
+| Isolation                     | Pass — unknown invoice **404**; other studentId **403**                  |
+| Parent cannot manage          | Pass — parent POST issue → **403**                                       |
+| MoMo blocked                  | Pass — PAY-PROVIDER-001 banners; no pay UI                               |
+| Residual                      | `/auth/me` `roles` empty (perms OK); GUI clicks not run (no browser MCP) |
 
 ## Doubt checks
 
-| Check | Answer |
-| ----- | ------ |
-| Admin bind without UUID paste? | Yes — picker primary |
-| Seed+migrate demo &lt;15 min? | Yes, after seed:admin |
+| Check                             | Answer                |
+| --------------------------------- | --------------------- |
+| Admin bind without UUID paste?    | Yes — picker primary  |
+| Seed+migrate demo &lt;15 min?     | Yes, after seed:admin |
 | Parent see other student invoice? | **No** — live 404/403 |
-| MoMo blocked? | Yes |
+| MoMo blocked?                     | Yes                   |
 
 ## Verification
 

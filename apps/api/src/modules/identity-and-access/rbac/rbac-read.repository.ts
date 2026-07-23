@@ -31,8 +31,9 @@ export class RbacReadRepository {
 
   /**
    * Roles assigned to user in tenant **only if** membership is active.
-   * Matches MembershipAwarePermissionSource / app.user_permission_codes gate so
-   * `/auth/me` roles[] and permissions[] cannot diverge after revoke.
+   * Membership gate uses `app.user_has_active_membership` (SECURITY DEFINER), matching
+   * `app.user_permission_codes`, so `/auth/me` roles[] and permissions[] cannot diverge
+   * after revoke and are not blocked by direct `tenant_memberships` RLS joins.
    * Fail-closed: invalid ids / no pool / errors → empty list (warn on DB errors).
    */
   async listRolesForUser(
@@ -55,12 +56,9 @@ export class RbacReadRepository {
            INNER JOIN roles r
              ON r.id = ur.role_id
             AND r.tenant_id = ur.tenant_id
-           INNER JOIN tenant_memberships tm
-             ON tm.tenant_id = ur.tenant_id
-            AND tm.user_id = ur.user_id
-            AND tm.status = 'active'
            WHERE ur.tenant_id = $1::uuid
              AND ur.user_id = $2::uuid
+             AND app.user_has_active_membership($1::uuid)
            ORDER BY r.code ASC`,
           [tenantId, userId],
         );

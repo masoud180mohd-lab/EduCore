@@ -23,12 +23,12 @@ describe('RbacReadRepository', () => {
     expect(connect).not.toHaveBeenCalled();
   });
 
-  it('SQL requires active tenant_memberships (membership gate)', async () => {
+  it('SQL requires active membership via DEFINER helper (membership gate)', async () => {
     // withTenantTransaction issues BEGIN/GUC/COMMIT queries; only assert the roles SELECT.
     const query = vi.fn().mockImplementation((sql: string) => {
       if (typeof sql === 'string' && sql.includes('user_roles')) {
-        expect(sql).toMatch(/tenant_memberships/i);
-        expect(sql).toMatch(/status\s*=\s*'active'/i);
+        expect(sql).toMatch(/user_has_active_membership/i);
+        expect(sql).not.toMatch(/tenant_memberships/i);
         return Promise.resolve({
           rows: [{ code: 'staff', name: 'Staff', is_system: true }],
         });
