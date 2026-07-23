@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
@@ -133,6 +134,14 @@ export default function AdminGuardianDetailPage() {
           {[guardian.email, guardian.phone, guardian.status].filter(Boolean).join(' · ')}
         </p>
       ) : null}
+      <p>
+        <Link
+          className="btn btn-secondary"
+          href={`/t/${tenantId}/admin/guardians/${guardianId}/fees`}
+        >
+          View fees (read-only)
+        </Link>
+      </p>
       {error !== null ? (
         <div className="banner banner-error" role="alert">
           {error}

@@ -106,7 +106,7 @@ Same as DSF-001/002: Bearer + `X-Tenant-Id` in `sessionStorage`. Mutations use `
 ## Non-goals
 
 - Real MoMo / production provider (PAY-PROVIDER-001)
-- Parent portal pay UI
+- Parent portal pay UI — **parent/guardian fees visibility → DSF-005 (IMP-011)**
 - Gateway initiate → pending → complete / Fake webhook operator console
 - Multi-currency beyond TZS; writable balance fields
 - Claiming reconcile mutates ledger or payment status (outcome is compare-only)
