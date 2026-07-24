@@ -38,12 +38,17 @@ export type PatchUserResult = {
   readonly data: User;
 };
 
+export type DisableUserResult = {
+  readonly data: User;
+};
+
 const USER_STATUSES = new Set(['invited', 'active', 'disabled', 'locked']);
 const PATCH_ROUTE_PREFIX = '/api/v1/users/';
+const DISABLE_ROUTE_SUFFIX = '/disable';
 
 /**
  * Product API for users visible in the bound tenant (via tenant memberships).
- * GET list/detail; PATCH displayName (P17: user.manage OR self).
+ * GET list/detail; PATCH displayName (P17); disable (IMP-016).
  */
 @Injectable()
 export class UsersService {
@@ -269,6 +274,106 @@ export class UsersService {
         throw AppError.validation('Invalid displayName.');
       }
       throw new AppError('INTERNAL_ERROR', 'Failed to update user.');
+    }
+  }
+
+  /**
+   * POST /users/:id/disable — status → disabled (user.manage).
+   * Rejects self-disable. Target must be visible (active membership). Idempotent.
+   * Idempotency-Key optional.
+   */
+  async disableForTenant(
+    actorUserId: string,
+    tenantId: string,
+    targetUserId: string,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<DisableUserResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(targetUserId)) {
+      throw AppError.notFound('User not found.');
+    }
+
+    if (actorUserId.toLowerCase() === targetUserId.toLowerCase()) {
+      throw AppError.forbidden('Cannot disable your own account.');
+    }
+
+    const allowed = await this.policy.hasPermission(actorUserId, tenantId, 'user.manage');
+    if (!allowed) {
+      throw AppError.forbidden('Missing required permission.', { permission: 'user.manage' });
+    }
+
+    const bodyJson = '{}';
+    const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
+    if (optionalKey !== undefined && this.idempotency !== null) {
+      const key = assertIdempotencyKey(optionalKey);
+      const scopeKey = buildIdempotencyScopeKey(
+        {
+          actorUserId,
+          tenantId,
+          method: 'POST',
+          route: `${PATCH_ROUTE_PREFIX}${targetUserId}${DISABLE_ROUTE_SUFFIX}`,
+        },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) {
+        return JSON.parse(replay.responseBody) as DisableUserResult;
+      }
+
+      const result = await this.executeDisable(actorUserId, tenantId, targetUserId, correlationId);
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executeDisable(actorUserId, tenantId, targetUserId, correlationId);
+  }
+
+  private async executeDisable(
+    actorUserId: string,
+    tenantId: string,
+    targetUserId: string,
+    correlationId: string,
+  ): Promise<DisableUserResult> {
+    if (!this.users.isAvailable()) {
+      throw AppError.notFound('User not found.');
+    }
+
+    try {
+      const user = await this.users.disableForTenant(actorUserId, tenantId, targetUserId);
+      if (user === null) {
+        throw AppError.notFound('User not found.');
+      }
+
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: 'user.disable',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'user',
+          resourceId: targetUserId,
+        });
+      }
+
+      return { data: user };
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to disable user.');
     }
   }
 }

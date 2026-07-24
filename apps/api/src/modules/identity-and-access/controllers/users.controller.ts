@@ -3,8 +3,10 @@ import {
   Controller,
   Get,
   Headers,
+  HttpCode,
   Param,
   Patch,
+  Post,
   Query,
   Req,
   UseGuards,
@@ -35,12 +37,13 @@ type AuthedRequest = Request & {
 };
 
 /**
- * Product users surface (solo-operator gated patch).
+ * Product users surface (ACF-001).
  *
- * GET   /api/v1/users      — list (user.read)
- * GET   /api/v1/users/:id  — detail (user.read)
- * PATCH /api/v1/users/:id  — displayName (user.manage OR self) — IMP-001 P17
- * No POST/DELETE/disable.
+ * GET   /api/v1/users           — list (user.read)
+ * GET   /api/v1/users/:id       — detail (user.read)
+ * PATCH /api/v1/users/:id       — displayName (user.manage OR self) — P17
+ * POST  /api/v1/users/:id/disable — disable (user.manage) — IMP-016
+ * No POST create / DELETE (invite via memberships).
  *
  * List query: limit, cursor, status, search.
  * List response: { data, page: { nextCursor, limit } }.
@@ -74,6 +77,35 @@ export class UsersController {
       status,
       search,
     });
+  }
+
+  @Post(':id/disable')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('user.manage'))
+  async disable(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    return this.usersService.disableForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
+      idempotencyKey,
+      correlationId,
+    );
   }
 
   @Get(':id')

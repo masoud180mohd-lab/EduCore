@@ -1,6 +1,6 @@
 /**
  * Organizations (RLS Pattern A).
- * Read: direct SELECT. Create (P16): SECURITY DEFINER app.create_organization.
+ * Read: direct SELECT. Writes: SECURITY DEFINER create/update/deactivate.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -238,6 +238,139 @@ export class OrganizationsRepository {
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'OrganizationsRepository', error, {
         operation: 'createForTenant',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Partial update via SECURITY DEFINER helper.
+   * Returns null when missing/cross-tenant. Throws on unique violation / missing parent.
+   */
+  async updateForTenant(
+    actorUserId: string,
+    tenantId: string,
+    organizationId: string,
+    input: {
+      readonly setName: boolean;
+      readonly name: string | undefined;
+      readonly setCode: boolean;
+      readonly code: string | null | undefined;
+      readonly setParent: boolean;
+      readonly parentOrganizationId: string | null | undefined;
+    },
+  ): Promise<OrganizationRow | null> {
+    if (
+      !isUuid(actorUserId) ||
+      !isUuid(tenantId) ||
+      !isUuid(organizationId) ||
+      this.pool === null
+    ) {
+      return null;
+    }
+    if (
+      input.setParent &&
+      input.parentOrganizationId !== undefined &&
+      input.parentOrganizationId !== null &&
+      !isUuid(input.parentOrganizationId)
+    ) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            org_type: string;
+            name: string;
+            code: string | null;
+            status: string;
+            parent_organization_id: string | null;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, tenant_id, org_type, name, code, status,
+                    parent_organization_id, created_at, updated_at
+             FROM app.update_organization(
+               $1::uuid, $2::uuid, $3::uuid,
+               $4::boolean, $5::text,
+               $6::boolean, $7::text,
+               $8::boolean, $9::uuid
+             )`,
+            [
+              actorUserId,
+              tenantId,
+              organizationId,
+              input.setName,
+              input.name ?? null,
+              input.setCode,
+              input.setCode ? (input.code ?? null) : null,
+              input.setParent,
+              input.setParent ? (input.parentOrganizationId ?? null) : null,
+            ],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapOrganizationRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'OrganizationsRepository', error, {
+        operation: 'updateForTenant',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Deactivate (status → inactive) via SECURITY DEFINER. Idempotent.
+   * Returns null when missing/cross-tenant.
+   */
+  async deactivateForTenant(
+    actorUserId: string,
+    tenantId: string,
+    organizationId: string,
+  ): Promise<OrganizationRow | null> {
+    if (
+      !isUuid(actorUserId) ||
+      !isUuid(tenantId) ||
+      !isUuid(organizationId) ||
+      this.pool === null
+    ) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            org_type: string;
+            name: string;
+            code: string | null;
+            status: string;
+            parent_organization_id: string | null;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, tenant_id, org_type, name, code, status,
+                    parent_organization_id, created_at, updated_at
+             FROM app.deactivate_organization($1::uuid, $2::uuid, $3::uuid)`,
+            [actorUserId, tenantId, organizationId],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapOrganizationRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'OrganizationsRepository', error, {
+        operation: 'deactivateForTenant',
       });
       throw error;
     }

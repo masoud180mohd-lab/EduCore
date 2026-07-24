@@ -8,6 +8,7 @@ import {
   buildIdempotencyScopeKey,
   hashRequestBody,
   IDEMPOTENCY_STORE,
+  parseIdempotencyKey,
   resolveIdempotentReplay,
   type IdempotencyStore,
 } from '../../../common/idempotency/index.js';
@@ -37,14 +38,24 @@ export type CreateOrganizationResult = {
   readonly data: Organization;
 };
 
+export type PatchOrganizationResult = {
+  readonly data: Organization;
+};
+
+export type DeactivateOrganizationResult = {
+  readonly data: Organization;
+};
+
 const ORG_STATUSES = new Set(['active', 'inactive']);
 const ORG_TYPES = new Set(['school', 'campus', 'department']);
 const CREATE_ROUTE = '/api/v1/organizations';
+const PATCH_ROUTE_PREFIX = '/api/v1/organizations/';
+const DEACTIVATE_ROUTE_SUFFIX = '/deactivate';
 const CODE_PATTERN = /^[a-z0-9-]{2,64}$/;
 
 /**
  * Product API for organizations in the bound tenant.
- * GET list/detail; POST create (P16).
+ * GET list/detail; POST create (P16); PATCH + deactivate (IMP-016).
  */
 @Injectable()
 export class OrganizationsService {
@@ -247,7 +258,241 @@ export class OrganizationsService {
       throw new AppError('INTERNAL_ERROR', 'Failed to create organization.');
     }
   }
+
+  /**
+   * PATCH /organizations/:id — partial update (organization.manage).
+   * Fields: name, code (null clears), parentOrganizationId (null clears).
+   * Idempotency-Key optional.
+   */
+  async patchForTenant(
+    actorUserId: string,
+    tenantId: string,
+    organizationId: string,
+    rawBody: unknown,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<PatchOrganizationResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(organizationId)) {
+      throw AppError.notFound('Organization not found.');
+    }
+
+    const parsed = parsePatchOrganizationRequest(rawBody);
+    const bodyJson = JSON.stringify({
+      ...(parsed.setName ? { name: parsed.name } : {}),
+      ...(parsed.setCode ? { code: parsed.code } : {}),
+      ...(parsed.setParent ? { parentOrganizationId: parsed.parentOrganizationId } : {}),
+    });
+
+    const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
+    if (optionalKey !== undefined && this.idempotency !== null) {
+      const key = assertIdempotencyKey(optionalKey);
+      const scopeKey = buildIdempotencyScopeKey(
+        {
+          actorUserId,
+          tenantId,
+          method: 'PATCH',
+          route: `${PATCH_ROUTE_PREFIX}${organizationId}`,
+        },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) {
+        return JSON.parse(replay.responseBody) as PatchOrganizationResult;
+      }
+
+      const result = await this.executePatch(
+        actorUserId,
+        tenantId,
+        organizationId,
+        parsed,
+        correlationId,
+      );
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executePatch(actorUserId, tenantId, organizationId, parsed, correlationId);
+  }
+
+  /**
+   * POST /organizations/:id/deactivate — status → inactive (organization.manage).
+   * Idempotent. Idempotency-Key optional.
+   */
+  async deactivateForTenant(
+    actorUserId: string,
+    tenantId: string,
+    organizationId: string,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<DeactivateOrganizationResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(organizationId)) {
+      throw AppError.notFound('Organization not found.');
+    }
+
+    const bodyJson = '{}';
+    const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
+    if (optionalKey !== undefined && this.idempotency !== null) {
+      const key = assertIdempotencyKey(optionalKey);
+      const scopeKey = buildIdempotencyScopeKey(
+        {
+          actorUserId,
+          tenantId,
+          method: 'POST',
+          route: `${PATCH_ROUTE_PREFIX}${organizationId}${DEACTIVATE_ROUTE_SUFFIX}`,
+        },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) {
+        return JSON.parse(replay.responseBody) as DeactivateOrganizationResult;
+      }
+
+      const result = await this.executeDeactivate(
+        actorUserId,
+        tenantId,
+        organizationId,
+        correlationId,
+      );
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executeDeactivate(actorUserId, tenantId, organizationId, correlationId);
+  }
+
+  private async executePatch(
+    actorUserId: string,
+    tenantId: string,
+    organizationId: string,
+    parsed: ParsedOrganizationPatch,
+    correlationId: string,
+  ): Promise<PatchOrganizationResult> {
+    if (!this.organizations.isAvailable()) {
+      throw AppError.notFound('Organization not found.');
+    }
+
+    try {
+      const org = await this.organizations.updateForTenant(actorUserId, tenantId, organizationId, {
+        setName: parsed.setName,
+        name: parsed.name,
+        setCode: parsed.setCode,
+        code: parsed.code,
+        setParent: parsed.setParent,
+        parentOrganizationId: parsed.parentOrganizationId,
+      });
+      if (org === null) {
+        throw AppError.notFound('Organization not found.');
+      }
+
+      if (this.audit !== null) {
+        const fields: string[] = [];
+        if (parsed.setName) fields.push('name');
+        if (parsed.setCode) fields.push('code');
+        if (parsed.setParent) fields.push('parentOrganizationId');
+        await this.audit.publish({
+          action: 'organization.patch',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'organization',
+          resourceId: organizationId,
+          metadata: { fields },
+        });
+      }
+
+      return { data: org };
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      if (isPgUniqueViolation(error)) {
+        throw new AppError('CONFLICT', 'Organization code already exists in this tenant.');
+      }
+      if (isParentNotFound(error)) {
+        throw AppError.notFound('Parent organization not found.');
+      }
+      if (isPgInvalidParameter(error)) {
+        throw AppError.validation('Invalid organization payload.');
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to update organization.');
+    }
+  }
+
+  private async executeDeactivate(
+    actorUserId: string,
+    tenantId: string,
+    organizationId: string,
+    correlationId: string,
+  ): Promise<DeactivateOrganizationResult> {
+    if (!this.organizations.isAvailable()) {
+      throw AppError.notFound('Organization not found.');
+    }
+
+    try {
+      const org = await this.organizations.deactivateForTenant(
+        actorUserId,
+        tenantId,
+        organizationId,
+      );
+      if (org === null) {
+        throw AppError.notFound('Organization not found.');
+      }
+
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: 'organization.deactivate',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'organization',
+          resourceId: organizationId,
+        });
+      }
+
+      return { data: org };
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to deactivate organization.');
+    }
+  }
 }
+
+type ParsedOrganizationPatch = {
+  setName: boolean;
+  name: string | undefined;
+  setCode: boolean;
+  code: string | null | undefined;
+  setParent: boolean;
+  parentOrganizationId: string | null | undefined;
+};
 
 function parseStatusFilter(raw: unknown): 'active' | 'inactive' | undefined {
   if (raw === undefined || raw === null || raw === '') {
@@ -332,6 +577,80 @@ export function parseCreateOrganizationRequest(raw: unknown): {
     code,
     parentOrganizationId,
   };
+}
+
+/**
+ * UpdateOrganizationRequest: optional name, code, parentOrganizationId (nullable).
+ * At least one field required. Unknown keys rejected. No orgType/status.
+ */
+export function parsePatchOrganizationRequest(raw: unknown): ParsedOrganizationPatch {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw AppError.validation('Body must be a JSON object.');
+  }
+  const body = raw as Record<string, unknown>;
+  const allowed = new Set(['name', 'code', 'parentOrganizationId']);
+  for (const key of Object.keys(body)) {
+    if (!allowed.has(key)) {
+      throw AppError.validation(`Unknown field: ${key}.`, { field: key });
+    }
+  }
+
+  let setName = false;
+  let name: string | undefined;
+  if (Object.prototype.hasOwnProperty.call(body, 'name')) {
+    setName = true;
+    if (typeof body['name'] !== 'string') {
+      throw AppError.validation('name must be a string.', { field: 'name' });
+    }
+    name = body['name'].trim();
+    if (name.length < 1 || name.length > 200) {
+      throw AppError.validation('name must be 1–200 characters.', { field: 'name' });
+    }
+  }
+
+  let setCode = false;
+  let code: string | null | undefined;
+  if (Object.prototype.hasOwnProperty.call(body, 'code')) {
+    setCode = true;
+    if (body['code'] === null) {
+      code = null;
+    } else if (typeof body['code'] === 'string') {
+      const trimmed = body['code'].trim();
+      if (trimmed === '') {
+        code = null;
+      } else if (!CODE_PATTERN.test(trimmed)) {
+        throw AppError.validation('code must match ^[a-z0-9-]{2,64}$.', { field: 'code' });
+      } else {
+        code = trimmed;
+      }
+    } else {
+      throw AppError.validation('code must be a string or null.', { field: 'code' });
+    }
+  }
+
+  let setParent = false;
+  let parentOrganizationId: string | null | undefined;
+  if (Object.prototype.hasOwnProperty.call(body, 'parentOrganizationId')) {
+    setParent = true;
+    if (body['parentOrganizationId'] === null) {
+      parentOrganizationId = null;
+    } else if (
+      typeof body['parentOrganizationId'] === 'string' &&
+      isUuid(body['parentOrganizationId'])
+    ) {
+      parentOrganizationId = body['parentOrganizationId'];
+    } else {
+      throw AppError.validation('parentOrganizationId must be a uuid or null.', {
+        field: 'parentOrganizationId',
+      });
+    }
+  }
+
+  if (!setName && !setCode && !setParent) {
+    throw AppError.validation('At least one of name, code, parentOrganizationId is required.');
+  }
+
+  return { setName, name, setCode, code, setParent, parentOrganizationId };
 }
 
 function isPgUniqueViolation(error: unknown): boolean {

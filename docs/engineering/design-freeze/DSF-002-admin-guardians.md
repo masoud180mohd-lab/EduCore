@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                                |
-| --------- | -------------------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                            |
-| Version   | `1.4`                                                                |
-| Date      | 2026-07-25                                                           |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet)          |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                             |
-| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · **IMP-015** (Admin Students) |
+| Field     | Value                                                                            |
+| --------- | -------------------------------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                                        |
+| Version   | `1.5`                                                                            |
+| Date      | 2026-07-25                                                                       |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet)                      |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                         |
+| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · **IMP-016** (Admin Users/Orgs) |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -32,8 +32,8 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 1. **Login routing** — after bind, `/auth/me` decides admin vs teacher home
 2. **Admin home** — school name + short links (Users, Orgs, Students, Guardians, **Academic**, Fees, Settings)
-3. **Users list** — `GET /users` (search optional)
-4. **Organizations list** — `GET /organizations`
+3. **Users list + invite + edit detail** — `GET /users` (search optional); invite via `POST /memberships`; detail `PATCH` displayName + `POST …/disable` (ACF-001). No Roles Admin.
+4. **Organizations list + create + edit detail** — `GET/POST /organizations`; detail `PATCH` + `POST …/deactivate` (ACF-001). No org DELETE.
 5. **Students list + create + edit detail** — `GET/POST /students`, `GET/PATCH /students/{id}` (ACF-002). No student DELETE in UI.
 6. **Tenant settings read** — `GET /tenant-settings`
 7. **Guardians list** — `GET /guardians`
@@ -49,6 +49,8 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - `ResourceList` pattern (loading / empty / error / forbidden)
 - Guardian form (displayName, optional phone/email)
 - Student create/edit forms (displayName, optional studentCode, status default **active**)
+- Org create/edit forms (orgType, name, optional code/parent); deactivate confirm on detail
+- User invite form (email, optional displayName, roleCodes owner|admin|staff); detail edit displayName + disable confirm
 - Link-student control (student picker + relationship type)
 - Academic create forms (name, optional code/dates, status default **active**)
 - Academic detail edit forms (name/code/dates/status; confirm when status → `closed`)
@@ -60,7 +62,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 - Unbound tenant → `/login`
 - 401 → Sign in again
-- 403 → “You do not have access for this action.” (academic: `academic.read` / `academic.manage`; students: `student.read` / `student.manage`)
+- 403 → “You do not have access for this action.” (academic: `academic.read` / `academic.manage`; students: `student.read` / `student.manage`; orgs: `organization.manage`; users: `user.invite` / `user.manage`)
 - Staff without admin perms → teacher shell only (no admin nav)
 
 ## Non-goals

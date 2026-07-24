@@ -11,7 +11,7 @@ function read(rel: string): string {
 }
 
 describe('IMP-001 P6–P9 product read increments (structural)', () => {
-  it('registers organizations list + get + create POST (P16) without patch/deactivate', () => {
+  it('registers organizations list + get + create + patch + deactivate (IMP-016)', () => {
     const ctrl = read(
       'apps/api/src/modules/tenant-and-billing/controllers/organizations.controller.ts',
     );
@@ -19,10 +19,11 @@ describe('IMP-001 P6–P9 product read increments (structural)', () => {
     expect(ctrl).toContain('@Get()');
     expect(ctrl).toContain('@Post()');
     expect(ctrl).toContain("@Get(':id')");
+    expect(ctrl).toContain("@Patch(':id')");
+    expect(ctrl).toContain("@Post(':id/deactivate')");
     expect(ctrl).toContain("RequirePermission('organization.read')");
     expect(ctrl).toContain("RequirePermission('organization.manage')");
-    expect(ctrl).not.toMatch(/@(Put|Patch|Delete)\(/);
-    expect(ctrl).not.toMatch(/async\s+deactivate\s*\(/);
+    expect(ctrl).not.toMatch(/@(Delete)\(/);
   });
 
   it('registers tenant-settings get + put (P14) without patch/delete', () => {
@@ -53,16 +54,18 @@ describe('IMP-001 P6–P9 product read increments (structural)', () => {
     expect(ctrl).not.toMatch(/async\s+remove\s*\(/);
   });
 
-  it('registers users list + get + patch (P17) without create/disable', () => {
+  it('registers users list + get + patch + disable (IMP-016) without create', () => {
     const ctrl = read('apps/api/src/modules/identity-and-access/controllers/users.controller.ts');
     expect(ctrl).toContain("@Controller('api/v1/users')");
     expect(ctrl).toContain('@Get()');
     expect(ctrl).toContain("@Get(':id')");
     expect(ctrl).toContain("@Patch(':id')");
+    expect(ctrl).toContain("@Post(':id/disable')");
     expect(ctrl).toContain("RequirePermission('user.read')");
+    expect(ctrl).toContain("RequirePermission('user.manage')");
     expect(ctrl).toContain('RequireActiveMembershipGuard');
-    expect(ctrl).not.toMatch(/@(Post|Put|Delete)\(/);
-    expect(ctrl).not.toMatch(/async\s+disable\s*\(/);
+    expect(ctrl).not.toMatch(/@(Put|Delete)\(/);
+    expect(ctrl).not.toMatch(/async\s+create\s*\(/);
   });
 
   it('uses shared cursor pagination helper on list services', () => {

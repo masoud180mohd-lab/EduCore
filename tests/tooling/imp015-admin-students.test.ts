@@ -7,12 +7,12 @@ import { describe, expect, it } from 'vitest';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
 describe('IMP-015 admin students UI', () => {
-  it('DSF-002 v1.4 documents students create + edit', () => {
+  it('DSF-002 documents students create + edit', () => {
     const dsf = readFileSync(
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.4/);
+    expect(dsf).toMatch(/1\.[45]/);
     expect(dsf).toContain('IMP-015');
     expect(dsf).toMatch(/Students list \+ create \+ edit|create\/edit forms/i);
   });

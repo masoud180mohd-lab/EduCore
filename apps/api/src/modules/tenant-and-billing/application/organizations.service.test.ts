@@ -296,3 +296,97 @@ describe('OrganizationsService.createForTenant', () => {
     ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 });
+
+describe('OrganizationsService.patchForTenant', () => {
+  const corr = 'corr-org-patch';
+
+  it('patches name and audits', async () => {
+    const updated = { ...orgA, name: 'Renamed School' };
+    const organizations = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new OrganizationsService(organizations as never, null, audit);
+    await expect(
+      service.patchForTenant(
+        userId,
+        tenantId,
+        orgA.id,
+        { name: 'Renamed School' },
+        undefined,
+        corr,
+      ),
+    ).resolves.toEqual({ data: updated });
+    expect(organizations.updateForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      orgA.id,
+      expect.objectContaining({ setName: true, name: 'Renamed School' }),
+    );
+    expect(audit.events[0]).toMatchObject({ action: 'organization.patch', outcome: 'success' });
+  });
+
+  it('rejects empty patch body', async () => {
+    const organizations = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new OrganizationsService(organizations as never);
+    await expect(
+      service.patchForTenant(userId, tenantId, orgA.id, {}, undefined, corr),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+
+  it('maps unique violation to CONFLICT', async () => {
+    const err = Object.assign(new Error('dup'), { code: '23505' });
+    const organizations = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockRejectedValue(err),
+    };
+    const service = new OrganizationsService(organizations as never);
+    await expect(
+      service.patchForTenant(userId, tenantId, orgA.id, { code: 'dup' }, undefined, corr),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+  });
+
+  it('returns 404 when org missing', async () => {
+    const organizations = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new OrganizationsService(organizations as never);
+    await expect(
+      service.patchForTenant(userId, tenantId, orgA.id, { name: 'X' }, undefined, corr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
+
+describe('OrganizationsService.deactivateForTenant', () => {
+  const corr = 'corr-org-deact';
+
+  it('deactivates and audits', async () => {
+    const inactive = { ...orgA, status: 'inactive' };
+    const organizations = {
+      isAvailable: () => true,
+      deactivateForTenant: vi.fn().mockResolvedValue(inactive),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new OrganizationsService(organizations as never, null, audit);
+    await expect(
+      service.deactivateForTenant(userId, tenantId, orgA.id, undefined, corr),
+    ).resolves.toEqual({ data: inactive });
+    expect(audit.events[0]).toMatchObject({
+      action: 'organization.deactivate',
+      outcome: 'success',
+    });
+  });
+
+  it('returns 404 when org missing', async () => {
+    const organizations = {
+      isAvailable: () => true,
+      deactivateForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new OrganizationsService(organizations as never);
+    await expect(
+      service.deactivateForTenant(userId, tenantId, orgA.id, undefined, corr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});

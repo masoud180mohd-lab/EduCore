@@ -150,13 +150,62 @@ describe('OrganizationsController', () => {
     expect(result).toEqual({ data: { id: 'o1', name: 'School A', status: 'active' } });
   });
 
-  it('documents list + create + getById only (no patch/deactivate)', () => {
+  it('patches organization for bound tenant', async () => {
+    const orgId = '01900000-0000-7000-8000-0000000000a1';
+    const organizationsService = {
+      patchForTenant: vi.fn().mockResolvedValue({
+        data: { id: orgId, name: 'Renamed', status: 'active' },
+      }),
+    };
+    const controller = new OrganizationsController(organizationsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const body = { name: 'Renamed' };
+    const result = await controller.patch(request as never, orgId, body, 'idem-patch-key-01');
+    expect(organizationsService.patchForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      orgId,
+      body,
+      'idem-patch-key-01',
+      'unknown',
+    );
+    expect(result).toEqual({ data: { id: orgId, name: 'Renamed', status: 'active' } });
+  });
+
+  it('deactivates organization for bound tenant', async () => {
+    const orgId = '01900000-0000-7000-8000-0000000000a1';
+    const organizationsService = {
+      deactivateForTenant: vi.fn().mockResolvedValue({
+        data: { id: orgId, name: 'School A', status: 'inactive' },
+      }),
+    };
+    const controller = new OrganizationsController(organizationsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const result = await controller.deactivate(request as never, orgId, undefined);
+    expect(organizationsService.deactivateForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      orgId,
+      undefined,
+      'unknown',
+    );
+    expect(result).toEqual({ data: { id: orgId, name: 'School A', status: 'inactive' } });
+  });
+
+  it('documents list + create + get + patch + deactivate (no delete)', () => {
     const proto = OrganizationsController.prototype as unknown as Record<string, unknown>;
     expect(typeof proto['list']).toBe('function');
     expect(typeof proto['create']).toBe('function');
     expect(typeof proto['getById']).toBe('function');
-    expect(proto['update']).toBeUndefined();
-    expect(proto['patch']).toBeUndefined();
-    expect(proto['deactivate']).toBeUndefined();
+    expect(typeof proto['patch']).toBe('function');
+    expect(typeof proto['deactivate']).toBe('function');
+    expect(proto['remove']).toBeUndefined();
+    expect(proto['delete']).toBeUndefined();
   });
 });

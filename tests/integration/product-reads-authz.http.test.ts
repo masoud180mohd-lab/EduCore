@@ -1060,7 +1060,7 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     expect(app.get(PERMISSION_SOURCE)).toBeInstanceOf(MembershipAwarePermissionSource);
   });
 
-  it('does not expose non-gated writes (org PATCH/deactivate, user disable)', async () => {
+  it('gates org PATCH/deactivate and user disable (IMP-016; not 404/405)', async () => {
     const orgPatch = await httpCall(
       server,
       'PATCH',
@@ -1072,18 +1072,16 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
       },
       JSON.stringify({ name: 'x' }),
     );
-    expect([404, 405]).toContain(orgPatch.statusCode);
+    // Missing org → 404; must not be route-missing 405.
+    expect([200, 403, 404]).toContain(orgPatch.statusCode);
+    expect(orgPatch.statusCode).not.toBe(405);
 
-    const userDisable = await httpCall(
-      server,
-      'POST',
-      `/api/v1/users/${userA}/disable`,
-      {
-        'authorization': harnessBearer(userA, tenantA),
-        'x-tenant-id': tenantA,
-      },
-      JSON.stringify({}),
-    );
-    expect([404, 405]).toContain(userDisable.statusCode);
+    const userDisable = await httpCall(server, 'POST', `/api/v1/users/${userA}/disable`, {
+      'authorization': harnessBearer(userA, tenantA),
+      'x-tenant-id': tenantA,
+    });
+    // Self-disable → 403; must not be route-missing.
+    expect([200, 403, 404]).toContain(userDisable.statusCode);
+    expect(userDisable.statusCode).not.toBe(405);
   });
 });

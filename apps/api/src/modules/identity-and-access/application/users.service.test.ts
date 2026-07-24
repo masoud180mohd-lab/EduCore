@@ -310,3 +310,50 @@ describe('UsersService.patchForTenant', () => {
     expect(users.updateDisplayNameForTenant).toHaveBeenCalledOnce();
   });
 });
+
+describe('UsersService.disableForTenant', () => {
+  const corr = 'corr-user-disable';
+
+  it('disables other user with user.manage', async () => {
+    const disabled = { ...userA, status: 'disabled' };
+    const users = {
+      isAvailable: () => true,
+      disableForTenant: vi.fn().mockResolvedValue(disabled),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = makeService(users, policyAllowManage, null, audit);
+    await expect(
+      service.disableForTenant(actorId, tenantId, userA.id, undefined, corr),
+    ).resolves.toEqual({ data: disabled });
+    expect(policyAllowManage.hasPermission).toHaveBeenCalledWith(actorId, tenantId, 'user.manage');
+    expect(audit.events[0]).toMatchObject({ action: 'user.disable', outcome: 'success' });
+  });
+
+  it('rejects self-disable', async () => {
+    const users = { isAvailable: () => true, disableForTenant: vi.fn() };
+    const service = makeService(users, policyAllowManage);
+    await expect(
+      service.disableForTenant(userA.id, tenantId, userA.id, undefined, corr),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(users.disableForTenant).not.toHaveBeenCalled();
+  });
+
+  it('forbids without user.manage', async () => {
+    const users = { isAvailable: () => true, disableForTenant: vi.fn() };
+    const service = makeService(users, policyDenyManage);
+    await expect(
+      service.disableForTenant(actorId, tenantId, userA.id, undefined, corr),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+
+  it('returns 404 when target not visible', async () => {
+    const users = {
+      isAvailable: () => true,
+      disableForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = makeService(users, policyAllowManage);
+    await expect(
+      service.disableForTenant(actorId, tenantId, userA.id, undefined, corr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});

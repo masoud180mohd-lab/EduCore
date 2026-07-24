@@ -5,6 +5,7 @@ import {
   Headers,
   HttpCode,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -33,12 +34,14 @@ type AuthedRequest = Request & {
 };
 
 /**
- * Product organizations surface (solo-operator gated create).
+ * Product organizations surface (ACF-001).
  *
- * GET  /api/v1/organizations      — list (organization.read)
- * GET  /api/v1/organizations/:id  — detail (organization.read)
- * POST /api/v1/organizations      — create (organization.manage) — IMP-001 P16
- * No PATCH/DELETE/deactivate.
+ * GET    /api/v1/organizations              — list (organization.read)
+ * POST   /api/v1/organizations              — create (organization.manage) — P16
+ * GET    /api/v1/organizations/:id          — detail (organization.read)
+ * PATCH  /api/v1/organizations/:id          — update (organization.manage) — IMP-016
+ * POST   /api/v1/organizations/:id/deactivate — deactivate (organization.manage) — IMP-016
+ * No DELETE.
  *
  * List query: limit, cursor, status, orgType, search.
  * List response: { data, page: { nextCursor, limit } }.
@@ -99,6 +102,65 @@ export class OrganizationsController {
     return this.organizationsService.createForTenant(
       auth.userId,
       tenant.tenantId,
+      body,
+      idempotencyKey,
+      correlationId,
+    );
+  }
+
+  @Post(':id/deactivate')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('organization.manage'))
+  async deactivate(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    return this.organizationsService.deactivateForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
+      idempotencyKey,
+      correlationId,
+    );
+  }
+
+  @Patch(':id')
+  @UseGuards(RequirePermission('organization.manage'))
+  async patch(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    return this.organizationsService.patchForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
       body,
       idempotencyKey,
       correlationId,
