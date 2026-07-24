@@ -396,6 +396,45 @@ paths:
         notes: >-
           At least one of name, code, startsOn, endsOn, status. code null clears.
           Idempotency optional. Duplicate code → 409.
+    delete:
+      tags:
+        - AcademicYears
+      operationId: deleteAcademicYear
+      summary: Delete academic year
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/AcademicYearId'
+      responses:
+        '204':
+          description: Deleted (empty)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          No request body. No Idempotency-Key. Missing/cross-tenant → 404.
+          Dependent rows (terms, classes, enrollments, attendance, exams,
+          fee_structures, invoices) → 409 Conflict. No cascade.
   /terms:
     get:
       tags:
@@ -584,8 +623,47 @@ paths:
         permissionCodes:
           - academic.manage
         notes: >-
-          At least one of name, code, startsOn, endsOn, status. No academicYearId
-          reparent. Idempotency optional. Duplicate code → 409.
+          At least one of name, code, startsOn, endsOn, status, academicYearId.
+          academicYearId reparents to another year in the bound tenant (missing/
+          other-tenant target → 400). Idempotency optional. Duplicate code → 409.
+    delete:
+      tags:
+        - Terms
+      operationId: deleteTerm
+      summary: Delete term
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/TermId'
+      responses:
+        '204':
+          description: Deleted (empty)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          No request body. No Idempotency-Key. Missing/cross-tenant → 404.
+          Dependent rows (e.g. classes with termId set) → 409 Conflict. No cascade.
   /classes:
     get:
       tags:
@@ -778,8 +856,48 @@ paths:
         permissionCodes:
           - academic.manage
         notes: >-
-          At least one of name, code, status. No academicYearId/termId reparent.
-          Idempotency optional. Duplicate code → 409.
+          At least one of name, code, status, academicYearId, termId.
+          academicYearId reparents to another year in the bound tenant; termId
+          reparents to another term (null clears the term link). Missing/
+          other-tenant target → 400. Idempotency optional. Duplicate code → 409.
+    delete:
+      tags:
+        - Classes
+      operationId: deleteClass
+      summary: Delete class
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/ClassId'
+      responses:
+        '204':
+          description: Deleted (empty)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          No request body. No Idempotency-Key. Missing/cross-tenant → 404.
+          Dependent rows (streams, enrollments) → 409 Conflict. No cascade.
   /streams:
     get:
       tags:
@@ -968,8 +1086,47 @@ paths:
         permissionCodes:
           - academic.manage
         notes: >-
-          At least one of name, code, status. No classId reparent.
+          At least one of name, code, status, classId. classId reparents to
+          another class in the bound tenant (missing/other-tenant target → 400).
           Idempotency optional. Duplicate code → 409.
+    delete:
+      tags:
+        - Streams
+      operationId: deleteStream
+      summary: Delete stream
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/StreamId'
+      responses:
+        '204':
+          description: Deleted (empty)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          No request body. No Idempotency-Key. Missing/cross-tenant → 404.
+          Dependent rows (enrollments) → 409 Conflict. No cascade.
   /subjects:
     get:
       tags:
@@ -1156,6 +1313,45 @@ paths:
         notes: >-
           At least one of name, code, status. Idempotency optional.
           Duplicate code → 409.
+    delete:
+      tags:
+        - Subjects
+      operationId: deleteSubject
+      summary: Delete subject
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/SubjectId'
+      responses:
+        '204':
+          description: Deleted (empty)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          No request body. No Idempotency-Key. Missing/cross-tenant → 404.
+          Dependent rows (e.g. exam/marks records) → 409 Conflict. No cascade.
+          No reparent — subjects have no parent FK.
 components:
   securitySchemes:
     bearerAuth:
@@ -1617,6 +1813,8 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/AcademicLifecycleStatus'
+        academicYearId:
+          $ref: '#/components/schemas/Uuid'
     Class:
       type: object
       additionalProperties: false
@@ -1708,6 +1906,12 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/AcademicLifecycleStatus'
+        academicYearId:
+          $ref: '#/components/schemas/Uuid'
+        termId:
+          type: string
+          format: uuid
+          nullable: true
     Stream:
       type: object
       additionalProperties: false
@@ -1792,6 +1996,8 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/AcademicLifecycleStatus'
+        classId:
+          $ref: '#/components/schemas/Uuid'
     Subject:
       type: object
       additionalProperties: false

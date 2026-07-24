@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { InMemoryAuditPublisher } from '../../platform-operations/index.js';
 import { ClassesService } from './classes.service.js';
 
 const actorId = '01900000-0000-7000-8000-000000000001';
@@ -153,5 +154,112 @@ describe('ClassesService.patchForTenant', () => {
     await expect(
       service.patchForTenant(actorId, tenantId, classA.id, { status: 'active' }, undefined, 'c'),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('reparents to another academic year and term, passing flags to repo', async () => {
+    const newYearId = '01900000-0000-7000-8000-0000000000c9';
+    const newTermId = '01900000-0000-7000-8000-0000000000d9';
+    const updated = { ...classA, academicYearId: newYearId, termId: newTermId };
+    const classes = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const service = new ClassesService(classes as never);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        classA.id,
+        { academicYearId: newYearId, termId: newTermId },
+        undefined,
+        'c',
+      ),
+    ).resolves.toEqual({ data: updated });
+    expect(classes.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      classA.id,
+      expect.objectContaining({
+        setAcademicYearId: true,
+        academicYearId: newYearId,
+        setTermId: true,
+        termId: newTermId,
+      }),
+    );
+  });
+
+  it('clears termId when set to null', async () => {
+    const updated = { ...classA, termId: null };
+    const classes = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const service = new ClassesService(classes as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, classA.id, { termId: null }, undefined, 'c'),
+    ).resolves.toEqual({ data: updated });
+    expect(classes.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      classA.id,
+      expect.objectContaining({ setTermId: true, termId: null }),
+    );
+  });
+
+  it('rejects non-uuid academicYearId on patch', async () => {
+    const classes = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new ClassesService(classes as never);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        classA.id,
+        { academicYearId: 'bad' },
+        undefined,
+        'c',
+      ),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(classes.updateForTenant).not.toHaveBeenCalled();
+  });
+});
+
+describe('ClassesService.deleteForTenant', () => {
+  it('deletes when empty and audits', async () => {
+    const classes = { isAvailable: () => true, deleteForTenant: vi.fn().mockResolvedValue(true) };
+    const audit = new InMemoryAuditPublisher();
+    const service = new ClassesService(classes as never, null, audit);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, classA.id, 'c'),
+    ).resolves.toBeUndefined();
+    expect(classes.deleteForTenant).toHaveBeenCalledWith(actorId, tenantId, classA.id);
+    expect(audit.events[0]).toMatchObject({ action: 'class.delete', outcome: 'success' });
+  });
+
+  it('maps missing to 404', async () => {
+    const classes = { isAvailable: () => true, deleteForTenant: vi.fn().mockResolvedValue(false) };
+    const service = new ClassesService(classes as never);
+    await expect(service.deleteForTenant(actorId, tenantId, classA.id, 'c')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('maps has-dependents error to CONFLICT', async () => {
+    const classes = {
+      isAvailable: () => true,
+      deleteForTenant: vi.fn().mockRejectedValue({ code: 'P0001', message: 'has dependents' }),
+    };
+    const service = new ClassesService(classes as never);
+    await expect(service.deleteForTenant(actorId, tenantId, classA.id, 'c')).rejects.toMatchObject({
+      code: 'CONFLICT',
+    });
+  });
+
+  it('maps invalid id to 404 without repo call', async () => {
+    const classes = { isAvailable: () => true, deleteForTenant: vi.fn() };
+    const service = new ClassesService(classes as never);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, 'not-a-uuid', 'c'),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(classes.deleteForTenant).not.toHaveBeenCalled();
   });
 });

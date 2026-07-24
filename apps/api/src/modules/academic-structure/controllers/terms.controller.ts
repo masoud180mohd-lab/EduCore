@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   HttpCode,
@@ -39,8 +40,8 @@ type AuthedRequest = Request & {
  * GET   /api/v1/terms      — list (academic.read) — IMP-003-P3
  * POST  /api/v1/terms      — create (academic.manage) — IMP-003-P5
  * GET   /api/v1/terms/:id  — detail (academic.read) — IMP-003-P4
- * PATCH /api/v1/terms/:id  — partial update (academic.manage) — IMP-013
- * DELETE not supported.
+ * PATCH /api/v1/terms/:id  — partial update + reparent (academic.manage) — IMP-013/IMP-014
+ * DELETE /api/v1/terms/:id — delete when empty (academic.manage) — IMP-014
  *
  * List query: limit, cursor, academicYearId, status, search.
  * List response: { data, page: { nextCursor, limit } }.
@@ -152,5 +153,24 @@ export class TermsController {
       idempotencyKey,
       correlationId,
     );
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @UseGuards(RequirePermission('academic.manage'))
+  async remove(@Req() request: AuthedRequest, @Param('id') id: string): Promise<void> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    await this.termsService.deleteForTenant(auth.userId, tenant.tenantId, id, correlationId);
   }
 }

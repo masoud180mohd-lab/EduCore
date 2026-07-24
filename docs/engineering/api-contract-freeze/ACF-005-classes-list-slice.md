@@ -2,32 +2,34 @@
 
 ## Freeze status
 
-| Field               | Value                                                     |
-| ------------------- | --------------------------------------------------------- |
-| Freeze ID           | `ACF-005`                                                 |
-| Title               | API Contract Freeze — classes list + get + create + patch |
-| Version             | `1.3`                                                     |
-| Date                | 2026-07-24                                                |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)       |
-| Companion DB freeze | DBF-005 (+ create helper)                                 |
+| Field               | Value                                                              |
+| ------------------- | ------------------------------------------------------------------ |
+| Freeze ID           | `ACF-005`                                                          |
+| Title               | API Contract Freeze — classes list + get + create + patch + delete |
+| Version             | `1.4` (1.3 patch; 1.4 delete + reparent IMP-014)                   |
+| Date                | 2026-07-25                                                         |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                |
+| Companion DB freeze | DBF-005 (+ create helper)                                          |
 
 **Honesty qualifier:** Solo-operator provisional.
 
 ## Revision history
 
-| Version | Date       | Notes                           |
-| ------- | ---------- | ------------------------------- |
-| 1.0     | 2026-07-21 | List only (`listClasses`)       |
-| 1.1     | 2026-07-21 | `GET /classes/{id}` getClass    |
-| **1.2** | 2026-07-21 | `POST /classes` createClass     |
-| **1.3** | 2026-07-24 | `PATCH /classes/{id}` (IMP-013) |
+| Version | Date       | Notes                                                                          |
+| ------- | ---------- | ------------------------------------------------------------------------------ |
+| 1.0     | 2026-07-21 | List only (`listClasses`)                                                      |
+| 1.1     | 2026-07-21 | `GET /classes/{id}` getClass                                                   |
+| **1.2** | 2026-07-21 | `POST /classes` createClass                                                    |
+| **1.3** | 2026-07-24 | `PATCH /classes/{id}` (IMP-013)                                                |
+| **1.4** | 2026-07-25 | `DELETE /classes/{id}` + `academicYearId`/`termId` reparent on PATCH (IMP-014) |
 
 ## Scope
 
-| In scope                                 | Out of scope                               |
-| ---------------------------------------- | ------------------------------------------ |
-| GET list, GET detail, POST create, PATCH | DELETE; reparent year/term; streams/enroll |
-| academic.read / academic.manage          | class.* invention                          |
+| In scope                                              | Out of scope          |
+| ----------------------------------------------------- | --------------------- |
+| GET list, GET detail, POST create, PATCH, DELETE      | Cascade delete        |
+| Reparent `academicYearId`/`termId` on PATCH (rev 1.4) | streams / enrollments |
+| academic.read / academic.manage                       | class.* invention     |
 
 ## Endpoint: list
 
@@ -64,7 +66,7 @@ Parent term missing/wrong year/tenant → 400 on `termId`.
 Duplicate code → 409.  
 Audit: `class.create`.
 
-## Endpoint: patch (rev 1.3 / IMP-013)
+## Endpoint: patch (rev 1.3–1.4 / IMP-013, IMP-014)
 
 | Method | Path                        | AuthZ           | Idempotency  |
 | ------ | --------------------------- | --------------- | ------------ |
@@ -72,12 +74,21 @@ Audit: `class.create`.
 
 **operationId:** `patchClass`
 
-Allowlist (≥1): `name`, `code` (null/empty clears), `status`. No `academicYearId` / `termId` on PATCH.  
-404 missing/cross-tenant; 409 duplicate code. Audit: `class.patch`.
+Allowlist (≥1): `name`, `code` (null/empty clears), `status`, `academicYearId` (UUID, required when set — reparent to another year in the bound tenant, rev 1.4), `termId` (UUID or `null` — `null` clears the term link; reparent to a term in the bound tenant when set, rev 1.4).  
+404 missing/cross-tenant; 409 duplicate code; `academicYearId`/`termId` present but missing/other-tenant target → 400 `VALIDATION_ERROR`. Audit: `class.patch`.
+
+## Endpoint: delete (rev 1.4 / IMP-014)
+
+| Method | Path                        | AuthZ           | Idempotency |
+| ------ | --------------------------- | --------------- | ----------- |
+| DELETE | `/api/v1/classes/{classId}` | academic.manage | n/a         |
+
+**operationId:** `deleteClass`  
+Success **204** empty body. Missing/cross-tenant → **404**. Any dependent (e.g. streams, enrollments referencing this class) → **409** `CONFLICT`. No cascade.
 
 ## Acceptance (solo-operator)
 
-Signed 2026-07-21 (Backend / Security / Principal acting).
+Signed 2026-07-21 (Backend / Security / Principal acting). Delete + reparent (rev 1.4) accepted under the same solo-operator acting seats, 2026-07-25.
 
 ## Related
 

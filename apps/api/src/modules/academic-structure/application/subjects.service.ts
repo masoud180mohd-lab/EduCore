@@ -274,6 +274,60 @@ export class SubjectsService {
       throw new AppError('INTERNAL_ERROR', 'Failed to update subject.');
     }
   }
+
+  /**
+   * DELETE /subjects/:id — delete when empty (academic.manage) (IMP-014).
+   * Missing/cross-tenant/invalid id → 404. Dependents present → 409 CONFLICT.
+   */
+  async deleteForTenant(
+    actorUserId: string,
+    tenantId: string,
+    subjectId: string,
+    correlationId: string,
+  ): Promise<void> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    if (!isUuid(subjectId)) throw AppError.notFound('Subject not found.');
+    if (!this.subjects.isAvailable()) throw AppError.notFound('Subject not found.');
+
+    try {
+      const deleted = await this.subjects.deleteForTenant(actorUserId, tenantId, subjectId);
+      if (deleted === null || deleted === false) {
+        throw AppError.notFound('Subject not found.');
+      }
+
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: 'subject.delete',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'subject',
+          resourceId: subjectId,
+          metadata: {},
+        });
+      }
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      if (isPgHasDependents(error)) {
+        throw new AppError('CONFLICT', 'Cannot delete subject with dependents.');
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to delete subject.');
+    }
+  }
+}
+
+/** True for the P0001 'has dependents' raised by app.delete_* helpers (IMP-014). */
+function isPgHasDependents(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === 'P0001' &&
+    'message' in error &&
+    String((error as { message: unknown }).message).includes('has dependents')
+  );
 }
 
 type ParsedSubjectPatch = {

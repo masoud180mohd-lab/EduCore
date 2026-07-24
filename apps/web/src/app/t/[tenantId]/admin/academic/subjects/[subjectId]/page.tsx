@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
@@ -17,6 +17,7 @@ import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/
 export default function AdminSubjectDetailPage() {
   const params = useParams<{ tenantId: string; subjectId: string }>();
   const { tenantId, subjectId } = params;
+  const router = useRouter();
   const [row, setRow] = useState<SubjectRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -81,6 +82,25 @@ export default function AdminSubjectDetailPage() {
     }
   }
 
+  async function onDelete() {
+    const auth = readSession();
+    if (auth === null) return;
+    if (!window.confirm('Delete this subject? This only works if nothing depends on it.')) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    try {
+      await apiRequest<void>(`/api/v1/subjects/${subjectId}`, { method: 'DELETE', auth });
+      router.push(`/t/${tenantId}/admin/academic/subjects`);
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(academicMessage(err));
+      else setError('Could not delete subject.');
+      setBusy(false);
+    }
+  }
+
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
@@ -125,6 +145,14 @@ export default function AdminSubjectDetailPage() {
           <div className="muted">Id: {row.id}</div>
           <button className="btn btn-primary" type="submit" disabled={busy}>
             {busy ? 'Saving…' : 'Save changes'}
+          </button>
+          <button
+            className="btn btn-secondary"
+            type="button"
+            onClick={() => void onDelete()}
+            disabled={busy}
+          >
+            Delete
           </button>
         </form>
       ) : error === null ? (

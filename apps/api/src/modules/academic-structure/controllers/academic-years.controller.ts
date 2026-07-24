@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   HttpCode,
@@ -40,7 +41,7 @@ type AuthedRequest = Request & {
  * POST  /api/v1/academic-years      — create (academic.manage) — IMP-003-P2
  * GET   /api/v1/academic-years/:id  — detail (academic.read) — IMP-003-P1
  * PATCH /api/v1/academic-years/:id  — partial update (academic.manage) — IMP-013
- * DELETE not supported.
+ * DELETE /api/v1/academic-years/:id — delete when empty (academic.manage) — IMP-014
  *
  * List query: limit, cursor, status, search.
  * List response: { data, page: { nextCursor, limit } }.
@@ -148,6 +149,30 @@ export class AcademicYearsController {
       id,
       body,
       idempotencyKey,
+      correlationId,
+    );
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @UseGuards(RequirePermission('academic.manage'))
+  async remove(@Req() request: AuthedRequest, @Param('id') id: string): Promise<void> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    await this.academicYearsService.deleteForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
       correlationId,
     );
   }

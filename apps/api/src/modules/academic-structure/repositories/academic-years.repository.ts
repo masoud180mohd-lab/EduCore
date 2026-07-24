@@ -1,7 +1,7 @@
 /**
  * Academic years in the bound tenant (RLS Pattern A / DBF-003).
- * List (P0) + get-by-id (P1) + create (P2) + patch (IMP-013) via SECURITY DEFINER.
- * No DELETE.
+ * List (P0) + get-by-id (P1) + create (P2) + patch (IMP-013) + delete (IMP-014)
+ * via SECURITY DEFINER.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -349,6 +349,45 @@ export class AcademicYearsRepository {
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'AcademicYearsRepository', error, {
         operation: 'updateForTenant',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Delete via SECURITY DEFINER helper (IMP-014).
+   * Returns null for invalid ids / no pool. Returns false when missing/other-tenant.
+   * Returns true on success. Throws (P0001 'has dependents') for service → 409.
+   */
+  async deleteForTenant(
+    actorUserId: string,
+    tenantId: string,
+    academicYearId: string,
+  ): Promise<boolean | null> {
+    if (
+      !isUuid(actorUserId) ||
+      !isUuid(tenantId) ||
+      !isUuid(academicYearId) ||
+      this.pool === null
+    ) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{ deleted: boolean }>(
+            `SELECT app.delete_academic_year($1::uuid, $2::uuid, $3::uuid) AS deleted`,
+            [actorUserId, tenantId, academicYearId],
+          );
+          return result.rows[0]?.deleted ?? false;
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'AcademicYearsRepository', error, {
+        operation: 'deleteForTenant',
       });
       throw error;
     }

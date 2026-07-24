@@ -338,4 +338,94 @@ describe('TermsService.patchForTenant', () => {
       service.patchForTenant(actorId, tenantId, termA.id, { status: 'closed' }, undefined, corr),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
+
+  it('reparents to another academic year and passes flags to repo', async () => {
+    const newYearId = '01900000-0000-7000-8000-0000000000c2';
+    const updated = { ...termA, academicYearId: newYearId };
+    const terms = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new TermsService(terms as never, null, audit);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        termA.id,
+        { academicYearId: newYearId },
+        undefined,
+        corr,
+      ),
+    ).resolves.toEqual({ data: updated });
+    expect(terms.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      termA.id,
+      expect.objectContaining({ setAcademicYearId: true, academicYearId: newYearId }),
+    );
+    expect(audit.events[0]).toMatchObject({
+      action: 'term.patch',
+      metadata: { fields: ['academicYearId'] },
+    });
+  });
+
+  it('rejects non-uuid academicYearId on patch', async () => {
+    const terms = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new TermsService(terms as never);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        termA.id,
+        { academicYearId: 'not-a-uuid' },
+        undefined,
+        corr,
+      ),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(terms.updateForTenant).not.toHaveBeenCalled();
+  });
+});
+
+describe('TermsService.deleteForTenant', () => {
+  const corr = 'corr-term-delete';
+
+  it('deletes when empty and audits', async () => {
+    const terms = { isAvailable: () => true, deleteForTenant: vi.fn().mockResolvedValue(true) };
+    const audit = new InMemoryAuditPublisher();
+    const service = new TermsService(terms as never, null, audit);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, termA.id, corr),
+    ).resolves.toBeUndefined();
+    expect(terms.deleteForTenant).toHaveBeenCalledWith(actorId, tenantId, termA.id);
+    expect(audit.events[0]).toMatchObject({ action: 'term.delete', outcome: 'success' });
+  });
+
+  it('maps missing to 404', async () => {
+    const terms = { isAvailable: () => true, deleteForTenant: vi.fn().mockResolvedValue(false) };
+    const service = new TermsService(terms as never);
+    await expect(service.deleteForTenant(actorId, tenantId, termA.id, corr)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('maps has-dependents error to CONFLICT', async () => {
+    const terms = {
+      isAvailable: () => true,
+      deleteForTenant: vi.fn().mockRejectedValue({ code: 'P0001', message: 'has dependents' }),
+    };
+    const service = new TermsService(terms as never);
+    await expect(service.deleteForTenant(actorId, tenantId, termA.id, corr)).rejects.toMatchObject({
+      code: 'CONFLICT',
+    });
+  });
+
+  it('maps invalid id to 404 without repo call', async () => {
+    const terms = { isAvailable: () => true, deleteForTenant: vi.fn() };
+    const service = new TermsService(terms as never);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, 'not-a-uuid', corr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(terms.deleteForTenant).not.toHaveBeenCalled();
+  });
 });

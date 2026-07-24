@@ -1,11 +1,11 @@
 # Database Freeze — Streams (DBF-006)
 
-| Field     | Value                                                   |
-| --------- | ------------------------------------------------------- |
-| Freeze ID | `DBF-006`                                               |
-| Version   | `1.2` (1.0 list; 1.1 create; 1.2 update helper IMP-013) |
-| Date      | 2026-07-21                                              |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                |
+| Field     | Value                                                                                                          |
+| --------- | -------------------------------------------------------------------------------------------------------------- |
+| Freeze ID | `DBF-006`                                                                                                      |
+| Version   | `1.3` (1.0 list; 1.1 create; 1.2 update helper IMP-013; 1.3 delete helper + reparent on update helper IMP-014) |
+| Date      | 2026-07-21                                                                                                     |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                       |
 
 ## Table `streams`
 
@@ -23,6 +23,14 @@ Indexes: unique code per class; (tenant_id, class_id, status); (tenant_id, class
 List order: `name ASC, id ASC`.  
 RLS Pattern A; educore_app SELECT only.  
 Write: `app.create_stream` SECURITY DEFINER; parent class same tenant.
+
+### Delete helper (rev 1.3 / IMP-014)
+
+`app.delete_stream(actor, tenant, id)` SECURITY DEFINER; membership + `academic.manage`; tenant-scoped; `RAISE foreign_key_violation` (mapped 409) when dependent rows exist (enrollments). Table DELETE remains REVOKED. No cascade.
+
+### Reparent on update helper (rev 1.3 / IMP-014)
+
+`app.update_stream` extended to accept optional `classId`; when set, re-validates parent class same tenant (same rule as create). Table UPDATE remains REVOKED (helper only). DELETE product HTTP no longer excluded.
 
 ## Permission
 

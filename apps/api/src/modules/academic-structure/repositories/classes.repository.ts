@@ -1,6 +1,7 @@
 /**
  * Classes in the bound tenant (RLS Pattern A / DBF-005).
- * List (C0) + get-by-id (C1) + create (C2) + patch (IMP-013) via SECURITY DEFINER.
+ * List (C0) + get-by-id (C1) + create (C2) + patch/reparent (IMP-013/IMP-014)
+ * + delete (IMP-014) via SECURITY DEFINER.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -293,6 +294,10 @@ export class ClassesRepository {
       readonly code: string | null;
       readonly setStatus: boolean;
       readonly status: string | null;
+      readonly setAcademicYearId: boolean;
+      readonly academicYearId: string | null;
+      readonly setTermId: boolean;
+      readonly termId: string | null;
     },
   ): Promise<ClassRow | null> {
     if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(classId) || this.pool === null) {
@@ -321,7 +326,9 @@ export class ClassesRepository {
                $1::uuid, $2::uuid, $3::uuid,
                $4::boolean, $5::text,
                $6::boolean, $7::text,
-               $8::boolean, $9::text
+               $8::boolean, $9::text,
+               $10::boolean, $11::uuid,
+               $12::boolean, $13::uuid
              )`,
             [
               actorUserId,
@@ -333,6 +340,10 @@ export class ClassesRepository {
               patch.code,
               patch.setStatus,
               patch.status,
+              patch.setAcademicYearId,
+              patch.academicYearId,
+              patch.setTermId,
+              patch.termId,
             ],
           );
           const row = result.rows[0];
@@ -342,6 +353,40 @@ export class ClassesRepository {
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'ClassesRepository', error, {
         operation: 'updateForTenant',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Delete via SECURITY DEFINER helper (IMP-014).
+   * Returns null for invalid ids / no pool. Returns false when missing/other-tenant.
+   * Returns true on success. Throws (P0001 'has dependents') for service → 409.
+   */
+  async deleteForTenant(
+    actorUserId: string,
+    tenantId: string,
+    classId: string,
+  ): Promise<boolean | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(classId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{ deleted: boolean }>(
+            `SELECT app.delete_class($1::uuid, $2::uuid, $3::uuid) AS deleted`,
+            [actorUserId, tenantId, classId],
+          );
+          return result.rows[0]?.deleted ?? false;
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'ClassesRepository', error, {
+        operation: 'deleteForTenant',
       });
       throw error;
     }

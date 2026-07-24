@@ -42,6 +42,8 @@ export type PatchAcademicYearResult = {
   readonly data: AcademicYear;
 };
 
+export type DeleteAcademicYearResult = void;
+
 const ACADEMIC_YEAR_STATUSES = new Set(['draft', 'active', 'closed']);
 const CREATE_ROUTE = '/api/v1/academic-years';
 const PATCH_ROUTE_PREFIX = '/api/v1/academic-years/';
@@ -372,6 +374,62 @@ export class AcademicYearsService {
       throw new AppError('INTERNAL_ERROR', 'Failed to update academic year.');
     }
   }
+
+  /**
+   * DELETE /academic-years/:id — delete when empty (academic.manage) (IMP-014).
+   * Missing/cross-tenant/invalid id → 404. Dependents present → 409 CONFLICT.
+   */
+  async deleteForTenant(
+    actorUserId: string,
+    tenantId: string,
+    academicYearId: string,
+    correlationId: string,
+  ): Promise<void> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(academicYearId)) {
+      throw AppError.notFound('Academic year not found.');
+    }
+    if (!this.academicYears.isAvailable()) {
+      throw AppError.notFound('Academic year not found.');
+    }
+
+    try {
+      const deleted = await this.academicYears.deleteForTenant(
+        actorUserId,
+        tenantId,
+        academicYearId,
+      );
+      if (deleted === null || deleted === false) {
+        throw AppError.notFound('Academic year not found.');
+      }
+
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: 'academic_year.delete',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'academic_year',
+          resourceId: academicYearId,
+          metadata: {},
+        });
+      }
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      if (isPgHasDependents(error)) {
+        throw new AppError('CONFLICT', 'Cannot delete academic year with dependents.');
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to delete academic year.');
+    }
+  }
 }
 
 type ParsedAcademicYearPatch = {
@@ -605,5 +663,17 @@ function isPgCheckViolation(error: unknown): boolean {
     error !== null &&
     'code' in error &&
     (error as { code: string }).code === '23514'
+  );
+}
+
+/** True for the P0001 'has dependents' raised by app.delete_* helpers (IMP-014). */
+function isPgHasDependents(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === 'P0001' &&
+    'message' in error &&
+    String((error as { message: unknown }).message).includes('has dependents')
   );
 }

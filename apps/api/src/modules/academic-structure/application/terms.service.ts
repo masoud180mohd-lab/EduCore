@@ -291,6 +291,7 @@ export class TermsService {
       ...(parsed.setStartsOn ? { startsOn: parsed.startsOn } : {}),
       ...(parsed.setEndsOn ? { endsOn: parsed.endsOn } : {}),
       ...(parsed.setStatus ? { status: parsed.status } : {}),
+      ...(parsed.setAcademicYearId ? { academicYearId: parsed.academicYearId } : {}),
     });
 
     const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
@@ -347,6 +348,8 @@ export class TermsService {
         endsOn: parsed.endsOn,
         setStatus: parsed.setStatus,
         status: parsed.status,
+        setAcademicYearId: parsed.setAcademicYearId,
+        academicYearId: parsed.academicYearId,
       });
       if (term === null) {
         throw AppError.notFound('Term not found.');
@@ -379,6 +382,58 @@ export class TermsService {
       throw new AppError('INTERNAL_ERROR', 'Failed to update term.');
     }
   }
+
+  /**
+   * DELETE /terms/:id — delete when empty (academic.manage) (IMP-014).
+   * Missing/cross-tenant/invalid id → 404. Dependents present → 409 CONFLICT.
+   */
+  async deleteForTenant(
+    actorUserId: string,
+    tenantId: string,
+    termId: string,
+    correlationId: string,
+  ): Promise<void> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(termId)) {
+      throw AppError.notFound('Term not found.');
+    }
+    if (!this.terms.isAvailable()) {
+      throw AppError.notFound('Term not found.');
+    }
+
+    try {
+      const deleted = await this.terms.deleteForTenant(actorUserId, tenantId, termId);
+      if (deleted === null || deleted === false) {
+        throw AppError.notFound('Term not found.');
+      }
+
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: 'term.delete',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'term',
+          resourceId: termId,
+          metadata: {},
+        });
+      }
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      if (isPgHasDependents(error)) {
+        throw new AppError('CONFLICT', 'Cannot delete term with dependents.');
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to delete term.');
+    }
+  }
 }
 
 type ParsedTermPatch = {
@@ -392,6 +447,8 @@ type ParsedTermPatch = {
   endsOn: string | null;
   setStatus: boolean;
   status: string | null;
+  setAcademicYearId: boolean;
+  academicYearId: string | null;
   fields: string[];
 };
 
@@ -494,7 +551,7 @@ export function parsePatchTermRequest(raw: unknown): ParsedTermPatch {
     throw AppError.validation('Body must be a JSON object.');
   }
   const body = raw as Record<string, unknown>;
-  const allowed = new Set(['name', 'code', 'startsOn', 'endsOn', 'status']);
+  const allowed = new Set(['name', 'code', 'startsOn', 'endsOn', 'status', 'academicYearId']);
   for (const key of Object.keys(body)) {
     if (!allowed.has(key)) {
       throw AppError.validation(`Unknown field: ${key}.`, { field: key });
@@ -512,6 +569,8 @@ export function parsePatchTermRequest(raw: unknown): ParsedTermPatch {
   let endsOn: string | null = null;
   let setStatus = false;
   let status: string | null = null;
+  let setAcademicYearId = false;
+  let academicYearId: string | null = null;
 
   if (Object.prototype.hasOwnProperty.call(body, 'name')) {
     if (typeof body['name'] !== 'string') {
@@ -572,6 +631,15 @@ export function parsePatchTermRequest(raw: unknown): ParsedTermPatch {
     fields.push('status');
   }
 
+  if (Object.prototype.hasOwnProperty.call(body, 'academicYearId')) {
+    if (typeof body['academicYearId'] !== 'string' || !isUuid(body['academicYearId'])) {
+      throw AppError.validation('academicYearId must be a UUID.', { field: 'academicYearId' });
+    }
+    setAcademicYearId = true;
+    academicYearId = body['academicYearId'];
+    fields.push('academicYearId');
+  }
+
   if (fields.length === 0) {
     throw AppError.validation('At least one field is required for patch.');
   }
@@ -587,6 +655,8 @@ export function parsePatchTermRequest(raw: unknown): ParsedTermPatch {
     endsOn,
     setStatus,
     status,
+    setAcademicYearId,
+    academicYearId,
     fields,
   };
 }
@@ -633,6 +703,18 @@ function isPgCheckViolation(error: unknown): boolean {
     error !== null &&
     'code' in error &&
     (error as { code: string }).code === '23514'
+  );
+}
+
+/** True for the P0001 'has dependents' raised by app.delete_* helpers (IMP-014). */
+function isPgHasDependents(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === 'P0001' &&
+    'message' in error &&
+    String((error as { message: unknown }).message).includes('has dependents')
   );
 }
 

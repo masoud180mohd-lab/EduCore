@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import {
+  type ClassRow,
   type LifecycleStatus,
   type StreamRow,
   LIFECYCLE_STATUSES,
@@ -17,25 +18,31 @@ import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/
 export default function AdminStreamDetailPage() {
   const params = useParams<{ tenantId: string; streamId: string }>();
   const { tenantId, streamId } = params;
+  const router = useRouter();
   const [row, setRow] = useState<StreamRow | null>(null);
+  const [classes, setClasses] = useState<ClassRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('draft');
+  const [classId, setClassId] = useState('');
 
   const load = useCallback(async () => {
     const auth = readSession();
     if (auth === null) return;
     try {
-      const result = await apiRequest<{ data: StreamRow }>(`/api/v1/streams/${streamId}`, {
-        auth,
-      });
+      const [result, classRes] = await Promise.all([
+        apiRequest<{ data: StreamRow }>(`/api/v1/streams/${streamId}`, { auth }),
+        apiRequest<{ data: ClassRow[] }>('/api/v1/classes?limit=50', { auth }),
+      ]);
       setRow(result.data);
       setName(result.data.name);
       setCode(result.data.code ?? '');
       setStatus(result.data.status as LifecycleStatus);
+      setClassId(result.data.classId);
+      setClasses(classRes.data ?? []);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(academicMessage(err));
@@ -67,6 +74,7 @@ export default function AdminStreamDetailPage() {
           name: name.trim(),
           code: code.trim() === '' ? null : code.trim(),
           status,
+          classId,
         },
         idempotencyKey: idem,
       });
@@ -77,6 +85,25 @@ export default function AdminStreamDetailPage() {
       if (err instanceof ApiClientError) setError(academicMessage(err));
       else setError('Could not update stream.');
     } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onDelete() {
+    const auth = readSession();
+    if (auth === null) return;
+    if (!window.confirm('Delete this stream? This only works if nothing depends on it.')) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    try {
+      await apiRequest<void>(`/api/v1/streams/${streamId}`, { method: 'DELETE', auth });
+      router.push(`/t/${tenantId}/admin/academic/streams`);
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(academicMessage(err));
+      else setError('Could not delete stream.');
       setBusy(false);
     }
   }
@@ -99,7 +126,16 @@ export default function AdminStreamDetailPage() {
       ) : null}
       {row !== null ? (
         <form className="card stack" onSubmit={(e) => void onSave(e)}>
-          <div className="muted">Class id: {row.classId}</div>
+          <label className="field">
+            <span>Class</span>
+            <select value={classId} onChange={(e) => setClassId(e.target.value)}>
+              {classes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="field">
             <span>Name</span>
             <input
@@ -126,6 +162,14 @@ export default function AdminStreamDetailPage() {
           <div className="muted">Id: {row.id}</div>
           <button className="btn btn-primary" type="submit" disabled={busy}>
             {busy ? 'Saving…' : 'Save changes'}
+          </button>
+          <button
+            className="btn btn-secondary"
+            type="button"
+            onClick={() => void onDelete()}
+            disabled={busy}
+          >
+            Delete
           </button>
         </form>
       ) : error === null ? (

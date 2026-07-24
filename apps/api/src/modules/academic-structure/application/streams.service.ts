@@ -190,6 +190,7 @@ export class StreamsService {
       ...(parsed.setName ? { name: parsed.name } : {}),
       ...(parsed.setCode ? { code: parsed.code } : {}),
       ...(parsed.setStatus ? { status: parsed.status } : {}),
+      ...(parsed.setClassId ? { classId: parsed.classId } : {}),
     });
 
     const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
@@ -238,6 +239,8 @@ export class StreamsService {
         code: parsed.code,
         setStatus: parsed.setStatus,
         status: parsed.status,
+        setClassId: parsed.setClassId,
+        classId: parsed.classId,
       });
       if (row === null) throw AppError.notFound('Stream not found.');
       if (this.audit !== null) {
@@ -262,6 +265,48 @@ export class StreamsService {
       throw new AppError('INTERNAL_ERROR', 'Failed to update stream.');
     }
   }
+
+  /**
+   * DELETE /streams/:id — delete when empty (academic.manage) (IMP-014).
+   * Missing/cross-tenant/invalid id → 404. Dependents present → 409 CONFLICT.
+   */
+  async deleteForTenant(
+    actorUserId: string,
+    tenantId: string,
+    streamId: string,
+    correlationId: string,
+  ): Promise<void> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    if (!isUuid(streamId)) throw AppError.notFound('Stream not found.');
+    if (!this.streams.isAvailable()) throw AppError.notFound('Stream not found.');
+
+    try {
+      const deleted = await this.streams.deleteForTenant(actorUserId, tenantId, streamId);
+      if (deleted === null || deleted === false) {
+        throw AppError.notFound('Stream not found.');
+      }
+
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: 'stream.delete',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'stream',
+          resourceId: streamId,
+          metadata: {},
+        });
+      }
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      if (isCode(error, 'P0001') && msg(error).includes('has dependents')) {
+        throw new AppError('CONFLICT', 'Cannot delete stream with dependents.');
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to delete stream.');
+    }
+  }
 }
 
 type ParsedStreamPatch = {
@@ -271,6 +316,8 @@ type ParsedStreamPatch = {
   code: string | null;
   setStatus: boolean;
   status: string | null;
+  setClassId: boolean;
+  classId: string | null;
   fields: string[];
 };
 
@@ -341,7 +388,7 @@ function parsePatchStreamRequest(raw: unknown): ParsedStreamPatch {
     throw AppError.validation('Body must be a JSON object.');
   }
   const body = raw as Record<string, unknown>;
-  const allowed = new Set(['name', 'code', 'status']);
+  const allowed = new Set(['name', 'code', 'status', 'classId']);
   for (const key of Object.keys(body)) {
     if (!allowed.has(key)) {
       throw AppError.validation(`Unknown field: ${key}.`, { field: key });
@@ -355,6 +402,8 @@ function parsePatchStreamRequest(raw: unknown): ParsedStreamPatch {
   let code: string | null = null;
   let setStatus = false;
   let status: string | null = null;
+  let setClassId = false;
+  let classId: string | null = null;
 
   if (Object.prototype.hasOwnProperty.call(body, 'name')) {
     if (typeof body['name'] !== 'string') {
@@ -397,11 +446,20 @@ function parsePatchStreamRequest(raw: unknown): ParsedStreamPatch {
     fields.push('status');
   }
 
+  if (Object.prototype.hasOwnProperty.call(body, 'classId')) {
+    if (typeof body['classId'] !== 'string' || !isUuid(body['classId'])) {
+      throw AppError.validation('classId must be a UUID.', { field: 'classId' });
+    }
+    setClassId = true;
+    classId = body['classId'];
+    fields.push('classId');
+  }
+
   if (fields.length === 0) {
     throw AppError.validation('At least one field is required for patch.');
   }
 
-  return { setName, name, setCode, code, setStatus, status, fields };
+  return { setName, name, setCode, code, setStatus, status, setClassId, classId, fields };
 }
 
 function isCode(error: unknown, code: string): boolean {

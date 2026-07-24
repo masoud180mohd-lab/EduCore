@@ -99,4 +99,83 @@ describe('StreamsService', () => {
     ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
     expect(streams.updateForTenant).not.toHaveBeenCalled();
   });
+
+  it('reparents to another class and passes flags to repo', async () => {
+    const newClassId = '01900000-0000-7000-8000-0000000000e9';
+    const updated = { ...streamA, classId: newClassId };
+    const streams = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new StreamsService(streams as never, null, audit);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        streamA.id,
+        { classId: newClassId },
+        undefined,
+        'c',
+      ),
+    ).resolves.toEqual({ data: updated });
+    expect(streams.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      streamA.id,
+      expect.objectContaining({ setClassId: true, classId: newClassId }),
+    );
+    expect(audit.events[0]).toMatchObject({
+      action: 'stream.patch',
+      metadata: { fields: ['classId'] },
+    });
+  });
+
+  it('rejects non-uuid classId on patch', async () => {
+    const streams = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new StreamsService(streams as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, streamA.id, { classId: 'bad' }, undefined, 'c'),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(streams.updateForTenant).not.toHaveBeenCalled();
+  });
+
+  it('deletes when empty and audits', async () => {
+    const streams = { isAvailable: () => true, deleteForTenant: vi.fn().mockResolvedValue(true) };
+    const audit = new InMemoryAuditPublisher();
+    const service = new StreamsService(streams as never, null, audit);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, streamA.id, 'c'),
+    ).resolves.toBeUndefined();
+    expect(streams.deleteForTenant).toHaveBeenCalledWith(actorId, tenantId, streamA.id);
+    expect(audit.events[0]).toMatchObject({ action: 'stream.delete', outcome: 'success' });
+  });
+
+  it('maps missing to 404 on delete', async () => {
+    const streams = { isAvailable: () => true, deleteForTenant: vi.fn().mockResolvedValue(false) };
+    const service = new StreamsService(streams as never);
+    await expect(service.deleteForTenant(actorId, tenantId, streamA.id, 'c')).rejects.toMatchObject(
+      { code: 'NOT_FOUND' },
+    );
+  });
+
+  it('maps has-dependents error to CONFLICT on delete', async () => {
+    const streams = {
+      isAvailable: () => true,
+      deleteForTenant: vi.fn().mockRejectedValue({ code: 'P0001', message: 'has dependents' }),
+    };
+    const service = new StreamsService(streams as never);
+    await expect(service.deleteForTenant(actorId, tenantId, streamA.id, 'c')).rejects.toMatchObject(
+      { code: 'CONFLICT' },
+    );
+  });
+
+  it('maps invalid id to 404 without repo call on delete', async () => {
+    const streams = { isAvailable: () => true, deleteForTenant: vi.fn() };
+    const service = new StreamsService(streams as never);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, 'not-a-uuid', 'c'),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(streams.deleteForTenant).not.toHaveBeenCalled();
+  });
 });

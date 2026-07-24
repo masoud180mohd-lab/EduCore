@@ -77,22 +77,27 @@ describe('ASSURE-001 OpenAPI students+academic sync', () => {
       ['/academic-years', 'post', 'createAcademicYear'],
       ['/academic-years/{academicYearId}', 'get', 'getAcademicYear'],
       ['/academic-years/{academicYearId}', 'patch', 'patchAcademicYear'],
+      ['/academic-years/{academicYearId}', 'delete', 'deleteAcademicYear'],
       ['/terms', 'get', 'listTerms'],
       ['/terms', 'post', 'createTerm'],
       ['/terms/{termId}', 'get', 'getTerm'],
       ['/terms/{termId}', 'patch', 'patchTerm'],
+      ['/terms/{termId}', 'delete', 'deleteTerm'],
       ['/classes', 'get', 'listClasses'],
       ['/classes', 'post', 'createClass'],
       ['/classes/{classId}', 'get', 'getClass'],
       ['/classes/{classId}', 'patch', 'patchClass'],
+      ['/classes/{classId}', 'delete', 'deleteClass'],
       ['/streams', 'get', 'listStreams'],
       ['/streams', 'post', 'createStream'],
       ['/streams/{streamId}', 'get', 'getStream'],
       ['/streams/{streamId}', 'patch', 'patchStream'],
+      ['/streams/{streamId}', 'delete', 'deleteStream'],
       ['/subjects', 'get', 'listSubjects'],
       ['/subjects', 'post', 'createSubject'],
       ['/subjects/{subjectId}', 'get', 'getSubject'],
       ['/subjects/{subjectId}', 'patch', 'patchSubject'],
+      ['/subjects/{subjectId}', 'delete', 'deleteSubject'],
     ];
     for (const [pathKey, method, id] of expected) {
       expect(op(pathKey, method).operationId, `${method} ${pathKey}`).toBe(id);
@@ -121,11 +126,15 @@ describe('ASSURE-001 OpenAPI students+academic sync', () => {
     }
   });
 
-  it('does not invent DELETE methods on students or academic resources', () => {
+  it('does not invent DELETE on students; academic structure DELETE is documented (IMP-014)', () => {
     const doc = loadDoc();
     for (const pathKey of Object.keys(doc.paths ?? {})) {
-      expect(doc.paths?.[pathKey], pathKey).not.toHaveProperty('delete');
+      if (pathKey.startsWith('/students')) {
+        expect(doc.paths?.[pathKey], pathKey).not.toHaveProperty('delete');
+      }
     }
+    expect(doc.paths?.['/academic-years/{academicYearId}']).toHaveProperty('delete');
+    expect(doc.paths?.['/subjects/{subjectId}']).toHaveProperty('delete');
   });
 
   it('is linked from ACF README and ACF-002…007 markdown', () => {

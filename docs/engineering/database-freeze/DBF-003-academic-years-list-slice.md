@@ -2,16 +2,16 @@
 
 ## Freeze status
 
-| Field               | Value                                                                            |
-| ------------------- | -------------------------------------------------------------------------------- |
-| Freeze ID           | `DBF-003`                                                                        |
-| Title               | Database Freeze — Academic Structure academic_years list-read                    |
-| Version             | `1.2` (1.0 list-read; 1.1 create helper; 1.2 update helper IMP-013)              |
-| Date                | 2026-07-20                                                                       |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                              |
-| Engine              | PostgreSQL                                                                       |
-| Scope               | Academic Structure — `academic_years` table only (list read)                     |
-| Explicitly excluded | terms, classes, streams, subjects, teacher_assignments, enrollments, students FK |
+| Field               | Value                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| Freeze ID           | `DBF-003`                                                                                      |
+| Title               | Database Freeze — Academic Structure academic_years list-read                                  |
+| Version             | `1.3` (1.0 list-read; 1.1 create helper; 1.2 update helper IMP-013; 1.3 delete helper IMP-014) |
+| Date                | 2026-07-20                                                                                     |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                                            |
+| Engine              | PostgreSQL                                                                                     |
+| Scope               | Academic Structure — `academic_years` table only (list read)                                   |
+| Explicitly excluded | terms, classes, streams, subjects, teacher_assignments, enrollments, students FK               |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** independent multi-person external review.
 
@@ -58,6 +58,11 @@ Does **not** authorize DELETE or child resources (terms/classes). Product writes
 `app.create_academic_year(actor, tenant, id, name, code, starts_on, ends_on, status)`  
 SECURITY DEFINER; re-checks active membership; GRANT EXECUTE to `educore_app`.
 
+### Delete helper (rev 1.3 / IMP-014)
+
+`app.delete_academic_year(actor, tenant, id)`  
+SECURITY DEFINER; re-checks active membership + `academic.manage`; row must be tenant-scoped; `RAISE foreign_key_violation` (mapped 409) when dependent rows exist (terms, classes, enrollments, attendance, exams, fee_structures, invoices). GRANT EXECUTE to `educore_app`; table DELETE remains REVOKED (helper only). No cascade.
+
 ### Ownership
 
 Bounded context: **Academic Structure**. Other modules must not write this table (ADR-001).
@@ -81,7 +86,7 @@ System role posture:
 
 - terms, classes, streams, subjects, enrollments
 - Cross-BC FKs from students
-- DELETE product HTTP (PATCH via `app.update_academic_year` — IMP-013)
+- ~~DELETE product HTTP~~ — no longer excluded; `app.delete_academic_year` (IMP-014). PATCH remains via `app.update_academic_year` (IMP-013).
 
 ## Acceptance (solo-operator)
 

@@ -1,14 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import {
+  type AcademicYearRow,
   type ClassRow,
   type LifecycleStatus,
+  type TermRow,
   LIFECYCLE_STATUSES,
   academicMessage,
 } from '@/lib/academic/types';
@@ -17,23 +19,34 @@ import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/
 export default function AdminClassDetailPage() {
   const params = useParams<{ tenantId: string; classId: string }>();
   const { tenantId, classId } = params;
+  const router = useRouter();
   const [row, setRow] = useState<ClassRow | null>(null);
+  const [years, setYears] = useState<AcademicYearRow[]>([]);
+  const [terms, setTerms] = useState<TermRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('draft');
+  const [academicYearId, setAcademicYearId] = useState('');
+  const [termId, setTermId] = useState('');
 
   const load = useCallback(async () => {
     const auth = readSession();
     if (auth === null) return;
     try {
-      const result = await apiRequest<{ data: ClassRow }>(`/api/v1/classes/${classId}`, { auth });
+      const [result, yearRes] = await Promise.all([
+        apiRequest<{ data: ClassRow }>(`/api/v1/classes/${classId}`, { auth }),
+        apiRequest<{ data: AcademicYearRow[] }>('/api/v1/academic-years?limit=50', { auth }),
+      ]);
       setRow(result.data);
       setName(result.data.name);
       setCode(result.data.code ?? '');
       setStatus(result.data.status as LifecycleStatus);
+      setAcademicYearId(result.data.academicYearId);
+      setTermId(result.data.termId ?? '');
+      setYears(yearRes.data ?? []);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(academicMessage(err));
@@ -44,6 +57,25 @@ export default function AdminClassDetailPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    const auth = readSession();
+    if (auth === null || academicYearId === '') {
+      setTerms([]);
+      return;
+    }
+    void (async () => {
+      try {
+        const termRes = await apiRequest<{ data: TermRow[] }>(
+          `/api/v1/terms?limit=50&academicYearId=${encodeURIComponent(academicYearId)}`,
+          { auth },
+        );
+        setTerms(termRes.data ?? []);
+      } catch {
+        setTerms([]);
+      }
+    })();
+  }, [academicYearId]);
 
   async function onSave(event: FormEvent) {
     event.preventDefault();
@@ -65,6 +97,8 @@ export default function AdminClassDetailPage() {
           name: name.trim(),
           code: code.trim() === '' ? null : code.trim(),
           status,
+          academicYearId,
+          termId: termId === '' ? null : termId,
         },
         idempotencyKey: idem,
       });
@@ -75,6 +109,25 @@ export default function AdminClassDetailPage() {
       if (err instanceof ApiClientError) setError(academicMessage(err));
       else setError('Could not update class.');
     } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onDelete() {
+    const auth = readSession();
+    if (auth === null) return;
+    if (!window.confirm('Delete this class? This only works if nothing depends on it.')) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    try {
+      await apiRequest<void>(`/api/v1/classes/${classId}`, { method: 'DELETE', auth });
+      router.push(`/t/${tenantId}/admin/academic/classes`);
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(academicMessage(err));
+      else setError('Could not delete class.');
       setBusy(false);
     }
   }
@@ -98,8 +151,33 @@ export default function AdminClassDetailPage() {
       {row !== null ? (
         <div className="stack">
           <form className="card stack" onSubmit={(e) => void onSave(e)}>
-            <div className="muted">Year id: {row.academicYearId}</div>
-            <div className="muted">Term id: {row.termId ?? '—'}</div>
+            <label className="field">
+              <span>Academic year</span>
+              <select
+                value={academicYearId}
+                onChange={(e) => {
+                  setAcademicYearId(e.target.value);
+                  setTermId('');
+                }}
+              >
+                {years.map((y) => (
+                  <option key={y.id} value={y.id}>
+                    {y.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Term (optional)</span>
+              <select value={termId} onChange={(e) => setTermId(e.target.value)}>
+                <option value="">None</option>
+                {terms.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label className="field">
               <span>Name</span>
               <input
@@ -126,6 +204,14 @@ export default function AdminClassDetailPage() {
             <div className="muted">Id: {row.id}</div>
             <button className="btn btn-primary" type="submit" disabled={busy}>
               {busy ? 'Saving…' : 'Save changes'}
+            </button>
+            <button
+              className="btn btn-secondary"
+              type="button"
+              onClick={() => void onDelete()}
+              disabled={busy}
+            >
+              Delete
             </button>
           </form>
           <p>

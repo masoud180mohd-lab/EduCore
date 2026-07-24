@@ -14,8 +14,9 @@ export default function AdminAcademicHubPage() {
     <AdminShell tenantId={tenantId}>
       <h1>Academic</h1>
       <p className="muted">
-        School year tree and enrollments (ACF-003…008 / DSF-002). Structure entities support create
-        and edit (rename, code, dates, status) — no delete.
+        School year tree and enrollments (ACF-003…008 / DSF-002). Structure entities support create,
+        edit, delete, and reparenting (year/term/class) — delete only succeeds when nothing depends
+        on the record (IMP-014).
       </p>
       <ul className="list">
         <li>

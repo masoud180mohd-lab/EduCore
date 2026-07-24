@@ -2,53 +2,56 @@
 
 ## Freeze status
 
-| Field               | Value                                                   |
-| ------------------- | ------------------------------------------------------- |
-| Freeze ID           | `ACF-004`                                               |
-| Title               | API Contract Freeze — terms list + get + create + patch |
-| Version             | `1.3`                                                   |
-| Date                | 2026-07-24                                              |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)     |
-| Companion DB freeze | DBF-004 (+ write helper rev 1.1)                        |
+| Field               | Value                                                            |
+| ------------------- | ---------------------------------------------------------------- |
+| Freeze ID           | `ACF-004`                                                        |
+| Title               | API Contract Freeze — terms list + get + create + patch + delete |
+| Version             | `1.4` (1.3 patch; 1.4 delete + reparent IMP-014)                 |
+| Date                | 2026-07-25                                                       |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)              |
+| Companion DB freeze | DBF-004 (+ write helper rev 1.1)                                 |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** multi-party external review.
 
 ## Revision history
 
-| Version | Date       | Notes                                 |
-| ------- | ---------- | ------------------------------------- |
-| 1.0     | 2026-07-20 | List only (`listTerms`)               |
-| 1.1     | 2026-07-21 | Add `GET /terms/{termId}` (`getTerm`) |
-| **1.2** | 2026-07-21 | Add `POST /terms` (`createTerm`)      |
-| **1.3** | 2026-07-24 | Add `PATCH /terms/{id}` (IMP-013)     |
+| Version | Date       | Notes                                                                   |
+| ------- | ---------- | ----------------------------------------------------------------------- |
+| 1.0     | 2026-07-20 | List only (`listTerms`)                                                 |
+| 1.1     | 2026-07-21 | Add `GET /terms/{termId}` (`getTerm`)                                   |
+| **1.2** | 2026-07-21 | Add `POST /terms` (`createTerm`)                                        |
+| **1.3** | 2026-07-24 | Add `PATCH /terms/{id}` (IMP-013)                                       |
+| **1.4** | 2026-07-25 | Add `DELETE /terms/{id}` + `academicYearId` reparent on PATCH (IMP-014) |
 
 ## Scope
 
 | In scope                                        | Out of scope                                         |
 | ----------------------------------------------- | ---------------------------------------------------- |
-| `GET /api/v1/terms` list                        | DELETE terms                                         |
+| `GET /api/v1/terms` list                        | Cascade delete                                       |
 | `GET /api/v1/terms/{termId}` detail             | Nested `/academic-years/{id}/terms` path (v1 closed) |
 | `POST /api/v1/terms` create (rev 1.2)           | classes, streams, subjects, enrollments              |
-| `PATCH /api/v1/terms/{id}` (rev 1.3)            | Reparenting `academicYearId` on PATCH                |
-| Cursor pagination + filters                     | Nested academicYear expansion                        |
-| Permissions `academic.read` / `academic.manage` | `term.read` / `term.manage` invention                |
+| `PATCH /api/v1/terms/{id}` (rev 1.3)            | Nested academicYear expansion                        |
+| `DELETE /api/v1/terms/{id}` (rev 1.4)           | `term.read` / `term.manage` invention                |
+| `academicYearId` reparent on PATCH (rev 1.4)    |                                                      |
+| Cursor pagination + filters                     |                                                      |
+| Permissions `academic.read` / `academic.manage` |                                                      |
 
 Identity/Tenant ACF-001, Student ACF-002, Academic Years ACF-003 remain unchanged.
 
 ## Locked product decisions (D1–D10 + create)
 
-| #   | Decision                                                       |
-| --- | -------------------------------------------------------------- |
-| D1  | Flat paths under `/api/v1/terms`                               |
-| D2  | Optional list filter `academicYearId`; create body requires it |
-| D3  | List/detail: `academic.read`; create: **`academic.manage`**    |
-| D4  | Status enum: `draft` \| `active` \| `closed`                   |
-| D5  | Dates optional; both set ⇒ `endsOn >= startsOn`                |
-| D6  | List order: `starts_on ASC NULLS LAST, id ASC`                 |
-| D7  | Cursor keyset on last row `id`                                 |
-| D8  | Parent year FK + denormalized `tenant_id`                      |
-| D9  | DELETE closed; POST + PATCH open (rev 1.3 / IMP-013)           |
-| D10 | `educore_app` table INSERT remains REVOKED (helper only)       |
+| #   | Decision                                                                                     |
+| --- | -------------------------------------------------------------------------------------------- |
+| D1  | Flat paths under `/api/v1/terms`                                                             |
+| D2  | Optional list filter `academicYearId`; create body requires it                               |
+| D3  | List/detail: `academic.read`; create: **`academic.manage`**                                  |
+| D4  | Status enum: `draft` \| `active` \| `closed`                                                 |
+| D5  | Dates optional; both set ⇒ `endsOn >= startsOn`                                              |
+| D6  | List order: `starts_on ASC NULLS LAST, id ASC`                                               |
+| D7  | Cursor keyset on last row `id`                                                               |
+| D8  | Parent year FK + denormalized `tenant_id`                                                    |
+| D9  | DELETE open with 409-if-deps; reparent `academicYearId` allowed on PATCH (rev 1.4 / IMP-014) |
+| D10 | `educore_app` table INSERT remains REVOKED (helper only)                                     |
 
 ## Endpoint: list
 
@@ -169,15 +172,14 @@ On success: `term.create` with metadata `{ status, hasCode, academicYearId }` (n
 
 ## Explicit non-goals
 
-- DELETE terms
-- Reparenting `academicYearId` on PATCH
+- Cascade delete
 - Nested year path
 - Nested academicYear expansion
 - classes / streams / subjects
 - New permission codes (`term.*`)
 - Table INSERT/UPDATE grant to `educore_app` (helpers only)
 
-## Endpoint: patch (rev 1.3 / IMP-013)
+## Endpoint: patch (rev 1.3–1.4 / IMP-013, IMP-014)
 
 | Method  | Path                     | AuthZ           | Idempotency  |
 | ------- | ------------------------ | --------------- | ------------ |
@@ -185,8 +187,17 @@ On success: `term.create` with metadata `{ status, hasCode, academicYearId }` (n
 
 **operationId:** `patchTerm`
 
-Allowlist (≥1): `name`, `code` (null/empty clears), `startsOn`, `endsOn`, `status` (`draft`\|`active`\|`closed`).  
-404 missing/cross-tenant; 409 duplicate code; empty body → 400.
+Allowlist (≥1): `name`, `code` (null/empty clears), `startsOn`, `endsOn`, `status` (`draft`\|`active`\|`closed`), `academicYearId` (UUID, required when set — reparent to another year in the bound tenant, rev 1.4).  
+404 missing/cross-tenant; 409 duplicate code; empty body → 400; `academicYearId` present but missing/other-tenant target year → 400 `VALIDATION_ERROR`.
+
+## Endpoint: delete (rev 1.4 / IMP-014)
+
+| Method   | Path                     | AuthZ           | Idempotency |
+| -------- | ------------------------ | --------------- | ----------- |
+| `DELETE` | `/api/v1/terms/{termId}` | academic.manage | n/a         |
+
+**operationId:** `deleteTerm`  
+Success **204** empty body. Missing/cross-tenant → **404**. Any dependent (e.g. classes with `term_id` set to this term) → **409** `CONFLICT`. No cascade.
 
 ## Acceptance (solo-operator)
 

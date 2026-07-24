@@ -30,7 +30,7 @@ export type SessionAuth = {
 };
 
 export type RequestOptions = {
-  readonly method?: 'GET' | 'POST' | 'PUT' | 'PATCH';
+  readonly method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   readonly body?: unknown;
   readonly auth?: SessionAuth | null;
   readonly idempotencyKey?: string;

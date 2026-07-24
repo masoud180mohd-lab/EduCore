@@ -270,3 +270,52 @@ describe('AcademicYearsService.patchForTenant', () => {
     );
   });
 });
+
+describe('AcademicYearsService.deleteForTenant', () => {
+  const corr = 'corr-year-delete';
+
+  it('deletes when empty and audits', async () => {
+    const academicYears = {
+      isAvailable: () => true,
+      deleteForTenant: vi.fn().mockResolvedValue(true),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new AcademicYearsService(academicYears as never, null, audit);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, yearA.id, corr),
+    ).resolves.toBeUndefined();
+    expect(academicYears.deleteForTenant).toHaveBeenCalledWith(actorId, tenantId, yearA.id);
+    expect(audit.events[0]).toMatchObject({ action: 'academic_year.delete', outcome: 'success' });
+  });
+
+  it('maps missing to 404', async () => {
+    const academicYears = {
+      isAvailable: () => true,
+      deleteForTenant: vi.fn().mockResolvedValue(false),
+    };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(service.deleteForTenant(actorId, tenantId, yearA.id, corr)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('maps invalid id to 404 without repo call', async () => {
+    const academicYears = { isAvailable: () => true, deleteForTenant: vi.fn() };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, 'not-a-uuid', corr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(academicYears.deleteForTenant).not.toHaveBeenCalled();
+  });
+
+  it('maps has-dependents error to CONFLICT', async () => {
+    const academicYears = {
+      isAvailable: () => true,
+      deleteForTenant: vi.fn().mockRejectedValue({ code: 'P0001', message: 'has dependents' }),
+    };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(service.deleteForTenant(actorId, tenantId, yearA.id, corr)).rejects.toMatchObject({
+      code: 'CONFLICT',
+    });
+  });
+});

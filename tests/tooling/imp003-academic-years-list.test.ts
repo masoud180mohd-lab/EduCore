@@ -11,7 +11,7 @@ function read(rel: string): string {
 }
 
 describe('IMP-003 academic years list + detail + create structural', () => {
-  it('registers GET list/detail + POST create + PATCH with permissions and no put/delete', () => {
+  it('registers GET list/detail + POST create + PATCH + DELETE with permissions and no put', () => {
     const ctrl = read(
       'apps/api/src/modules/academic-structure/controllers/academic-years.controller.ts',
     );
@@ -20,9 +20,10 @@ describe('IMP-003 academic years list + detail + create structural', () => {
     expect(ctrl).toContain('@Post()');
     expect(ctrl).toContain("@Get(':id')");
     expect(ctrl).toContain("@Patch(':id')");
+    expect(ctrl).toContain("@Delete(':id')");
     expect(ctrl).toContain("RequirePermission('academic.read')");
     expect(ctrl).toContain("RequirePermission('academic.manage')");
-    expect(ctrl).not.toMatch(/@(Put|Delete)\(/);
+    expect(ctrl).not.toMatch(/@Put\(/);
   });
 
   it('documents freezes and task records', () => {

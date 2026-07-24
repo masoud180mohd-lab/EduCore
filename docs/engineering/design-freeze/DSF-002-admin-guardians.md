@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                       |
-| --------- | ----------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                   |
-| Version   | `1.2`                                                       |
-| Date      | 2026-07-24                                                  |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet) |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                    |
-| Program   | IMP-007 · IMP-012 · **IMP-013** (structure PATCH)           |
+| Field     | Value                                                                                     |
+| --------- | ----------------------------------------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                                                 |
+| Version   | `1.3`                                                                                     |
+| Date      | 2026-07-25                                                                                |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet)                               |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                  |
+| Program   | IMP-007 · IMP-012 · IMP-013 (structure PATCH) · **IMP-014** (structure DELETE + reparent) |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -39,7 +39,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 7. **Guardians list** — `GET /guardians`
 8. **Guardian detail** — get + linked students; create guardian; link/unbind portal user
 9. **Academic hub** — `/admin/academic` short links (Years, Terms, Classes, Streams, Subjects, Enrollments) — **IMP-012**
-10. **Academic entity list + create + edit detail** — years / terms / classes / streams / subjects (ACF-003…007 rev 1.3). Structure PATCH for rename/code/dates/status; **no DELETE**; no FK reparenting.
+10. **Academic entity list + create + edit detail** — years / terms / classes / streams / subjects (ACF-003…007 rev 1.4). Structure PATCH for rename/code/dates/status; **edit + delete (confirm)**; reparent on term/class/stream (`academicYearId` on terms/classes, `termId` on classes, `classId` on streams) via detail edit form.
 11. **Enrollments** — list + create + detail + **status PATCH** only (ACF-008)
 
 ## Component inventory (this slice)
@@ -51,6 +51,8 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - Link-student control (student picker + relationship type)
 - Academic create forms (name, optional code/dates, status default **active**)
 - Academic detail edit forms (name/code/dates/status; confirm when status → `closed`)
+- Delete button (destructive, confirm dialog) on academic entity detail — years/terms/classes/streams/subjects
+- Parent pickers (reparent controls) on term/class/stream detail edit: academic year picker (terms, classes), term picker incl. "none" (classes), class picker (streams)
 - Enrollment create (student + class + optional stream); status control on detail
 
 ## AuthZ UX
@@ -65,7 +67,8 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - Parent portal chrome (DSF-006)
 - Marks / AI
 - Fees / bursar chrome — **DSF-004** (IMP-010)
-- Structure DELETE / soft-delete archive beyond `closed`
+- MoMo / mobile money payment UX (PAY-PROVIDER-001) — out of scope
+- Cascade delete UX (delete stays empty-only; 409 surfaced as a plain error, no dependent-listing UI)
 - Bulk enroll / transfer / timetable / report cards
 - Roles/permissions admin CRUD (`/roles` HTTP missing)
 - MFA enrollment

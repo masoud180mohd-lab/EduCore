@@ -113,4 +113,46 @@ describe('SubjectsService', () => {
       service.patchForTenant(actorId, tenantId, subjectA.id, { status: 'closed' }, undefined, 'c'),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
+
+  it('deletes when empty and audits', async () => {
+    const subjects = { isAvailable: () => true, deleteForTenant: vi.fn().mockResolvedValue(true) };
+    const audit = new InMemoryAuditPublisher();
+    const service = new SubjectsService(subjects as never, null, audit);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, subjectA.id, 'c'),
+    ).resolves.toBeUndefined();
+    expect(subjects.deleteForTenant).toHaveBeenCalledWith(actorId, tenantId, subjectA.id);
+    expect(audit.events[0]).toMatchObject({ action: 'subject.delete', outcome: 'success' });
+  });
+
+  it('maps missing to 404 on delete', async () => {
+    const subjects = {
+      isAvailable: () => true,
+      deleteForTenant: vi.fn().mockResolvedValue(false),
+    };
+    const service = new SubjectsService(subjects as never);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, subjectA.id, 'c'),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('maps has-dependents error to CONFLICT on delete', async () => {
+    const subjects = {
+      isAvailable: () => true,
+      deleteForTenant: vi.fn().mockRejectedValue({ code: 'P0001', message: 'has dependents' }),
+    };
+    const service = new SubjectsService(subjects as never);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, subjectA.id, 'c'),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+  });
+
+  it('maps invalid id to 404 without repo call on delete', async () => {
+    const subjects = { isAvailable: () => true, deleteForTenant: vi.fn() };
+    const service = new SubjectsService(subjects as never);
+    await expect(
+      service.deleteForTenant(actorId, tenantId, 'not-a-uuid', 'c'),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(subjects.deleteForTenant).not.toHaveBeenCalled();
+  });
 });

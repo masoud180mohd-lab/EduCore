@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   HttpCode,
@@ -35,7 +36,8 @@ type AuthedRequest = Request & {
 
 /**
  * Streams surface (ACF-006 rev 1.2).
- * GET list/detail academic.read; POST/PATCH (IMP-013) academic.manage. DELETE not supported.
+ * GET list/detail academic.read; POST/PATCH (IMP-013/IMP-014 reparent) academic.manage;
+ * DELETE when empty (academic.manage) — IMP-014.
  */
 @Controller('api/v1/streams')
 export class StreamsController {
@@ -119,5 +121,18 @@ export class StreamsController {
       idempotencyKey,
       correlationId,
     );
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @UseGuards(RequirePermission('academic.manage'))
+  async remove(@Req() request: AuthedRequest, @Param('id') id: string): Promise<void> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) throw AppError.unauthorized();
+    if (tenant === undefined) throw AppError.tenantContextRequired();
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+    await this.streamsService.deleteForTenant(auth.userId, tenant.tenantId, id, correlationId);
   }
 }

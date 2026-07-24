@@ -2,16 +2,16 @@
 
 ## Freeze status
 
-| Field               | Value                                                             |
-| ------------------- | ----------------------------------------------------------------- |
-| Freeze ID           | `DBF-005`                                                         |
-| Title               | Database Freeze — Academic Structure `classes` list-read          |
-| Version             | `1.2` (1.0 list; 1.1 create; 1.2 update helper IMP-013)           |
-| Date                | 2026-07-21                                                        |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)               |
-| Engine              | PostgreSQL                                                        |
-| Scope               | Academic Structure — `classes` table + create/update helpers      |
-| Explicitly excluded | streams, subjects, enrollments, teacher_assignments, class DELETE |
+| Field               | Value                                                                                                          |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Freeze ID           | `DBF-005`                                                                                                      |
+| Title               | Database Freeze — Academic Structure `classes` list-read                                                       |
+| Version             | `1.3` (1.0 list; 1.1 create; 1.2 update helper IMP-013; 1.3 delete helper + reparent on update helper IMP-014) |
+| Date                | 2026-07-21                                                                                                     |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                                                            |
+| Engine              | PostgreSQL                                                                                                     |
+| Scope               | Academic Structure — `classes` table + create/update helpers                                                   |
+| Explicitly excluded | streams, subjects, enrollments, teacher_assignments (class DELETE now covered — IMP-014)                       |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** multi-party external review.
 
@@ -62,6 +62,15 @@ Authorize the smallest tenant-owned schema for `GET /api/v1/classes` under ACF-0
 - `educore_app`: **SELECT only**; INSERT/UPDATE/DELETE **REVOKED**
 - Product create (rev 1.1): `app.create_class` SECURITY DEFINER; GRANT EXECUTE; membership + parent year (and term if set: same tenant + same academic_year_id)
 - Platform: SELECT/INSERT/UPDATE for seed/ops
+
+### Delete helper (rev 1.3 / IMP-014)
+
+`app.delete_class(actor, tenant, id)`  
+SECURITY DEFINER; re-checks active membership + `academic.manage`; row must be tenant-scoped; `RAISE foreign_key_violation` (mapped 409) when dependent rows exist (streams, enrollments). GRANT EXECUTE to `educore_app`; table DELETE remains REVOKED. No cascade.
+
+### Reparent on update helper (rev 1.3 / IMP-014)
+
+`app.update_class` extended to accept optional `academicYearId` and `termId` (nullable — `null` clears the term link). When `academicYearId` set, re-validates parent year same tenant; when `termId` set (non-null), re-validates parent term same tenant (same rules as create). Table UPDATE grant to `educore_app` remains REVOKED (helper only).
 
 ## Permission
 
