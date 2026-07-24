@@ -42,6 +42,8 @@ Idempotency-Key **optional**.
 
 Checklist: `tasks/manual-test-admin-academic-structure-patch-qa.md`
 
+**Live evidence (2026-07-24):** API `:3000` + web `:3001` — create/PATCH year→active, duplicate code 409, foreign 404, term/class/stream/subject PATCH, close status, parent 403, no DELETE. Year id `064687a4-5e87-483e-b584-68db2f852c8c`. See checklist evidence table.
+
 ## Verification
 
 ```bash
