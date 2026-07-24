@@ -69,6 +69,12 @@ export default function AdminHomePage() {
           </Link>
         </li>
         <li>
+          <Link className="card" href={`${base}/academic`}>
+            <strong>Academic</strong>
+            <div className="muted">Years, classes, subjects, enrollments</div>
+          </Link>
+        </li>
+        <li>
           <Link className="card" href={`${base}/fees`}>
             <strong>Fees</strong>
             <div className="muted">Structures, invoices, office payments</div>

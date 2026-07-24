@@ -1,18 +1,19 @@
-# DSF-002 — Admin shell + Guardians UI (provisional)
+# DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
 | Field     | Value                                                       |
 | --------- | ----------------------------------------------------------- |
 | Freeze ID | `DSF-002`                                                   |
-| Version   | `1.0`                                                       |
-| Date      | 2026-07-21                                                  |
+| Version   | `1.1`                                                       |
+| Date      | 2026-07-24                                                  |
 | Audience  | School admin / headmaster (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                    |
+| Program   | IMP-007 · **IMP-012** (Academic amend)                      |
 
-**Honesty:** Provisional design-system slice for IMP-007 only. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome and guardians registry screens.
+**Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
 ## Goal
 
-Calm operations shell for school admins: school overview, staff directory, organizations, students, guardians, and tenant settings — against existing Nest APIs (ACF-001/002) plus guardians ACF-010.
+Calm operations shell for school admins: school overview, staff directory, organizations, students, guardians, **academic structure + enrollments**, fees, and tenant settings — against existing Nest APIs (ACF-001–010) plus fees ACF-012.
 
 ## Tokens
 
@@ -30,37 +31,44 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 ## Screens in scope
 
 1. **Login routing** — after bind, `/auth/me` decides admin vs teacher home
-2. **Admin home** — school name + short links (Users, Orgs, Students, Guardians, Settings)
+2. **Admin home** — school name + short links (Users, Orgs, Students, Guardians, **Academic**, Fees, Settings)
 3. **Users list** — `GET /users` (search optional)
 4. **Organizations list** — `GET /organizations`
 5. **Students list** — `GET /students` (admin read; create deferred unless trivial)
 6. **Tenant settings read** — `GET /tenant-settings`
 7. **Guardians list** — `GET /guardians`
-8. **Guardian detail** — get + linked students; create guardian; link/unlink student
+8. **Guardian detail** — get + linked students; create guardian; link/unbind portal user
+9. **Academic hub** — `/admin/academic` short links (Years, Terms, Classes, Streams, Subjects, Enrollments) — **IMP-012**
+10. **Academic entity list + create + read-only detail** — years / terms / classes / streams / subjects (ACF-003…007). No structure PATCH/DELETE in UI (API gap).
+11. **Enrollments** — list + create + detail + **status PATCH** only (ACF-008)
 
 ## Component inventory (this slice)
 
-- `AdminShell` (nav: Home / Users / Orgs / Students / Guardians / Settings / Logout)
+- `AdminShell` (nav: Home / Users / Orgs / Students / Guardians / **Academic** / Fees / Settings / Logout)
 - Shared banners, buttons, fields from DSF-001 language
 - `ResourceList` pattern (loading / empty / error / forbidden)
 - Guardian form (displayName, optional phone/email)
 - Link-student control (student picker + relationship type)
+- Academic create forms (name, optional code/dates, status default **active**)
+- Enrollment create (student + class + optional stream); status control on detail
 
 ## AuthZ UX
 
 - Unbound tenant → `/login`
 - 401 → Sign in again
-- 403 → “You do not have access for this action.”
+- 403 → “You do not have access for this action.” (academic: needs `academic.read` / `academic.manage`)
 - Staff without admin perms → teacher shell only (no admin nav)
 
 ## Non-goals
 
-- Parent portal, marks, AI
-- Fees / bursar chrome — deferred to **DSF-004** (IMP-010)
+- Parent portal chrome (DSF-006)
+- Marks / AI
+- Fees / bursar chrome — **DSF-004** (IMP-010)
+- Structure rename / activate-close PATCH (needs future ACF)
+- Bulk enroll / transfer / timetable / report cards
 - Roles/permissions admin CRUD (`/roles` HTTP missing)
 - MFA enrollment
 - Full offline sync
-- Nested PII expansions on student GET
 - Marketing dashboards / charts
 
 ## Auth storage
