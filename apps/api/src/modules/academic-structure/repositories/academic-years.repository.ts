@@ -1,7 +1,7 @@
 /**
  * Academic years in the bound tenant (RLS Pattern A / DBF-003).
- * List (P0) + get-by-id (P1) + create (P2 via SECURITY DEFINER).
- * No PATCH/DELETE.
+ * List (P0) + get-by-id (P1) + create (P2) + patch (IMP-013) via SECURITY DEFINER.
+ * No DELETE.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -265,6 +265,90 @@ export class AcademicYearsRepository {
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'AcademicYearsRepository', error, {
         operation: 'createForTenant',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Partial update via SECURITY DEFINER helper.
+   * Returns null when missing/other-tenant (empty helper result) or invalid ids / no pool.
+   * Throws on unique violation (23505) for service → 409.
+   */
+  async updateForTenant(
+    actorUserId: string,
+    tenantId: string,
+    academicYearId: string,
+    patch: {
+      readonly setName: boolean;
+      readonly name: string | null;
+      readonly setCode: boolean;
+      readonly code: string | null;
+      readonly setStartsOn: boolean;
+      readonly startsOn: string | null;
+      readonly setEndsOn: boolean;
+      readonly endsOn: string | null;
+      readonly setStatus: boolean;
+      readonly status: string | null;
+    },
+  ): Promise<AcademicYearRow | null> {
+    if (
+      !isUuid(actorUserId) ||
+      !isUuid(tenantId) ||
+      !isUuid(academicYearId) ||
+      this.pool === null
+    ) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            name: string;
+            code: string | null;
+            starts_on: Date | string | null;
+            ends_on: Date | string | null;
+            status: string;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, tenant_id, name, code, starts_on, ends_on, status, created_at, updated_at
+             FROM app.update_academic_year(
+               $1::uuid, $2::uuid, $3::uuid,
+               $4::boolean, $5::text,
+               $6::boolean, $7::text,
+               $8::boolean, $9::date,
+               $10::boolean, $11::date,
+               $12::boolean, $13::text
+             )`,
+            [
+              actorUserId,
+              tenantId,
+              academicYearId,
+              patch.setName,
+              patch.name,
+              patch.setCode,
+              patch.code,
+              patch.setStartsOn,
+              patch.startsOn,
+              patch.setEndsOn,
+              patch.endsOn,
+              patch.setStatus,
+              patch.status,
+            ],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapAcademicYearRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'AcademicYearsRepository', error, {
+        operation: 'updateForTenant',
       });
       throw error;
     }

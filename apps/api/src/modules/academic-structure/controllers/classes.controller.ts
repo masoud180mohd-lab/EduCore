@@ -5,6 +5,7 @@ import {
   Headers,
   HttpCode,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -35,10 +36,11 @@ type AuthedRequest = Request & {
 /**
  * Product classes surface (Academic Structure — ACF-005 rev 1.2).
  *
- * GET  /api/v1/classes      — list (academic.read) — IMP-003-C0
- * POST /api/v1/classes      — create (academic.manage) — IMP-003-C2
- * GET  /api/v1/classes/:id  — detail (academic.read) — IMP-003-C1
- * No PATCH/DELETE.
+ * GET   /api/v1/classes      — list (academic.read) — IMP-003-C0
+ * POST  /api/v1/classes      — create (academic.manage) — IMP-003-C2
+ * GET   /api/v1/classes/:id  — detail (academic.read) — IMP-003-C1
+ * PATCH /api/v1/classes/:id  — partial update (academic.manage) — IMP-013
+ * DELETE not supported.
  */
 @Controller('api/v1/classes')
 export class ClassesController {
@@ -116,5 +118,35 @@ export class ClassesController {
     }
 
     return this.classesService.getForTenant(auth.userId, tenant.tenantId, id);
+  }
+
+  @Patch(':id')
+  @UseGuards(RequirePermission('academic.manage'))
+  async patch(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    return this.classesService.patchForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
+      body,
+      idempotencyKey,
+      correlationId,
+    );
   }
 }

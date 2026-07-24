@@ -1,11 +1,11 @@
 # Database Freeze — Subjects (DBF-007)
 
-| Field     | Value                                    |
-| --------- | ---------------------------------------- |
-| Freeze ID | `DBF-007`                                |
-| Version   | `1.1` (1.0 list; 1.1 create helper)      |
-| Date      | 2026-07-21                               |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Field     | Value                                                   |
+| --------- | ------------------------------------------------------- |
+| Freeze ID | `DBF-007`                                               |
+| Version   | `1.2` (1.0 list; 1.1 create; 1.2 update helper IMP-013) |
+| Date      | 2026-07-21                                              |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                |
 
 ## Table `subjects`
 

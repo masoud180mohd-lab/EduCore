@@ -8,6 +8,7 @@ import {
   buildIdempotencyScopeKey,
   hashRequestBody,
   IDEMPOTENCY_STORE,
+  parseIdempotencyKey,
   resolveIdempotentReplay,
   type IdempotencyStore,
 } from '../../../common/idempotency/index.js';
@@ -34,13 +35,18 @@ export type CreateClassResult = {
   readonly data: SchoolClass;
 };
 
+export type PatchClassResult = {
+  readonly data: SchoolClass;
+};
+
 const CLASS_STATUSES = new Set(['draft', 'active', 'closed']);
 const CREATE_ROUTE = '/api/v1/classes';
+const PATCH_ROUTE_PREFIX = '/api/v1/classes/';
 const CODE_PATTERN = /^[A-Za-z0-9._/-]{1,64}$/;
 
 /**
  * Product API for classes in the bound tenant.
- * GET list (C0) + detail (C1) + POST create (C2).
+ * GET list (C0) + detail (C1) + POST create (C2) + PATCH (IMP-013).
  */
 @Injectable()
 export class ClassesService {
@@ -241,7 +247,129 @@ export class ClassesService {
       throw new AppError('INTERNAL_ERROR', 'Failed to create class.');
     }
   }
+
+  /**
+   * PATCH /classes/:id — partial update (academic.manage).
+   * Idempotency-Key optional. Missing/cross-tenant → 404.
+   */
+  async patchForTenant(
+    actorUserId: string,
+    tenantId: string,
+    classId: string,
+    rawBody: unknown,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<PatchClassResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(classId)) {
+      throw AppError.notFound('Class not found.');
+    }
+
+    const parsed = parsePatchClassRequest(rawBody);
+    const bodyJson = JSON.stringify({
+      ...(parsed.setName ? { name: parsed.name } : {}),
+      ...(parsed.setCode ? { code: parsed.code } : {}),
+      ...(parsed.setStatus ? { status: parsed.status } : {}),
+    });
+
+    const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
+    if (optionalKey !== undefined && this.idempotency !== null) {
+      const key = assertIdempotencyKey(optionalKey);
+      const scopeKey = buildIdempotencyScopeKey(
+        {
+          actorUserId,
+          tenantId,
+          method: 'PATCH',
+          route: `${PATCH_ROUTE_PREFIX}${classId}`,
+        },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) {
+        return JSON.parse(replay.responseBody) as PatchClassResult;
+      }
+
+      const result = await this.executePatch(actorUserId, tenantId, classId, parsed, correlationId);
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executePatch(actorUserId, tenantId, classId, parsed, correlationId);
+  }
+
+  private async executePatch(
+    actorUserId: string,
+    tenantId: string,
+    classId: string,
+    parsed: ParsedClassPatch,
+    correlationId: string,
+  ): Promise<PatchClassResult> {
+    if (!this.classes.isAvailable()) {
+      throw AppError.notFound('Class not found.');
+    }
+
+    try {
+      const row = await this.classes.updateForTenant(actorUserId, tenantId, classId, {
+        setName: parsed.setName,
+        name: parsed.name,
+        setCode: parsed.setCode,
+        code: parsed.code,
+        setStatus: parsed.setStatus,
+        status: parsed.status,
+      });
+      if (row === null) {
+        throw AppError.notFound('Class not found.');
+      }
+
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: 'class.patch',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'class',
+          resourceId: row.id,
+          metadata: { fields: parsed.fields },
+        });
+      }
+
+      return { data: row };
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      if (isPgUniqueViolation(error)) {
+        throw new AppError('CONFLICT', 'Class code already exists for this academic year.');
+      }
+      if (isPgInvalidParameter(error)) {
+        throw AppError.validation('Invalid class payload.');
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to update class.');
+    }
+  }
 }
+
+type ParsedClassPatch = {
+  setName: boolean;
+  name: string | null;
+  setCode: boolean;
+  code: string | null;
+  setStatus: boolean;
+  status: string | null;
+  fields: string[];
+};
 
 function parseStatusFilter(raw: unknown): 'draft' | 'active' | 'closed' | undefined {
   if (raw === undefined || raw === null || raw === '') {
@@ -332,6 +460,76 @@ export function parseCreateClassRequest(raw: unknown): {
   }
 
   return { academicYearId, termId, name, code, status };
+}
+
+export function parsePatchClassRequest(raw: unknown): ParsedClassPatch {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw AppError.validation('Body must be a JSON object.');
+  }
+  const body = raw as Record<string, unknown>;
+  const allowed = new Set(['name', 'code', 'status']);
+  for (const key of Object.keys(body)) {
+    if (!allowed.has(key)) {
+      throw AppError.validation(`Unknown field: ${key}.`, { field: key });
+    }
+  }
+
+  const fields: string[] = [];
+  let setName = false;
+  let name: string | null = null;
+  let setCode = false;
+  let code: string | null = null;
+  let setStatus = false;
+  let status: string | null = null;
+
+  if (Object.prototype.hasOwnProperty.call(body, 'name')) {
+    if (typeof body['name'] !== 'string') {
+      throw AppError.validation('name must be a string.', { field: 'name' });
+    }
+    const trimmed = body['name'].trim();
+    if (trimmed.length < 1 || trimmed.length > 200) {
+      throw AppError.validation('name must be 1–200 characters.', { field: 'name' });
+    }
+    setName = true;
+    name = trimmed;
+    fields.push('name');
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'code')) {
+    setCode = true;
+    fields.push('code');
+    if (body['code'] === null) {
+      code = null;
+    } else if (typeof body['code'] !== 'string') {
+      throw AppError.validation('code must be a string or null.', { field: 'code' });
+    } else {
+      const trimmed = body['code'].trim();
+      if (trimmed === '') {
+        code = null;
+      } else if (!CODE_PATTERN.test(trimmed)) {
+        throw AppError.validation('code has invalid format.', { field: 'code' });
+      } else {
+        code = trimmed;
+      }
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'status')) {
+    if (typeof body['status'] !== 'string' || !CLASS_STATUSES.has(body['status'])) {
+      throw AppError.validation('status must be draft, active, or closed.', {
+        field: 'status',
+      });
+    }
+    setStatus = true;
+    status = body['status'];
+    fields.push('status');
+  }
+
+  if (fields.length === 0) {
+    throw AppError.validation('At least one field is required for patch.');
+  }
+
+  return { setName, name, setCode, code, setStatus, status, fields };
 }
 
 function isPgUniqueViolation(error: unknown): boolean {

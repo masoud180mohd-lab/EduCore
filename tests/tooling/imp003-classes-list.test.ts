@@ -11,15 +11,16 @@ function read(rel: string): string {
 }
 
 describe('IMP-003-C0/C1/C2 classes list + detail + create structural', () => {
-  it('registers GET list/detail + POST create with permissions and no patch/delete', () => {
+  it('registers GET list/detail + POST create + PATCH with permissions and no put/delete', () => {
     const ctrl = read('apps/api/src/modules/academic-structure/controllers/classes.controller.ts');
     expect(ctrl).toContain("@Controller('api/v1/classes')");
     expect(ctrl).toContain('@Get()');
     expect(ctrl).toContain('@Post()');
     expect(ctrl).toContain("@Get(':id')");
+    expect(ctrl).toContain("@Patch(':id')");
     expect(ctrl).toContain("RequirePermission('academic.read')");
     expect(ctrl).toContain("RequirePermission('academic.manage')");
-    expect(ctrl).not.toMatch(/@(Put|Patch|Delete)\(/);
+    expect(ctrl).not.toMatch(/@(Put|Delete)\(/);
     expect(ctrl.indexOf('@Get()')).toBeLessThan(ctrl.indexOf('@Post()'));
     expect(ctrl.indexOf('@Post()')).toBeLessThan(ctrl.indexOf("@Get(':id')"));
   });

@@ -162,3 +162,111 @@ describe('AcademicYearsService.createForTenant', () => {
     ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 });
+
+describe('AcademicYearsService.patchForTenant', () => {
+  const corr = 'corr-year-patch';
+
+  it('patches status and audits fields', async () => {
+    const updated = { ...yearA, status: 'closed' };
+    const academicYears = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new AcademicYearsService(academicYears as never, null, audit);
+    await expect(
+      service.patchForTenant(actorId, tenantId, yearA.id, { status: 'closed' }, undefined, corr),
+    ).resolves.toEqual({ data: updated });
+    expect(academicYears.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      yearA.id,
+      expect.objectContaining({
+        setStatus: true,
+        status: 'closed',
+        setName: false,
+        setCode: false,
+        setStartsOn: false,
+        setEndsOn: false,
+      }),
+    );
+    expect(audit.events[0]).toMatchObject({
+      action: 'academic_year.patch',
+      metadata: { fields: ['status'] },
+    });
+  });
+
+  it('maps missing year to 404', async () => {
+    const academicYears = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, yearA.id, { status: 'closed' }, undefined, corr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('rejects empty body', async () => {
+    const academicYears = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, yearA.id, {}, undefined, corr),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(academicYears.updateForTenant).not.toHaveBeenCalled();
+  });
+
+  it('rejects unknown field', async () => {
+    const academicYears = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, yearA.id, { tenantId: 'x' }, undefined, corr),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(academicYears.updateForTenant).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid id without repo call', async () => {
+    const academicYears = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        'not-a-uuid',
+        { status: 'active' },
+        undefined,
+        corr,
+      ),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(academicYears.updateForTenant).not.toHaveBeenCalled();
+  });
+
+  it('maps unique violation to CONFLICT', async () => {
+    const academicYears = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockRejectedValue({ code: '23505', message: 'dup' }),
+    };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, yearA.id, { code: 'DUP' }, undefined, corr),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+  });
+
+  it('clears code when set to null', async () => {
+    const updated = { ...yearA, code: null };
+    const academicYears = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const service = new AcademicYearsService(academicYears as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, yearA.id, { code: null }, undefined, corr),
+    ).resolves.toEqual({ data: updated });
+    expect(academicYears.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      yearA.id,
+      expect.objectContaining({ setCode: true, code: null }),
+    );
+  });
+});

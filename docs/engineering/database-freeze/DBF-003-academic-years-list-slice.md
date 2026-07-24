@@ -6,7 +6,7 @@
 | ------------------- | -------------------------------------------------------------------------------- |
 | Freeze ID           | `DBF-003`                                                                        |
 | Title               | Database Freeze — Academic Structure academic_years list-read                    |
-| Version             | `1.1` (1.0 list-read; 1.1 create helper)                                         |
+| Version             | `1.2` (1.0 list-read; 1.1 create helper; 1.2 update helper IMP-013)              |
 | Date                | 2026-07-20                                                                       |
 | Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                              |
 | Engine              | PostgreSQL                                                                       |
@@ -19,7 +19,7 @@
 
 Authorize the **smallest** tenant-owned schema needed for `GET /api/v1/academic-years` under ACF-003.
 
-Does **not** authorize academic writes or child resources (terms/classes).
+Does **not** authorize DELETE or child resources (terms/classes). Product writes use SECURITY DEFINER helpers (`app.create_academic_year`, `app.update_academic_year`).
 
 ## Table `academic_years` (frozen)
 
@@ -81,7 +81,7 @@ System role posture:
 
 - terms, classes, streams, subjects, enrollments
 - Cross-BC FKs from students
-- PATCH/DELETE product HTTP
+- DELETE product HTTP (PATCH via `app.update_academic_year` — IMP-013)
 
 ## Acceptance (solo-operator)
 

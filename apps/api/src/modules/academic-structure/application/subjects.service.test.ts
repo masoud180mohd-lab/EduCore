@@ -63,4 +63,54 @@ describe('SubjectsService', () => {
       service.createForTenant(actorId, tenantId, { name: 'Math' }, undefined, 'c'),
     ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
   });
+
+  it('patches name and audits fields', async () => {
+    const updated = { ...subjectA, name: 'Mathematics' };
+    const subjects = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new SubjectsService(subjects as never, null, audit);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        subjectA.id,
+        { name: 'Mathematics' },
+        undefined,
+        'c',
+      ),
+    ).resolves.toEqual({ data: updated });
+    expect(subjects.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      subjectA.id,
+      expect.objectContaining({ setName: true, name: 'Mathematics' }),
+    );
+    expect(audit.events[0]).toMatchObject({
+      action: 'subject.patch',
+      metadata: { fields: ['name'] },
+    });
+  });
+
+  it('rejects empty patch body', async () => {
+    const subjects = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new SubjectsService(subjects as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, subjectA.id, {}, undefined, 'c'),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(subjects.updateForTenant).not.toHaveBeenCalled();
+  });
+
+  it('maps missing subject to 404 on patch', async () => {
+    const subjects = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new SubjectsService(subjects as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, subjectA.id, { status: 'closed' }, undefined, 'c'),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
 });

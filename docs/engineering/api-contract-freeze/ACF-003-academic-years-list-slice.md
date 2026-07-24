@@ -2,14 +2,14 @@
 
 ## Freeze status
 
-| Field               | Value                                                          |
-| ------------------- | -------------------------------------------------------------- |
-| Freeze ID           | `ACF-003`                                                      |
-| Title               | API Contract Freeze — academic-years list + get-by-id + create |
-| Version             | `1.2` (1.0 list; 1.1 get; 1.2 create)                          |
-| Date                | 2026-07-20                                                     |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)            |
-| Companion DB freeze | DBF-003 (+ write helper rev for create)                        |
+| Field               | Value                                                            |
+| ------------------- | ---------------------------------------------------------------- |
+| Freeze ID           | `ACF-003`                                                        |
+| Title               | API Contract Freeze — academic-years list + get + create + patch |
+| Version             | `1.3` (1.0 list; 1.1 get; 1.2 create; 1.3 patch)                 |
+| Date                | 2026-07-24                                                       |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)              |
+| Companion DB freeze | DBF-003 (+ write helper rev for create)                          |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** multi-party external review.
 
@@ -20,14 +20,16 @@
 | 1.0     | 2026-07-20 | List only (`listAcademicYears`)                    |
 | **1.1** | 2026-07-20 | Add `GET /academic-years/{id}` (`getAcademicYear`) |
 | **1.2** | 2026-07-20 | Add `POST /academic-years` (`createAcademicYear`)  |
+| **1.3** | 2026-07-24 | Add `PATCH /academic-years/{id}` (IMP-013)         |
 
 ## Scope
 
 | In scope                                             | Out of scope                                   |
 | ---------------------------------------------------- | ---------------------------------------------- |
-| `GET /api/v1/academic-years` list                    | PATCH/DELETE academic-years                    |
+| `GET /api/v1/academic-years` list                    | DELETE academic-years                          |
 | `GET /api/v1/academic-years/{academicYearId}` detail | terms, classes, streams, subjects, enrollments |
 | `POST /api/v1/academic-years` create (rev 1.2)       | Nested expansions                              |
+| `PATCH /api/v1/academic-years/{id}` (rev 1.3)        |                                                |
 | Cursor pagination + status/search on list            |                                                |
 | Permissions `academic.read` / `academic.manage`      |                                                |
 
@@ -158,12 +160,46 @@ Permission: `academic.manage` — owner + admin only (not staff).
 
 ---
 
+## Endpoint: patch (rev 1.3 / IMP-013)
+
+| Method  | Path                                      | Auth   | Header                     | AuthZ                                                                                  | Idempotency  |
+| ------- | ----------------------------------------- | ------ | -------------------------- | -------------------------------------------------------------------------------------- | ------------ |
+| `PATCH` | `/api/v1/academic-years/{academicYearId}` | Bearer | `X-Tenant-Id` **required** | `RequirePermission('academic.manage')` + session↔header bind + active membership + RLS | **Optional** |
+
+**operationId:** `patchAcademicYear`
+
+### Body — `PatchAcademicYearRequest` (partial; ≥1 field)
+
+| Field      | Rules                                                                  |
+| ---------- | ---------------------------------------------------------------------- |
+| `name`     | optional; length 1–200 when set                                        |
+| `code`     | optional; null/empty clears; unique per tenant when set                |
+| `startsOn` | optional; ISO date or null to clear                                    |
+| `endsOn`   | optional; ISO date or null; if both effective dates set, ends ≥ starts |
+| `status`   | optional; `draft` \| `active` \| `closed` (any value; no matrix)       |
+
+Unknown keys → `VALIDATION_ERROR`. Empty body → `VALIDATION_ERROR`.
+
+### Success 200 — `AcademicYearEnvelope`
+
+### Errors (patch)
+
+| Condition                               | HTTP | Code family        |
+| --------------------------------------- | ---- | ------------------ |
+| No `academic.manage` / session mismatch | 403  | `FORBIDDEN`        |
+| Invalid body / empty allowlist          | 400  | `VALIDATION_ERROR` |
+| Missing / other tenant                  | 404  | `NOT_FOUND`        |
+| Duplicate code                          | 409  | `CONFLICT`         |
+
+---
+
 ## Locked product decisions (IMP-003-P0+)
 
 1. **Keyset order:** `starts_on DESC NULLS LAST, id ASC`
 2. **Dates:** optional null; DB enforces `ends_on >= starts_on` when both set
 3. **Status enum:** `draft` \| `active` \| `closed`
 4. **Create default status:** `draft` (safer than active)
+5. **PATCH (IMP-013):** allowlist only; no DELETE; no FK reparenting
 
 ## Acceptance (solo-operator)
 

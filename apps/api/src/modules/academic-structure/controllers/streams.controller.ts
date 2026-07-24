@@ -5,6 +5,7 @@ import {
   Headers,
   HttpCode,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -34,7 +35,7 @@ type AuthedRequest = Request & {
 
 /**
  * Streams surface (ACF-006 rev 1.2).
- * GET list/detail academic.read; POST academic.manage.
+ * GET list/detail academic.read; POST/PATCH (IMP-013) academic.manage. DELETE not supported.
  */
 @Controller('api/v1/streams')
 export class StreamsController {
@@ -94,5 +95,29 @@ export class StreamsController {
     if (auth === undefined) throw AppError.unauthorized();
     if (tenant === undefined) throw AppError.tenantContextRequired();
     return this.streamsService.getForTenant(auth.userId, tenant.tenantId, id);
+  }
+
+  @Patch(':id')
+  @UseGuards(RequirePermission('academic.manage'))
+  async patch(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) throw AppError.unauthorized();
+    if (tenant === undefined) throw AppError.tenantContextRequired();
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+    return this.streamsService.patchForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
+      body,
+      idempotencyKey,
+      correlationId,
+    );
   }
 }

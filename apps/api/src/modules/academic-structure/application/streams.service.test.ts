@@ -67,4 +67,36 @@ describe('StreamsService', () => {
     expect(second).toEqual(first);
     expect(streams.createForTenant).not.toHaveBeenCalled();
   });
+
+  it('patches name and audits fields', async () => {
+    const updated = { ...streamA, name: 'Alpha' };
+    const streams = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new StreamsService(streams as never, null, audit);
+    await expect(
+      service.patchForTenant(actorId, tenantId, streamA.id, { name: 'Alpha' }, undefined, 'c'),
+    ).resolves.toEqual({ data: updated });
+    expect(streams.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      streamA.id,
+      expect.objectContaining({ setName: true, name: 'Alpha' }),
+    );
+    expect(audit.events[0]).toMatchObject({
+      action: 'stream.patch',
+      metadata: { fields: ['name'] },
+    });
+  });
+
+  it('rejects empty patch body', async () => {
+    const streams = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new StreamsService(streams as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, streamA.id, {}, undefined, 'c'),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(streams.updateForTenant).not.toHaveBeenCalled();
+  });
 });

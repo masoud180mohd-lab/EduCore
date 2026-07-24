@@ -11,15 +11,16 @@ function read(rel: string): string {
 }
 
 describe('IMP-003-P3/P4/P5 terms list + detail + create structural', () => {
-  it('registers GET list/detail + POST create with permissions and no patch/delete', () => {
+  it('registers GET list/detail + POST create + PATCH with permissions and no put/delete', () => {
     const ctrl = read('apps/api/src/modules/academic-structure/controllers/terms.controller.ts');
     expect(ctrl).toContain("@Controller('api/v1/terms')");
     expect(ctrl).toContain('@Get()');
     expect(ctrl).toContain('@Post()');
     expect(ctrl).toContain("@Get(':id')");
+    expect(ctrl).toContain("@Patch(':id')");
     expect(ctrl).toContain("RequirePermission('academic.read')");
     expect(ctrl).toContain("RequirePermission('academic.manage')");
-    expect(ctrl).not.toMatch(/@(Put|Patch|Delete)\(/);
+    expect(ctrl).not.toMatch(/@(Put|Delete)\(/);
     expect(ctrl).not.toContain('term.read');
     expect(ctrl).not.toContain('term.manage');
     // Route order: list Get, Post, then :id Get.

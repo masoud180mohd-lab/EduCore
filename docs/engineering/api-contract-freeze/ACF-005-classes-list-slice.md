@@ -2,31 +2,32 @@
 
 ## Freeze status
 
-| Field               | Value                                               |
-| ------------------- | --------------------------------------------------- |
-| Freeze ID           | `ACF-005`                                           |
-| Title               | API Contract Freeze — classes list + get + create   |
-| Version             | `1.2`                                               |
-| Date                | 2026-07-21                                          |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001) |
-| Companion DB freeze | DBF-005 (+ create helper)                           |
+| Field               | Value                                                     |
+| ------------------- | --------------------------------------------------------- |
+| Freeze ID           | `ACF-005`                                                 |
+| Title               | API Contract Freeze — classes list + get + create + patch |
+| Version             | `1.3`                                                     |
+| Date                | 2026-07-24                                                |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)       |
+| Companion DB freeze | DBF-005 (+ create helper)                                 |
 
 **Honesty qualifier:** Solo-operator provisional.
 
 ## Revision history
 
-| Version | Date       | Notes                        |
-| ------- | ---------- | ---------------------------- |
-| 1.0     | 2026-07-21 | List only (`listClasses`)    |
-| 1.1     | 2026-07-21 | `GET /classes/{id}` getClass |
-| **1.2** | 2026-07-21 | `POST /classes` createClass  |
+| Version | Date       | Notes                           |
+| ------- | ---------- | ------------------------------- |
+| 1.0     | 2026-07-21 | List only (`listClasses`)       |
+| 1.1     | 2026-07-21 | `GET /classes/{id}` getClass    |
+| **1.2** | 2026-07-21 | `POST /classes` createClass     |
+| **1.3** | 2026-07-24 | `PATCH /classes/{id}` (IMP-013) |
 
 ## Scope
 
-| In scope                          | Out of scope                       |
-| --------------------------------- | ---------------------------------- |
-| GET list, GET detail, POST create | PATCH/DELETE, streams, enrollments |
-| academic.read / academic.manage   | class.* invention                  |
+| In scope                                 | Out of scope                               |
+| ---------------------------------------- | ------------------------------------------ |
+| GET list, GET detail, POST create, PATCH | DELETE; reparent year/term; streams/enroll |
+| academic.read / academic.manage          | class.* invention                          |
 
 ## Endpoint: list
 
@@ -62,6 +63,17 @@ Parent year missing/other-tenant → 400 `academicYearId not found in this tenan
 Parent term missing/wrong year/tenant → 400 on `termId`.  
 Duplicate code → 409.  
 Audit: `class.create`.
+
+## Endpoint: patch (rev 1.3 / IMP-013)
+
+| Method | Path                        | AuthZ           | Idempotency  |
+| ------ | --------------------------- | --------------- | ------------ |
+| PATCH  | `/api/v1/classes/{classId}` | academic.manage | **Optional** |
+
+**operationId:** `patchClass`
+
+Allowlist (≥1): `name`, `code` (null/empty clears), `status`. No `academicYearId` / `termId` on PATCH.  
+404 missing/cross-tenant; 409 duplicate code. Audit: `class.patch`.
 
 ## Acceptance (solo-operator)
 

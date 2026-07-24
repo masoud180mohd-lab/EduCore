@@ -345,6 +345,57 @@ paths:
         permissionCodes:
           - academic.read
         notes: Missing/cross-tenant → 404 Academic year not found.
+    patch:
+      tags:
+        - AcademicYears
+      operationId: patchAcademicYear
+      summary: Patch academic year fields
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/AcademicYearId'
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchAcademicYearRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          At least one of name, code, startsOn, endsOn, status. code null clears.
+          Idempotency optional. Duplicate code → 409.
   /terms:
     get:
       tags:
@@ -484,6 +535,57 @@ paths:
         permissionCodes:
           - academic.read
         notes: Missing/cross-tenant → 404 Term not found.
+    patch:
+      tags:
+        - Terms
+      operationId: patchTerm
+      summary: Patch term fields
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/TermId'
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchTermRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          At least one of name, code, startsOn, endsOn, status. No academicYearId
+          reparent. Idempotency optional. Duplicate code → 409.
   /classes:
     get:
       tags:
@@ -627,6 +729,57 @@ paths:
         permissionCodes:
           - academic.read
         notes: Missing/cross-tenant → 404 Class not found.
+    patch:
+      tags:
+        - Classes
+      operationId: patchClass
+      summary: Patch class fields
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/ClassId'
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchClassRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          At least one of name, code, status. No academicYearId/termId reparent.
+          Idempotency optional. Duplicate code → 409.
   /streams:
     get:
       tags:
@@ -766,6 +919,57 @@ paths:
         permissionCodes:
           - academic.read
         notes: Missing/cross-tenant → 404 Stream not found.
+    patch:
+      tags:
+        - Streams
+      operationId: patchStream
+      summary: Patch stream fields
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/StreamId'
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchStreamRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          At least one of name, code, status. No classId reparent.
+          Idempotency optional. Duplicate code → 409.
   /subjects:
     get:
       tags:
@@ -901,6 +1105,57 @@ paths:
         permissionCodes:
           - academic.read
         notes: Missing/cross-tenant → 404 Subject not found.
+    patch:
+      tags:
+        - Subjects
+      operationId: patchSubject
+      summary: Patch subject fields
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/SubjectId'
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchSubjectRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubjectEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions:
+        - academic.manage
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - academic.manage
+        notes: >-
+          At least one of name, code, status. Idempotency optional.
+          Duplicate code → 409.
 components:
   securitySchemes:
     bearerAuth:
@@ -1232,6 +1487,28 @@ components:
         status:
           $ref: '#/components/schemas/AcademicLifecycleStatus'
           default: draft
+    PatchAcademicYearRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        code:
+          type: string
+          nullable: true
+        startsOn:
+          type: string
+          format: date
+          nullable: true
+        endsOn:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
     Term:
       type: object
       additionalProperties: false
@@ -1318,6 +1595,28 @@ components:
         status:
           $ref: '#/components/schemas/AcademicLifecycleStatus'
           default: draft
+    PatchTermRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        code:
+          type: string
+          nullable: true
+        startsOn:
+          type: string
+          format: date
+          nullable: true
+        endsOn:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
     Class:
       type: object
       additionalProperties: false
@@ -1395,6 +1694,20 @@ components:
         status:
           $ref: '#/components/schemas/AcademicLifecycleStatus'
           default: draft
+    PatchClassRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        code:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
     Stream:
       type: object
       additionalProperties: false
@@ -1465,6 +1778,20 @@ components:
         status:
           $ref: '#/components/schemas/AcademicLifecycleStatus'
           default: draft
+    PatchStreamRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        code:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'
     Subject:
       type: object
       additionalProperties: false
@@ -1529,3 +1856,17 @@ components:
         status:
           $ref: '#/components/schemas/AcademicLifecycleStatus'
           default: draft
+    PatchSubjectRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        code:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AcademicLifecycleStatus'

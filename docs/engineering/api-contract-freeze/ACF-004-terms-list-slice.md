@@ -2,14 +2,14 @@
 
 ## Freeze status
 
-| Field               | Value                                               |
-| ------------------- | --------------------------------------------------- |
-| Freeze ID           | `ACF-004`                                           |
-| Title               | API Contract Freeze — terms list + get + create     |
-| Version             | `1.2`                                               |
-| Date                | 2026-07-21                                          |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001) |
-| Companion DB freeze | DBF-004 (+ write helper rev 1.1)                    |
+| Field               | Value                                                   |
+| ------------------- | ------------------------------------------------------- |
+| Freeze ID           | `ACF-004`                                               |
+| Title               | API Contract Freeze — terms list + get + create + patch |
+| Version             | `1.3`                                                   |
+| Date                | 2026-07-24                                              |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)     |
+| Companion DB freeze | DBF-004 (+ write helper rev 1.1)                        |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** multi-party external review.
 
@@ -20,14 +20,16 @@
 | 1.0     | 2026-07-20 | List only (`listTerms`)               |
 | 1.1     | 2026-07-21 | Add `GET /terms/{termId}` (`getTerm`) |
 | **1.2** | 2026-07-21 | Add `POST /terms` (`createTerm`)      |
+| **1.3** | 2026-07-24 | Add `PATCH /terms/{id}` (IMP-013)     |
 
 ## Scope
 
 | In scope                                        | Out of scope                                         |
 | ----------------------------------------------- | ---------------------------------------------------- |
-| `GET /api/v1/terms` list                        | PATCH/DELETE terms                                   |
+| `GET /api/v1/terms` list                        | DELETE terms                                         |
 | `GET /api/v1/terms/{termId}` detail             | Nested `/academic-years/{id}/terms` path (v1 closed) |
 | `POST /api/v1/terms` create (rev 1.2)           | classes, streams, subjects, enrollments              |
+| `PATCH /api/v1/terms/{id}` (rev 1.3)            | Reparenting `academicYearId` on PATCH                |
 | Cursor pagination + filters                     | Nested academicYear expansion                        |
 | Permissions `academic.read` / `academic.manage` | `term.read` / `term.manage` invention                |
 
@@ -45,7 +47,7 @@ Identity/Tenant ACF-001, Student ACF-002, Academic Years ACF-003 remain unchange
 | D6  | List order: `starts_on ASC NULLS LAST, id ASC`                 |
 | D7  | Cursor keyset on last row `id`                                 |
 | D8  | Parent year FK + denormalized `tenant_id`                      |
-| D9  | PATCH/DELETE closed; POST open (rev 1.2)                       |
+| D9  | DELETE closed; POST + PATCH open (rev 1.3 / IMP-013)           |
 | D10 | `educore_app` table INSERT remains REVOKED (helper only)       |
 
 ## Endpoint: list
@@ -167,12 +169,24 @@ On success: `term.create` with metadata `{ status, hasCode, academicYearId }` (n
 
 ## Explicit non-goals
 
-- PATCH/DELETE terms
+- DELETE terms
+- Reparenting `academicYearId` on PATCH
 - Nested year path
 - Nested academicYear expansion
 - classes / streams / subjects
 - New permission codes (`term.*`)
-- Table INSERT grant to `educore_app`
+- Table INSERT/UPDATE grant to `educore_app` (helpers only)
+
+## Endpoint: patch (rev 1.3 / IMP-013)
+
+| Method  | Path                     | AuthZ           | Idempotency  |
+| ------- | ------------------------ | --------------- | ------------ |
+| `PATCH` | `/api/v1/terms/{termId}` | academic.manage | **Optional** |
+
+**operationId:** `patchTerm`
+
+Allowlist (≥1): `name`, `code` (null/empty clears), `startsOn`, `endsOn`, `status` (`draft`\|`active`\|`closed`).  
+404 missing/cross-tenant; 409 duplicate code; empty body → 400.
 
 ## Acceptance (solo-operator)
 

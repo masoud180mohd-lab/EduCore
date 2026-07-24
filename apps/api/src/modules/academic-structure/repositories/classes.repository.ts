@@ -1,6 +1,6 @@
 /**
  * Classes in the bound tenant (RLS Pattern A / DBF-005).
- * List (C0) + get-by-id (C1) + create (C2 via SECURITY DEFINER).
+ * List (C0) + get-by-id (C1) + create (C2) + patch (IMP-013) via SECURITY DEFINER.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -272,6 +272,76 @@ export class ClassesRepository {
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'ClassesRepository', error, {
         operation: 'createForTenant',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Partial update via SECURITY DEFINER helper.
+   * Returns null when missing/other-tenant (empty helper result) or invalid ids / no pool.
+   * Throws on unique violation (23505) for service → 409.
+   */
+  async updateForTenant(
+    actorUserId: string,
+    tenantId: string,
+    classId: string,
+    patch: {
+      readonly setName: boolean;
+      readonly name: string | null;
+      readonly setCode: boolean;
+      readonly code: string | null;
+      readonly setStatus: boolean;
+      readonly status: string | null;
+    },
+  ): Promise<ClassRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(classId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            academic_year_id: string;
+            term_id: string | null;
+            name: string;
+            code: string | null;
+            status: string;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, tenant_id, academic_year_id, term_id, name, code, status,
+                    created_at, updated_at
+             FROM app.update_class(
+               $1::uuid, $2::uuid, $3::uuid,
+               $4::boolean, $5::text,
+               $6::boolean, $7::text,
+               $8::boolean, $9::text
+             )`,
+            [
+              actorUserId,
+              tenantId,
+              classId,
+              patch.setName,
+              patch.name,
+              patch.setCode,
+              patch.code,
+              patch.setStatus,
+              patch.status,
+            ],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapClassRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'ClassesRepository', error, {
+        operation: 'updateForTenant',
       });
       throw error;
     }

@@ -115,3 +115,43 @@ describe('ClassesService.createForTenant', () => {
     ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 });
+
+describe('ClassesService.patchForTenant', () => {
+  it('patches status', async () => {
+    const updated = { ...classA, status: 'closed' };
+    const classes = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const service = new ClassesService(classes as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, classA.id, { status: 'closed' }, undefined, 'c'),
+    ).resolves.toEqual({ data: updated });
+    expect(classes.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      classA.id,
+      expect.objectContaining({ setStatus: true, status: 'closed' }),
+    );
+  });
+
+  it('rejects empty body', async () => {
+    const classes = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new ClassesService(classes as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, classA.id, {}, undefined, 'c'),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(classes.updateForTenant).not.toHaveBeenCalled();
+  });
+
+  it('maps missing class to 404', async () => {
+    const classes = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new ClassesService(classes as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, classA.id, { status: 'active' }, undefined, 'c'),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});

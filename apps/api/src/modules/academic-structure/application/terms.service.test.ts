@@ -292,3 +292,50 @@ describe('TermsService.createForTenant', () => {
     );
   });
 });
+
+describe('TermsService.patchForTenant', () => {
+  const corr = 'corr-term-patch';
+
+  it('patches name and audits fields', async () => {
+    const updated = { ...termA, name: 'Term One' };
+    const terms = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new TermsService(terms as never, null, audit);
+    await expect(
+      service.patchForTenant(actorId, tenantId, termA.id, { name: 'Term One' }, undefined, corr),
+    ).resolves.toEqual({ data: updated });
+    expect(terms.updateForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      termA.id,
+      expect.objectContaining({ setName: true, name: 'Term One' }),
+    );
+    expect(audit.events[0]).toMatchObject({
+      action: 'term.patch',
+      metadata: { fields: ['name'] },
+    });
+  });
+
+  it('rejects empty body', async () => {
+    const terms = { isAvailable: () => true, updateForTenant: vi.fn() };
+    const service = new TermsService(terms as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, termA.id, {}, undefined, corr),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(terms.updateForTenant).not.toHaveBeenCalled();
+  });
+
+  it('maps missing term to 404', async () => {
+    const terms = {
+      isAvailable: () => true,
+      updateForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new TermsService(terms as never);
+    await expect(
+      service.patchForTenant(actorId, tenantId, termA.id, { status: 'closed' }, undefined, corr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});

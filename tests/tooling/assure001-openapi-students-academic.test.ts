@@ -76,18 +76,23 @@ describe('ASSURE-001 OpenAPI students+academic sync', () => {
       ['/academic-years', 'get', 'listAcademicYears'],
       ['/academic-years', 'post', 'createAcademicYear'],
       ['/academic-years/{academicYearId}', 'get', 'getAcademicYear'],
+      ['/academic-years/{academicYearId}', 'patch', 'patchAcademicYear'],
       ['/terms', 'get', 'listTerms'],
       ['/terms', 'post', 'createTerm'],
       ['/terms/{termId}', 'get', 'getTerm'],
+      ['/terms/{termId}', 'patch', 'patchTerm'],
       ['/classes', 'get', 'listClasses'],
       ['/classes', 'post', 'createClass'],
       ['/classes/{classId}', 'get', 'getClass'],
+      ['/classes/{classId}', 'patch', 'patchClass'],
       ['/streams', 'get', 'listStreams'],
       ['/streams', 'post', 'createStream'],
       ['/streams/{streamId}', 'get', 'getStream'],
+      ['/streams/{streamId}', 'patch', 'patchStream'],
       ['/subjects', 'get', 'listSubjects'],
       ['/subjects', 'post', 'createSubject'],
       ['/subjects/{subjectId}', 'get', 'getSubject'],
+      ['/subjects/{subjectId}', 'patch', 'patchSubject'],
     ];
     for (const [pathKey, method, id] of expected) {
       expect(op(pathKey, method).operationId, `${method} ${pathKey}`).toBe(id);

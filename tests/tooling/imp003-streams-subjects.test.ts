@@ -11,23 +11,25 @@ function read(rel: string): string {
 }
 
 describe('IMP-003 streams + subjects structural', () => {
-  it('registers streams list/detail/create without patch/delete', () => {
+  it('registers streams list/detail/create/patch without put/delete', () => {
     const ctrl = read('apps/api/src/modules/academic-structure/controllers/streams.controller.ts');
     expect(ctrl).toContain("@Controller('api/v1/streams')");
     expect(ctrl).toContain('@Get()');
     expect(ctrl).toContain('@Post()');
     expect(ctrl).toContain("@Get(':id')");
+    expect(ctrl).toContain("@Patch(':id')");
     expect(ctrl).toContain("RequirePermission('academic.read')");
     expect(ctrl).toContain("RequirePermission('academic.manage')");
-    expect(ctrl).not.toMatch(/@(Put|Patch|Delete)\(/);
+    expect(ctrl).not.toMatch(/@(Put|Delete)\(/);
   });
 
-  it('registers subjects list/detail/create without patch/delete', () => {
+  it('registers subjects list/detail/create/patch without put/delete', () => {
     const ctrl = read('apps/api/src/modules/academic-structure/controllers/subjects.controller.ts');
     expect(ctrl).toContain("@Controller('api/v1/subjects')");
     expect(ctrl).toContain('@Post()');
     expect(ctrl).toContain("@Get(':id')");
-    expect(ctrl).not.toMatch(/@(Put|Patch|Delete)\(/);
+    expect(ctrl).toContain("@Patch(':id')");
+    expect(ctrl).not.toMatch(/@(Put|Delete)\(/);
   });
 
   it('documents freezes', () => {

@@ -2,16 +2,16 @@
 
 ## Freeze status
 
-| Field               | Value                                                                      |
-| ------------------- | -------------------------------------------------------------------------- |
-| Freeze ID           | `DBF-004`                                                                  |
-| Title               | Database Freeze — Academic Structure `terms` (list + create helper)        |
-| Version             | `1.1` (1.0 list-read; 1.1 create helper)                                   |
-| Date                | 2026-07-21                                                                 |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                        |
-| Engine              | PostgreSQL                                                                 |
-| Scope               | Academic Structure — `terms` table + `app.create_term`                     |
-| Explicitly excluded | classes, streams, subjects, teacher_assignments, enrollments, PATCH/DELETE |
+| Field               | Value                                                                |
+| ------------------- | -------------------------------------------------------------------- |
+| Freeze ID           | `DBF-004`                                                            |
+| Title               | Database Freeze — Academic Structure `terms` (list + create helper)  |
+| Version             | `1.2` (1.0 list-read; 1.1 create; 1.2 update helper IMP-013)         |
+| Date                | 2026-07-21                                                           |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                  |
+| Engine              | PostgreSQL                                                           |
+| Scope               | Academic Structure — `terms` table + create/update helpers           |
+| Explicitly excluded | classes, streams, subjects, teacher_assignments, enrollments, DELETE |
 
 **Honesty qualifier:** Accepted under solo-operator acting seats — **not** independent multi-person external review.
 
@@ -19,7 +19,7 @@
 
 Authorize the tenant-owned schema and write helper for `GET/POST /api/v1/terms` under ACF-004.
 
-Does **not** authorize PATCH/DELETE or child resources (classes/streams/subjects).
+Does **not** authorize DELETE or child resources (classes/streams/subjects). PATCH via `app.update_term` (IMP-013).
 
 **Detail note (ACF-004 rev 1.1):** `GET /api/v1/terms/{id}` reuses this table and SELECT-only Pattern A RLS — **no schema change** for get-by-id.
 
@@ -101,7 +101,7 @@ No `term.read` / `term.manage`.
 ## Exclusions
 
 - classes, streams, subjects, enrollments
-- Term PATCH/DELETE product HTTP
+- Term DELETE product HTTP (PATCH via `app.update_term` — IMP-013)
 - Nested path under academic-years (v1 uses flat `/terms`)
 
 ## Acceptance (solo-operator)

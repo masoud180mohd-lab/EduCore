@@ -8,6 +8,7 @@ import {
   buildIdempotencyScopeKey,
   hashRequestBody,
   IDEMPOTENCY_STORE,
+  parseIdempotencyKey,
   resolveIdempotentReplay,
   type IdempotencyStore,
 } from '../../../common/idempotency/index.js';
@@ -25,9 +26,11 @@ export type Subject = SubjectRow;
 export type ListSubjectsResult = PaginatedResponse<Subject>;
 export type GetSubjectResult = { readonly data: Subject };
 export type CreateSubjectResult = { readonly data: Subject };
+export type PatchSubjectResult = { readonly data: Subject };
 
 const STATUSES = new Set(['draft', 'active', 'closed']);
 const CREATE_ROUTE = '/api/v1/subjects';
+const PATCH_ROUTE_PREFIX = '/api/v1/subjects/';
 const CODE_PATTERN = /^[A-Za-z0-9._/-]{1,64}$/;
 
 @Injectable()
@@ -169,7 +172,119 @@ export class SubjectsService {
       throw new AppError('INTERNAL_ERROR', 'Failed to create subject.');
     }
   }
+
+  async patchForTenant(
+    actorUserId: string,
+    tenantId: string,
+    subjectId: string,
+    rawBody: unknown,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<PatchSubjectResult> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    if (!isUuid(subjectId)) throw AppError.notFound('Subject not found.');
+
+    const parsed = parsePatchSubjectRequest(rawBody);
+    const bodyJson = JSON.stringify({
+      ...(parsed.setName ? { name: parsed.name } : {}),
+      ...(parsed.setCode ? { code: parsed.code } : {}),
+      ...(parsed.setStatus ? { status: parsed.status } : {}),
+    });
+
+    const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
+    if (optionalKey !== undefined && this.idempotency !== null) {
+      const key = assertIdempotencyKey(optionalKey);
+      const scopeKey = buildIdempotencyScopeKey(
+        { actorUserId, tenantId, method: 'PATCH', route: `${PATCH_ROUTE_PREFIX}${subjectId}` },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) return JSON.parse(replay.responseBody) as PatchSubjectResult;
+      const result = await this.executePatch(
+        actorUserId,
+        tenantId,
+        subjectId,
+        parsed,
+        correlationId,
+      );
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+    return this.executePatch(actorUserId, tenantId, subjectId, parsed, correlationId);
+  }
+
+  private async executePatch(
+    actorUserId: string,
+    tenantId: string,
+    subjectId: string,
+    parsed: ParsedSubjectPatch,
+    correlationId: string,
+  ): Promise<PatchSubjectResult> {
+    if (!this.subjects.isAvailable()) {
+      throw AppError.notFound('Subject not found.');
+    }
+    try {
+      const row = await this.subjects.updateForTenant(actorUserId, tenantId, subjectId, {
+        setName: parsed.setName,
+        name: parsed.name,
+        setCode: parsed.setCode,
+        code: parsed.code,
+        setStatus: parsed.setStatus,
+        status: parsed.status,
+      });
+      if (row === null) throw AppError.notFound('Subject not found.');
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: 'subject.patch',
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'subject',
+          resourceId: row.id,
+          metadata: { fields: parsed.fields },
+        });
+      }
+      return { data: row };
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code: string }).code === '23505'
+      ) {
+        throw new AppError('CONFLICT', 'Subject code already exists in this tenant.');
+      }
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code: string }).code === '22023'
+      ) {
+        throw AppError.validation('Invalid subject payload.');
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to update subject.');
+    }
+  }
 }
+
+type ParsedSubjectPatch = {
+  setName: boolean;
+  name: string | null;
+  setCode: boolean;
+  code: string | null;
+  setStatus: boolean;
+  status: string | null;
+  fields: string[];
+};
 
 function parseStatus(raw: unknown): 'draft' | 'active' | 'closed' | undefined {
   if (raw === undefined || raw === null || raw === '') return undefined;
@@ -219,4 +334,72 @@ function parseCreateSubjectRequest(raw: unknown): {
     status = body['status'];
   }
   return { name, code, status };
+}
+
+function parsePatchSubjectRequest(raw: unknown): ParsedSubjectPatch {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw AppError.validation('Body must be a JSON object.');
+  }
+  const body = raw as Record<string, unknown>;
+  const allowed = new Set(['name', 'code', 'status']);
+  for (const key of Object.keys(body)) {
+    if (!allowed.has(key)) {
+      throw AppError.validation(`Unknown field: ${key}.`, { field: key });
+    }
+  }
+
+  const fields: string[] = [];
+  let setName = false;
+  let name: string | null = null;
+  let setCode = false;
+  let code: string | null = null;
+  let setStatus = false;
+  let status: string | null = null;
+
+  if (Object.prototype.hasOwnProperty.call(body, 'name')) {
+    if (typeof body['name'] !== 'string') {
+      throw AppError.validation('name must be a string.', { field: 'name' });
+    }
+    const trimmed = body['name'].trim();
+    if (trimmed.length < 1 || trimmed.length > 200) {
+      throw AppError.validation('name must be 1–200 characters.', { field: 'name' });
+    }
+    setName = true;
+    name = trimmed;
+    fields.push('name');
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'code')) {
+    setCode = true;
+    fields.push('code');
+    if (body['code'] === null) {
+      code = null;
+    } else if (typeof body['code'] !== 'string') {
+      throw AppError.validation('code must be a string or null.', { field: 'code' });
+    } else {
+      const trimmed = body['code'].trim();
+      if (trimmed === '') {
+        code = null;
+      } else if (!CODE_PATTERN.test(trimmed)) {
+        throw AppError.validation('code has invalid format.', { field: 'code' });
+      } else {
+        code = trimmed;
+      }
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'status')) {
+    if (typeof body['status'] !== 'string' || !STATUSES.has(body['status'])) {
+      throw AppError.validation('status must be draft, active, or closed.', { field: 'status' });
+    }
+    setStatus = true;
+    status = body['status'];
+    fields.push('status');
+  }
+
+  if (fields.length === 0) {
+    throw AppError.validation('At least one field is required for patch.');
+  }
+
+  return { setName, name, setCode, code, setStatus, status, fields };
 }
