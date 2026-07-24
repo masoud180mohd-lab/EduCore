@@ -30,3 +30,5 @@ Operators can **delete empty** structure entities (409 if dependents) and **repa
 ## Manual QA
 
 Checklist: `tasks/manual-test-admin-academic-structure-delete-reparent-qa.md`
+
+**Live evidence (2026-07-25):** API `:3000` — empty subject DELETE 204→404; year-with-term DELETE 409; stream/term/class reparent 200; parent 403; foreign 404; no cascade. See checklist evidence table.
