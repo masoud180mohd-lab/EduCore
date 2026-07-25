@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                                            |
-| --------- | -------------------------------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                                        |
-| Version   | `1.5`                                                                            |
-| Date      | 2026-07-25                                                                       |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet)                      |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                                         |
-| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · **IMP-016** (Admin Users/Orgs) |
+| Field     | Value                                                                                            |
+| --------- | ------------------------------------------------------------------------------------------------ |
+| Freeze ID | `DSF-002`                                                                                        |
+| Version   | `1.6`                                                                                            |
+| Date      | 2026-07-25                                                                                       |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                      |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                         |
+| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · **IMP-017** (AdminShell school name) |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -44,7 +44,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 ## Component inventory (this slice)
 
-- `AdminShell` (nav: Home / Users / Orgs / Students / Guardians / **Academic** / Fees / Settings / Logout)
+- `AdminShell` (nav: Home / Users / Orgs / Students / Guardians / **Academic** / Fees / Settings / Logout); header brand = school name from `GET /tenants/current` (fallback `EduCore Admin`)
 - Shared banners, buttons, fields from DSF-001 language
 - `ResourceList` pattern (loading / empty / error / forbidden)
 - Guardian form (displayName, optional phone/email)

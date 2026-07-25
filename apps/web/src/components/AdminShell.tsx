@@ -5,7 +5,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
+import { apiRequest } from '@/lib/api/client';
 import { clearSession, readSession } from '@/lib/auth/session';
+
+const BRAND_FALLBACK = 'EduCore Admin';
+
+type TenantCurrent = {
+  readonly data: { readonly id: string; readonly name?: string; readonly code?: string };
+};
 
 export function AdminShell({
   tenantId,
@@ -17,6 +24,7 @@ export function AdminShell({
   const router = useRouter();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
+  const [brand, setBrand] = useState(BRAND_FALLBACK);
 
   useEffect(() => {
     const session = readSession();
@@ -25,6 +33,17 @@ export function AdminShell({
       return;
     }
     setReady(true);
+
+    void (async () => {
+      try {
+        const result = await apiRequest<TenantCurrent>('/api/v1/tenants/current', {
+          auth: session,
+        });
+        setBrand(result.data.name ?? result.data.code ?? BRAND_FALLBACK);
+      } catch {
+        setBrand(BRAND_FALLBACK);
+      }
+    })();
   }, [router, tenantId]);
 
   if (!ready) {
@@ -50,7 +69,7 @@ export function AdminShell({
   return (
     <div className="app-shell app-shell-wide">
       <header className="top-nav">
-        <strong>EduCore Admin</strong>
+        <strong>{brand}</strong>
         <nav aria-label="Admin">
           {links.map((link) => {
             const current =
