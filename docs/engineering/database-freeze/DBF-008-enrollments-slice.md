@@ -2,16 +2,16 @@
 
 ## Freeze status
 
-| Field               | Value                                                                 |
-| ------------------- | --------------------------------------------------------------------- |
-| Freeze ID           | `DBF-008`                                                             |
-| Title               | Database Freeze — enrollments (list + create + status update helpers) |
-| Version             | `1.2` (1.0 list table; 1.1 create helper; 1.2 update_status helper)   |
-| Date                | 2026-07-21                                                            |
-| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                   |
-| Engine              | PostgreSQL                                                            |
-| Scope               | Academic Structure owns `enrollments` table + write helpers           |
-| Explicitly excluded | Attendance, marks, bulk import, nested expansions, guardians          |
+| Field               | Value                                                                     |
+| ------------------- | ------------------------------------------------------------------------- |
+| Freeze ID           | `DBF-008`                                                                 |
+| Title               | Database Freeze — enrollments (list + create + status + transfer helpers) |
+| Version             | `1.3` (1.0 list; 1.1 create; 1.2 update_status; **1.3** transfer/patch)   |
+| Date                | 2026-07-25                                                                |
+| Authority           | Solo-operator provisional acceptance (SOLO-GOV-001)                       |
+| Engine              | PostgreSQL                                                                |
+| Scope               | Academic Structure owns `enrollments` table + write helpers               |
+| Explicitly excluded | Attendance, marks, bulk import, nested expansions, guardians              |
 
 **Honesty qualifier:** Solo-operator provisional — not multi-party external review.
 
@@ -70,6 +70,7 @@ Authorize tenant-owned enrollment of a student into a class (optional stream), w
 - Product writes via SECURITY DEFINER:
   - `app.create_enrollment` (rev 1.1)
   - `app.update_enrollment_status` (rev 1.2)
+  - `app.patch_enrollment` (rev 1.3 — status and/or class/stream; re-derive year/term from class)
 
 ### Ownership
 

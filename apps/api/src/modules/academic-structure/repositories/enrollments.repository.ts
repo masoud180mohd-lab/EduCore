@@ -267,6 +267,76 @@ export class EnrollmentsRepository {
       throw error;
     }
   }
+
+  /**
+   * Partial PATCH via app.patch_enrollment (status and/or class/stream).
+   * Returns null when missing/cross-tenant. Throws on validation / unique violation.
+   */
+  async patchForTenant(
+    actorUserId: string,
+    tenantId: string,
+    enrollmentId: string,
+    input: {
+      readonly setClass: boolean;
+      readonly classId: string | undefined;
+      readonly setStream: boolean;
+      readonly streamId: string | null | undefined;
+      readonly setStatus: boolean;
+      readonly status: string | undefined;
+    },
+  ): Promise<EnrollmentRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(enrollmentId) || this.pool === null) {
+      return null;
+    }
+    if (input.setClass && (input.classId === undefined || !isUuid(input.classId))) {
+      return null;
+    }
+    if (
+      input.setStream &&
+      input.streamId !== undefined &&
+      input.streamId !== null &&
+      !isUuid(input.streamId)
+    ) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<EnrollmentDbRow>(
+            `SELECT id, tenant_id, student_id, class_id, stream_id, academic_year_id,
+                    term_id, status, enrolled_at, created_at, updated_at
+             FROM app.patch_enrollment(
+               $1::uuid, $2::uuid, $3::uuid,
+               $4::boolean, $5::uuid,
+               $6::boolean, $7::uuid,
+               $8::boolean, $9::text
+             )`,
+            [
+              actorUserId,
+              tenantId,
+              enrollmentId,
+              input.setClass,
+              input.setClass ? (input.classId ?? null) : null,
+              input.setStream,
+              input.setStream ? (input.streamId ?? null) : null,
+              input.setStatus,
+              input.setStatus ? (input.status ?? null) : null,
+            ],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapEnrollmentRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'EnrollmentsRepository', error, {
+        operation: 'patchForTenant',
+      });
+      throw error;
+    }
+  }
 }
 
 function mapEnrollmentRow(row: EnrollmentDbRow): EnrollmentRow {

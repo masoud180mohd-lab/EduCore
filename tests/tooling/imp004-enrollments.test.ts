@@ -45,7 +45,7 @@ describe('IMP-004 enrollments structural', () => {
     expect(acf).toContain('getEnrollment');
     expect(acf).toContain('createEnrollment');
     expect(acf).toContain('patchEnrollment');
-    expect(acf).toContain('1.3');
+    expect(acf).toMatch(/1\.[34]/);
     expect(read('docs/engineering/task-records/IMP-004-E0-enrollments-foundation.md')).toContain(
       'IMP-004',
     );

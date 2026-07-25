@@ -79,8 +79,8 @@ describe('EnrollmentsService', () => {
     ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 
-  it('patch status requires status field', async () => {
-    const enrollments = { isAvailable: () => true, updateStatusForTenant: vi.fn() };
+  it('patch requires at least one field', async () => {
+    const enrollments = { isAvailable: () => true, patchForTenant: vi.fn() };
     const service = new EnrollmentsService(enrollments as never);
     await expect(
       service.patchForTenant(actorId, tenantId, enrollmentA.id, {}, undefined, 'c'),
@@ -91,7 +91,7 @@ describe('EnrollmentsService', () => {
     const updated = { ...enrollmentA, status: 'withdrawn' };
     const enrollments = {
       isAvailable: () => true,
-      updateStatusForTenant: vi.fn().mockResolvedValue(updated),
+      patchForTenant: vi.fn().mockResolvedValue(updated),
     };
     const service = new EnrollmentsService(enrollments as never);
     await expect(
@@ -100,6 +100,32 @@ describe('EnrollmentsService', () => {
         tenantId,
         enrollmentA.id,
         { status: 'withdrawn' },
+        undefined,
+        'c',
+      ),
+    ).resolves.toEqual({ data: updated });
+    expect(enrollments.patchForTenant).toHaveBeenCalledWith(
+      actorId,
+      tenantId,
+      enrollmentA.id,
+      expect.objectContaining({ setStatus: true, status: 'withdrawn' }),
+    );
+  });
+
+  it('patch transfers class', async () => {
+    const newClass = '01900000-0000-7000-8000-0000000000e2';
+    const updated = { ...enrollmentA, classId: newClass };
+    const enrollments = {
+      isAvailable: () => true,
+      patchForTenant: vi.fn().mockResolvedValue(updated),
+    };
+    const service = new EnrollmentsService(enrollments as never);
+    await expect(
+      service.patchForTenant(
+        actorId,
+        tenantId,
+        enrollmentA.id,
+        { classId: newClass },
         undefined,
         'c',
       ),

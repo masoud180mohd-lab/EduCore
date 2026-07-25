@@ -3,7 +3,7 @@ info:
   title: EduCore API — Enrollments & Attendance (ACF-008 / ACF-009)
   version: 1.0.0
   description: >-
-    Machine-readable contract for enrollments (ACF-008 rev 1.3) and attendance
+    Machine-readable contract for enrollments (ACF-008 rev 1.4) and attendance
     sessions/records (ACF-009 rev 1.3). Solo-operator provisional (SOLO-GOV-001).
     Binding design baseline for implemented product HTTP; not freeze re-acceptance.
     AuthZ stack (typical privileged route): Authenticated → Tenant header →
@@ -168,7 +168,7 @@ paths:
       tags:
         - Enrollments
       operationId: patchEnrollment
-      summary: Update enrollment status
+      summary: Update enrollment status and/or placement (class/stream)
       security:
         - bearerAuth: []
           tenantHeader: []
@@ -720,11 +720,20 @@ components:
     PatchEnrollmentRequest:
       type: object
       additionalProperties: false
-      required:
-        - status
+      minProperties: 1
       properties:
         status:
           $ref: '#/components/schemas/EnrollmentStatus'
+        classId:
+          $ref: '#/components/schemas/Uuid'
+        streamId:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: >-
+            Optional stream under the effective class. Null clears stream.
+            When classId is set and streamId omitted, stream is cleared.
     AttendanceSession:
       type: object
       additionalProperties: false

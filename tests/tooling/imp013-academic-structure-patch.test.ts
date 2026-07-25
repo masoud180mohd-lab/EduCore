@@ -51,7 +51,7 @@ describe('IMP-013 academic structure PATCH', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.[23456]/);
+    expect(dsf).toMatch(/1\.[234567]/);
     expect(dsf).toContain('IMP-013');
     expect(dsf).toMatch(/edit detail|edit forms/i);
   });

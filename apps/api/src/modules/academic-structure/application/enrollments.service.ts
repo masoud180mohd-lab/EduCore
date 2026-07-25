@@ -143,8 +143,12 @@ export class EnrollmentsService {
     if (!isUuid(actorUserId)) throw AppError.unauthorized();
     if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
     if (!isUuid(enrollmentId)) throw AppError.notFound('Enrollment not found.');
-    const status = parsePatchStatusRequest(rawBody);
-    const bodyJson = JSON.stringify({ status });
+    const parsed = parsePatchEnrollmentRequest(rawBody);
+    const bodyJson = JSON.stringify({
+      ...(parsed.setStatus ? { status: parsed.status } : {}),
+      ...(parsed.setClass ? { classId: parsed.classId } : {}),
+      ...(parsed.setStream ? { streamId: parsed.streamId } : {}),
+    });
 
     const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
     if (optionalKey !== undefined && this.idempotency !== null) {
@@ -165,7 +169,7 @@ export class EnrollmentsService {
         actorUserId,
         tenantId,
         enrollmentId,
-        status,
+        parsed,
         correlationId,
       );
       await this.idempotency.put(scopeKey, {
@@ -176,7 +180,7 @@ export class EnrollmentsService {
       });
       return result;
     }
-    return this.executePatch(actorUserId, tenantId, enrollmentId, status, correlationId);
+    return this.executePatch(actorUserId, tenantId, enrollmentId, parsed, correlationId);
   }
 
   private async executeCreate(
@@ -251,21 +255,27 @@ export class EnrollmentsService {
     actorUserId: string,
     tenantId: string,
     enrollmentId: string,
-    status: string,
+    parsed: ParsedEnrollmentPatch,
     correlationId: string,
   ): Promise<PatchEnrollmentResult> {
     if (!this.enrollments.isAvailable()) {
       throw AppError.notFound('Enrollment not found.');
     }
     try {
-      const row = await this.enrollments.updateStatusForTenant(
-        actorUserId,
-        tenantId,
-        enrollmentId,
-        status,
-      );
+      const row = await this.enrollments.patchForTenant(actorUserId, tenantId, enrollmentId, {
+        setClass: parsed.setClass,
+        classId: parsed.classId,
+        setStream: parsed.setStream,
+        streamId: parsed.streamId,
+        setStatus: parsed.setStatus,
+        status: parsed.status,
+      });
       if (row === null) throw AppError.notFound('Enrollment not found.');
       if (this.audit !== null) {
+        const fields: string[] = [];
+        if (parsed.setStatus) fields.push('status');
+        if (parsed.setClass) fields.push('classId');
+        if (parsed.setStream) fields.push('streamId');
         await this.audit.publish({
           action: 'enrollment.patch',
           outcome: 'success',
@@ -274,7 +284,7 @@ export class EnrollmentsService {
           tenantId,
           resourceType: 'enrollment',
           resourceId: row.id,
-          metadata: { status },
+          metadata: { fields },
         });
       }
       return { data: row };
@@ -287,12 +297,30 @@ export class EnrollmentsService {
         );
       }
       if (isPgCode(error, '22023')) {
-        throw AppError.validation('Invalid enrollment status.');
+        const m = getMsg(error);
+        if (m.includes('class not found')) {
+          throw AppError.validation('classId not found in this tenant.', { field: 'classId' });
+        }
+        if (m.includes('stream not found')) {
+          throw AppError.validation('streamId not found for this class in this tenant.', {
+            field: 'streamId',
+          });
+        }
+        throw AppError.validation('Invalid enrollment payload.');
       }
       throw new AppError('INTERNAL_ERROR', 'Failed to update enrollment.');
     }
   }
 }
+
+type ParsedEnrollmentPatch = {
+  setStatus: boolean;
+  status: string | undefined;
+  setClass: boolean;
+  classId: string | undefined;
+  setStream: boolean;
+  streamId: string | null | undefined;
+};
 
 function parseStatusFilter(
   raw: unknown,
@@ -354,22 +382,58 @@ function parseCreateEnrollmentRequest(raw: unknown): {
   return { studentId: body['studentId'], classId: body['classId'], streamId, status };
 }
 
-function parsePatchStatusRequest(raw: unknown): string {
+function parsePatchEnrollmentRequest(raw: unknown): ParsedEnrollmentPatch {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
     throw AppError.validation('Body must be a JSON object.');
   }
   const body = raw as Record<string, unknown>;
+  const allowed = new Set(['status', 'classId', 'streamId']);
   for (const key of Object.keys(body)) {
-    if (key !== 'status') {
+    if (!allowed.has(key)) {
       throw AppError.validation(`Unknown field: ${key}.`, { field: key });
     }
   }
-  if (typeof body['status'] !== 'string' || !STATUSES.has(body['status'])) {
-    throw AppError.validation('status must be active, withdrawn, completed, or suspended.', {
-      field: 'status',
-    });
+
+  let setStatus = false;
+  let status: string | undefined;
+  if (Object.prototype.hasOwnProperty.call(body, 'status')) {
+    setStatus = true;
+    if (typeof body['status'] !== 'string' || !STATUSES.has(body['status'])) {
+      throw AppError.validation('status must be active, withdrawn, completed, or suspended.', {
+        field: 'status',
+      });
+    }
+    status = body['status'];
   }
-  return body['status'];
+
+  let setClass = false;
+  let classId: string | undefined;
+  if (Object.prototype.hasOwnProperty.call(body, 'classId')) {
+    setClass = true;
+    if (typeof body['classId'] !== 'string' || !isUuid(body['classId'])) {
+      throw AppError.validation('classId must be a UUID.', { field: 'classId' });
+    }
+    classId = body['classId'];
+  }
+
+  let setStream = false;
+  let streamId: string | null | undefined;
+  if (Object.prototype.hasOwnProperty.call(body, 'streamId')) {
+    setStream = true;
+    if (body['streamId'] === null) {
+      streamId = null;
+    } else if (typeof body['streamId'] === 'string' && isUuid(body['streamId'])) {
+      streamId = body['streamId'];
+    } else {
+      throw AppError.validation('streamId must be a UUID or null.', { field: 'streamId' });
+    }
+  }
+
+  if (!setStatus && !setClass && !setStream) {
+    throw AppError.validation('At least one of status, classId, streamId is required.');
+  }
+
+  return { setStatus, status, setClass, classId, setStream, streamId };
 }
 
 function isPgCode(error: unknown, code: string): boolean {

@@ -34,12 +34,12 @@ type AuthedRequest = Request & {
 };
 
 /**
- * Enrollments surface (ACF-008 rev 1.3) — Academic Structure.
+ * Enrollments surface (ACF-008 rev 1.4) — Academic Structure.
  *
  * GET   /api/v1/enrollments      — list (academic.read) — IMP-004-E1
  * POST  /api/v1/enrollments      — create (academic.manage) — IMP-004-E3
  * GET   /api/v1/enrollments/:id  — detail (academic.read) — IMP-004-E2
- * PATCH /api/v1/enrollments/:id  — status (academic.manage) — IMP-004-E4
+ * PATCH /api/v1/enrollments/:id  — status and/or placement (academic.manage) — E4 + IMP-018
  */
 @Controller('api/v1/enrollments')
 export class EnrollmentsController {
