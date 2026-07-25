@@ -2,6 +2,7 @@
  * Tenant memberships (RLS Pattern A + own-row).
  * Read: direct SELECT under withTenantTransaction.
  * Invite (P15): SECURITY DEFINER app.invite_tenant_membership (+ optional role assign).
+ * Lifecycle (IMP-020): suspend / reactivate / remove via SECURITY DEFINER helpers.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -229,6 +230,100 @@ export class MembershipsRepository {
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'MembershipsRepository', error, {
         operation: 'inviteForTenant',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Suspend membership via SECURITY DEFINER.
+   * Returns null when missing / wrong transition (caller → 404).
+   */
+  async suspendForTenant(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+  ): Promise<MembershipRow | null> {
+    return this.callLifecycleHelper(
+      actorUserId,
+      tenantId,
+      membershipId,
+      `SELECT id, tenant_id, user_id, status, joined_at, created_at, updated_at
+       FROM app.suspend_membership($1::uuid, $2::uuid, $3::uuid)`,
+      'suspendForTenant',
+    );
+  }
+
+  /**
+   * Reactivate membership via SECURITY DEFINER.
+   * Returns null when missing / wrong transition (caller → 404).
+   */
+  async reactivateForTenant(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+  ): Promise<MembershipRow | null> {
+    return this.callLifecycleHelper(
+      actorUserId,
+      tenantId,
+      membershipId,
+      `SELECT id, tenant_id, user_id, status, joined_at, created_at, updated_at
+       FROM app.reactivate_membership($1::uuid, $2::uuid, $3::uuid)`,
+      'reactivateForTenant',
+    );
+  }
+
+  /**
+   * Soft-remove membership via SECURITY DEFINER (status → removed).
+   * Returns null when missing (caller → 404).
+   */
+  async removeForTenant(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+  ): Promise<MembershipRow | null> {
+    return this.callLifecycleHelper(
+      actorUserId,
+      tenantId,
+      membershipId,
+      `SELECT id, tenant_id, user_id, status, joined_at, created_at, updated_at
+       FROM app.remove_membership($1::uuid, $2::uuid, $3::uuid)`,
+      'removeForTenant',
+    );
+  }
+
+  private async callLifecycleHelper(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+    sql: string,
+    operation: string,
+  ): Promise<MembershipRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(membershipId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            user_id: string;
+            status: string;
+            joined_at: Date | null;
+            created_at: Date;
+            updated_at: Date;
+          }>(sql, [actorUserId, tenantId, membershipId]);
+          const row = result.rows[0];
+          return row === undefined ? null : mapMembershipRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'MembershipsRepository', error, {
+        operation,
       });
       throw error;
     }

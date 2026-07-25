@@ -8,6 +8,7 @@ import {
   buildIdempotencyScopeKey,
   hashRequestBody,
   IDEMPOTENCY_STORE,
+  parseIdempotencyKey,
   resolveIdempotentReplay,
   type IdempotencyStore,
 } from '../../../common/idempotency/index.js';
@@ -36,15 +37,21 @@ export type CreateMembershipResult = {
   readonly data: Membership;
 };
 
+export type LifecycleMembershipResult = {
+  readonly data: Membership;
+};
+
 const MEMBERSHIP_STATUSES = new Set(['invited', 'active', 'suspended', 'removed']);
 const SYSTEM_ROLE_CODES = new Set(['owner', 'admin', 'staff']);
 const CREATE_ROUTE = '/api/v1/memberships';
+const LIFECYCLE_ROUTE_PREFIX = '/api/v1/memberships/';
 // Practical email shape; full RFC not required for product invite.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Product API for memberships in the bound tenant.
- * Scope: tenant roster (ACF 4.6). GET list/detail; POST invite (P15).
+ * Scope: tenant roster (ACF 4.6). GET list/detail; POST invite (P15);
+ * POST suspend/reactivate/remove (IMP-020).
  */
 @Injectable()
 export class MembershipsService {
@@ -234,6 +241,229 @@ export class MembershipsService {
         throw AppError.validation('Invalid invite payload.');
       }
       throw new AppError('INTERNAL_ERROR', 'Failed to create membership.');
+    }
+  }
+
+  /**
+   * POST /memberships/:id/suspend — active|invited → suspended (user.manage).
+   * Rejects self-suspend. Wrong/missing → 404. Idempotent when already suspended.
+   */
+  async suspendForTenant(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<LifecycleMembershipResult> {
+    return this.runLifecycle(
+      actorUserId,
+      tenantId,
+      membershipId,
+      idempotencyKeyHeader,
+      correlationId,
+      {
+        action: 'suspend',
+        routeSuffix: '/suspend',
+        auditAction: 'membership.suspend',
+        rejectSelf: true,
+        selfMessage: 'Cannot suspend your own membership.',
+        execute: (a, t, m) => this.memberships.suspendForTenant(a, t, m),
+      },
+    );
+  }
+
+  /**
+   * POST /memberships/:id/reactivate — suspended → active (user.manage).
+   * Wrong/missing → 404. Idempotent when already active.
+   */
+  async reactivateForTenant(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<LifecycleMembershipResult> {
+    return this.runLifecycle(
+      actorUserId,
+      tenantId,
+      membershipId,
+      idempotencyKeyHeader,
+      correlationId,
+      {
+        action: 'reactivate',
+        routeSuffix: '/reactivate',
+        auditAction: 'membership.reactivate',
+        rejectSelf: false,
+        selfMessage: '',
+        execute: (a, t, m) => this.memberships.reactivateForTenant(a, t, m),
+      },
+    );
+  }
+
+  /**
+   * POST /memberships/:id/remove — soft status → removed (user.manage).
+   * Rejects self-remove. Missing → 404. Idempotent when already removed.
+   */
+  async removeForTenant(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<LifecycleMembershipResult> {
+    return this.runLifecycle(
+      actorUserId,
+      tenantId,
+      membershipId,
+      idempotencyKeyHeader,
+      correlationId,
+      {
+        action: 'remove',
+        routeSuffix: '/remove',
+        auditAction: 'membership.remove',
+        rejectSelf: true,
+        selfMessage: 'Cannot remove your own membership.',
+        execute: (a, t, m) => this.memberships.removeForTenant(a, t, m),
+      },
+    );
+  }
+
+  private async runLifecycle(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+    opts: {
+      readonly action: 'suspend' | 'reactivate' | 'remove';
+      readonly routeSuffix: '/suspend' | '/reactivate' | '/remove';
+      readonly auditAction: string;
+      readonly rejectSelf: boolean;
+      readonly selfMessage: string;
+      readonly execute: (
+        actorUserId: string,
+        tenantId: string,
+        membershipId: string,
+      ) => Promise<MembershipRow | null>;
+    },
+  ): Promise<LifecycleMembershipResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(membershipId)) {
+      throw AppError.notFound('Membership not found.');
+    }
+
+    if (opts.rejectSelf) {
+      await this.assertNotSelfMembership(actorUserId, tenantId, membershipId, opts.selfMessage);
+    }
+
+    const bodyJson = '{}';
+    const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
+    if (optionalKey !== undefined && this.idempotency !== null) {
+      const key = assertIdempotencyKey(optionalKey);
+      const scopeKey = buildIdempotencyScopeKey(
+        {
+          actorUserId,
+          tenantId,
+          method: 'POST',
+          route: `${LIFECYCLE_ROUTE_PREFIX}${membershipId}${opts.routeSuffix}`,
+        },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) {
+        return JSON.parse(replay.responseBody) as LifecycleMembershipResult;
+      }
+
+      const result = await this.executeLifecycle(
+        actorUserId,
+        tenantId,
+        membershipId,
+        correlationId,
+        opts,
+      );
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executeLifecycle(actorUserId, tenantId, membershipId, correlationId, opts);
+  }
+
+  private async assertNotSelfMembership(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+    message: string,
+  ): Promise<void> {
+    if (!this.memberships.isAvailable()) {
+      throw AppError.notFound('Membership not found.');
+    }
+    const current = await this.memberships.getByIdForTenant(actorUserId, tenantId, membershipId);
+    if (current === null) {
+      throw AppError.notFound('Membership not found.');
+    }
+    if (current.userId.toLowerCase() === actorUserId.toLowerCase()) {
+      throw AppError.forbidden(message);
+    }
+  }
+
+  private async executeLifecycle(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+    correlationId: string,
+    opts: {
+      readonly action: 'suspend' | 'reactivate' | 'remove';
+      readonly auditAction: string;
+      readonly execute: (
+        actorUserId: string,
+        tenantId: string,
+        membershipId: string,
+      ) => Promise<MembershipRow | null>;
+    },
+  ): Promise<LifecycleMembershipResult> {
+    if (!this.memberships.isAvailable()) {
+      throw AppError.notFound('Membership not found.');
+    }
+
+    try {
+      const membership = await opts.execute(actorUserId, tenantId, membershipId);
+      if (membership === null) {
+        throw AppError.notFound('Membership not found.');
+      }
+
+      if (this.audit !== null) {
+        await this.audit.publish({
+          action: opts.auditAction,
+          outcome: 'success',
+          correlationId,
+          actorUserId,
+          tenantId,
+          resourceType: 'membership',
+          resourceId: membershipId,
+          metadata: { membershipUserId: membership.userId, status: membership.status },
+        });
+      }
+
+      return { data: membership };
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      if (isPgInvalidParameter(error)) {
+        throw AppError.validation('Invalid membership lifecycle request.');
+      }
+      throw new AppError('INTERNAL_ERROR', `Failed to ${opts.action} membership.`);
     }
   }
 }

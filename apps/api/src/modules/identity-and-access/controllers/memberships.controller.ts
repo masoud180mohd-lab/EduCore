@@ -33,12 +33,14 @@ type AuthedRequest = Request & {
 };
 
 /**
- * Product memberships surface (solo-operator gated invite).
+ * Product memberships surface (ACF-001 §4.6).
  *
- * GET  /api/v1/memberships      — list (user.read)
- * GET  /api/v1/memberships/:id  — detail (user.read)
- * POST /api/v1/memberships      — invite (user.invite) — IMP-001 P15
- * No suspend/reactivate/remove.
+ * GET  /api/v1/memberships              — list (user.read)
+ * GET  /api/v1/memberships/:id          — detail (user.read)
+ * POST /api/v1/memberships              — invite (user.invite) — IMP-001 P15
+ * POST /api/v1/memberships/:id/suspend  — suspend (user.manage) — IMP-020
+ * POST /api/v1/memberships/:id/reactivate — reactivate (user.manage) — IMP-020
+ * POST /api/v1/memberships/:id/remove   — soft remove (user.manage) — IMP-020
  *
  * List query: limit, cursor, status, userId.
  * List response: { data, page: { nextCursor, limit } }.
@@ -99,6 +101,93 @@ export class MembershipsController {
       auth.userId,
       tenant.tenantId,
       body,
+      idempotencyKey,
+      correlationId,
+    );
+  }
+
+  @Post(':id/suspend')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('user.manage'))
+  async suspend(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    return this.membershipsService.suspendForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
+      idempotencyKey,
+      correlationId,
+    );
+  }
+
+  @Post(':id/reactivate')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('user.manage'))
+  async reactivate(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    return this.membershipsService.reactivateForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
+      idempotencyKey,
+      correlationId,
+    );
+  }
+
+  @Post(':id/remove')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('user.manage'))
+  async remove(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    return this.membershipsService.removeForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
       idempotencyKey,
       correlationId,
     );

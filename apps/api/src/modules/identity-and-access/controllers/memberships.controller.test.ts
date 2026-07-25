@@ -161,13 +161,86 @@ describe('MembershipsController', () => {
     expect(membershipsService.inviteForTenant).not.toHaveBeenCalled();
   });
 
-  it('documents list + create + getById only (no suspend/remove)', () => {
+  it('suspends membership for bound tenant', async () => {
+    const membershipId = '01900000-0000-7000-8000-0000000000b1';
+    const membershipsService = {
+      suspendForTenant: vi.fn().mockResolvedValue({
+        data: { id: membershipId, userId, status: 'suspended' },
+      }),
+    };
+    const controller = new MembershipsController(membershipsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const result = await controller.suspend(
+      request as never,
+      membershipId,
+      'idem-key-abcdefghijkl',
+    );
+    expect(membershipsService.suspendForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      membershipId,
+      'idem-key-abcdefghijkl',
+      'unknown',
+    );
+    expect(result).toEqual({ data: { id: membershipId, userId, status: 'suspended' } });
+  });
+
+  it('reactivates membership for bound tenant', async () => {
+    const membershipId = '01900000-0000-7000-8000-0000000000b1';
+    const membershipsService = {
+      reactivateForTenant: vi.fn().mockResolvedValue({
+        data: { id: membershipId, userId, status: 'active' },
+      }),
+    };
+    const controller = new MembershipsController(membershipsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const result = await controller.reactivate(request as never, membershipId, undefined);
+    expect(membershipsService.reactivateForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      membershipId,
+      undefined,
+      'unknown',
+    );
+    expect(result).toEqual({ data: { id: membershipId, userId, status: 'active' } });
+  });
+
+  it('removes membership for bound tenant', async () => {
+    const membershipId = '01900000-0000-7000-8000-0000000000b1';
+    const membershipsService = {
+      removeForTenant: vi.fn().mockResolvedValue({
+        data: { id: membershipId, userId, status: 'removed' },
+      }),
+    };
+    const controller = new MembershipsController(membershipsService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const result = await controller.remove(request as never, membershipId, undefined);
+    expect(membershipsService.removeForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      membershipId,
+      undefined,
+      'unknown',
+    );
+    expect(result).toEqual({ data: { id: membershipId, userId, status: 'removed' } });
+  });
+
+  it('documents list + create + getById + lifecycle routes', () => {
     const proto = MembershipsController.prototype as unknown as Record<string, unknown>;
     expect(typeof proto['list']).toBe('function');
     expect(typeof proto['create']).toBe('function');
     expect(typeof proto['getById']).toBe('function');
-    expect(proto['suspend']).toBeUndefined();
-    expect(proto['reactivate']).toBeUndefined();
-    expect(proto['remove']).toBeUndefined();
+    expect(typeof proto['suspend']).toBe('function');
+    expect(typeof proto['reactivate']).toBe('function');
+    expect(typeof proto['remove']).toBe('function');
   });
 });

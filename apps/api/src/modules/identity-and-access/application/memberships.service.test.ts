@@ -296,3 +296,108 @@ describe('MembershipsService.inviteForTenant', () => {
     ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 });
+
+const otherUserId = '01900000-0000-7000-8000-000000000002';
+const otherMembership = {
+  ...membershipA,
+  id: '01900000-0000-7000-8000-0000000000b2',
+  userId: otherUserId,
+};
+const lifecycleCorr = 'corr-lifecycle-1';
+
+describe('MembershipsService.suspendForTenant', () => {
+  it('suspends another member membership', async () => {
+    const suspended = { ...otherMembership, status: 'suspended' };
+    const memberships = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(otherMembership),
+      suspendForTenant: vi.fn().mockResolvedValue(suspended),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = new MembershipsService(memberships as never, null, audit);
+    await expect(
+      service.suspendForTenant(userId, tenantId, otherMembership.id, undefined, lifecycleCorr),
+    ).resolves.toEqual({ data: suspended });
+    expect(memberships.suspendForTenant).toHaveBeenCalledWith(userId, tenantId, otherMembership.id);
+    expect(audit.events).toHaveLength(1);
+    expect(audit.events[0]?.action).toBe('membership.suspend');
+  });
+
+  it('rejects self-suspend', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(membershipA),
+      suspendForTenant: vi.fn(),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(
+      service.suspendForTenant(userId, tenantId, membershipA.id, undefined, lifecycleCorr),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(memberships.suspendForTenant).not.toHaveBeenCalled();
+  });
+
+  it('returns NOT_FOUND when repository yields null', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(otherMembership),
+      suspendForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(
+      service.suspendForTenant(userId, tenantId, otherMembership.id, undefined, lifecycleCorr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
+
+describe('MembershipsService.reactivateForTenant', () => {
+  it('reactivates a suspended membership', async () => {
+    const active = { ...otherMembership, status: 'active' };
+    const memberships = {
+      isAvailable: () => true,
+      reactivateForTenant: vi.fn().mockResolvedValue(active),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(
+      service.reactivateForTenant(userId, tenantId, otherMembership.id, undefined, lifecycleCorr),
+    ).resolves.toEqual({ data: active });
+  });
+
+  it('returns NOT_FOUND for wrong transition', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      reactivateForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(
+      service.reactivateForTenant(userId, tenantId, otherMembership.id, undefined, lifecycleCorr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
+
+describe('MembershipsService.removeForTenant', () => {
+  it('soft-removes another member membership', async () => {
+    const removed = { ...otherMembership, status: 'removed' };
+    const memberships = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(otherMembership),
+      removeForTenant: vi.fn().mockResolvedValue(removed),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(
+      service.removeForTenant(userId, tenantId, otherMembership.id, undefined, lifecycleCorr),
+    ).resolves.toEqual({ data: removed });
+  });
+
+  it('rejects self-remove', async () => {
+    const memberships = {
+      isAvailable: () => true,
+      getByIdForTenant: vi.fn().mockResolvedValue(membershipA),
+      removeForTenant: vi.fn(),
+    };
+    const service = new MembershipsService(memberships as never);
+    await expect(
+      service.removeForTenant(userId, tenantId, membershipA.id, undefined, lifecycleCorr),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(memberships.removeForTenant).not.toHaveBeenCalled();
+  });
+});

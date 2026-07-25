@@ -38,7 +38,7 @@ describe('IMP-001 P6–P9 product read increments (structural)', () => {
     expect(ctrl).not.toMatch(/@(Post|Patch|Delete)\(/);
   });
 
-  it('registers memberships list + get + invite POST (P15) without suspend/remove', () => {
+  it('registers memberships list + get + invite + lifecycle (IMP-020)', () => {
     const ctrl = read(
       'apps/api/src/modules/identity-and-access/controllers/memberships.controller.ts',
     );
@@ -46,12 +46,13 @@ describe('IMP-001 P6–P9 product read increments (structural)', () => {
     expect(ctrl).toContain('@Get()');
     expect(ctrl).toContain('@Post()');
     expect(ctrl).toContain("@Get(':id')");
+    expect(ctrl).toContain("@Post(':id/suspend')");
+    expect(ctrl).toContain("@Post(':id/reactivate')");
+    expect(ctrl).toContain("@Post(':id/remove')");
     expect(ctrl).toContain("RequirePermission('user.read')");
     expect(ctrl).toContain("RequirePermission('user.invite')");
+    expect(ctrl).toContain("RequirePermission('user.manage')");
     expect(ctrl).not.toMatch(/@(Put|Patch|Delete)\(/);
-    expect(ctrl).not.toMatch(/async\s+suspend\s*\(/);
-    expect(ctrl).not.toMatch(/async\s+reactivate\s*\(/);
-    expect(ctrl).not.toMatch(/async\s+remove\s*\(/);
   });
 
   it('registers users list + get + patch + disable (IMP-016) without create', () => {
