@@ -12,7 +12,7 @@ describe('IMP-016 admin users/orgs + Nest writes', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.[567]/);
+    expect(dsf).toMatch(/1\.[5678]/);
     expect(dsf).toContain('IMP-016');
     expect(dsf).toMatch(/Users list \+ invite \+ edit|invite form/i);
     expect(dsf).toMatch(/Organizations list \+ create \+ edit|Org create\/edit/i);

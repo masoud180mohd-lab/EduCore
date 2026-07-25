@@ -28,6 +28,16 @@ type LinkRow = {
 
 type StudentRow = { readonly id: string; readonly displayName: string };
 
+type GuardianStatus = 'active' | 'inactive';
+
+const GUARDIAN_STATUSES: ReadonlyArray<GuardianStatus> = ['active', 'inactive'];
+
+function guardianMessage(err: ApiClientError): string {
+  if (err.status === 403) return 'You do not have access for this action.';
+  if (err.status === 409) return err.message || 'Conflict — duplicate email or link.';
+  return teacherFriendlyMessage(err);
+}
+
 export default function AdminGuardianDetailPage() {
   const params = useParams<{ tenantId: string; guardianId: string }>();
   const { tenantId, guardianId } = params;
@@ -42,6 +52,10 @@ export default function AdminGuardianDetailPage() {
   const [relationshipType, setRelationshipType] = useState('guardian');
   const [bindUserId, setBindUserId] = useState('');
   const [showAdvancedUuid, setShowAdvancedUuid] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<GuardianStatus>('active');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -83,6 +97,10 @@ export default function AdminGuardianDetailPage() {
         apiRequest<{ data: StudentRow[] }>('/api/v1/students?limit=100&status=active', { auth }),
       ]);
       setGuardian(gRes.data);
+      setDisplayName(gRes.data.displayName);
+      setPhone(gRes.data.phone ?? '');
+      setEmail(gRes.data.email ?? '');
+      setStatus((gRes.data.status as GuardianStatus) === 'inactive' ? 'inactive' : 'active');
       setLinks(lRes.data ?? []);
       setStudents(sRes.data ?? []);
       const nameMap: Record<string, string> = {};
@@ -101,7 +119,7 @@ export default function AdminGuardianDetailPage() {
       );
       setNames(nameMap);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+      if (err instanceof ApiClientError) setError(guardianMessage(err));
       else setError('Could not load guardian.');
     }
   }, [guardianId]);
@@ -110,6 +128,38 @@ export default function AdminGuardianDetailPage() {
     void load();
     void loadUsers();
   }, [load, loadUsers]);
+
+  async function onSaveProfile(event: FormEvent) {
+    event.preventDefault();
+    const auth = readSession();
+    if (auth === null || guardian === null) return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `guardian.patch:${guardianId}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      await apiRequest<{ data: Guardian }>(`/api/v1/guardians/${guardianId}`, {
+        method: 'PATCH',
+        auth,
+        body: {
+          displayName: displayName.trim(),
+          phone: phone.trim() === '' ? null : phone.trim(),
+          email: email.trim() === '' ? null : email.trim(),
+          status,
+        },
+        idempotencyKey: idem,
+      });
+      clearIdempotencyKey(actionKey);
+      setInfo('Guardian profile updated.');
+      await load();
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(guardianMessage(err));
+      else setError('Could not update guardian.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function onLink(event: FormEvent) {
     event.preventDefault();
@@ -132,7 +182,7 @@ export default function AdminGuardianDetailPage() {
       setStudentId('');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+      if (err instanceof ApiClientError) setError(guardianMessage(err));
       else setError('Could not link student.');
     } finally {
       setBusy(false);
@@ -153,7 +203,7 @@ export default function AdminGuardianDetailPage() {
       setInfo('Link ended.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+      if (err instanceof ApiClientError) setError(guardianMessage(err));
       else setError('Could not end link.');
     } finally {
       setBusy(false);
@@ -189,7 +239,7 @@ export default function AdminGuardianDetailPage() {
           'Cannot bind: this guardian or user is already bound (conflict). Unbind first or pick another user.',
         );
       } else if (err instanceof ApiClientError) {
-        setError(teacherFriendlyMessage(err));
+        setError(guardianMessage(err));
       } else {
         setError('Could not bind user.');
       }
@@ -217,7 +267,7 @@ export default function AdminGuardianDetailPage() {
       setInfo('Portal user unbound.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+      if (err instanceof ApiClientError) setError(guardianMessage(err));
       else setError('Could not unbind user.');
     } finally {
       setBusy(false);
@@ -232,12 +282,10 @@ export default function AdminGuardianDetailPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
+      <p className="muted">
+        <Link href={`/t/${tenantId}/admin/guardians`}>← Guardians</Link>
+      </p>
       <h1>{guardian?.displayName ?? 'Guardian'}</h1>
-      {guardian !== null ? (
-        <p className="muted">
-          {[guardian.email, guardian.phone, guardian.status].filter(Boolean).join(' · ')}
-        </p>
-      ) : null}
       <p>
         <Link
           className="btn btn-secondary"
@@ -255,6 +303,61 @@ export default function AdminGuardianDetailPage() {
         <div className="banner banner-info" role="status">
           {info}
         </div>
+      ) : null}
+
+      {guardian !== null ? (
+        <form className="stack card" onSubmit={(e) => void onSaveProfile(e)}>
+          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Profile</h2>
+          <div className="field">
+            <label htmlFor="displayName">Display name</label>
+            <input
+              id="displayName"
+              required
+              maxLength={200}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="phone">Phone (optional)</label>
+            <input
+              id="phone"
+              maxLength={32}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="email">Email (optional)</label>
+            <input
+              id="email"
+              type="email"
+              maxLength={320}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="status">Status</label>
+            <select
+              id="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as GuardianStatus)}
+            >
+              {GUARDIAN_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="muted">Id: {guardian.id}</div>
+          <button type="submit" className="btn btn-primary" disabled={busy}>
+            {busy ? 'Saving…' : 'Save profile'}
+          </button>
+        </form>
+      ) : error === null ? (
+        <p className="muted">Loading…</p>
       ) : null}
 
       <h2 style={{ fontSize: '1.1rem' }}>Portal bind</h2>
