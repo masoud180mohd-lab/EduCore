@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                                                                                        |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                                                                                    |
-| Version   | `1.9`                                                                                                                        |
-| Date      | 2026-07-25                                                                                                                   |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                  |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                     |
-| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · **IMP-020** (Membership lifecycle) |
+| Field     | Value                                                                                                                         |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                                                                                     |
+| Version   | `1.10`                                                                                                                        |
+| Date      | 2026-07-25                                                                                                                    |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                   |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                      |
+| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · **IMP-021** (User enable) |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -32,7 +32,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 1. **Login routing** — after bind, `/auth/me` decides admin vs teacher home
 2. **Admin home** — school name + short links (Users, Orgs, Students, Guardians, **Academic**, Fees, Settings)
-3. **Users list + invite + edit detail** — `GET /users` (search optional); invite via `POST /memberships`; detail `PATCH` displayName + `POST …/disable` + **membership suspend / reactivate / remove** via `POST /memberships/{id}/…` (ACF-001; resolve membership with `GET /memberships?userId=`). No Roles Admin.
+3. **Users list + invite + edit detail** — `GET /users` (search optional); invite via `POST /memberships`; detail `PATCH` displayName + `POST …/disable` + **`POST …/enable`** + **membership suspend / reactivate / remove** via `POST /memberships/{id}/…` (ACF-001; resolve membership with `GET /memberships?userId=`). No Roles Admin (IMP-022).
 4. **Organizations list + create + edit detail** — `GET/POST /organizations`; detail `PATCH` + `POST …/deactivate` (ACF-001). No org DELETE.
 5. **Students list + create + edit detail** — `GET/POST /students`, `GET/PATCH /students/{id}` (ACF-002). No student DELETE in UI.
 6. **Tenant settings edit** — `GET` + `PUT /tenant-settings` (ACF-001); form for known keys + settings JSON merge
@@ -51,7 +51,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - Tenant settings form (timezone/locale/currency + settings JSON; PUT save)
 - Student create/edit forms (displayName, optional studentCode, status default **active**)
 - Org create/edit forms (orgType, name, optional code/parent); deactivate confirm on detail
-- User invite form (email, optional displayName, roleCodes owner|admin|staff); detail edit displayName + disable confirm; **membership status + Suspend / Reactivate / Remove** (confirm; no self suspend/remove)
+- User invite form (email, optional displayName, roleCodes owner|admin|staff); detail edit displayName + disable/enable confirm; **membership status + Suspend / Reactivate / Remove** (confirm; no self suspend/remove/enable)
 - Link-student control (student picker + relationship type)
 - Academic create forms (name, optional code/dates, status default **active**)
 - Academic detail edit forms (name/code/dates/status; confirm when status → `closed`)

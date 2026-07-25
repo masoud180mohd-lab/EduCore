@@ -1046,6 +1046,46 @@ paths:
         permissionCodes:
           - user.manage
         notes: Requires listed permission codes unless a documented self-service exception applies.
+  /users/{userId}/enable:
+    post:
+      tags:
+        - Users
+      operationId: enableUser
+      summary: Enable a disabled user account
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      responses:
+        '200':
+          description: Enabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions:
+        - user.manage
+      x-authz:
+        stack:
+          - authenticated
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes:
+          - user.manage
+        notes: >-
+          disabled→active; already active idempotent 200; other statuses/missing→404;
+          reject self-enable. Does not change membership (IMP-021).
   /memberships:
     get:
       tags:

@@ -35,8 +35,8 @@ import { SessionRepository } from './repositories/session.repository.js';
 /**
  * Bounded context: Identity And Access.
  * P3 AuthN + P4 RBAC + membership/users reads + gated P15 invite + P17 user patch.
- * Role-admin remains closed. Membership lifecycle (suspend/reactivate/remove) shipped (IMP-020).
- * User disable shipped (IMP-016).
+ * Role-admin remains closed until IMP-022. Membership lifecycle shipped (IMP-020).
+ * User disable (IMP-016) + enable (IMP-021) shipped.
  */
 @Global()
 @Module({

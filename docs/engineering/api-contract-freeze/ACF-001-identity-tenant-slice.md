@@ -319,8 +319,11 @@ Settings body is a **versioned schema** (`schemaVersion` field required); unknow
 | `GET`   | `/api/v1/users/{userId}`         | Bearer + tenant | `user.read` or self             | —           | Profile in tenant context                 |
 | `PATCH` | `/api/v1/users/{userId}`         | Bearer + tenant | `user.manage` or self (limited) | Recommended | Update display name etc.                  |
 | `POST`  | `/api/v1/users/{userId}/disable` | Bearer + tenant | `user.manage`                   | Recommended | Disable in platform sense (careful)       |
+| `POST`  | `/api/v1/users/{userId}/enable`  | Bearer + tenant | `user.manage`                   | Recommended | Re-enable a disabled user (IMP-021)       |
 
 Self-service patch limited fields: `displayName` only unless `user.manage`.
+
+**Enable rules (IMP-021):** `disabled` → `active`; already `active` → idempotent 200; other statuses / missing / no active membership → 404; reject self-enable. Does not change tenant membership.
 
 ### 4.6 Tenant memberships
 
@@ -572,3 +575,4 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 | 1.2     | 2026-07-16 | OpenAPI amend: `GET /tenants` list + get-by-id AuthZ notes (IMP-001 P5d)                        |
 | 1.3     | 2026-07-20 | P10 OpenAPI P8 filters + session bind; P11/P12 users list/get honesty (AUDIT-R4 Medium)         |
 | 1.4     | 2026-07-20 | Tenants picker list policy (unpaginated + soft cap); shared ILIKE helper (P13)                  |
+| 1.5     | 2026-07-25 | Add `POST /users/{userId}/enable` (IMP-021)                                                     |

@@ -55,13 +55,14 @@ describe('IMP-001 P6–P9 product read increments (structural)', () => {
     expect(ctrl).not.toMatch(/@(Put|Patch|Delete)\(/);
   });
 
-  it('registers users list + get + patch + disable (IMP-016) without create', () => {
+  it('registers users list + get + patch + disable + enable (IMP-021) without create', () => {
     const ctrl = read('apps/api/src/modules/identity-and-access/controllers/users.controller.ts');
     expect(ctrl).toContain("@Controller('api/v1/users')");
     expect(ctrl).toContain('@Get()');
     expect(ctrl).toContain("@Get(':id')");
     expect(ctrl).toContain("@Patch(':id')");
     expect(ctrl).toContain("@Post(':id/disable')");
+    expect(ctrl).toContain("@Post(':id/enable')");
     expect(ctrl).toContain("RequirePermission('user.read')");
     expect(ctrl).toContain("RequirePermission('user.manage')");
     expect(ctrl).toContain('RequireActiveMembershipGuard');

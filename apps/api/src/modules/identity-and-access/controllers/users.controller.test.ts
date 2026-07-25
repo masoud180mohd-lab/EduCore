@@ -78,12 +78,13 @@ describe('UsersController', () => {
     expect(usersService.listForTenant).not.toHaveBeenCalled();
   });
 
-  it('documents read + patch + disable surface (no create/remove)', () => {
+  it('documents read + patch + disable + enable surface (no create/remove)', () => {
     const proto = UsersController.prototype as unknown as Record<string, unknown>;
     expect(typeof proto['list']).toBe('function');
     expect(typeof proto['getById']).toBe('function');
     expect(typeof proto['patch']).toBe('function');
     expect(typeof proto['disable']).toBe('function');
+    expect(typeof proto['enable']).toBe('function');
     expect(proto['create']).toBeUndefined();
     expect(proto['remove']).toBeUndefined();
   });
@@ -187,12 +188,38 @@ describe('UsersController', () => {
     });
   });
 
-  it('documents list + getById + patch + disable (no create/remove)', () => {
+  it('enables user for bound tenant', async () => {
+    const targetId = '01900000-0000-7000-8000-0000000000c1';
+    const usersService = {
+      enableForTenant: vi.fn().mockResolvedValue({
+        data: { id: targetId, email: 'a@x.com', displayName: 'A', status: 'active' },
+      }),
+    };
+    const controller = new UsersController(usersService as never);
+    const request = {
+      [AUTH_CONTEXT_REQUEST_KEY]: { userId, sessionId: 's1', tenantId, tokenType: 'bearer' },
+      [TENANT_CONTEXT_REQUEST_KEY]: { tenantId },
+    };
+    const result = await controller.enable(request as never, targetId, undefined);
+    expect(usersService.enableForTenant).toHaveBeenCalledWith(
+      userId,
+      tenantId,
+      targetId,
+      undefined,
+      'unknown',
+    );
+    expect(result).toEqual({
+      data: { id: targetId, email: 'a@x.com', displayName: 'A', status: 'active' },
+    });
+  });
+
+  it('documents list + getById + patch + disable + enable (no create/remove)', () => {
     const proto = UsersController.prototype as unknown as Record<string, unknown>;
     expect(typeof proto['list']).toBe('function');
     expect(typeof proto['getById']).toBe('function');
     expect(typeof proto['patch']).toBe('function');
     expect(typeof proto['disable']).toBe('function');
+    expect(typeof proto['enable']).toBe('function');
     expect(proto['create']).toBeUndefined();
     expect(proto['remove']).toBeUndefined();
   });

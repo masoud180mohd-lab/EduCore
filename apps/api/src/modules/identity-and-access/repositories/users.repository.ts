@@ -3,6 +3,7 @@
  * Never selects password_hash or other credential columns.
  * Patch (P17): SECURITY DEFINER app.update_user_display_name (displayName only).
  * Disable (IMP-016): SECURITY DEFINER app.disable_user.
+ * Enable (IMP-021): SECURITY DEFINER app.enable_user.
  */
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
@@ -295,6 +296,51 @@ export class UsersRepository {
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'UsersRepository', error, {
         operation: 'disableForTenant',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Enable user (disabled → active) via SECURITY DEFINER. Idempotent when active.
+   * Returns null when not visible / wrong status (caller → 404).
+   */
+  async enableForTenant(
+    actorUserId: string,
+    tenantId: string,
+    targetUserId: string,
+  ): Promise<UserRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(targetUserId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            email: string;
+            display_name: string;
+            status: string;
+            email_verified_at: Date | null;
+            last_login_at: Date | null;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT id, email::text AS email, display_name, status,
+                    email_verified_at, last_login_at, created_at, updated_at
+             FROM app.enable_user($1::uuid, $2::uuid, $3::uuid)`,
+            [actorUserId, tenantId, targetUserId],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapUserRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'UsersRepository', error, {
+        operation: 'enableForTenant',
       });
       throw error;
     }

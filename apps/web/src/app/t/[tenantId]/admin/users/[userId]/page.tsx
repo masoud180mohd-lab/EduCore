@@ -150,6 +150,39 @@ export default function AdminUserDetailPage() {
     }
   }
 
+  async function onEnable() {
+    if (row === null || row.status !== 'disabled') return;
+    if (
+      !window.confirm(
+        `Enable “${row.displayName || row.email}”? They will be able to sign in again.`,
+      )
+    )
+      return;
+    const auth = readSession();
+    if (auth === null) return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `user.enable:${userId}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      await apiRequest<{ data: UserRow }>(`/api/v1/users/${userId}/enable`, {
+        method: 'POST',
+        auth,
+        body: {},
+        idempotencyKey: idem,
+      });
+      clearIdempotencyKey(actionKey);
+      setInfo('User enabled.');
+      await load();
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(userMessage(err));
+      else setError('Could not enable user.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onMembershipAction(action: LifecycleAction) {
     if (membership === null) return;
     const labels: Record<LifecycleAction, { confirm: string; done: string }> = {
@@ -252,7 +285,17 @@ export default function AdminUserDetailPage() {
               Disable user
             </button>
           ) : (
-            <p className="muted">This user is disabled.</p>
+            <div className="stack">
+              <p className="muted">This user is disabled.</p>
+              <button
+                className="btn btn-primary"
+                type="button"
+                disabled={busy || isSelf}
+                onClick={() => void onEnable()}
+              >
+                Enable user
+              </button>
+            </div>
           )}
         </div>
       ) : null}

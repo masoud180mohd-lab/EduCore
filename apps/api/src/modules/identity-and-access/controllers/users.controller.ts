@@ -43,6 +43,7 @@ type AuthedRequest = Request & {
  * GET   /api/v1/users/:id       — detail (user.read)
  * PATCH /api/v1/users/:id       — displayName (user.manage OR self) — P17
  * POST  /api/v1/users/:id/disable — disable (user.manage) — IMP-016
+ * POST  /api/v1/users/:id/enable  — enable (user.manage) — IMP-021
  * No POST create / DELETE (invite via memberships).
  *
  * List query: limit, cursor, status, search.
@@ -100,6 +101,35 @@ export class UsersController {
       request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
 
     return this.usersService.disableForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
+      idempotencyKey,
+      correlationId,
+    );
+  }
+
+  @Post(':id/enable')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('user.manage'))
+  async enable(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    return this.usersService.enableForTenant(
       auth.userId,
       tenant.tenantId,
       id,

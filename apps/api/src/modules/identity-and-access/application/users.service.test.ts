@@ -357,3 +357,41 @@ describe('UsersService.disableForTenant', () => {
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
+
+describe('UsersService.enableForTenant', () => {
+  const corr = 'corr-user-enable';
+
+  it('enables disabled user with user.manage', async () => {
+    const enabled = { ...userA, status: 'active' };
+    const users = {
+      isAvailable: () => true,
+      enableForTenant: vi.fn().mockResolvedValue(enabled),
+    };
+    const audit = new InMemoryAuditPublisher();
+    const service = makeService(users, policyAllowManage, null, audit);
+    await expect(
+      service.enableForTenant(actorId, tenantId, userA.id, undefined, corr),
+    ).resolves.toEqual({ data: enabled });
+    expect(audit.events[0]).toMatchObject({ action: 'user.enable', outcome: 'success' });
+  });
+
+  it('rejects self-enable', async () => {
+    const users = { isAvailable: () => true, enableForTenant: vi.fn() };
+    const service = makeService(users, policyAllowManage);
+    await expect(
+      service.enableForTenant(userA.id, tenantId, userA.id, undefined, corr),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(users.enableForTenant).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when target not visible or wrong status', async () => {
+    const users = {
+      isAvailable: () => true,
+      enableForTenant: vi.fn().mockResolvedValue(null),
+    };
+    const service = makeService(users, policyAllowManage);
+    await expect(
+      service.enableForTenant(actorId, tenantId, userA.id, undefined, corr),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
