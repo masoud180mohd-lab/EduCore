@@ -61,6 +61,7 @@ export function AdminShell({
     { href: `${base}/organizations`, label: 'Orgs' },
     { href: `${base}/students`, label: 'Students' },
     { href: `${base}/guardians`, label: 'Guardians' },
+    { href: `${base}/roles`, label: 'Roles' },
     { href: `${base}/academic`, label: 'Academic' },
     { href: `${base}/fees`, label: 'Fees' },
     { href: `${base}/settings`, label: 'Settings' },

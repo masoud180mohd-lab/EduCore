@@ -12,7 +12,7 @@ describe('IMP-020 membership lifecycle', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.9|1\.10/);
+    expect(dsf).toMatch(/1\.(?:9|10|11)/);
     expect(dsf).toContain('IMP-020');
     expect(dsf).toMatch(/suspend|reactivate|remove/i);
     expect(dsf).toMatch(/membership/i);

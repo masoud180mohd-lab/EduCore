@@ -60,7 +60,7 @@ describe('IMP-014 academic structure DELETE + reparent', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.(?:[3-9]|10)/);
+    expect(dsf).toMatch(/1\.(?:[3-9]|10|11)/);
     expect(dsf).toContain('IMP-014');
     expect(dsf).toMatch(/[Dd]elete/);
     expect(dsf).toMatch(/[Rr]eparent/);

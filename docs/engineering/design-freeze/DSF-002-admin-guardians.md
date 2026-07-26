@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                                                                                         |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                                                                                     |
-| Version   | `1.10`                                                                                                                        |
-| Date      | 2026-07-25                                                                                                                    |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                   |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                      |
-| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · **IMP-021** (User enable) |
+| Field     | Value                                                                                                                                   |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                                                                                               |
+| Version   | `1.11`                                                                                                                                  |
+| Date      | 2026-07-25                                                                                                                              |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                             |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                |
+| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · IMP-021 · **IMP-022** (Roles Admin) |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -31,27 +31,29 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 ## Screens in scope
 
 1. **Login routing** — after bind, `/auth/me` decides admin vs teacher home
-2. **Admin home** — school name + short links (Users, Orgs, Students, Guardians, **Academic**, Fees, Settings)
-3. **Users list + invite + edit detail** — `GET /users` (search optional); invite via `POST /memberships`; detail `PATCH` displayName + `POST …/disable` + **`POST …/enable`** + **membership suspend / reactivate / remove** via `POST /memberships/{id}/…` (ACF-001; resolve membership with `GET /memberships?userId=`). No Roles Admin (IMP-022).
-4. **Organizations list + create + edit detail** — `GET/POST /organizations`; detail `PATCH` + `POST …/deactivate` (ACF-001). No org DELETE.
-5. **Students list + create + edit detail** — `GET/POST /students`, `GET/PATCH /students/{id}` (ACF-002). No student DELETE in UI.
-6. **Tenant settings edit** — `GET` + `PUT /tenant-settings` (ACF-001); form for known keys + settings JSON merge
-7. **Guardians list** — `GET /guardians`
-8. **Guardian detail** — get + **profile edit** (displayName/phone/email/status PATCH); linked students; create guardian; link/unbind portal user
-9. **Academic hub** — `/admin/academic` short links (Years, Terms, Classes, Streams, Subjects, Enrollments) — **IMP-012**
-10. **Academic entity list + create + edit detail** — years / terms / classes / streams / subjects (ACF-003…007 rev 1.4). Structure PATCH for rename/code/dates/status; **edit + delete (confirm)**; reparent on term/class/stream (`academicYearId` on terms/classes, `termId` on classes, `classId` on streams) via detail edit form.
-11. **Enrollments** — list + create + detail + **status PATCH** + **placement transfer** (`classId` / `streamId`, ACF-008 rev 1.4)
+2. **Admin home** — school name + short links (Users, Orgs, Students, Guardians, **Roles**, **Academic**, Fees, Settings)
+3. **Users list + invite + edit detail** — `GET /users` (search optional); invite via `POST /memberships`; detail `PATCH` displayName + `POST …/disable` + **`POST …/enable`** + **membership suspend / reactivate / remove** via `POST /memberships/{id}/…` (ACF-001; resolve membership with `GET /memberships?userId=`). **User-role assign/unassign** on detail (`GET/POST /user-roles`, `DELETE /user-roles/{id}`).
+4. **Roles list + create + edit detail** — `GET/POST /roles`; detail rename (`PATCH`) + permission replace for **custom** roles (`PUT …/permissions`); system roles read-only grants (ACF-001 §4.7). No role DELETE.
+5. **Organizations list + create + edit detail** — `GET/POST /organizations`; detail `PATCH` + `POST …/deactivate` (ACF-001). No org DELETE.
+6. **Students list + create + edit detail** — `GET/POST /students`, `GET/PATCH /students/{id}` (ACF-002). No student DELETE in UI.
+7. **Tenant settings edit** — `GET` + `PUT /tenant-settings` (ACF-001); form for known keys + settings JSON merge
+8. **Guardians list** — `GET /guardians`
+9. **Guardian detail** — get + **profile edit** (displayName/phone/email/status PATCH); linked students; create guardian; link/unbind portal user
+10. **Academic hub** — `/admin/academic` short links (Years, Terms, Classes, Streams, Subjects, Enrollments) — **IMP-012**
+11. **Academic entity list + create + edit detail** — years / terms / classes / streams / subjects (ACF-003…007 rev 1.4). Structure PATCH for rename/code/dates/status; **edit + delete (confirm)**; reparent on term/class/stream (`academicYearId` on terms/classes, `termId` on classes, `classId` on streams) via detail edit form.
+12. **Enrollments** — list + create + detail + **status PATCH** + **placement transfer** (`classId` / `streamId`, ACF-008 rev 1.4)
 
 ## Component inventory (this slice)
 
-- `AdminShell` (nav: Home / Users / Orgs / Students / Guardians / **Academic** / Fees / Settings / Logout); header brand = school name from `GET /tenants/current` (fallback `EduCore Admin`)
+- `AdminShell` (nav: Home / Users / Orgs / Students / Guardians / **Roles** / **Academic** / Fees / Settings / Logout); header brand = school name from `GET /tenants/current` (fallback `EduCore Admin`)
 - Shared banners, buttons, fields from DSF-001 language
 - `ResourceList` pattern (loading / empty / error / forbidden)
 - Guardian form (displayName, optional phone/email); guardian detail **profile edit** (displayName/phone/email/status)
 - Tenant settings form (timezone/locale/currency + settings JSON; PUT save)
 - Student create/edit forms (displayName, optional studentCode, status default **active**)
 - Org create/edit forms (orgType, name, optional code/parent); deactivate confirm on detail
-- User invite form (email, optional displayName, roleCodes owner|admin|staff); detail edit displayName + disable/enable confirm; **membership status + Suspend / Reactivate / Remove** (confirm; no self suspend/remove/enable)
+- User invite form (email, optional displayName, roleCodes owner|admin|staff); detail edit displayName + disable/enable confirm; **membership status + Suspend / Reactivate / Remove** (confirm; no self suspend/remove/enable); **user-role assign/unassign** (tenant-wide)
+- Roles list + create custom (code, name); detail rename; permission checklist for custom roles (system grants read-only)
 - Link-student control (student picker + relationship type)
 - Academic create forms (name, optional code/dates, status default **active**)
 - Academic detail edit forms (name/code/dates/status; confirm when status → `closed`)
@@ -63,7 +65,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 - Unbound tenant → `/login`
 - 401 → Sign in again
-- 403 → “You do not have access for this action.” (academic: `academic.read` / `academic.manage`; students: `student.read` / `student.manage`; orgs: `organization.manage`; users: `user.invite` / `user.manage` / membership lifecycle; settings: `tenant.manage`; guardians: `guardian.manage`)
+- 403 → “You do not have access for this action.” (academic: `academic.read` / `academic.manage`; students: `student.read` / `student.manage`; orgs: `organization.manage`; users: `user.invite` / `user.manage` / membership lifecycle; roles: `role.read` / `role.manage`; settings: `tenant.manage`; guardians: `guardian.manage`)
 - Staff without admin perms → teacher shell only (no admin nav)
 
 ## Non-goals
@@ -74,10 +76,11 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - MoMo / mobile money payment UX (PAY-PROVIDER-001) — out of scope
 - Cascade delete UX (delete stays empty-only; 409 surfaced as a plain error, no dependent-listing UI)
 - Bulk enroll / bulk transfer / timetable / report cards
-- Roles/permissions admin CRUD (`/roles` HTTP missing)
 - MFA enrollment
 - Full offline sync
 - Marketing dashboards / charts
+- Org-scoped user-role assignment UI
+- DELETE role / mutate system role permission grants via product API
 
 ## Auth storage
 

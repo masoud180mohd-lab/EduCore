@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { type RoleRow, type UserRoleRow, roleMessage } from '@/lib/roles/types';
 import { type UserRow, userMessage } from '@/lib/users/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -26,6 +27,9 @@ export default function AdminUserDetailPage() {
   const { tenantId, userId } = params;
   const [row, setRow] = useState<UserRow | null>(null);
   const [membership, setMembership] = useState<MembershipRow | null>(null);
+  const [userRoles, setUserRoles] = useState<UserRoleRow[]>([]);
+  const [rolesCatalog, setRolesCatalog] = useState<RoleRow[]>([]);
+  const [assignRoleId, setAssignRoleId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -83,6 +87,21 @@ export default function AdminUserDetailPage() {
       } else {
         setError(userError ?? 'Could not load membership.');
       }
+    }
+
+    try {
+      const [assignments, roles] = await Promise.all([
+        apiRequest<{ data: UserRoleRow[] }>(
+          `/api/v1/user-roles?userId=${encodeURIComponent(userId)}&limit=50`,
+          { auth },
+        ),
+        apiRequest<{ data: RoleRow[] }>('/api/v1/roles?limit=100', { auth }),
+      ]);
+      setUserRoles(assignments.data ?? []);
+      setRolesCatalog(roles.data ?? []);
+    } catch {
+      setUserRoles([]);
+      setRolesCatalog([]);
     }
   }, [userId]);
 
@@ -233,12 +252,69 @@ export default function AdminUserDetailPage() {
     }
   }
 
+  async function onAssignRole(event: FormEvent) {
+    event.preventDefault();
+    if (assignRoleId === '') return;
+    const auth = readSession();
+    if (auth === null) return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `user-role.assign:${userId}:${assignRoleId}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      await apiRequest<{ data: UserRoleRow }>('/api/v1/user-roles', {
+        method: 'POST',
+        auth,
+        body: { userId, roleId: assignRoleId },
+        idempotencyKey: idem,
+      });
+      clearIdempotencyKey(actionKey);
+      setAssignRoleId('');
+      setInfo('Role assigned.');
+      await load();
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(roleMessage(err));
+      else setError('Could not assign role.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onUnassignRole(assignmentId: string, roleCode: string) {
+    if (!window.confirm(`Remove role “${roleCode}” from this user?`)) return;
+    const auth = readSession();
+    if (auth === null) return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `user-role.unassign:${assignmentId}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      await apiRequest<void>(`/api/v1/user-roles/${assignmentId}`, {
+        method: 'DELETE',
+        auth,
+        idempotencyKey: idem,
+      });
+      clearIdempotencyKey(actionKey);
+      setInfo('Role removed.');
+      await load();
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(roleMessage(err));
+      else setError('Could not remove role.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const isSelf = sessionUserId !== null && sessionUserId.toLowerCase() === userId.toLowerCase();
   const status = membership?.status;
   const canSuspend = status === 'active' || status === 'invited';
   const canReactivate = status === 'suspended';
   const canRemove = status !== undefined && status !== 'removed';
   const showUserForm = row !== null;
+  const assignedRoleIds = new Set(userRoles.map((ur) => ur.roleId));
+  const assignableRoles = rolesCatalog.filter((r) => !assignedRoleIds.has(r.id));
 
   return (
     <AdminShell tenantId={tenantId}>
@@ -350,6 +426,66 @@ export default function AdminUserDetailPage() {
         <p className="muted" style={{ marginTop: '1.5rem' }}>
           No membership found for this user in this school.
         </p>
+      ) : null}
+
+      {(showUserForm || membership !== null) && rolesCatalog.length > 0 ? (
+        <div className="stack" style={{ marginTop: '1.5rem' }}>
+          <h2>Roles</h2>
+          {userRoles.length === 0 ? (
+            <p className="muted">No roles assigned.</p>
+          ) : (
+            <ul className="list">
+              {userRoles.map((ur) => (
+                <li
+                  key={ur.id}
+                  className="card"
+                  style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}
+                >
+                  <span style={{ flex: 1 }}>
+                    <strong>{ur.roleCode}</strong>
+                    <div className="muted">Assignment {ur.id}</div>
+                  </span>
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void onUnassignRole(ur.id, ur.roleCode)}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {assignableRoles.length > 0 ? (
+            <form className="stack" onSubmit={(e) => void onAssignRole(e)}>
+              <label className="field">
+                <span>Assign role</span>
+                <select
+                  value={assignRoleId}
+                  onChange={(e) => setAssignRoleId(e.target.value)}
+                  required
+                >
+                  <option value="">Select a role…</option>
+                  {assignableRoles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name} ({r.code})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="btn btn-primary"
+                type="submit"
+                disabled={busy || assignRoleId === ''}
+              >
+                {busy ? 'Assigning…' : 'Assign role'}
+              </button>
+            </form>
+          ) : (
+            <p className="muted">All tenant roles are already assigned.</p>
+          )}
+        </div>
       ) : null}
 
       {!showUserForm && membership === null && error === null ? (

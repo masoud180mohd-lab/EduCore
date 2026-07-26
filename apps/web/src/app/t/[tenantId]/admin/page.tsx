@@ -69,6 +69,12 @@ export default function AdminHomePage() {
           </Link>
         </li>
         <li>
+          <Link className="card" href={`${base}/roles`}>
+            <strong>Roles</strong>
+            <div className="muted">Permissions and assignments</div>
+          </Link>
+        </li>
+        <li>
           <Link className="card" href={`${base}/academic`}>
             <strong>Academic</strong>
             <div className="muted">Years, classes, subjects, enrollments</div>

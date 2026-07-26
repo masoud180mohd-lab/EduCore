@@ -12,6 +12,9 @@ import { DatabaseModule, PG_POOL } from '../../common/persistence/index.js';
 import { PlatformOperationsModule } from '../platform-operations/index.js';
 import { IdentityAndAccessApplicationService } from './application/identity-and-access.application-service.js';
 import { MembershipsService } from './application/memberships.service.js';
+import { PermissionsService } from './application/permissions.service.js';
+import { RolesService } from './application/roles.service.js';
+import { UserRolesService } from './application/user-roles.service.js';
 import { UsersService } from './application/users.service.js';
 import { AuthService } from './auth/auth.service.js';
 import {
@@ -22,12 +25,18 @@ import {
 import { AuthController } from './controllers/auth.controller.js';
 import { IdentityAndAccessController } from './controllers/identity-and-access.controller.js';
 import { MembershipsController } from './controllers/memberships.controller.js';
+import { PermissionsController } from './controllers/permissions.controller.js';
+import { RolesController } from './controllers/roles.controller.js';
+import { UserRolesController } from './controllers/user-roles.controller.js';
 import { UsersController } from './controllers/users.controller.js';
 import { IdentityAndAccessDomainService } from './domain/identity-and-access.domain-service.js';
 import { IdentityAndAccessPolicy } from './policies/identity-and-access.policy.js';
 import { IDENTITY_AND_ACCESS_REPOSITORY } from './repositories/identity-and-access.repository.js';
 import { IdentityAndAccessRepositoryPlaceholder } from './repositories/identity-and-access.repository.placeholder.js';
 import { MembershipsRepository } from './repositories/memberships.repository.js';
+import { PermissionsRepository } from './repositories/permissions.repository.js';
+import { RolesRepository } from './repositories/roles.repository.js';
+import { UserRolesRepository } from './repositories/user-roles.repository.js';
 import { UsersRepository } from './repositories/users.repository.js';
 import { RbacReadRepository } from './rbac/rbac-read.repository.js';
 import { SessionRepository } from './repositories/session.repository.js';
@@ -35,7 +44,7 @@ import { SessionRepository } from './repositories/session.repository.js';
 /**
  * Bounded context: Identity And Access.
  * P3 AuthN + P4 RBAC + membership/users reads + gated P15 invite + P17 user patch.
- * Role-admin remains closed until IMP-022. Membership lifecycle shipped (IMP-020).
+ * Role-admin reads and writes shipped (IMP-022). Membership lifecycle shipped (IMP-020).
  * User disable (IMP-016) + enable (IMP-021) shipped.
  */
 @Global()
@@ -45,6 +54,9 @@ import { SessionRepository } from './repositories/session.repository.js';
     IdentityAndAccessController,
     AuthController,
     MembershipsController,
+    PermissionsController,
+    RolesController,
+    UserRolesController,
     UsersController,
   ],
   providers: [
@@ -59,6 +71,12 @@ import { SessionRepository } from './repositories/session.repository.js';
     RbacReadRepository,
     MembershipsRepository,
     MembershipsService,
+    PermissionsRepository,
+    PermissionsService,
+    RolesRepository,
+    RolesService,
+    UserRolesRepository,
+    UserRolesService,
     UsersRepository,
     UsersService,
     AuthService,
@@ -86,6 +104,9 @@ import { SessionRepository } from './repositories/session.repository.js';
     TOKEN_VALIDATOR,
     RbacReadRepository,
     MembershipsService,
+    PermissionsService,
+    RolesService,
+    UserRolesService,
     UsersService,
   ],
 })
