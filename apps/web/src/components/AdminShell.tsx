@@ -58,6 +58,7 @@ export function AdminShell({
   const links: ReadonlyArray<{ href: string; label: string; match?: string }> = [
     { href: base, label: 'Home' },
     { href: `${base}/users`, label: 'Users' },
+    { href: `${base}/memberships`, label: 'Memberships' },
     { href: `${base}/organizations`, label: 'Orgs' },
     { href: `${base}/students`, label: 'Students' },
     { href: `${base}/guardians`, label: 'Guardians' },
