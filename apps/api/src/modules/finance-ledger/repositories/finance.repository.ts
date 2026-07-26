@@ -91,6 +91,15 @@ export type CreateFeeStructureInput = {
   readonly items: ReadonlyArray<CreateFeeStructureItemInput>;
 };
 
+export type UpdateFeeStructureInput = {
+  readonly setName: boolean;
+  readonly name: string | null;
+  readonly setStatus: boolean;
+  readonly status: string | null;
+  readonly setItems: boolean;
+  readonly items: ReadonlyArray<CreateFeeStructureItemInput> | null;
+};
+
 export type CreateInvoiceLineInput = {
   readonly id: string;
   readonly description: string;
@@ -347,6 +356,46 @@ export class FinanceRepository {
       const row = result.rows[0];
       if (row === undefined) throw new Error('create_fee_structure returned no row');
       return mapFeeStructure(row);
+    });
+  }
+
+  async updateFeeStructure(
+    actorUserId: string,
+    tenantId: string,
+    feeStructureId: string,
+    input: UpdateFeeStructureInput,
+  ): Promise<FeeStructureRow | null> {
+    if (this.pool === null) throw new Error('database unavailable');
+    return withTenantTransaction(this.pool, { userId: actorUserId, tenantId }, async (client) => {
+      const result = await client.query<FeeStructureDbRow>(
+        `SELECT id, tenant_id, academic_year_id, name, status, currency, created_at, updated_at
+         FROM app.update_fee_structure(
+           $1::uuid, $2::uuid, $3::uuid, $4::boolean, $5::text,
+           $6::boolean, $7::text, $8::boolean, $9::jsonb
+         )`,
+        [
+          actorUserId,
+          tenantId,
+          feeStructureId,
+          input.setName,
+          input.name,
+          input.setStatus,
+          input.status,
+          input.setItems,
+          input.items === null
+            ? null
+            : JSON.stringify(
+                input.items.map((item) => ({
+                  id: item.id,
+                  name: item.name,
+                  amountMinor: item.amountMinor,
+                  sortOrder: item.sortOrder,
+                })),
+              ),
+        ],
+      );
+      const row = result.rows[0];
+      return row === undefined ? null : mapFeeStructure(row);
     });
   }
 

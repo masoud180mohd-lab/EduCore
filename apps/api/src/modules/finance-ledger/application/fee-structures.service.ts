@@ -12,6 +12,7 @@ import {
   buildIdempotencyScopeKey,
   hashRequestBody,
   IDEMPOTENCY_STORE,
+  parseIdempotencyKey,
   resolveIdempotentReplay,
   type IdempotencyStore,
 } from '../../../common/idempotency/index.js';
@@ -36,10 +37,12 @@ export type GetFeeStructureResult = {
   readonly data: FeeStructure & { readonly items: ReadonlyArray<FeeStructureItem> };
 };
 export type CreateFeeStructureResult = { readonly data: FeeStructure };
+export type PatchFeeStructureResult = GetFeeStructureResult;
 
 const FEE_STRUCTURE_STATUSES = new Set(['draft', 'active', 'archived']);
 const NAME_MAX_LEN = 200;
 const FEE_STRUCTURES_ROUTE = '/api/v1/fee-structures';
+const FEE_STRUCTURES_PATCH_ROUTE_PREFIX = '/api/v1/fee-structures/';
 
 @Injectable()
 export class FeeStructuresService {
@@ -134,6 +137,66 @@ export class FeeStructuresService {
     return this.executeCreate(actorUserId, tenantId, parsed, correlationId);
   }
 
+  async patchForTenant(
+    actorUserId: string,
+    tenantId: string,
+    feeStructureId: string,
+    rawBody: unknown,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<PatchFeeStructureResult> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    if (!isUuid(feeStructureId)) {
+      throw AppError.validation('feeStructureId must be a UUID.', { field: 'feeStructureId' });
+    }
+
+    const parsed = parsePatchFeeStructureRequest(rawBody);
+    const bodyJson = JSON.stringify({
+      ...(parsed.setName ? { name: parsed.name } : {}),
+      ...(parsed.setStatus ? { status: parsed.status } : {}),
+      ...(parsed.setItems ? { items: parsed.items } : {}),
+    });
+    const optionalKey = parseIdempotencyKey(idempotencyKeyHeader);
+
+    if (optionalKey !== undefined) {
+      const key = assertIdempotencyKey(optionalKey);
+      if (this.idempotency !== null) {
+        const scopeKey = buildIdempotencyScopeKey(
+          {
+            actorUserId,
+            tenantId,
+            method: 'PATCH',
+            route: `${FEE_STRUCTURES_PATCH_ROUTE_PREFIX}${feeStructureId}`,
+          },
+          key,
+        );
+        const bodyHash = hashRequestBody(bodyJson);
+        const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+        if (replay !== null) {
+          return JSON.parse(replay.responseBody) as PatchFeeStructureResult;
+        }
+
+        const result = await this.executePatch(
+          actorUserId,
+          tenantId,
+          feeStructureId,
+          parsed,
+          correlationId,
+        );
+        await this.idempotency.put(scopeKey, {
+          bodyHash,
+          statusCode: 200,
+          responseBody: JSON.stringify(result),
+          createdAt: new Date().toISOString(),
+        });
+        return result;
+      }
+    }
+
+    return this.executePatch(actorUserId, tenantId, feeStructureId, parsed, correlationId);
+  }
+
   private async executeCreate(
     actorUserId: string,
     tenantId: string,
@@ -170,6 +233,47 @@ export class FeeStructuresService {
     }
   }
 
+  private async executePatch(
+    actorUserId: string,
+    tenantId: string,
+    feeStructureId: string,
+    parsed: ParsedPatchFeeStructure,
+    correlationId: string,
+  ): Promise<PatchFeeStructureResult> {
+    if (!this.finance.isAvailable()) throw AppError.notFound('Fee structure not found.');
+
+    try {
+      const row = await this.finance.updateFeeStructure(actorUserId, tenantId, feeStructureId, {
+        setName: parsed.setName,
+        name: parsed.name,
+        setStatus: parsed.setStatus,
+        status: parsed.status,
+        setItems: parsed.setItems,
+        items:
+          parsed.items === null
+            ? null
+            : parsed.items.map((item) => ({ id: randomUUID(), ...item })),
+      });
+      if (row === null) throw AppError.notFound('Fee structure not found.');
+
+      const items = await this.finance.listFeeStructureItems(actorUserId, tenantId, feeStructureId);
+      await this.safeAudit({
+        action: 'fee_structure.patch',
+        outcome: 'success',
+        correlationId,
+        actorUserId,
+        tenantId,
+        resourceType: 'fee_structure',
+        resourceId: row.id,
+        metadata: { fields: parsed.fields },
+      });
+      return { data: { ...row, items } };
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      throw mapFeeStructureWriteError(error, 'update');
+    }
+  }
+
   private async safeAudit(input: {
     readonly action: string;
     readonly outcome: 'success' | 'failure';
@@ -201,6 +305,16 @@ type ParsedCreateFeeStructure = {
   readonly status: string;
   readonly currency: string;
   readonly items: ReadonlyArray<ParsedFeeStructureItem>;
+};
+
+type ParsedPatchFeeStructure = {
+  readonly setName: boolean;
+  readonly name: string | null;
+  readonly setStatus: boolean;
+  readonly status: string | null;
+  readonly setItems: boolean;
+  readonly items: ReadonlyArray<ParsedFeeStructureItem> | null;
+  readonly fields: ReadonlyArray<string>;
 };
 
 function parseCreateFeeStructureRequest(raw: unknown): ParsedCreateFeeStructure {
@@ -252,6 +366,67 @@ function parseCreateFeeStructureRequest(raw: unknown): ParsedCreateFeeStructure 
   const items = body['items'].map((item, index) => parseFeeStructureItem(item, index));
 
   return { academicYearId: body['academicYearId'], name, status, currency, items };
+}
+
+function parsePatchFeeStructureRequest(raw: unknown): ParsedPatchFeeStructure {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw AppError.validation('Body must be a JSON object.');
+  }
+  const body = raw as Record<string, unknown>;
+  const allowed = new Set(['name', 'status', 'items']);
+  for (const key of Object.keys(body)) {
+    if (!allowed.has(key)) throw AppError.validation(`Unknown field: ${key}.`, { field: key });
+  }
+
+  const setName = Object.prototype.hasOwnProperty.call(body, 'name');
+  const setStatus = Object.prototype.hasOwnProperty.call(body, 'status');
+  const setItems = Object.prototype.hasOwnProperty.call(body, 'items');
+  if (!setName && !setStatus && !setItems) {
+    throw AppError.validation('At least one of name, status, or items is required.');
+  }
+
+  let name: string | null = null;
+  if (setName) {
+    if (typeof body['name'] !== 'string') {
+      throw AppError.validation('name must be a string.', { field: 'name' });
+    }
+    name = body['name'].trim();
+    if (name.length < 1 || name.length > NAME_MAX_LEN) {
+      throw AppError.validation(`name must be 1–${String(NAME_MAX_LEN)} characters.`, {
+        field: 'name',
+      });
+    }
+  }
+
+  let status: string | null = null;
+  if (setStatus) {
+    if (typeof body['status'] !== 'string' || !FEE_STRUCTURE_STATUSES.has(body['status'])) {
+      throw AppError.validation('status must be draft, active, or archived.', { field: 'status' });
+    }
+    status = body['status'];
+  }
+
+  let items: ReadonlyArray<ParsedFeeStructureItem> | null = null;
+  if (setItems) {
+    if (!Array.isArray(body['items']) || body['items'].length === 0) {
+      throw AppError.validation('items must be a non-empty array.', { field: 'items' });
+    }
+    items = body['items'].map((item, index) => parseFeeStructureItem(item, index));
+  }
+
+  return {
+    setName,
+    name,
+    setStatus,
+    status,
+    setItems,
+    items,
+    fields: [
+      ...(setName ? ['name'] : []),
+      ...(setStatus ? ['status'] : []),
+      ...(setItems ? ['items'] : []),
+    ],
+  };
 }
 
 function parseFeeStructureItem(raw: unknown, index: number): ParsedFeeStructureItem {
@@ -320,20 +495,32 @@ function parseOptionalUuid(raw: unknown, field: string): string | undefined {
   return raw;
 }
 
-function mapFeeStructureWriteError(error: unknown): AppError {
+function mapFeeStructureWriteError(
+  error: unknown,
+  operation: 'create' | 'update' = 'create',
+): AppError {
+  const message = getMsg(error);
+  if (
+    isPgCode(error, '23503') ||
+    (isPgCode(error, 'P0001') && (message.includes('in use') || message.includes('invoice')))
+  ) {
+    return new AppError('CONFLICT', 'Fee structure items are in use by invoices.');
+  }
   if (isPgCode(error, '23505')) {
     return new AppError('CONFLICT', 'A conflicting fee structure already exists.');
   }
   if (isPgCode(error, '22023')) {
-    const m = getMsg(error);
-    if (m.includes('academic year not found')) {
+    if (message.includes('academic year not found')) {
       return AppError.validation('academicYearId not found in this tenant.', {
         field: 'academicYearId',
       });
     }
     return AppError.validation('Invalid fee structure payload.');
   }
-  return new AppError('INTERNAL_ERROR', 'Failed to create fee structure.');
+  return new AppError(
+    'INTERNAL_ERROR',
+    operation === 'create' ? 'Failed to create fee structure.' : 'Failed to update fee structure.',
+  );
 }
 
 function isPgCode(error: unknown, code: string): boolean {

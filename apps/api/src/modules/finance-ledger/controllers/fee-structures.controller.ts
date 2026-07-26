@@ -5,6 +5,7 @@ import {
   Headers,
   HttpCode,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -38,6 +39,7 @@ type AuthedRequest = Request & {
  * GET  /api/v1/fee-structures       — list (finance.read)
  * POST /api/v1/fee-structures       — create (finance.manage + Idempotency-Key)
  * GET  /api/v1/fee-structures/:id   — detail with items (finance.read)
+ * PATCH /api/v1/fee-structures/:id  — partial update (finance.manage)
  */
 @Controller()
 export class FeeStructuresController {
@@ -87,6 +89,25 @@ export class FeeStructuresController {
   ): Promise<unknown> {
     const { auth, tenant } = requireAuthTenant(request);
     return this.feeStructuresService.getForTenant(auth.userId, tenant.tenantId, feeStructureId);
+  }
+
+  @Patch('api/v1/fee-structures/:feeStructureId')
+  @UseGuards(RequirePermission('finance.manage'))
+  async patchFeeStructure(
+    @Req() request: AuthedRequest,
+    @Param('feeStructureId') feeStructureId: string,
+    @Body() body: unknown,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.feeStructuresService.patchForTenant(
+      auth.userId,
+      tenant.tenantId,
+      feeStructureId,
+      body,
+      idempotencyKey,
+      resolveCorrelationId(request),
+    );
   }
 }
 

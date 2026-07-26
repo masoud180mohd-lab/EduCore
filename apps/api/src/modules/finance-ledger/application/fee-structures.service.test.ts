@@ -213,6 +213,193 @@ describe('FeeStructuresService', () => {
     expect(second).toEqual(first);
   });
 
+  it.each([
+    [{}, 'at least one field'],
+    [{ extra: true }, 'unknown field'],
+    [{ name: '   ' }, 'empty name'],
+    [{ status: 'deleted' }, 'invalid status'],
+    [{ items: [] }, 'empty items'],
+    [{ items: [{ name: 'Tuition', amountMinor: 10.5, sortOrder: 0 }] }, 'float amount'],
+  ])('rejects invalid patch body: %s (%s)', async (body: unknown, _description: string) => {
+    const service = makeService({ isAvailable: () => true });
+    await expect(
+      service.patchForTenant(actorUserId, tenantId, feeStructureId, body, undefined, 'corr'),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+
+  it('rejects an invalid patch fee structure id as validation', async () => {
+    const service = makeService({ isAvailable: () => true });
+    await expect(
+      service.patchForTenant(actorUserId, tenantId, 'bad', { name: 'Term 2' }, undefined, 'corr'),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+
+  it('patches fields, replaces item ids, and returns detail with items', async () => {
+    const updateFeeStructure = vi.fn().mockResolvedValue({
+      id: feeStructureId,
+      tenantId,
+      academicYearId,
+      name: 'Term 2 Fees',
+      status: 'active',
+      currency: 'TZS',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-02-01T00:00:00.000Z',
+    });
+    const items = [
+      {
+        id: '01900000-0000-7000-8000-0000000000b1',
+        feeStructureId,
+        name: 'Tuition',
+        amountMinor: 2500,
+        sortOrder: 1,
+      },
+    ];
+    const listFeeStructureItems = vi.fn().mockResolvedValue(items);
+    const service = makeService({
+      isAvailable: () => true,
+      updateFeeStructure,
+      listFeeStructureItems,
+    });
+
+    const result = await service.patchForTenant(
+      actorUserId,
+      tenantId,
+      feeStructureId,
+      {
+        name: ' Term 2 Fees ',
+        status: 'active',
+        items: [{ name: ' Tuition ', amountMinor: 2500, sortOrder: 1 }],
+      },
+      undefined,
+      'corr',
+    );
+
+    expect(result.data).toMatchObject({ id: feeStructureId, name: 'Term 2 Fees', items });
+    expect(updateFeeStructure).toHaveBeenCalledWith(
+      actorUserId,
+      tenantId,
+      feeStructureId,
+      expect.objectContaining({
+        setName: true,
+        name: 'Term 2 Fees',
+        setStatus: true,
+        status: 'active',
+        setItems: true,
+        items: [
+          expect.objectContaining({
+            // Vitest asymmetric matchers are typed as any.
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            id: expect.stringMatching(/^[0-9a-f-]{36}$/),
+            name: 'Tuition',
+            amountMinor: 2500,
+            sortOrder: 1,
+          }),
+        ],
+      }),
+    );
+    expect(listFeeStructureItems).toHaveBeenCalledWith(actorUserId, tenantId, feeStructureId);
+  });
+
+  it('returns 404 when patch target does not exist', async () => {
+    const service = makeService({
+      isAvailable: () => true,
+      updateFeeStructure: vi.fn().mockResolvedValue(null),
+    });
+    await expect(
+      service.patchForTenant(
+        actorUserId,
+        tenantId,
+        feeStructureId,
+        { status: 'archived' },
+        undefined,
+        'corr',
+      ),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('replays an idempotent patch with the same detail response', async () => {
+    const row = {
+      id: feeStructureId,
+      tenantId,
+      academicYearId,
+      name: 'Term 2',
+      status: 'draft',
+      currency: 'TZS',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-02-01T00:00:00.000Z',
+    };
+    const updateFeeStructure = vi.fn().mockResolvedValue(row);
+    const listFeeStructureItems = vi.fn().mockResolvedValue([]);
+    const records = new Map<
+      string,
+      { bodyHash: string; statusCode: number; responseBody: string; createdAt: string }
+    >();
+    const idempotency = {
+      get: vi.fn((key: string) => Promise.resolve(records.get(key) ?? null)),
+      put: vi.fn(
+        (
+          key: string,
+          record: { bodyHash: string; statusCode: number; responseBody: string; createdAt: string },
+        ) => {
+          records.set(key, record);
+          return Promise.resolve();
+        },
+      ),
+    };
+    const service = new FeeStructuresService(
+      { isAvailable: () => true, updateFeeStructure, listFeeStructureItems } as never,
+      idempotency,
+      null,
+    );
+
+    const first = await service.patchForTenant(
+      actorUserId,
+      tenantId,
+      feeStructureId,
+      { name: 'Term 2' },
+      idempotencyKey,
+      'corr',
+    );
+    const second = await service.patchForTenant(
+      actorUserId,
+      tenantId,
+      feeStructureId,
+      { name: 'Term 2' },
+      idempotencyKey,
+      'corr',
+    );
+
+    expect(second).toEqual(first);
+    expect(updateFeeStructure).toHaveBeenCalledTimes(1);
+    expect(listFeeStructureItems).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    [{ code: '23503' }, 'foreign key'],
+    [{ code: 'P0001', message: 'fee structure items are in use by invoices' }, 'helper guard'],
+  ])(
+    'maps item replacement %s conflict (%s)',
+    async (databaseError: unknown, _description: string) => {
+      const service = makeService({
+        isAvailable: () => true,
+        updateFeeStructure: vi.fn().mockRejectedValue(databaseError),
+      });
+      await expect(
+        service.patchForTenant(
+          actorUserId,
+          tenantId,
+          feeStructureId,
+          { items: [{ name: 'Tuition', amountMinor: 1000, sortOrder: 0 }] },
+          undefined,
+          'corr',
+        ),
+      ).rejects.toMatchObject({
+        code: 'CONFLICT',
+        message: 'Fee structure items are in use by invoices.',
+      });
+    },
+  );
+
   it('throws unauthorized for bad actor id', async () => {
     const service = makeService({ isAvailable: () => true });
     await expect(service.listForTenant('bad', tenantId, {})).rejects.toBeInstanceOf(AppError);

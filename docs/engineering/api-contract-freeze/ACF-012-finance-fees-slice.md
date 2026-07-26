@@ -3,8 +3,8 @@
 | Field     | Value                                     |
 | --------- | ----------------------------------------- |
 | Freeze ID | `ACF-012`                                 |
-| Version   | `1.3`                                     |
-| Date      | 2026-07-22                                |
+| Version   | `1.4`                                     |
+| Date      | 2026-07-26                                |
 | Companion | DBF-012                                   |
 | Program   | **IMP-009** (prompt IMP-007 ID collision) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)  |
@@ -15,7 +15,7 @@
 
 | In scope                                   | Out of scope                       |
 | ------------------------------------------ | ---------------------------------- |
-| Fee structures list/get/create             | Parent portal pay UI               |
+| Fee structures list/get/create/patch       | Parent portal pay UI               |
 | Invoices list/get/create/issue/void        | Real MoMo vendor                   |
 | Manual payment + receipt + reverse         | Multi-currency beyond TZS          |
 | Derived `balanceMinor` on invoice get/list | Writable balance column            |
@@ -33,6 +33,7 @@
 | GET    | `/api/v1/fee-structures`          | finance.read                                                 |
 | GET    | `/api/v1/fee-structures/{id}`     | finance.read                                                 |
 | POST   | `/api/v1/fee-structures`          | finance.manage + Idempotency-Key                             |
+| PATCH  | `/api/v1/fee-structures/{id}`     | finance.manage + optional Idempotency-Key                    |
 | GET    | `/api/v1/invoices`                | finance.read                                                 |
 | GET    | `/api/v1/invoices/{id}`           | finance.read                                                 |
 | POST   | `/api/v1/invoices`                | finance.manage + Idempotency-Key                             |
@@ -81,6 +82,12 @@ Revenue recognized **on issue** (DBF-012). Receipt only after succeeded payment 
 - `POST /api/v1/payments/{id}/reconcile` — `finance.reconcile` + `Idempotency-Key`, `HttpCode(200)`.
 - Compares attempt amount/status vs latest linked gateway event; writes immutable `payment_reconciliations` row.
 - Outcomes: `matched`, `amount_mismatch`, `missing_event`, `status_mismatch`. Does not mutate payment or ledger.
+
+## Rev 1.4 — Fee structure amend (IMP-024)
+
+- `PATCH /api/v1/fee-structures/{id}` — `finance.manage`, optional `Idempotency-Key`, and `200` fee structure detail with items.
+- Allows any non-empty subset of `name`, `status`, and `items`; unknown fields are rejected.
+- `items` is a full replacement. Replacement is blocked with `409 CONFLICT` when an invoice line references a current item.
 
 ## Solo-operator honesty
 

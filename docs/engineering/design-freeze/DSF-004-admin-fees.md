@@ -3,12 +3,12 @@
 | Field     | Value                                                   |
 | --------- | ------------------------------------------------------- |
 | Freeze ID | `DSF-004`                                               |
-| Version   | `1.0`                                                   |
-| Date      | 2026-07-22                                              |
+| Version   | `1.1`                                                   |
+| Date      | 2026-07-26                                              |
 | Audience  | School admin / bursar (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                |
-| Program   | **IMP-010**                                             |
-| Contract  | ACF-012 rev 1.3 / DBF-012                               |
+| Program   | **IMP-010** / **IMP-024**                               |
+| Contract  | ACF-012 rev 1.4 / DBF-012                               |
 
 **Honesty:** Provisional design-system slice for IMP-010 only. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens and DSF-002 admin chrome; adds bursar fee workflows against existing Nest finance HTTP.
 
@@ -43,7 +43,7 @@ Same as DSF-002:
 
 1. **Fees hub** — short links: Structures, Invoices, Receipts
 2. **Fee structures list** — `GET /fee-structures` + create form (`POST`, Idempotency-Key)
-3. **Fee structure detail** — `GET /fee-structures/{id}` with items
+3. **Fee structure detail** — `GET /fee-structures/{id}` with items; **edit** name / status / items via `PATCH` (Idempotency-Key). Item payload is full replace and only sent when the item list changed; **409** when items are referenced by invoices.
 4. **Invoices list** — `GET /invoices` + create draft form (student + year + lines; optional structure)
 5. **Invoice detail** — lines, balance; **Issue** (draft); **Void** (issued, unpaid); **Record office payment**; payments list; **Reverse** on succeeded payment; **Reconcile** (Wave X — `finance.reconcile`) outcome display only
 6. **Receipts list** — `GET /receipts`
@@ -65,6 +65,7 @@ Same as DSF-002:
 - Resource list pattern (loading / empty / error / forbidden)
 - Money format helper (`formatTzsMinor`)
 - Structure create form (name, year, status, line items)
+- Structure detail edit form (name, status, replaceable items; year/currency read-only)
 - Invoice create form (student picker, year, structure → prefill lines, or manual lines)
 - Office payment form (method: cash | bank | cheque | other; amount ≤ balance)
 - Confirm dialogs for void / reverse (destructive)
@@ -93,7 +94,7 @@ Fake webhook remains **out of MVP UI**.
 | --------------------------------------------------- | ----------------------------- |
 | `/t/[tenantId]/admin/fees`                          | Hub                           |
 | `/t/[tenantId]/admin/fees/structures`               | List + create                 |
-| `/t/[tenantId]/admin/fees/structures/[structureId]` | Detail                        |
+| `/t/[tenantId]/admin/fees/structures/[structureId]` | Detail + edit                 |
 | `/t/[tenantId]/admin/fees/invoices`                 | List + create draft           |
 | `/t/[tenantId]/admin/fees/invoices/[invoiceId]`     | Detail + pay / void / reverse |
 | `/t/[tenantId]/admin/fees/receipts`                 | List                          |
@@ -116,3 +117,10 @@ Same as DSF-001/002: Bearer + `X-Tenant-Id` in `sessionStorage`. Mutations use `
 ## Solo-operator honesty
 
 Accepted under acting seats only; revise when a second review seat exists.
+
+## Revisions
+
+| Ver | Date       | Notes                                                               |
+| --- | ---------- | ------------------------------------------------------------------- |
+| 1.0 | 2026-07-22 | IMP-010 provisional bursar fees UI                                  |
+| 1.1 | 2026-07-26 | IMP-024 fee structure detail edit (`PATCH`, items replace + 409 UX) |

@@ -1,11 +1,12 @@
 openapi: 3.1.0
 info:
   title: EduCore API — Finance / Fees (ACF-012)
-  version: 1.3.0
+  version: 1.4.0
   description: >-
     Machine-readable contract for fee structures, invoices, manual payments,
-    receipts, void/reverse, Fake webhook stub, and reconcile (ACF-012 rev 1.3 /
-    DBF-012). Solo-operator provisional (SOLO-GOV-001). Program IMP-009.
+    receipts, void/reverse, Fake webhook stub, reconcile, and fee structure
+    amend (ACF-012 rev 1.4 / DBF-012). Solo-operator provisional
+    (SOLO-GOV-001). Programs IMP-009 and IMP-024.
     Amounts are integer minor units only; balanceMinor is derived (ADR-004).
     No real MoMo vendor (PAY-PROVIDER-001 / Fake only).
     AuthZ stack: Authenticated → Tenant header → Session tenant bind →
@@ -143,6 +144,54 @@ paths:
           - scope
           - rls
         permissionCodes: [finance.read]
+    patch:
+      tags: [FeeStructures]
+      operationId: patchFeeStructure
+      summary: Partially update fee structure and optionally replace all items
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/FeeStructureId'
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchFeeStructureRequest'
+      responses:
+        '200':
+          description: Updated fee structure detail with items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeStructureDetailEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-permissions: [finance.manage]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [finance.manage]
+        notes: >-
+          items is a full replacement and is rejected with 409 when current
+          items are referenced by invoice lines.
   /invoices:
     get:
       tags: [Invoices]
@@ -683,6 +732,14 @@ components:
         type: string
         minLength: 16
         maxLength: 128
+    IdempotencyKeyOptional:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
     Limit:
       name: limit
       in: query
@@ -906,6 +963,34 @@ components:
           $ref: '#/components/schemas/FeeStructureStatus'
         currency:
           $ref: '#/components/schemas/Currency'
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required: [name, amountMinor]
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 200
+              amountMinor:
+                $ref: '#/components/schemas/MinorUnits'
+              sortOrder:
+                type: integer
+                minimum: 0
+    PatchFeeStructureRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        status:
+          $ref: '#/components/schemas/FeeStructureStatus'
         items:
           type: array
           minItems: 1
