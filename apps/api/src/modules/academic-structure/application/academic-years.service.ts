@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { Inject, Injectable, Optional } from '@nestjs/common';
 
+import { mapAcademicDeleteDependentsConflict } from './academic-delete-conflict.js';
 import { AppError } from '../../../common/errors/app-error.js';
 import {
   assertIdempotencyKey,
@@ -424,8 +425,9 @@ export class AcademicYearsService {
       if (error instanceof AppError) {
         throw error;
       }
-      if (isPgHasDependents(error)) {
-        throw new AppError('CONFLICT', 'Cannot delete academic year with dependents.');
+      const dependentsConflict = mapAcademicDeleteDependentsConflict(error, 'academic year');
+      if (dependentsConflict !== null) {
+        throw dependentsConflict;
       }
       throw new AppError('INTERNAL_ERROR', 'Failed to delete academic year.');
     }
@@ -663,17 +665,5 @@ function isPgCheckViolation(error: unknown): boolean {
     error !== null &&
     'code' in error &&
     (error as { code: string }).code === '23514'
-  );
-}
-
-/** True for the P0001 'has dependents' raised by app.delete_* helpers (IMP-014). */
-function isPgHasDependents(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code: string }).code === 'P0001' &&
-    'message' in error &&
-    String((error as { message: unknown }).message).includes('has dependents')
   );
 }

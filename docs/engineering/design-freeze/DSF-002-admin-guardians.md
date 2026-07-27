@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                                                                                                                  |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Freeze ID | `DSF-002`                                                                                                                                              |
-| Version   | `1.12`                                                                                                                                                 |
-| Date      | 2026-07-26                                                                                                                                             |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                                            |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                               |
-| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · IMP-021 · IMP-022 · **IMP-023** (Memberships list) |
+| Field     | Value                                                                                                                                         |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                                                                                                     |
+| Version   | `1.13`                                                                                                                                        |
+| Date      | 2026-07-27                                                                                                                                    |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                                   |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                      |
+| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · IMP-021 · IMP-022 · IMP-023 · **IMP-025** |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -59,7 +59,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - Link-student control (student picker + relationship type)
 - Academic create forms (name, optional code/dates, status default **active**)
 - Academic detail edit forms (name/code/dates/status; confirm when status → `closed`)
-- Delete button (destructive, confirm dialog) on academic entity detail — years/terms/classes/streams/subjects
+- Delete button (destructive, confirm dialog) on academic entity detail — years/terms/classes/streams/subjects; **409 dependents banner** lists blocker types/counts/samples with admin links (IMP-025)
 - Parent pickers (reparent controls) on term/class/stream detail edit: academic year picker (terms, classes), term picker incl. "none" (classes), class picker (streams)
 - Enrollment create (student + class + optional stream); status control on detail; **transfer** class/stream pickers on detail
 
@@ -76,7 +76,6 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - Marks / AI
 - Fees / bursar chrome — **DSF-004** (IMP-010)
 - MoMo / mobile money payment UX (PAY-PROVIDER-001) — out of scope
-- Cascade delete UX (delete stays empty-only; 409 surfaced as a plain error, no dependent-listing UI)
 - Bulk enroll / bulk transfer / timetable / report cards
 - MFA enrollment
 - Full offline sync
@@ -91,3 +90,9 @@ Same as DSF-001: Bearer + `X-Tenant-Id` in `sessionStorage` until httpOnly cooki
 ## Solo-operator honesty
 
 Accepted under acting seats only; revise when a second review seat exists.
+
+## Revisions
+
+| Ver  | Date       | Notes                                             |
+| ---- | ---------- | ------------------------------------------------- |
+| 1.13 | 2026-07-27 | IMP-025 academic delete dependents listing on 409 |

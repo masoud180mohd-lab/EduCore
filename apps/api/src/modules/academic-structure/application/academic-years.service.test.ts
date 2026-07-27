@@ -308,14 +308,23 @@ describe('AcademicYearsService.deleteForTenant', () => {
     expect(academicYears.deleteForTenant).not.toHaveBeenCalled();
   });
 
-  it('maps has-dependents error to CONFLICT', async () => {
+  it('maps has-dependents error to CONFLICT with dependents details', async () => {
     const academicYears = {
       isAvailable: () => true,
-      deleteForTenant: vi.fn().mockRejectedValue({ code: 'P0001', message: 'has dependents' }),
+      deleteForTenant: vi.fn().mockRejectedValue({
+        code: 'P0001',
+        message: 'has dependents',
+        detail: JSON.stringify({
+          dependents: [{ type: 'terms', count: 1, samples: [{ id: yearA.id, label: 'Term 1' }] }],
+        }),
+      }),
     };
     const service = new AcademicYearsService(academicYears as never);
     await expect(service.deleteForTenant(actorId, tenantId, yearA.id, corr)).rejects.toMatchObject({
       code: 'CONFLICT',
+      details: {
+        dependents: [{ type: 'terms', count: 1, samples: [{ id: yearA.id, label: 'Term 1' }] }],
+      },
     });
   });
 });

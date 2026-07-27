@@ -5,7 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
+import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { type DependentGroup, parseDeleteDependents } from '@/lib/academic/dependents';
 import {
   type AcademicYearRow,
   type LifecycleStatus,
@@ -27,6 +29,7 @@ export default function AdminAcademicYearDetailPage() {
   const [startsOn, setStartsOn] = useState('');
   const [endsOn, setEndsOn] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('draft');
+  const [deleteDependents, setDeleteDependents] = useState<DependentGroup[] | null>(null);
 
   const load = useCallback(async () => {
     const auth = readSession();
@@ -101,6 +104,7 @@ export default function AdminAcademicYearDetailPage() {
     setBusy(true);
     setError(null);
     setInfo(null);
+    setDeleteDependents(null);
     try {
       await apiRequest<void>(`/api/v1/academic-years/${yearId}`, {
         method: 'DELETE',
@@ -108,8 +112,10 @@ export default function AdminAcademicYearDetailPage() {
       });
       router.push(`/t/${tenantId}/admin/academic/years`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
-      else setError('Could not delete academic year.');
+      if (err instanceof ApiClientError) {
+        setDeleteDependents(parseDeleteDependents(err));
+        setError(academicMessage(err));
+      } else setError('Could not delete academic year.');
       setBusy(false);
     }
   }
@@ -124,6 +130,9 @@ export default function AdminAcademicYearDetailPage() {
         <div className="banner banner-error" role="alert">
           {error}
         </div>
+      ) : null}
+      {deleteDependents !== null ? (
+        <DeleteDependentsBanner tenantId={tenantId} groups={deleteDependents} />
       ) : null}
       {info !== null ? (
         <div className="banner banner-info" role="status">

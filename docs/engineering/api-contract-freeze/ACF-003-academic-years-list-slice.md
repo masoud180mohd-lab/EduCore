@@ -202,7 +202,7 @@ Unknown keys → `VALIDATION_ERROR`. Empty body → `VALIDATION_ERROR`.
 | `DELETE` | `/api/v1/academic-years/{academicYearId}` | academic.manage | n/a         |
 
 **operationId:** `deleteAcademicYear`  
-Success **204** empty body. Missing/cross-tenant → **404**. Any dependent (terms, classes, enrollments, attendance, exams, fee_structures, invoices) → **409** `CONFLICT`. No cascade.
+Success **204** empty body. Missing/cross-tenant → **404**. Any dependent (terms, classes, enrollments, attendance, exams, fee_structures, invoices) → **409** `CONFLICT` with optional `error.details.dependents[]` `{ type, count, samples[{ id, label }] }` (IMP-025). No cascade.
 
 ---
 

@@ -5,7 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
+import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { type DependentGroup, parseDeleteDependents } from '@/lib/academic/dependents';
 import {
   type AcademicYearRow,
   type ClassRow,
@@ -31,6 +33,7 @@ export default function AdminClassDetailPage() {
   const [status, setStatus] = useState<LifecycleStatus>('draft');
   const [academicYearId, setAcademicYearId] = useState('');
   const [termId, setTermId] = useState('');
+  const [deleteDependents, setDeleteDependents] = useState<DependentGroup[] | null>(null);
 
   const load = useCallback(async () => {
     const auth = readSession();
@@ -122,12 +125,15 @@ export default function AdminClassDetailPage() {
     setBusy(true);
     setError(null);
     setInfo(null);
+    setDeleteDependents(null);
     try {
       await apiRequest<void>(`/api/v1/classes/${classId}`, { method: 'DELETE', auth });
       router.push(`/t/${tenantId}/admin/academic/classes`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
-      else setError('Could not delete class.');
+      if (err instanceof ApiClientError) {
+        setDeleteDependents(parseDeleteDependents(err));
+        setError(academicMessage(err));
+      } else setError('Could not delete class.');
       setBusy(false);
     }
   }
@@ -142,6 +148,9 @@ export default function AdminClassDetailPage() {
         <div className="banner banner-error" role="alert">
           {error}
         </div>
+      ) : null}
+      {deleteDependents !== null ? (
+        <DeleteDependentsBanner tenantId={tenantId} groups={deleteDependents} />
       ) : null}
       {info !== null ? (
         <div className="banner banner-info" role="status">

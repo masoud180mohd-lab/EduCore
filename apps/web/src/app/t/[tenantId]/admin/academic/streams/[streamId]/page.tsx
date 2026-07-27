@@ -5,7 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
+import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { type DependentGroup, parseDeleteDependents } from '@/lib/academic/dependents';
 import {
   type ClassRow,
   type LifecycleStatus,
@@ -28,6 +30,7 @@ export default function AdminStreamDetailPage() {
   const [code, setCode] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('draft');
   const [classId, setClassId] = useState('');
+  const [deleteDependents, setDeleteDependents] = useState<DependentGroup[] | null>(null);
 
   const load = useCallback(async () => {
     const auth = readSession();
@@ -98,12 +101,15 @@ export default function AdminStreamDetailPage() {
     setBusy(true);
     setError(null);
     setInfo(null);
+    setDeleteDependents(null);
     try {
       await apiRequest<void>(`/api/v1/streams/${streamId}`, { method: 'DELETE', auth });
       router.push(`/t/${tenantId}/admin/academic/streams`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
-      else setError('Could not delete stream.');
+      if (err instanceof ApiClientError) {
+        setDeleteDependents(parseDeleteDependents(err));
+        setError(academicMessage(err));
+      } else setError('Could not delete stream.');
       setBusy(false);
     }
   }
@@ -118,6 +124,9 @@ export default function AdminStreamDetailPage() {
         <div className="banner banner-error" role="alert">
           {error}
         </div>
+      ) : null}
+      {deleteDependents !== null ? (
+        <DeleteDependentsBanner tenantId={tenantId} groups={deleteDependents} />
       ) : null}
       {info !== null ? (
         <div className="banner banner-info" role="status">

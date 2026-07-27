@@ -417,7 +417,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          $ref: '#/components/responses/Conflict'
+          $ref: '#/components/responses/DeleteDependentsConflict'
       x-permissions:
         - academic.manage
       x-authz:
@@ -647,7 +647,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          $ref: '#/components/responses/Conflict'
+          $ref: '#/components/responses/DeleteDependentsConflict'
       x-permissions:
         - academic.manage
       x-authz:
@@ -881,7 +881,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          $ref: '#/components/responses/Conflict'
+          $ref: '#/components/responses/DeleteDependentsConflict'
       x-permissions:
         - academic.manage
       x-authz:
@@ -1110,7 +1110,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          $ref: '#/components/responses/Conflict'
+          $ref: '#/components/responses/DeleteDependentsConflict'
       x-permissions:
         - academic.manage
       x-authz:
@@ -1334,7 +1334,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          $ref: '#/components/responses/Conflict'
+          $ref: '#/components/responses/DeleteDependentsConflict'
       x-permissions:
         - academic.manage
       x-authz:
@@ -1467,10 +1467,54 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorEnvelope'
+    DeleteDependentsConflict:
+      description: Delete blocked by dependent rows (empty-only delete)
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      details:
+                        type: object
+                        required: [dependents]
+                        properties:
+                          dependents:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/DependentGroup'
   schemas:
     Uuid:
       type: string
       format: uuid
+    DependentSample:
+      type: object
+      additionalProperties: false
+      required: [id, label]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        label:
+          type: string
+    DependentGroup:
+      type: object
+      additionalProperties: false
+      required: [type, count, samples]
+      properties:
+        type:
+          type: string
+        count:
+          type: integer
+          minimum: 1
+        samples:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/DependentSample'
     StudentStatus:
       type: string
       enum:

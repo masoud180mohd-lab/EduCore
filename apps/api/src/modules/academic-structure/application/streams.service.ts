@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { Inject, Injectable, Optional } from '@nestjs/common';
 
+import { mapAcademicDeleteDependentsConflict } from './academic-delete-conflict.js';
 import { AppError } from '../../../common/errors/app-error.js';
 import {
   assertIdempotencyKey,
@@ -301,8 +302,9 @@ export class StreamsService {
       }
     } catch (error: unknown) {
       if (error instanceof AppError) throw error;
-      if (isCode(error, 'P0001') && msg(error).includes('has dependents')) {
-        throw new AppError('CONFLICT', 'Cannot delete stream with dependents.');
+      const dependentsConflict = mapAcademicDeleteDependentsConflict(error, 'stream');
+      if (dependentsConflict !== null) {
+        throw dependentsConflict;
       }
       throw new AppError('INTERNAL_ERROR', 'Failed to delete stream.');
     }
