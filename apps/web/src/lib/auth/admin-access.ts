@@ -111,3 +111,39 @@ export function adminDeniedFallback(me: MeLike): AdminFallbackHome {
   }
   return 'teacher';
 }
+
+export type AdminNavGroupId = 'home' | 'registry' | 'access' | 'academic' | 'fees' | 'settings';
+
+export type AdminNavGroup = {
+  readonly id: AdminNavGroupId;
+  readonly label: string;
+  readonly items: ReadonlyArray<AdminNavId>;
+};
+
+/** IA groups for AdminShell (IMP-029 Option A). Membership order is display order. */
+const ADMIN_NAV_GROUP_DEFS: ReadonlyArray<{
+  readonly id: AdminNavGroupId;
+  readonly label: string;
+  readonly members: ReadonlyArray<AdminNavId>;
+}> = [
+  { id: 'home', label: 'Home', members: ['home'] },
+  { id: 'registry', label: 'Registry', members: ['students', 'guardians', 'organizations'] },
+  { id: 'access', label: 'Access', members: ['users', 'memberships', 'roles'] },
+  { id: 'academic', label: 'Academic', members: ['academic'] },
+  { id: 'fees', label: 'Fees', members: ['fees'] },
+  { id: 'settings', label: 'Settings', members: ['settings'] },
+];
+
+/**
+ * Group visible nav ids for tablet IA. Empty groups are omitted.
+ * Does not invent visibility — input must already be `visibleAdminNavIds`.
+ */
+export function groupAdminNav(visibleIds: ReadonlySet<AdminNavId>): ReadonlyArray<AdminNavGroup> {
+  const groups: AdminNavGroup[] = [];
+  for (const def of ADMIN_NAV_GROUP_DEFS) {
+    const items = def.members.filter((id) => visibleIds.has(id));
+    if (items.length === 0) continue;
+    groups.push({ id: def.id, label: def.label, items });
+  }
+  return groups;
+}

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { adminDeniedFallback, canAccessAdminShell, visibleAdminNavIds } from './admin-access.js';
+import {
+  adminDeniedFallback,
+  canAccessAdminShell,
+  groupAdminNav,
+  visibleAdminNavIds,
+  type AdminNavId,
+} from './admin-access.js';
 
 describe('canAccessAdminShell', () => {
   it('allows owner/admin roles', () => {
@@ -76,5 +82,44 @@ describe('adminDeniedFallback', () => {
         permissions: ['attendance.manage'],
       }),
     ).toBe('teacher');
+  });
+});
+
+describe('groupAdminNav (IMP-029)', () => {
+  it('groups all owner ids and omits nothing when full set', () => {
+    const ids = visibleAdminNavIds({ roles: [{ code: 'owner' }], permissions: [] });
+    const groups = groupAdminNav(ids);
+    expect(groups.map((g) => g.id)).toEqual([
+      'home',
+      'registry',
+      'access',
+      'academic',
+      'fees',
+      'settings',
+    ]);
+    expect(groups.find((g) => g.id === 'registry')?.items).toEqual([
+      'students',
+      'guardians',
+      'organizations',
+    ]);
+    expect(groups.find((g) => g.id === 'access')?.items).toEqual(['users', 'memberships', 'roles']);
+  });
+
+  it('omits empty groups; finance-only sees Fees not Access', () => {
+    const ids = visibleAdminNavIds({
+      roles: [{ code: 'staff' }],
+      permissions: ['finance.manage', 'attendance.manage'],
+    });
+    const groups = groupAdminNav(ids);
+    expect(groups.map((g) => g.id)).toEqual(['home', 'fees']);
+    expect(groups.some((g) => g.id === 'access')).toBe(false);
+    expect(groups.some((g) => g.id === 'registry')).toBe(false);
+  });
+
+  it('keeps partial registry when only students visible', () => {
+    const ids = new Set<AdminNavId>(['home', 'students']);
+    const groups = groupAdminNav(ids);
+    expect(groups.map((g) => g.id)).toEqual(['home', 'registry']);
+    expect(groups.find((g) => g.id === 'registry')?.items).toEqual(['students']);
   });
 });

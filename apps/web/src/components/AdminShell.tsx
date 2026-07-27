@@ -9,6 +9,7 @@ import { apiRequest } from '@/lib/api/client';
 import {
   adminDeniedFallback,
   canAccessAdminShell,
+  groupAdminNav,
   visibleAdminNavIds,
   type AdminNavId,
 } from '@/lib/auth/admin-access';
@@ -27,7 +28,7 @@ type MeEnvelope = {
 
 type NavLink = {
   readonly id: AdminNavId;
-  readonly href: string;
+  readonly href: (base: string) => string;
   readonly label: string;
 };
 
@@ -39,10 +40,29 @@ type GateState =
       readonly fallback: 'teacher' | 'parent';
     };
 
+/** Flat catalog — presentation is grouped via `groupAdminNav` (IMP-029). Routes unchanged. */
+const NAV_LINKS: ReadonlyArray<NavLink> = [
+  { id: 'home', href: (base) => base, label: 'Home' },
+  { id: 'users', href: (base) => `${base}/users`, label: 'Users' },
+  { id: 'memberships', href: (base) => `${base}/memberships`, label: 'Memberships' },
+  { id: 'organizations', href: (base) => `${base}/organizations`, label: 'Orgs' },
+  { id: 'students', href: (base) => `${base}/students`, label: 'Students' },
+  { id: 'guardians', href: (base) => `${base}/guardians`, label: 'Guardians' },
+  { id: 'roles', href: (base) => `${base}/roles`, label: 'Roles' },
+  { id: 'academic', href: (base) => `${base}/academic`, label: 'Academic' },
+  { id: 'fees', href: (base) => `${base}/fees`, label: 'Fees' },
+  { id: 'settings', href: (base) => `${base}/settings`, label: 'Settings' },
+];
+
+const NAV_BY_ID = Object.fromEntries(NAV_LINKS.map((l) => [l.id, l])) as Record<
+  AdminNavId,
+  NavLink
+>;
+
 /**
- * Admin chrome (DSF-002 / IMP-033).
+ * Admin chrome (DSF-002 / IMP-033 / IMP-029).
  * Session + tenant bind first; then /auth/me capability gate.
- * Nav is permission-filtered — API remains AuthZ truth for mutations.
+ * Nav is permission-filtered and grouped for tablet — API remains AuthZ truth.
  */
 export function AdminShell({
   tenantId,
@@ -76,7 +96,6 @@ export function AdminShell({
         setGate({ kind: 'allowed', navIds: visibleAdminNavIds(me.data) });
       } catch {
         if (cancelled) return;
-        // Fail closed: unknown /auth/me → deny admin chrome (API truth unavailable).
         setGate({ kind: 'denied', fallback: 'teacher' });
         return;
       }
@@ -136,40 +155,43 @@ export function AdminShell({
   }
 
   const base = `/t/${tenantId}/admin`;
-  const allLinks: ReadonlyArray<NavLink> = [
-    { id: 'home', href: base, label: 'Home' },
-    { id: 'users', href: `${base}/users`, label: 'Users' },
-    { id: 'memberships', href: `${base}/memberships`, label: 'Memberships' },
-    { id: 'organizations', href: `${base}/organizations`, label: 'Orgs' },
-    { id: 'students', href: `${base}/students`, label: 'Students' },
-    { id: 'guardians', href: `${base}/guardians`, label: 'Guardians' },
-    { id: 'roles', href: `${base}/roles`, label: 'Roles' },
-    { id: 'academic', href: `${base}/academic`, label: 'Academic' },
-    { id: 'fees', href: `${base}/fees`, label: 'Fees' },
-    { id: 'settings', href: `${base}/settings`, label: 'Settings' },
-  ];
-  const links = allLinks.filter((link) => gate.navIds.has(link.id));
+  const groups = groupAdminNav(gate.navIds);
+
+  function isCurrent(href: string): boolean {
+    if (href === base) return pathname === base;
+    return pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
+  }
 
   return (
     <div className="app-shell app-shell-wide">
-      <header className="top-nav">
-        <strong>{brand}</strong>
-        <nav aria-label="Admin">
-          {links.map((link) => {
-            const current =
-              link.href === base
-                ? pathname === base
-                : pathname === link.href || pathname?.startsWith(`${link.href}/`);
-            return (
-              <Link key={link.href} href={link.href} aria-current={current ? 'page' : undefined}>
-                {link.label}
-              </Link>
-            );
-          })}
+      <header className="top-nav top-nav-grouped">
+        <strong className="top-nav-brand">{brand}</strong>
+        <nav aria-label="Admin" className="admin-nav-groups">
+          {groups.map((group) => (
+            <div key={group.id} className="admin-nav-group">
+              <span className="admin-nav-group-label" id={`admin-nav-${group.id}`}>
+                {group.label}
+              </span>
+              <ul className="admin-nav-group-links" aria-labelledby={`admin-nav-${group.id}`}>
+                {group.items.map((id) => {
+                  const link = NAV_BY_ID[id];
+                  const href = link.href(base);
+                  const current = isCurrent(href);
+                  return (
+                    <li key={id}>
+                      <Link href={href} aria-current={current ? 'page' : undefined}>
+                        {link.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
         <button
           type="button"
-          className="btn btn-secondary"
+          className="btn btn-secondary top-nav-logout"
           onClick={() => {
             clearSession();
             router.replace('/login');

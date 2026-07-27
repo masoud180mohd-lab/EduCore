@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                                                                                                                                                       |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                                                                                                                                                   |
-| Version   | `1.18`                                                                                                                                                                                      |
-| Date      | 2026-07-27                                                                                                                                                                                  |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                                                                                 |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                                                                    |
-| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · IMP-021 · IMP-022 · IMP-023 · IMP-025 · IMP-026 · IMP-027 · IMP-028 · IMP-030 · IMP-033 |
+| Field     | Value                                                                                                                                                                                                 |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                                                                                                                                                             |
+| Version   | `1.19`                                                                                                                                                                                                |
+| Date      | 2026-07-27                                                                                                                                                                                            |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                                                                                           |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                                                                              |
+| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · IMP-021 · IMP-022 · IMP-023 · IMP-025 · IMP-026 · IMP-027 · IMP-028 · IMP-029 · IMP-030 · IMP-033 |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -31,7 +31,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 ## Screens in scope
 
 1. **Login routing** — after bind, `/auth/me` decides admin vs teacher home
-2. **Admin home** — school name + short links (Users, **Memberships**, Orgs, Students, Guardians, **Roles**, **Academic**, Fees, Settings)
+2. **Admin home** — school name + **grouped** short links (Registry / Access / Academic / Fees / Settings) mirroring shell IA (IMP-029)
 3. **Users list + invite + edit detail** — `GET /users` (search optional); invite via `POST /memberships`; detail `PATCH` displayName + `POST …/disable` + **`POST …/enable`** + **membership suspend / reactivate / remove** via `POST /memberships/{id}/…` (ACF-001; resolve membership with `GET /memberships?userId=`). **User-role assign/unassign** on detail (`GET/POST /user-roles`, `DELETE /user-roles/{id}`) with optional **organization scope** (IMP-026).
 4. **Memberships list** — `GET /memberships` with optional status filter; row links to user detail for lifecycle actions (IMP-023).
 5. **Roles list + create + edit detail** — `GET/POST /roles`; detail rename (`PATCH`) + permission replace for **custom** roles (`PUT …/permissions`); system roles read-only grants (ACF-001 §4.7). No role DELETE.
@@ -46,11 +46,12 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 ## Component inventory (this slice)
 
-- `AdminShell` (nav: Home / Users / **Memberships** / Orgs / Students / Guardians / **Roles** / **Academic** / Fees / Settings / Logout); header brand = school name from `GET /tenants/current` (fallback `EduCore Admin`)
+- `AdminShell` — header brand = school name from `GET /tenants/current` (fallback `EduCore Admin`); Logout; **grouped top nav (IMP-029 Option A)** — see Nav IA below
 - Shared banners, buttons, fields from DSF-001 language
 - **IMP-027 primitives:** `Banner`, `AdminPageHeader`, `ResourceList`, `StatusChip`, `ConfirmDialog` under `apps/web/src/components/admin/`
 - **IMP-028 ops tables:** `AdminTable` for dense registries (Users, Students; fees lists in DSF-004); `ResourceList variant="table"`
 - **IMP-030 pagination:** `ResourceListPagination` (“Load more”) + `ResourceList` optional `footer`; shared helper `apps/web/src/lib/admin/list-pagination.ts`
+- **IMP-029 nav model:** `groupAdminNav(visibleAdminNavIds)` in `apps/web/src/lib/auth/admin-access.ts`
 - `ResourceList` pattern (loading / empty / error / forbidden / optional Load more footer)
 - Guardian form (displayName, optional phone/email); guardian detail **profile edit** (displayName/phone/email/status)
 - Tenant settings form (timezone/locale/currency + settings JSON; PUT save)
@@ -72,9 +73,35 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - 401 → Sign in again
 - 403 → “You do not have access for this action.” (academic: `academic.read` / `academic.manage`; students: `student.read` / `student.manage`; orgs: `organization.manage`; users: `user.invite` / `user.manage` / membership lifecycle; roles: `role.read` / `role.manage`; settings: `tenant.manage`; guardians: `guardian.manage`; fees: `finance.read` / `finance.manage` / `finance.reconcile`)
 - **AdminShell gate (IMP-033):** after session↔tenant bind, `GET /auth/me` must show an admin-domain capability (owner/admin role **or** any of tenant/user/org/student/guardian/role/academic/finance read|manage). Otherwise show “Admin unavailable” with link to teacher/parent — do **not** render privileged nav or page children.
-- **Nav filter (IMP-033):** top-nav (and home hub cards) only list domains the actor’s permissions can reach; API remains AuthZ truth for mutations.
+- **Nav filter (IMP-033):** top-nav (and home hub cards) only list domains the actor’s permissions can reach; API remains AuthZ truth for mutations. **IMP-029 does not redesign permissions** — it only groups already-visible ids.
 - Attendance-only staff / parent-only → no AdminShell (teacher or parent workspace)
 - Post-login home preference (`prefersAdminHome`) unchanged — still prefers owner/admin/user-invite surfaces; bursars may open Admin Fees via URL when `finance.*` is present
+
+## Nav IA — tablet grouped top nav (IMP-029)
+
+**Pattern chosen: Option A — Grouped top nav.** Section labels + links under each group; wrap by _group_, not ten equal peer links. Routes unchanged (`/admin/users`, etc.).
+
+| Group        | `AdminNavId` members (when visible)      |
+| ------------ | ---------------------------------------- |
+| **Home**     | `home`                                   |
+| **Registry** | `students`, `guardians`, `organizations` |
+| **Access**   | `users`, `memberships`, `roles`          |
+| **Academic** | `academic`                               |
+| **Fees**     | `fees`                                   |
+| **Settings** | `settings`                               |
+
+| Rule              | Behavior                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| Visibility source | `visibleAdminNavIds(me)` only — no new permission matrix                              |
+| Empty groups      | Omit entirely when all member ids filtered out                                        |
+| Home hub          | Mirror the same groups/cards; skip Home group on the hub itself                       |
+| Active state      | `aria-current="page"` on current link; deep links (e.g. `/fees/invoices/…`) mark Fees |
+| Tablet (≥768)     | Usable without horizontal page scroll; primary nav links ≥44px tall                   |
+| Desktop (≥1024)   | Same grouped IA; calm and scannable                                                   |
+| Mobile (&lt;768)  | Best-effort stacked groups; full phone IA redesign out of scope                       |
+| A11y              | `<nav aria-label="Admin">`; group headings + labelled lists; no hover-only access     |
+
+**Non-goals (nav IA):** permission redesign; shadcn/marketing sidebar; ParentShell/TeacherShell; route renames; Option B sessionStorage / Option C side rail (unless a later DSF revise).
 
 ## List pagination (IMP-030 / ACF)
 
@@ -146,3 +173,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.16 | 2026-07-27 | IMP-027 shared admin primitives (Banner/ResourceList/ConfirmDialog) |
 | 1.17 | 2026-07-27 | IMP-030 Load more cursor pagination on admin registries             |
 | 1.18 | 2026-07-27 | IMP-028 AdminTable for Users/Students ops lists                     |
+| 1.19 | 2026-07-27 | IMP-029 grouped AdminShell nav IA for tablet (Option A)             |

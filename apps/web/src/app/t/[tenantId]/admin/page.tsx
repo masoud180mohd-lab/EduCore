@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
-import { visibleAdminNavIds, type AdminNavId } from '@/lib/auth/admin-access';
+import { groupAdminNav, visibleAdminNavIds, type AdminNavId } from '@/lib/auth/admin-access';
 import type { MeLike } from '@/lib/auth/home-preference';
 import { readSession } from '@/lib/auth/session';
 
@@ -57,6 +57,10 @@ const HUB_CARDS: ReadonlyArray<HubCard> = [
   { id: 'settings', hrefSuffix: '/settings', title: 'Settings', blurb: 'Tenant settings document' },
 ];
 
+const HUB_BY_ID = Object.fromEntries(HUB_CARDS.map((c) => [c.id, c])) as Partial<
+  Record<AdminNavId, HubCard>
+>;
+
 export default function AdminHomePage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
@@ -83,8 +87,7 @@ export default function AdminHomePage() {
   }, []);
 
   const base = `/t/${tenantId}/admin`;
-  const cards =
-    navIds === null ? [] : HUB_CARDS.filter((card) => card.id !== 'home' && navIds.has(card.id));
+  const groups = navIds === null ? [] : groupAdminNav(navIds).filter((g) => g.id !== 'home');
 
   return (
     <AdminShell tenantId={tenantId}>
@@ -95,15 +98,28 @@ export default function AdminHomePage() {
           {error}
         </div>
       ) : null}
-      <ul className="list">
-        {cards.map((card) => (
-          <li key={card.id}>
-            <Link className="card" href={`${base}${card.hrefSuffix}`}>
-              <strong>{card.title}</strong>
-              <div className="muted">{card.blurb}</div>
-            </Link>
-          </li>
-        ))}
+      <ul className="admin-hub-groups">
+        {groups.map((group) => {
+          const cards = group.items
+            .map((id) => HUB_BY_ID[id])
+            .filter((card): card is HubCard => card !== undefined);
+          if (cards.length === 0) return null;
+          return (
+            <li key={group.id} className="admin-hub-group">
+              <h2 className="admin-hub-group-label">{group.label}</h2>
+              <ul className="list">
+                {cards.map((card) => (
+                  <li key={card.id}>
+                    <Link className="card" href={`${base}${card.hrefSuffix}`}>
+                      <strong>{card.title}</strong>
+                      <div className="muted">{card.blurb}</div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          );
+        })}
       </ul>
     </AdminShell>
   );
