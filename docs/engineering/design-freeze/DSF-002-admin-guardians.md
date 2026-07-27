@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                                                                                                                   |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                                                                                                               |
-| Version   | `1.14`                                                                                                                                                  |
-| Date      | 2026-07-27                                                                                                                                              |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                                             |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                                |
-| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · IMP-021 · IMP-022 · IMP-023 · IMP-025 · **IMP-026** |
+| Field     | Value                                                       |
+| --------- | ----------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                   |
+| Version   | `1.15`                                                      |
+| Date      | 2026-07-27                                                  |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                    |
+| Program   | IMP-007 · … · IMP-026 · **IMP-033**                         |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -67,8 +67,11 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 - Unbound tenant → `/login`
 - 401 → Sign in again
-- 403 → “You do not have access for this action.” (academic: `academic.read` / `academic.manage`; students: `student.read` / `student.manage`; orgs: `organization.manage`; users: `user.invite` / `user.manage` / membership lifecycle; roles: `role.read` / `role.manage`; settings: `tenant.manage`; guardians: `guardian.manage`)
-- Staff without admin perms → teacher shell only (no admin nav)
+- 403 → “You do not have access for this action.” (academic: `academic.read` / `academic.manage`; students: `student.read` / `student.manage`; orgs: `organization.manage`; users: `user.invite` / `user.manage` / membership lifecycle; roles: `role.read` / `role.manage`; settings: `tenant.manage`; guardians: `guardian.manage`; fees: `finance.read` / `finance.manage` / `finance.reconcile`)
+- **AdminShell gate (IMP-033):** after session↔tenant bind, `GET /auth/me` must show an admin-domain capability (owner/admin role **or** any of tenant/user/org/student/guardian/role/academic/finance read|manage). Otherwise show “Admin unavailable” with link to teacher/parent — do **not** render privileged nav or page children.
+- **Nav filter (IMP-033):** top-nav (and home hub cards) only list domains the actor’s permissions can reach; API remains AuthZ truth for mutations.
+- Attendance-only staff / parent-only → no AdminShell (teacher or parent workspace)
+- Post-login home preference (`prefersAdminHome`) unchanged — still prefers owner/admin/user-invite surfaces; bursars may open Admin Fees via URL when `finance.*` is present
 
 ## Non-goals
 
@@ -93,7 +96,8 @@ Accepted under acting seats only; revise when a second review seat exists.
 
 ## Revisions
 
-| Ver  | Date       | Notes                                              |
-| ---- | ---------- | -------------------------------------------------- |
-| 1.13 | 2026-07-27 | IMP-025 academic delete dependents listing on 409  |
-| 1.14 | 2026-07-27 | IMP-026 org-scoped user-role assign (storage + UI) |
+| Ver  | Date       | Notes                                                      |
+| ---- | ---------- | ---------------------------------------------------------- |
+| 1.13 | 2026-07-27 | IMP-025 academic delete dependents listing on 409          |
+| 1.14 | 2026-07-27 | IMP-026 org-scoped user-role assign (storage + UI)         |
+| 1.15 | 2026-07-27 | IMP-033 AdminShell /auth/me gate + permission-filtered nav |
