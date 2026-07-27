@@ -19,12 +19,12 @@ End-to-end amend of fee structures: Nest `PATCH`, SECURITY DEFINER `app.update_f
 
 ## Waves
 
-| Wave | Work                                   | Status  |
-| ---- | -------------------------------------- | ------- |
-| 0    | ACF-012 + OpenAPI PATCH                | Done    |
-| 1    | Migration DEFINER + Nest patch + tests | Done    |
-| 2    | Admin detail edit UI + DSF-004         | Done    |
-| 3    | Tooling + check + commit               | Done    |
+| Wave | Work                                   | Status |
+| ---- | -------------------------------------- | ------ |
+| 0    | ACF-012 + OpenAPI PATCH                | Done   |
+| 1    | Migration DEFINER + Nest patch + tests | Done   |
+| 2    | Admin detail edit UI + DSF-004         | Done   |
+| 3    | Tooling + check + commit               | Done   |
 
 ## Non-goals
 
