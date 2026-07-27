@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner, ConfirmDialog, StatusChip } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
-import { type OrganizationRow, organizationMessage } from '@/lib/organizations/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+import { type OrganizationRow, organizationMessage } from '@/lib/organizations/types';
 
 export default function AdminOrganizationDetailPage() {
   const params = useParams<{ tenantId: string; organizationId: string }>();
@@ -16,6 +17,7 @@ export default function AdminOrganizationDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [parentOrganizationId, setParentOrganizationId] = useState('');
@@ -75,9 +77,8 @@ export default function AdminOrganizationDetailPage() {
     }
   }
 
-  async function onDeactivate() {
+  async function runDeactivate() {
     if (row === null || row.status === 'inactive') return;
-    if (!window.confirm(`Deactivate “${row.name}”? It will become inactive.`)) return;
     const auth = readSession();
     if (auth === null) return;
     setBusy(true);
@@ -96,6 +97,7 @@ export default function AdminOrganizationDetailPage() {
         },
       );
       clearIdempotencyKey(actionKey);
+      setConfirmOpen(false);
       setInfo('Organization deactivated.');
       await load();
     } catch (err) {
@@ -111,17 +113,16 @@ export default function AdminOrganizationDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/organizations`}>← Organizations</Link>
       </p>
-      <h1>{row?.name ?? 'Organization'}</h1>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      <AdminPageHeader title={row?.name ?? 'Organization'}>
+        {row !== null ? (
+          <p className="muted">
+            Type: {row.orgType} ·{' '}
+            <StatusChip label={row.status} tone={row.status === 'active' ? 'ok' : 'muted'} />
+          </p>
+        ) : null}
+      </AdminPageHeader>
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {row !== null ? (
         <div className="stack">
           <form className="card stack" onSubmit={(e) => void onSave(e)}>
@@ -151,9 +152,7 @@ export default function AdminOrganizationDetailPage() {
                 placeholder="UUID or empty to clear"
               />
             </label>
-            <div className="muted">
-              Type: {row.orgType} · Status: {row.status} · Id: {row.id}
-            </div>
+            <div className="muted">Id: {row.id}</div>
             <button className="btn btn-primary" type="submit" disabled={busy}>
               {busy ? 'Saving…' : 'Save changes'}
             </button>
@@ -163,7 +162,7 @@ export default function AdminOrganizationDetailPage() {
               className="btn btn-secondary"
               type="button"
               disabled={busy}
-              onClick={() => void onDeactivate()}
+              onClick={() => setConfirmOpen(true)}
             >
               Deactivate
             </button>
@@ -174,6 +173,25 @@ export default function AdminOrganizationDetailPage() {
       ) : error === null ? (
         <p className="muted">Loading…</p>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Deactivate organization?"
+        body={
+          row !== null
+            ? `Deactivate “${row.name}”? It will become inactive.`
+            : 'Deactivate this organization?'
+        }
+        confirmLabel="Deactivate"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirmOpen(false);
+        }}
+        onConfirm={() => {
+          void runDeactivate();
+        }}
+      />
     </AdminShell>
   );
 }

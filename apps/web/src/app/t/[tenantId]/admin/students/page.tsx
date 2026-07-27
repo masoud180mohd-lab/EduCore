@@ -4,15 +4,16 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner, ResourceList, StatusChip } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import {
   type StudentRow,
   type StudentStatus,
   STUDENT_STATUSES,
   studentMessage,
 } from '@/lib/students/types';
-import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
 export default function AdminStudentsPage() {
   const params = useParams<{ tenantId: string }>();
@@ -86,16 +87,14 @@ export default function AdminStudentsPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <h1>Students</h1>
-      <p className="muted">Student registry (ACF-002). Create and edit names, codes, and status.</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Students"
+        description="Student registry (ACF-002). Create and edit names, codes, and status."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Add student</h2>
+        <h2 className="section-title">Add student</h2>
         <div className="field">
           <label htmlFor="displayName">Display name</label>
           <input
@@ -157,22 +156,18 @@ export default function AdminStudentsPage() {
         </button>
       </form>
 
-      {loading ? <p className="muted">Loading…</p> : null}
-      {!loading && rows.length === 0 ? (
-        <div className="banner banner-info">No students yet.</div>
-      ) : null}
-      <ul className="list">
+      <ResourceList loading={loading} empty="No students yet." isEmpty={rows.length === 0}>
         {rows.map((s) => (
           <li key={s.id}>
             <Link className="card" href={`/t/${tenantId}/admin/students/${s.id}`}>
               <strong>{s.displayName}</strong>
               <div className="muted">
-                {s.studentCode ?? '—'} · {s.status}
+                {s.studentCode ?? '—'} · <StatusChip label={s.status} />
               </div>
             </Link>
           </li>
         ))}
-      </ul>
+      </ResourceList>
     </AdminShell>
   );
 }

@@ -4,15 +4,16 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner, ResourceList, StatusChip } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import {
   type OrganizationRow,
   type OrgType,
   ORG_TYPES,
   organizationMessage,
 } from '@/lib/organizations/types';
-import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
 export default function AdminOrganizationsPage() {
   const params = useParams<{ tenantId: string }>();
@@ -91,16 +92,14 @@ export default function AdminOrganizationsPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <h1>Organizations</h1>
-      <p className="muted">Campuses and organizational units. Create, edit, or deactivate.</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Organizations"
+        description="Campuses and organizational units. Create, edit, or deactivate."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Add organization</h2>
+        <h2 className="section-title">Add organization</h2>
         <div className="field">
           <label htmlFor="orgType">Type</label>
           <select
@@ -171,20 +170,20 @@ export default function AdminOrganizationsPage() {
         </button>
       </form>
 
-      {loading ? <p className="muted">Loading…</p> : null}
-      {!loading && rows.length === 0 ? (
-        <div className="banner banner-info">No organizations yet.</div>
-      ) : null}
-      <ul className="list">
+      <ResourceList loading={loading} empty="No organizations yet." isEmpty={rows.length === 0}>
         {rows.map((o) => (
           <li key={o.id} className="card">
             <Link href={`/t/${tenantId}/admin/organizations/${o.id}`}>
               <strong>{o.name}</strong>
             </Link>
-            <div className="muted">{[o.code, o.orgType, o.status].filter(Boolean).join(' · ')}</div>
+            <div className="muted">
+              {[o.code, o.orgType].filter(Boolean).join(' · ')}
+              {[o.code, o.orgType].some(Boolean) ? ' · ' : null}
+              <StatusChip label={o.status} tone={o.status === 'active' ? 'ok' : 'muted'} />
+            </div>
           </li>
         ))}
-      </ul>
+      </ResourceList>
     </AdminShell>
   );
 }

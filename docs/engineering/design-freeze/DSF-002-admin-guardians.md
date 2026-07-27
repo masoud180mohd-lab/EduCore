@@ -3,11 +3,11 @@
 | Field     | Value                                                       |
 | --------- | ----------------------------------------------------------- |
 | Freeze ID | `DSF-002`                                                   |
-| Version   | `1.15`                                                      |
+| Version   | `1.16`                                                      |
 | Date      | 2026-07-27                                                  |
 | Audience  | School admin / headmaster (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                    |
-| Program   | IMP-007 · … · IMP-026 · **IMP-033**                         |
+| Program   | IMP-007 · … · IMP-033 · **IMP-027**                         |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -48,6 +48,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 - `AdminShell` (nav: Home / Users / **Memberships** / Orgs / Students / Guardians / **Roles** / **Academic** / Fees / Settings / Logout); header brand = school name from `GET /tenants/current` (fallback `EduCore Admin`)
 - Shared banners, buttons, fields from DSF-001 language
+- **IMP-027 primitives:** `Banner`, `AdminPageHeader`, `ResourceList`, `StatusChip`, `ConfirmDialog` under `apps/web/src/components/admin/`
 - `ResourceList` pattern (loading / empty / error / forbidden)
 - Guardian form (displayName, optional phone/email); guardian detail **profile edit** (displayName/phone/email/status)
 - Tenant settings form (timezone/locale/currency + settings JSON; PUT save)
@@ -96,8 +97,9 @@ Accepted under acting seats only; revise when a second review seat exists.
 
 ## Revisions
 
-| Ver  | Date       | Notes                                                      |
-| ---- | ---------- | ---------------------------------------------------------- |
-| 1.13 | 2026-07-27 | IMP-025 academic delete dependents listing on 409          |
-| 1.14 | 2026-07-27 | IMP-026 org-scoped user-role assign (storage + UI)         |
-| 1.15 | 2026-07-27 | IMP-033 AdminShell /auth/me gate + permission-filtered nav |
+| Ver  | Date       | Notes                                                               |
+| ---- | ---------- | ------------------------------------------------------------------- |
+| 1.13 | 2026-07-27 | IMP-025 academic delete dependents listing on 409                   |
+| 1.14 | 2026-07-27 | IMP-026 org-scoped user-role assign (storage + UI)                  |
+| 1.15 | 2026-07-27 | IMP-033 AdminShell /auth/me gate + permission-filtered nav          |
+| 1.16 | 2026-07-27 | IMP-027 shared admin primitives (Banner/ResourceList/ConfirmDialog) |
