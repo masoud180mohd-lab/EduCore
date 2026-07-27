@@ -1,12 +1,12 @@
 # AUDIT-ADMIN-UI-R1 — Admin UI maturity & design review
 
-| Field     | Value                                              |
-| --------- | -------------------------------------------------- |
-| Audit ID  | `AUDIT-ADMIN-UI-R1`                                |
-| Date      | 2026-07-27                                         |
-| Mode      | Read-only · Evidence-based · No implementation     |
-| Scope     | Admin UI foundation → current (through IMP-020+)   |
-| Authority | Solo-operator provisional (SOLO-GOV-001)           |
+| Field     | Value                                            |
+| --------- | ------------------------------------------------ |
+| Audit ID  | `AUDIT-ADMIN-UI-R1`                              |
+| Date      | 2026-07-27                                       |
+| Mode      | Read-only · Evidence-based · No implementation   |
+| Scope     | Admin UI foundation → current (through IMP-020+) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)         |
 
 **Inspected:** `apps/web/src/app/t/[tenantId]/admin/**`, `AdminShell.tsx`, `tokens.css`, `lib/api/client.ts`, `lib/finance/money.ts`, DSF-001/002/004, EduCore/07 + /09, task records IMP-007…IMP-026. **`npm run check` was not run** (audit-only pass).
 
@@ -24,18 +24,18 @@ Professionalism is **usable internal-tool floor**, not shippable SaaS polish: sh
 
 ## 2. Surface inventory
 
-| Domain | Routes (under `/t/[tenantId]/admin`) | DSF ref | Maturity | Notes |
-| ------ | ------------------------------------- | ------- | -------- | ----- |
-| Shell / home | `/`, nav chrome | DSF-002 | Usable | School name in header (IMP-017); home = 9 static cards; no KPIs |
-| Users | `/users`, `/users/[userId]` | DSF-002 | Usable | Invite, disable/enable, membership lifecycle, role assign; most mature detail page |
-| Memberships | `/memberships` | DSF-002 | Usable | Status filter (IMP-023); actions live on user detail |
-| Organizations | `/organizations`, `/organizations/[organizationId]` | DSF-002 | Usable | Create/edit/deactivate |
-| Students | `/students`, `/students/[studentId]` | DSF-002 | Usable | Create/edit; no delete; no confirm on status |
-| Guardians | `/guardians`, `/guardians/[guardianId]` (+ fees compose) | DSF-002 / DSF-005 | Usable | Links, portal bind; UUID paste fallback when picker 403s |
-| Roles | `/roles`, `/roles/[roleId]` | DSF-002 | Usable | Custom role perms; system grants read-only (IMP-022) |
-| Academic | `/academic` + years/terms/classes/streams/subjects/enrollments | DSF-002 | Usable | PATCH/delete/reparent; `DeleteDependentsBanner` (IMP-025) |
-| Fees | `/fees`, structures/invoices/receipts (+ details) | DSF-004 | Usable | Honest “MoMo not enabled”; `formatTzsMinor`; void/pay/reverse/reconcile |
-| Settings | `/settings` | DSF-002 | Prototype→Usable | Known keys + raw JSON textarea (developer escape hatch) |
+| Domain        | Routes (under `/t/[tenantId]/admin`)                           | DSF ref           | Maturity         | Notes                                                                              |
+| ------------- | -------------------------------------------------------------- | ----------------- | ---------------- | ---------------------------------------------------------------------------------- |
+| Shell / home  | `/`, nav chrome                                                | DSF-002           | Usable           | School name in header (IMP-017); home = 9 static cards; no KPIs                    |
+| Users         | `/users`, `/users/[userId]`                                    | DSF-002           | Usable           | Invite, disable/enable, membership lifecycle, role assign; most mature detail page |
+| Memberships   | `/memberships`                                                 | DSF-002           | Usable           | Status filter (IMP-023); actions live on user detail                               |
+| Organizations | `/organizations`, `/organizations/[organizationId]`            | DSF-002           | Usable           | Create/edit/deactivate                                                             |
+| Students      | `/students`, `/students/[studentId]`                           | DSF-002           | Usable           | Create/edit; no delete; no confirm on status                                       |
+| Guardians     | `/guardians`, `/guardians/[guardianId]` (+ fees compose)       | DSF-002 / DSF-005 | Usable           | Links, portal bind; UUID paste fallback when picker 403s                           |
+| Roles         | `/roles`, `/roles/[roleId]`                                    | DSF-002           | Usable           | Custom role perms; system grants read-only (IMP-022)                               |
+| Academic      | `/academic` + years/terms/classes/streams/subjects/enrollments | DSF-002           | Usable           | PATCH/delete/reparent; `DeleteDependentsBanner` (IMP-025)                          |
+| Fees          | `/fees`, structures/invoices/receipts (+ details)              | DSF-004           | Usable           | Honest “MoMo not enabled”; `formatTzsMinor`; void/pay/reverse/reconcile            |
+| Settings      | `/settings`                                                    | DSF-002           | Prototype→Usable | Known keys + raw JSON textarea (developer escape hatch)                            |
 
 **Maturity key:** Prototype = scaffolding · Usable = operator can complete job with roughness · Polished = production-grade density/states/a11y. **No admin surface scored Polished.**
 
@@ -45,24 +45,24 @@ Professionalism is **usable internal-tool floor**, not shippable SaaS polish: sh
 
 Equal weights (no justification to overweight visual over trust for this pass).
 
-| Rubric | Score (1–5) | One-line justification |
-| ------ | ----------- | ---------------------- |
-| R1 Visual professionalism | **3** | Calm teal/ink tokens; still student-demo density (cards, inline styles, no tables) |
-| R2 IA & workflow fit | **3** | Hub→list→detail exists; flat 10-item nav; weak cross-links (student↔fees) |
-| R3 Design-system consistency | **2** | Tokens shared; DSF “ResourceList” not a real component; per-page hand-roll |
-| R4 Interaction states | **3** | Loading/empty/error often present; no pagination/toasts/skeletons |
-| R5 Accessibility & input | **2** | Labels + focus-ring + 44px `.btn`; native confirms; nav wrap risk on tablet |
-| R6 Security & trust UX | **3** | API is AuthZ truth; MoMo honesty; no admin route permission gate |
-| R7 Product fit (EduCore SMS) | **3** | Ops-not-marketing OK; under-dense for bursar; no i18n readiness |
-| **Overall (mean)** | **2.7** | Demo / soft pilot; polish track required before production |
+| Rubric                       | Score (1–5) | One-line justification                                                             |
+| ---------------------------- | ----------- | ---------------------------------------------------------------------------------- |
+| R1 Visual professionalism    | **3**       | Calm teal/ink tokens; still student-demo density (cards, inline styles, no tables) |
+| R2 IA & workflow fit         | **3**       | Hub→list→detail exists; flat 10-item nav; weak cross-links (student↔fees)          |
+| R3 Design-system consistency | **2**       | Tokens shared; DSF “ResourceList” not a real component; per-page hand-roll         |
+| R4 Interaction states        | **3**       | Loading/empty/error often present; no pagination/toasts/skeletons                  |
+| R5 Accessibility & input     | **2**       | Labels + focus-ring + 44px `.btn`; native confirms; nav wrap risk on tablet        |
+| R6 Security & trust UX       | **3**       | API is AuthZ truth; MoMo honesty; no admin route permission gate                   |
+| R7 Product fit (EduCore SMS) | **3**       | Ops-not-marketing OK; under-dense for bursar; no i18n readiness                    |
+| **Overall (mean)**           | **2.7**     | Demo / soft pilot; polish track required before production                         |
 
 ### Comparative judgment
 
-| Baseline | Verdict |
-| -------- | ------- |
-| vs IMP-007 first AdminShell | **Better** — domains, fees money path, academic delete dependents, membership lifecycle, roles |
-| vs EduCore target (07/09 dense ops SaaS) | **Medium gap** — aesthetic direction right; density, shared primitives, kit stack missing |
-| vs production school software | **Ready with polish** for guided pilot; **Not ready** for unsupervised bursar floor |
+| Baseline                                 | Verdict                                                                                        |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| vs IMP-007 first AdminShell              | **Better** — domains, fees money path, academic delete dependents, membership lifecycle, roles |
+| vs EduCore target (07/09 dense ops SaaS) | **Medium gap** — aesthetic direction right; density, shared primitives, kit stack missing      |
+| vs production school software            | **Ready with polish** for guided pilot; **Not ready** for unsupervised bursar floor            |
 
 ---
 
@@ -81,21 +81,21 @@ Equal weights (no justification to overweight visual over trust for this pass).
 
 ## 5. Gaps & weaknesses (severity)
 
-| ID | Severity | Area | Finding | Evidence | User impact |
-| -- | -------- | ---- | ------- | -------- | ----------- |
-| G1 | P0 | Trust / AuthZ UX | AdminShell gates session+tenant only — not admin role/permissions; full nav shown to any signed-in user who hits the URL | `AdminShell.tsx:29-34`, `58-69` | Teacher/parent who knows the URL sees Admin chrome; confusion + false capability impression (API still 403s) |
-| G2 | P0 | Workflow / data | No pagination / “more rows” affordance; lists hard-cap `limit=50`/`100` | e.g. `students`/`users`/`guardians`/`organizations` list fetches | Large schools silently miss students/invoices beyond first page |
-| G3 | P1 | Design system | DSF-002 invents `ResourceList` pattern; no shared React primitive — ~25 pages copy fetch/error JSX | DSF-002 §Component inventory vs `apps/web/src/components/` (shells only) | Inconsistent empty/403 copy; high change cost |
-| G4 | P1 | Visual / IA | Ops lists use **card stacks**, not tables; fights EduCore/07 “Tables for operational lists” | `admin/page.tsx` cards; list pages `ul.list` + `Link.card` | Scanning/comparison slow for bursar/headmaster |
-| G5 | P1 | Interaction | All confirms are `window.confirm` — not styleable/accessible modals | Fees invoice void; users disable/suspend; academic delete | Tablet/keyboard UX poor; looks prototype |
-| G6 | P1 | Consistency | 8+ near-duplicate `*Message(err)` mappers; inline `style={{}}` bypasses tokens | `teacherFriendlyMessage` wrappers; 32 files with inline styles | Drift between domains; spacing/typography uneven |
-| G7 | P1 | Settings | Raw JSON textarea shipped to operators | `settings/page.tsx:188-196` | Risk of broken tenant settings; feels developer-tool |
-| G8 | P1 | Guardians | “Paste user UUID” advanced bind when `user.read` denied | `guardians/[guardianId]/page.tsx` advanced UUID path | Feels insecure/unfinished; operators stuck without support |
-| G9 | P2 | Performance | Duplicate `/tenants/current` on home (shell + page) | `AdminShell.tsx:39` + `admin/page.tsx:26` | Extra latency on weak networks |
-| G10 | P2 | Kit drift | EduCore/09 specifies Tailwind + shadcn + TanStack Query; web uses hand CSS + raw `useEffect` fetch | `EduCore/09` vs `apps/web/package.json` | Future agents/humans pull wrong stack; no shared query cache |
-| G11 | P2 | i18n / product fit | Hardcoded English strings; no translation keys | All admin pages | Kiswahili layout readiness blocked |
-| G12 | P2 | Chrome | Flat 10-link top nav will wrap/crowd on tablet | `AdminShell.tsx` + `.top-nav nav` flex | Tablet office use degrades first |
-| G13 | P2 | Cross-workflow | Weak student→enrollment→invoice deep links from registries | Students detail vs Fees invoice create pickers | Headmaster hunts across hubs |
+| ID  | Severity | Area               | Finding                                                                                                                  | Evidence                                                                 | User impact                                                                                                  |
+| --- | -------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| G1  | P0       | Trust / AuthZ UX   | AdminShell gates session+tenant only — not admin role/permissions; full nav shown to any signed-in user who hits the URL | `AdminShell.tsx:29-34`, `58-69`                                          | Teacher/parent who knows the URL sees Admin chrome; confusion + false capability impression (API still 403s) |
+| G2  | P0       | Workflow / data    | No pagination / “more rows” affordance; lists hard-cap `limit=50`/`100`                                                  | e.g. `students`/`users`/`guardians`/`organizations` list fetches         | Large schools silently miss students/invoices beyond first page                                              |
+| G3  | P1       | Design system      | DSF-002 invents `ResourceList` pattern; no shared React primitive — ~25 pages copy fetch/error JSX                       | DSF-002 §Component inventory vs `apps/web/src/components/` (shells only) | Inconsistent empty/403 copy; high change cost                                                                |
+| G4  | P1       | Visual / IA        | Ops lists use **card stacks**, not tables; fights EduCore/07 “Tables for operational lists”                              | `admin/page.tsx` cards; list pages `ul.list` + `Link.card`               | Scanning/comparison slow for bursar/headmaster                                                               |
+| G5  | P1       | Interaction        | All confirms are `window.confirm` — not styleable/accessible modals                                                      | Fees invoice void; users disable/suspend; academic delete                | Tablet/keyboard UX poor; looks prototype                                                                     |
+| G6  | P1       | Consistency        | 8+ near-duplicate `*Message(err)` mappers; inline `style={{}}` bypasses tokens                                           | `teacherFriendlyMessage` wrappers; 32 files with inline styles           | Drift between domains; spacing/typography uneven                                                             |
+| G7  | P1       | Settings           | Raw JSON textarea shipped to operators                                                                                   | `settings/page.tsx:188-196`                                              | Risk of broken tenant settings; feels developer-tool                                                         |
+| G8  | P1       | Guardians          | “Paste user UUID” advanced bind when `user.read` denied                                                                  | `guardians/[guardianId]/page.tsx` advanced UUID path                     | Feels insecure/unfinished; operators stuck without support                                                   |
+| G9  | P2       | Performance        | Duplicate `/tenants/current` on home (shell + page)                                                                      | `AdminShell.tsx:39` + `admin/page.tsx:26`                                | Extra latency on weak networks                                                                               |
+| G10 | P2       | Kit drift          | EduCore/09 specifies Tailwind + shadcn + TanStack Query; web uses hand CSS + raw `useEffect` fetch                       | `EduCore/09` vs `apps/web/package.json`                                  | Future agents/humans pull wrong stack; no shared query cache                                                 |
+| G11 | P2       | i18n / product fit | Hardcoded English strings; no translation keys                                                                           | All admin pages                                                          | Kiswahili layout readiness blocked                                                                           |
+| G12 | P2       | Chrome             | Flat 10-link top nav will wrap/crowd on tablet                                                                           | `AdminShell.tsx` + `.top-nav nav` flex                                   | Tablet office use degrades first                                                                             |
+| G13 | P2       | Cross-workflow     | Weak student→enrollment→invoice deep links from registries                                                               | Students detail vs Fees invoice create pickers                           | Headmaster hunts across hubs                                                                                 |
 
 ---
 
@@ -103,16 +103,16 @@ Equal weights (no justification to overweight visual over trust for this pass).
 
 **Partial** match to EduCore/07 + /09 + DSF-002/004.
 
-| Intent | Fit |
-| ------ | --- |
-| Calm ops, not marketing | **Yes** — restrained color, no hero |
-| Dense admin dashboards / tables | **No** — sparse card lists dominate |
-| Shared banners/buttons/fields language | **Partial** — CSS classes exist; no React primitives |
-| ResourceList loading/empty/error/forbidden | **Partial** — pattern copied per page, uneven 403 wording |
-| Kit Tailwind/shadcn/TanStack | **No** — intentional provisional debt; document honestly |
-| Fees money precision | **Yes** — DSF-004 helpers followed |
-| Role-specific navigation | **Partial** — post-login routing only; AdminShell not permission-filtered |
-| Avoid decorative complexity | **Yes** — but under-building density is the bigger miss |
+| Intent                                     | Fit                                                                       |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
+| Calm ops, not marketing                    | **Yes** — restrained color, no hero                                       |
+| Dense admin dashboards / tables            | **No** — sparse card lists dominate                                       |
+| Shared banners/buttons/fields language     | **Partial** — CSS classes exist; no React primitives                      |
+| ResourceList loading/empty/error/forbidden | **Partial** — pattern copied per page, uneven 403 wording                 |
+| Kit Tailwind/shadcn/TanStack               | **No** — intentional provisional debt; document honestly                  |
+| Fees money precision                       | **Yes** — DSF-004 helpers followed                                        |
+| Role-specific navigation                   | **Partial** — post-login routing only; AdminShell not permission-filtered |
+| Avoid decorative complexity                | **Yes** — but under-building density is the bigger miss                   |
 
 ---
 
@@ -120,27 +120,27 @@ Equal weights (no justification to overweight visual over trust for this pass).
 
 ### T1 Visual / system polish
 
-| Increment | Goal | Why now | Out of scope | Acceptance | Suggested ID |
-| --------- | ---- | ------- | ------------ | ---------- | ------------ |
-| Shared admin primitives | Extract `AdminPageHeader`, `ResourceList`, `StatusChip`, `ConfirmDialog`, `Banner` using existing tokens | Unlocks every later page without redesign | Tailwind migration | 3 domains refactored to primitives; no visual brand change | **IMP-027-UI-admin-primitives** |
-| Ops tables + density | Replace card lists with dense table rows for Users/Students/Invoices/Receipts | Matches EduCore/07; biggest professionalism jump | New APIs | Tables with status chips; ≥44px primary actions retained | **IMP-028-UI-admin-tables** |
-| Nav IA for tablet | Group nav (Registry / Academic / Fees / Access) or secondary sidebar | 10 flat links wrap on tablet | Permission redesign | Usable at 768px width without overflow | **IMP-029-UI-admin-nav** |
+| Increment               | Goal                                                                                                     | Why now                                          | Out of scope        | Acceptance                                                 | Suggested ID                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ------------------- | ---------------------------------------------------------- | ------------------------------- |
+| Shared admin primitives | Extract `AdminPageHeader`, `ResourceList`, `StatusChip`, `ConfirmDialog`, `Banner` using existing tokens | Unlocks every later page without redesign        | Tailwind migration  | 3 domains refactored to primitives; no visual brand change | **IMP-027-UI-admin-primitives** |
+| Ops tables + density    | Replace card lists with dense table rows for Users/Students/Invoices/Receipts                            | Matches EduCore/07; biggest professionalism jump | New APIs            | Tables with status chips; ≥44px primary actions retained   | **IMP-028-UI-admin-tables**     |
+| Nav IA for tablet       | Group nav (Registry / Academic / Fees / Access) or secondary sidebar                                     | 10 flat links wrap on tablet                     | Permission redesign | Usable at 768px width without overflow                     | **IMP-029-UI-admin-nav**        |
 
 ### T2 Workflow completeness
 
-| Increment | Goal | Why now | Out of scope | Acceptance | Suggested ID |
-| --------- | ---- | ------- | ------------ | ---------- | ------------ |
-| List pagination | Cursor/next UI on all admin lists | P0 data honesty for real schools | Virtualization | “Load more” or next cursor when `page.nextCursor` set; never silent truncate | **IMP-030-UI-admin-pagination** |
-| Cross-links | Student detail → enrollments + open invoices; invoice → student/guardian | Reduces hunting | Parent portal | Documented deep links in DSF-002 amend | **IMP-031-UI-admin-crosslinks** |
-| Settings operator form | Hide raw JSON behind “Advanced” or staff-only | Stops accidental tenant breakage | New settings schema | Default form = known keys only | **IMP-032-UI-settings-safe** |
+| Increment              | Goal                                                                     | Why now                          | Out of scope        | Acceptance                                                                   | Suggested ID                    |
+| ---------------------- | ------------------------------------------------------------------------ | -------------------------------- | ------------------- | ---------------------------------------------------------------------------- | ------------------------------- |
+| List pagination        | Cursor/next UI on all admin lists                                        | P0 data honesty for real schools | Virtualization      | “Load more” or next cursor when `page.nextCursor` set; never silent truncate | **IMP-030-UI-admin-pagination** |
+| Cross-links            | Student detail → enrollments + open invoices; invoice → student/guardian | Reduces hunting                  | Parent portal       | Documented deep links in DSF-002 amend                                       | **IMP-031-UI-admin-crosslinks** |
+| Settings operator form | Hide raw JSON behind “Advanced” or staff-only                            | Stops accidental tenant breakage | New settings schema | Default form = known keys only                                               | **IMP-032-UI-settings-safe**    |
 
 ### T3 Trust / a11y / states
 
-| Increment | Goal | Why now | Out of scope | Acceptance | Suggested ID |
-| --------- | ---- | ------- | ------------ | ---------- | ------------ |
-| Admin route honesty | After session bind, `/auth/me` without admin-capable perms → redirect teacher/parent + explain | Closes AuthZ theater gap | Server middleware AuthZ | Direct `/admin` URL does not show full privileged nav for staff-only | **IMP-033-UI-admin-authz-gate** |
-| Confirm modal + focus trap | Replace `window.confirm` for money + membership destructive actions | A11y + professionalism | Generic modal library rewrite | Keyboard Esc/Enter; focus return; danger styling | **IMP-034-UI-confirm-modal** |
-| Central error mapper | One `adminFriendlyMessage(domain)` | Stops 403 wording drift | i18n framework | Single module; domain overrides only where needed | **IMP-035-UI-error-copy** |
+| Increment                  | Goal                                                                                           | Why now                  | Out of scope                  | Acceptance                                                           | Suggested ID                    |
+| -------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------ | ----------------------------- | -------------------------------------------------------------------- | ------------------------------- |
+| Admin route honesty        | After session bind, `/auth/me` without admin-capable perms → redirect teacher/parent + explain | Closes AuthZ theater gap | Server middleware AuthZ       | Direct `/admin` URL does not show full privileged nav for staff-only | **IMP-033-UI-admin-authz-gate** |
+| Confirm modal + focus trap | Replace `window.confirm` for money + membership destructive actions                            | A11y + professionalism   | Generic modal library rewrite | Keyboard Esc/Enter; focus return; danger styling                     | **IMP-034-UI-confirm-modal**    |
+| Central error mapper       | One `adminFriendlyMessage(domain)`                                                             | Stops 403 wording drift  | i18n framework                | Single module; domain overrides only where needed                    | **IMP-035-UI-error-copy**       |
 
 ### T4 Do not do yet
 
@@ -167,12 +167,12 @@ Equal weights (no justification to overweight visual over trust for this pass).
 
 ## 9. npm / evidence notes
 
-| Item | Status |
-| ---- | ------ |
-| Code / DSF / task record inspection | Done (paths cited above) |
-| Live browser walkthrough this pass | Not required; prior session saw login + admin chrome |
-| `npm run check` | **Not run** — do not claim green |
-| Five-axis (admin web) | Correctness: money helpers sound; Readability: high duplication; Architecture: page-per-feature without shared list primitive; Security: sessionStorage + missing route gate (UX); Performance: uncapped mental model + duplicate tenant fetch |
+| Item                                | Status                                                                                                                                                                                                                                         |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code / DSF / task record inspection | Done (paths cited above)                                                                                                                                                                                                                       |
+| Live browser walkthrough this pass  | Not required; prior session saw login + admin chrome                                                                                                                                                                                           |
+| `npm run check`                     | **Not run** — do not claim green                                                                                                                                                                                                               |
+| Five-axis (admin web)               | Correctness: money helpers sound; Readability: high duplication; Architecture: page-per-feature without shared list primitive; Security: sessionStorage + missing route gate (UX); Performance: uncapped mental model + duplicate tenant fetch |
 
 ### Doubt checks (adversarial answers)
 

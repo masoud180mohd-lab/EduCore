@@ -4,9 +4,23 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { AdminPageHeader, Banner, ResourceList, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  AdminTable,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import {
   type StudentRow,
@@ -20,36 +34,50 @@ export default function AdminStudentsPage() {
   const tenantId = params.tenantId;
   const router = useRouter();
   const [rows, setRows] = useState<StudentRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [studentCode, setStudentCode] = useState('');
   const [status, setStatus] = useState<StudentStatus>('active');
 
-  async function load(searchQ: string) {
+  async function loadPage(opts: {
+    readonly searchQ: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
-    setLoading(true);
+    if (opts.append) setLoadingMore(true);
+    else setLoading(true);
     try {
-      const q =
-        searchQ.trim() !== ''
-          ? `/api/v1/students?limit=50&search=${encodeURIComponent(searchQ.trim())}`
-          : '/api/v1/students?limit=50';
-      const result = await apiRequest<{ data: StudentRow[] }>(q, { auth });
-      setRows(result.data ?? []);
+      const q = buildListQuery('/api/v1/students', {
+        limit: ADMIN_LIST_DEFAULT_LIMIT,
+        cursor: opts.cursor,
+        filters: { search: opts.searchQ },
+      });
+      const result = await apiRequest<PaginatedEnvelope<StudentRow>>(q, { auth });
+      const page = readPageMeta(result);
+      setRows((prev) =>
+        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
+      );
+      setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(studentMessage(err));
       else setError('Could not load students.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load('');
+    void loadPage({ searchQ: '', cursor: null, append: false });
   }, []);
 
   async function onCreate(event: FormEvent) {
@@ -139,7 +167,8 @@ export default function AdminStudentsPage() {
         style={{ marginTop: '1.5rem' }}
         onSubmit={(e) => {
           e.preventDefault();
-          void load(search);
+          setAppliedSearch(search);
+          void loadPage({ searchQ: search, cursor: null, append: false });
         }}
       >
         <div className="field">
@@ -151,22 +180,47 @@ export default function AdminStudentsPage() {
             placeholder="Name or code"
           />
         </div>
-        <button type="submit" className="btn btn-secondary" disabled={loading}>
+        <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
           Search
         </button>
       </form>
 
-      <ResourceList loading={loading} empty="No students yet." isEmpty={rows.length === 0}>
-        {rows.map((s) => (
-          <li key={s.id}>
-            <Link className="card" href={`/t/${tenantId}/admin/students/${s.id}`}>
-              <strong>{s.displayName}</strong>
-              <div className="muted">
-                {s.studentCode ?? '—'} · <StatusChip label={s.status} />
-              </div>
-            </Link>
-          </li>
-        ))}
+      <ResourceList
+        loading={loading}
+        empty="No students yet."
+        isEmpty={rows.length === 0}
+        variant="table"
+        footer={
+          <ResourceListPagination
+            nextCursor={nextCursor}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void loadPage({ searchQ: appliedSearch, cursor: nextCursor, append: true });
+            }}
+          />
+        }
+      >
+        <AdminTable caption="Students" headers={['Name', 'Code', 'Status', '']}>
+          {rows.map((s) => (
+            <tr key={s.id}>
+              <td>
+                <Link href={`/t/${tenantId}/admin/students/${s.id}`}>{s.displayName}</Link>
+              </td>
+              <td className="muted">{s.studentCode ?? '—'}</td>
+              <td>
+                <StatusChip label={s.status} />
+              </td>
+              <td className="admin-table-actions">
+                <Link
+                  className="btn btn-secondary admin-table-open"
+                  href={`/t/${tenantId}/admin/students/${s.id}`}
+                >
+                  Open
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
       </ResourceList>
     </AdminShell>
   );

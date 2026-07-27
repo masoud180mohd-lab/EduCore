@@ -4,8 +4,16 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import {
   type AcademicYearRow,
   type ClassRow,
@@ -21,12 +29,14 @@ export default function AdminClassesPage() {
   const tenantId = params.tenantId;
   const router = useRouter();
   const [rows, setRows] = useState<ClassRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
   const [terms, setTerms] = useState<TermRow[]>([]);
   const [yearNames, setYearNames] = useState<Record<string, string>>({});
   const [filterYearId, setFilterYearId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -34,38 +44,59 @@ export default function AdminClassesPage() {
   const [termId, setTermId] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('active');
 
-  async function load(yearFilter: string) {
+  async function loadPickers() {
     const auth = readSession();
     if (auth === null) return;
-    setLoading(true);
     try {
-      const yearRes = await apiRequest<{ data: AcademicYearRow[] }>(
-        '/api/v1/academic-years?limit=50',
-        { auth },
-      );
+      const q = buildListQuery('/api/v1/academic-years', { limit: ADMIN_LIST_DEFAULT_LIMIT });
+      const yearRes = await apiRequest<{ data: AcademicYearRow[] }>(q, { auth });
       const yearList = yearRes.data ?? [];
       setYears(yearList);
       const map: Record<string, string> = {};
       for (const y of yearList) map[y.id] = y.name;
       setYearNames(map);
+    } catch {
+      // Picker failure — form/filter still usable if list loaded
+    }
+  }
 
-      const classQ =
-        yearFilter !== ''
-          ? `/api/v1/classes?limit=50&academicYearId=${encodeURIComponent(yearFilter)}`
-          : '/api/v1/classes?limit=50';
-      const classRes = await apiRequest<{ data: ClassRow[] }>(classQ, { auth });
-      setRows(classRes.data ?? []);
+  async function loadPage(opts: {
+    readonly yearFilter: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null) return;
+    if (opts.append) setLoadingMore(true);
+    else setLoading(true);
+    try {
+      const q = buildListQuery('/api/v1/classes', {
+        limit: ADMIN_LIST_DEFAULT_LIMIT,
+        cursor: opts.cursor,
+        filters: { academicYearId: opts.yearFilter === '' ? undefined : opts.yearFilter },
+      });
+      const result = await apiRequest<PaginatedEnvelope<ClassRow>>(q, { auth });
+      const page = readPageMeta(result);
+      setRows((prev) =>
+        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
+      );
+      setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(academicMessage(err));
       else setError('Could not load classes.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load(filterYearId);
+    void loadPickers();
+  }, []);
+
+  useEffect(() => {
+    void loadPage({ yearFilter: filterYearId, cursor: null, append: false });
   }, [filterYearId]);
 
   useEffect(() => {
@@ -76,10 +107,11 @@ export default function AdminClassesPage() {
     }
     void (async () => {
       try {
-        const termRes = await apiRequest<{ data: TermRow[] }>(
-          `/api/v1/terms?limit=50&academicYearId=${encodeURIComponent(academicYearId)}`,
-          { auth },
-        );
+        const q = buildListQuery('/api/v1/terms', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          filters: { academicYearId },
+        });
+        const termRes = await apiRequest<{ data: TermRow[] }>(q, { auth });
         setTerms(termRes.data ?? []);
       } catch {
         setTerms([]);
@@ -216,11 +248,20 @@ export default function AdminClassesPage() {
         </button>
       </form>
 
-      {loading ? <p className="muted">Loading…</p> : null}
-      {!loading && rows.length === 0 ? (
-        <div className="banner banner-info">No classes yet.</div>
-      ) : null}
-      <ul className="list">
+      <ResourceList
+        loading={loading}
+        empty="No classes yet."
+        isEmpty={rows.length === 0}
+        footer={
+          <ResourceListPagination
+            nextCursor={nextCursor}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void loadPage({ yearFilter: filterYearId, cursor: nextCursor, append: true });
+            }}
+          />
+        }
+      >
         {rows.map((row) => (
           <li key={row.id}>
             <Link className="card" href={`/t/${tenantId}/admin/academic/classes/${row.id}`}>
@@ -233,7 +274,7 @@ export default function AdminClassesPage() {
             </Link>
           </li>
         ))}
-      </ul>
+      </ResourceList>
     </AdminShell>
   );
 }

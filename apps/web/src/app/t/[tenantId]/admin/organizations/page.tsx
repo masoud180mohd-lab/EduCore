@@ -4,8 +4,21 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { AdminPageHeader, Banner, ResourceList, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import {
@@ -20,37 +33,51 @@ export default function AdminOrganizationsPage() {
   const tenantId = params.tenantId;
   const router = useRouter();
   const [rows, setRows] = useState<OrganizationRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [orgType, setOrgType] = useState<OrgType>('school');
   const [parentOrganizationId, setParentOrganizationId] = useState('');
 
-  async function load(searchQ: string) {
+  async function loadPage(opts: {
+    readonly searchQ: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
-    setLoading(true);
+    if (opts.append) setLoadingMore(true);
+    else setLoading(true);
     try {
-      const q =
-        searchQ.trim() !== ''
-          ? `/api/v1/organizations?limit=50&search=${encodeURIComponent(searchQ.trim())}`
-          : '/api/v1/organizations?limit=50';
-      const result = await apiRequest<{ data: OrganizationRow[] }>(q, { auth });
-      setRows(result.data ?? []);
+      const q = buildListQuery('/api/v1/organizations', {
+        limit: ADMIN_LIST_DEFAULT_LIMIT,
+        cursor: opts.cursor,
+        filters: { search: opts.searchQ },
+      });
+      const result = await apiRequest<PaginatedEnvelope<OrganizationRow>>(q, { auth });
+      const page = readPageMeta(result);
+      setRows((prev) =>
+        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
+      );
+      setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(organizationMessage(err));
       else setError('Could not load organizations.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load('');
+    void loadPage({ searchQ: '', cursor: null, append: false });
   }, []);
 
   async function onCreate(event: FormEvent) {
@@ -153,7 +180,8 @@ export default function AdminOrganizationsPage() {
         style={{ marginTop: '1.5rem' }}
         onSubmit={(e) => {
           e.preventDefault();
-          void load(search);
+          setAppliedSearch(search);
+          void loadPage({ searchQ: search, cursor: null, append: false });
         }}
       >
         <div className="field">
@@ -165,12 +193,25 @@ export default function AdminOrganizationsPage() {
             placeholder="Name or code"
           />
         </div>
-        <button className="btn btn-secondary" type="submit" disabled={loading}>
+        <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
           Search
         </button>
       </form>
 
-      <ResourceList loading={loading} empty="No organizations yet." isEmpty={rows.length === 0}>
+      <ResourceList
+        loading={loading}
+        empty="No organizations yet."
+        isEmpty={rows.length === 0}
+        footer={
+          <ResourceListPagination
+            nextCursor={nextCursor}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void loadPage({ searchQ: appliedSearch, cursor: nextCursor, append: true });
+            }}
+          />
+        }
+      >
         {rows.map((o) => (
           <li key={o.id} className="card">
             <Link href={`/t/${tenantId}/admin/organizations/${o.id}`}>

@@ -3,8 +3,10 @@ import type { ReactNode } from 'react';
 import { Banner } from '@/components/admin/Banner';
 
 /**
- * Shared loading / empty / error / list frame for admin registries (IMP-027).
+ * Shared loading / empty / error / list frame for admin registries (IMP-027/030/028).
  * Does not fetch — pages own data; this only standardizes chrome.
+ * Optional `footer` hosts Load more (IMP-030) without implying totals.
+ * `variant="table"` renders children as-is (AdminTable); default wraps in `ul.list`.
  */
 export function ResourceList({
   loading,
@@ -12,12 +14,16 @@ export function ResourceList({
   empty,
   isEmpty,
   children,
+  footer,
+  variant = 'list',
 }: {
   readonly loading: boolean;
   readonly error?: string | null;
   readonly empty: string;
   readonly isEmpty: boolean;
   readonly children: ReactNode;
+  readonly footer?: ReactNode;
+  readonly variant?: 'list' | 'table';
 }) {
   return (
     <div className="resource-list stack">
@@ -26,7 +32,14 @@ export function ResourceList({
       ) : null}
       {loading ? <p className="muted">Loading…</p> : null}
       {!loading && isEmpty ? <Banner tone="info">{empty}</Banner> : null}
-      {!loading && !isEmpty ? <ul className="list">{children}</ul> : null}
+      {!loading && !isEmpty ? (
+        variant === 'table' ? (
+          children
+        ) : (
+          <ul className="list">{children}</ul>
+        )
+      ) : null}
+      {!loading && !isEmpty && footer !== undefined ? footer : null}
     </div>
   );
 }

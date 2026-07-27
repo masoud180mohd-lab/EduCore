@@ -4,8 +4,16 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import {
   type ClassRow,
   type EnrollmentRow,
@@ -17,11 +25,15 @@ import {
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
+const CLASS_PICKER_LIMIT = 100;
+const STUDENT_PICKER_LIMIT = 100;
+
 export default function AdminEnrollmentsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
   const [rows, setRows] = useState<EnrollmentRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [students, setStudents] = useState<StudentOption[]>([]);
   const [streams, setStreams] = useState<StreamRow[]>([]);
@@ -31,22 +43,29 @@ export default function AdminEnrollmentsPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [studentId, setStudentId] = useState('');
   const [classId, setClassId] = useState('');
   const [streamId, setStreamId] = useState('');
   const [status, setStatus] = useState<EnrollmentStatus>('active');
 
-  async function load(classFilter: string, statusFilter: string) {
+  async function loadPickers() {
     const auth = readSession();
     if (auth === null) return;
-    setLoading(true);
     try {
       const [classRes, studentRes] = await Promise.all([
-        apiRequest<{ data: ClassRow[] }>('/api/v1/classes?limit=100', { auth }),
-        apiRequest<{ data: StudentOption[] }>('/api/v1/students?limit=100&status=active', {
-          auth,
-        }),
+        apiRequest<{ data: ClassRow[] }>(
+          buildListQuery('/api/v1/classes', { limit: CLASS_PICKER_LIMIT }),
+          { auth },
+        ),
+        apiRequest<{ data: StudentOption[] }>(
+          buildListQuery('/api/v1/students', {
+            limit: STUDENT_PICKER_LIMIT,
+            filters: { status: 'active' },
+          }),
+          { auth },
+        ),
       ]);
       const classList = classRes.data ?? [];
       const studentList = studentRes.data ?? [];
@@ -58,26 +77,57 @@ export default function AdminEnrollmentsPage() {
       const sMap: Record<string, string> = {};
       for (const s of studentList) sMap[s.id] = s.displayName;
       setStudentNames(sMap);
+    } catch {
+      // Picker failure — form/filter still usable if list loaded
+    }
+  }
 
-      const qs = new URLSearchParams({ limit: '50' });
-      if (classFilter !== '') qs.set('classId', classFilter);
-      if (statusFilter !== '') qs.set('status', statusFilter);
-      const enrollRes = await apiRequest<{ data: EnrollmentRow[] }>(
-        `/api/v1/enrollments?${qs.toString()}`,
-        { auth },
+  async function loadPage(opts: {
+    readonly classFilter: string;
+    readonly statusFilter: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null) return;
+    if (opts.append) setLoadingMore(true);
+    else setLoading(true);
+    try {
+      const q = buildListQuery('/api/v1/enrollments', {
+        limit: ADMIN_LIST_DEFAULT_LIMIT,
+        cursor: opts.cursor,
+        filters: {
+          classId: opts.classFilter === '' ? undefined : opts.classFilter,
+          status: opts.statusFilter === '' ? undefined : opts.statusFilter,
+        },
+      });
+      const result = await apiRequest<PaginatedEnvelope<EnrollmentRow>>(q, { auth });
+      const page = readPageMeta(result);
+      setRows((prev) =>
+        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
       );
-      setRows(enrollRes.data ?? []);
+      setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(academicMessage(err));
       else setError('Could not load enrollments.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load(filterClassId, filterStatus);
+    void loadPickers();
+  }, []);
+
+  useEffect(() => {
+    void loadPage({
+      classFilter: filterClassId,
+      statusFilter: filterStatus,
+      cursor: null,
+      append: false,
+    });
   }, [filterClassId, filterStatus]);
 
   useEffect(() => {
@@ -88,10 +138,11 @@ export default function AdminEnrollmentsPage() {
     }
     void (async () => {
       try {
-        const streamRes = await apiRequest<{ data: StreamRow[] }>(
-          `/api/v1/streams?limit=50&classId=${encodeURIComponent(classId)}`,
-          { auth },
-        );
+        const q = buildListQuery('/api/v1/streams', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          filters: { classId },
+        });
+        const streamRes = await apiRequest<{ data: StreamRow[] }>(q, { auth });
         setStreams(streamRes.data ?? []);
       } catch {
         setStreams([]);
@@ -243,11 +294,25 @@ export default function AdminEnrollmentsPage() {
         </button>
       </form>
 
-      {loading ? <p className="muted">Loading…</p> : null}
-      {!loading && rows.length === 0 ? (
-        <div className="banner banner-info">No enrollments yet.</div>
-      ) : null}
-      <ul className="list">
+      <ResourceList
+        loading={loading}
+        empty="No enrollments yet."
+        isEmpty={rows.length === 0}
+        footer={
+          <ResourceListPagination
+            nextCursor={nextCursor}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void loadPage({
+                classFilter: filterClassId,
+                statusFilter: filterStatus,
+                cursor: nextCursor,
+                append: true,
+              });
+            }}
+          />
+        }
+      >
         {rows.map((row) => (
           <li key={row.id}>
             <Link className="card" href={`/t/${tenantId}/admin/academic/enrollments/${row.id}`}>
@@ -260,7 +325,7 @@ export default function AdminEnrollmentsPage() {
             </Link>
           </li>
         ))}
-      </ul>
+      </ResourceList>
     </AdminShell>
   );
 }

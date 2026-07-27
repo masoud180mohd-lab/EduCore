@@ -4,7 +4,21 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import {
+  AdminPageHeader,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { readSession } from '@/lib/auth/session';
 
@@ -37,50 +51,61 @@ export default function AdminMembershipsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const [rows, setRows] = useState<MembershipRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [status, setStatus] = useState<'' | MembershipStatus>('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | MembershipStatus>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  async function load(statusFilter: '' | MembershipStatus) {
+  async function loadPage(opts: {
+    readonly statusFilter: '' | MembershipStatus;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
-    setLoading(true);
+    if (opts.append) setLoadingMore(true);
+    else setLoading(true);
     try {
-      const q =
-        statusFilter === ''
-          ? '/api/v1/memberships?limit=50'
-          : `/api/v1/memberships?limit=50&status=${encodeURIComponent(statusFilter)}`;
-      const result = await apiRequest<{ data: MembershipRow[] }>(q, { auth });
-      setRows(result.data ?? []);
+      const q = buildListQuery('/api/v1/memberships', {
+        limit: ADMIN_LIST_DEFAULT_LIMIT,
+        cursor: opts.cursor,
+        filters: { status: opts.statusFilter === '' ? undefined : opts.statusFilter },
+      });
+      const result = await apiRequest<PaginatedEnvelope<MembershipRow>>(q, { auth });
+      const page = readPageMeta(result);
+      setRows((prev) =>
+        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
+      );
+      setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(membershipMessage(err));
       else setError('Could not load memberships.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load('');
+    void loadPage({ statusFilter: '', cursor: null, append: false });
   }, []);
 
   function onFilter(event: FormEvent) {
     event.preventDefault();
-    void load(status);
+    setAppliedStatus(status);
+    void loadPage({ statusFilter: status, cursor: null, append: false });
   }
 
   return (
     <AdminShell tenantId={tenantId}>
-      <h1>Memberships</h1>
-      <p className="muted">
-        Tenant roster by membership status. Open a user to suspend, reactivate, or remove.
-      </p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Memberships"
+        description="Tenant roster by membership status. Open a user to suspend, reactivate, or remove."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack" onSubmit={onFilter} style={{ marginBottom: '1rem' }}>
         <label className="field">
@@ -96,31 +121,44 @@ export default function AdminMembershipsPage() {
             ))}
           </select>
         </label>
-        <button className="btn btn-secondary" type="submit" disabled={loading}>
-          {loading ? 'Loading…' : 'Apply filter'}
+        <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
+          Apply filter
         </button>
       </form>
 
-      {loading ? (
-        <p className="muted">Loading…</p>
-      ) : rows.length === 0 ? (
-        <p className="muted">No memberships for this filter.</p>
-      ) : (
-        <ul className="list">
-          {rows.map((m) => (
-            <li key={m.id}>
-              <Link className="card" href={`/t/${tenantId}/admin/users/${m.userId}`}>
-                <strong>{m.status}</strong>
-                <div className="muted">
-                  User {m.userId}
-                  {m.joinedAt !== null ? ` · Joined ${m.joinedAt}` : null}
-                </div>
-                <div className="muted">Membership {m.id}</div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ResourceList
+        loading={loading}
+        empty="No memberships for this filter."
+        isEmpty={rows.length === 0}
+        footer={
+          <ResourceListPagination
+            nextCursor={nextCursor}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void loadPage({
+                statusFilter: appliedStatus,
+                cursor: nextCursor,
+                append: true,
+              });
+            }}
+          />
+        }
+      >
+        {rows.map((m) => (
+          <li key={m.id}>
+            <Link className="card" href={`/t/${tenantId}/admin/users/${m.userId}`}>
+              <strong>
+                <StatusChip label={m.status} />
+              </strong>
+              <div className="muted">
+                User {m.userId}
+                {m.joinedAt !== null ? ` · Joined ${m.joinedAt}` : null}
+              </div>
+              <div className="muted">Membership {m.id}</div>
+            </Link>
+          </li>
+        ))}
+      </ResourceList>
     </AdminShell>
   );
 }

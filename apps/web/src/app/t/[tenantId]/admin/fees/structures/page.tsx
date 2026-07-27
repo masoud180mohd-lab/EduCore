@@ -4,8 +4,16 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import { parseMajorToMinor } from '@/lib/finance/money';
 
@@ -34,10 +42,12 @@ export default function AdminFeeStructuresPage() {
   const tenantId = params.tenantId;
   const router = useRouter();
   const [rows, setRows] = useState<FeeStructureRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
   const [yearNames, setYearNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const [name, setName] = useState('');
@@ -45,32 +55,51 @@ export default function AdminFeeStructuresPage() {
   const [status, setStatus] = useState<'draft' | 'active'>('active');
   const [items, setItems] = useState<ItemDraft[]>([{ name: '', amountMajor: '' }]);
 
-  async function load() {
+  async function loadPickers() {
     const auth = readSession();
     if (auth === null) return;
-    setLoading(true);
     try {
-      const [structRes, yearRes] = await Promise.all([
-        apiRequest<{ data: FeeStructureRow[] }>('/api/v1/fee-structures?limit=50', { auth }),
-        apiRequest<{ data: AcademicYearRow[] }>('/api/v1/academic-years?limit=50', { auth }),
-      ]);
+      const q = buildListQuery('/api/v1/academic-years', { limit: ADMIN_LIST_DEFAULT_LIMIT });
+      const yearRes = await apiRequest<{ data: AcademicYearRow[] }>(q, { auth });
       const yearList = yearRes.data ?? [];
       setYears(yearList);
       const map: Record<string, string> = {};
       for (const y of yearList) map[y.id] = y.name;
       setYearNames(map);
-      setRows(structRes.data ?? []);
+    } catch {
+      // Picker failure — form still usable if list loaded
+    }
+  }
+
+  async function loadPage(opts: { readonly cursor: string | null; readonly append: boolean }) {
+    const auth = readSession();
+    if (auth === null) return;
+    if (opts.append) setLoadingMore(true);
+    else setLoading(true);
+    try {
+      const q = buildListQuery('/api/v1/fee-structures', {
+        limit: ADMIN_LIST_DEFAULT_LIMIT,
+        cursor: opts.cursor,
+      });
+      const result = await apiRequest<PaginatedEnvelope<FeeStructureRow>>(q, { auth });
+      const page = readPageMeta(result);
+      setRows((prev) =>
+        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
+      );
+      setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(financeMessage(err));
       else setError('Could not load fee structures.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load();
+    void loadPickers();
+    void loadPage({ cursor: null, append: false });
   }, []);
 
   async function onCreate(event: FormEvent) {
@@ -229,11 +258,20 @@ export default function AdminFeeStructuresPage() {
         </button>
       </form>
 
-      {loading ? <p className="muted">Loading…</p> : null}
-      {!loading && rows.length === 0 ? (
-        <div className="banner banner-info">No fee structures yet.</div>
-      ) : null}
-      <ul className="list">
+      <ResourceList
+        loading={loading}
+        empty="No fee structures yet."
+        isEmpty={rows.length === 0}
+        footer={
+          <ResourceListPagination
+            nextCursor={nextCursor}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void loadPage({ cursor: nextCursor, append: true });
+            }}
+          />
+        }
+      >
         {rows.map((row) => (
           <li key={row.id}>
             <Link className="card" href={`/t/${tenantId}/admin/fees/structures/${row.id}`}>
@@ -248,7 +286,7 @@ export default function AdminFeeStructuresPage() {
             </Link>
           </li>
         ))}
-      </ul>
+      </ResourceList>
     </AdminShell>
   );
 }

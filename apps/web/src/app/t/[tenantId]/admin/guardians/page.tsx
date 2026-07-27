@@ -4,8 +4,21 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { AdminPageHeader, Banner, ResourceList, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -22,33 +35,43 @@ export default function AdminGuardiansPage() {
   const tenantId = params.tenantId;
   const router = useRouter();
   const [rows, setRows] = useState<GuardianRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
 
-  async function load() {
+  async function loadPage(opts: { readonly cursor: string | null; readonly append: boolean }) {
     const auth = readSession();
     if (auth === null) return;
-    setLoading(true);
+    if (opts.append) setLoadingMore(true);
+    else setLoading(true);
     try {
-      const result = await apiRequest<{ data: GuardianRow[] }>('/api/v1/guardians?limit=50', {
-        auth,
+      const q = buildListQuery('/api/v1/guardians', {
+        limit: ADMIN_LIST_DEFAULT_LIMIT,
+        cursor: opts.cursor,
       });
-      setRows(result.data ?? []);
+      const result = await apiRequest<PaginatedEnvelope<GuardianRow>>(q, { auth });
+      const page = readPageMeta(result);
+      setRows((prev) =>
+        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
+      );
+      setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
       else setError('Could not load guardians.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load();
+    void loadPage({ cursor: null, append: false });
   }, []);
 
   async function onCreate(event: FormEvent) {
@@ -114,7 +137,20 @@ export default function AdminGuardiansPage() {
         </button>
       </form>
 
-      <ResourceList loading={loading} empty="No guardians yet." isEmpty={rows.length === 0}>
+      <ResourceList
+        loading={loading}
+        empty="No guardians yet."
+        isEmpty={rows.length === 0}
+        footer={
+          <ResourceListPagination
+            nextCursor={nextCursor}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void loadPage({ cursor: nextCursor, append: true });
+            }}
+          />
+        }
+      >
         {rows.map((g) => (
           <li key={g.id}>
             <Link className="card" href={`/t/${tenantId}/admin/guardians/${g.id}`}>

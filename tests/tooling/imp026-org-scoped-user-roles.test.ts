@@ -12,7 +12,7 @@ describe('IMP-026 org-scoped user roles', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.14/);
+    expect(dsf).toMatch(/1\.(?:14|15|16|17|18)/);
     expect(dsf).toContain('IMP-026');
     expect(dsf).toMatch(/organization scope/i);
   });

@@ -12,7 +12,7 @@ describe('IMP-023 admin memberships list', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.(?:12|13|14)/);
+    expect(dsf).toMatch(/1\.(?:12|13|14|15|16|17|18)/);
     expect(dsf).toContain('IMP-023');
     expect(dsf).toMatch(/Memberships list/i);
   });
@@ -23,7 +23,7 @@ describe('IMP-023 admin memberships list', () => {
       'utf8',
     );
     expect(page).toContain('/api/v1/memberships');
-    expect(page).toContain('status=');
+    expect(page).toMatch(/status[=:]/);
     expect(page).toContain('/admin/users/');
   });
 

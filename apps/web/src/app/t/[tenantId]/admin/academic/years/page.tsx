@@ -4,8 +4,16 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import {
   type AcademicYearRow,
   type LifecycleStatus,
@@ -19,8 +27,10 @@ export default function AdminAcademicYearsPage() {
   const tenantId = params.tenantId;
   const router = useRouter();
   const [rows, setRows] = useState<AcademicYearRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -28,27 +38,34 @@ export default function AdminAcademicYearsPage() {
   const [endsOn, setEndsOn] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('active');
 
-  async function load() {
+  async function loadPage(opts: { readonly cursor: string | null; readonly append: boolean }) {
     const auth = readSession();
     if (auth === null) return;
-    setLoading(true);
+    if (opts.append) setLoadingMore(true);
+    else setLoading(true);
     try {
-      const result = await apiRequest<{ data: AcademicYearRow[] }>(
-        '/api/v1/academic-years?limit=50',
-        { auth },
+      const q = buildListQuery('/api/v1/academic-years', {
+        limit: ADMIN_LIST_DEFAULT_LIMIT,
+        cursor: opts.cursor,
+      });
+      const result = await apiRequest<PaginatedEnvelope<AcademicYearRow>>(q, { auth });
+      const page = readPageMeta(result);
+      setRows((prev) =>
+        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
       );
-      setRows(result.data ?? []);
+      setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(academicMessage(err));
       else setError('Could not load academic years.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load();
+    void loadPage({ cursor: null, append: false });
   }, []);
 
   async function onCreate(event: FormEvent) {
@@ -151,11 +168,20 @@ export default function AdminAcademicYearsPage() {
         </button>
       </form>
 
-      {loading ? <p className="muted">Loading…</p> : null}
-      {!loading && rows.length === 0 ? (
-        <div className="banner banner-info">No academic years yet.</div>
-      ) : null}
-      <ul className="list">
+      <ResourceList
+        loading={loading}
+        empty="No academic years yet."
+        isEmpty={rows.length === 0}
+        footer={
+          <ResourceListPagination
+            nextCursor={nextCursor}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void loadPage({ cursor: nextCursor, append: true });
+            }}
+          />
+        }
+      >
         {rows.map((row) => (
           <li key={row.id}>
             <Link className="card" href={`/t/${tenantId}/admin/academic/years/${row.id}`}>
@@ -167,7 +193,7 @@ export default function AdminAcademicYearsPage() {
             </Link>
           </li>
         ))}
-      </ul>
+      </ResourceList>
     </AdminShell>
   );
 }

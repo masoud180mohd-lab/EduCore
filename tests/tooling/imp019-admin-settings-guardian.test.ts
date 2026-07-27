@@ -12,7 +12,7 @@ describe('IMP-019 admin settings + guardian profile edit', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.(?:8|9|10|11|12|13|14)/);
+    expect(dsf).toMatch(/1\.(?:8|9|10|11|12|13|14|15|16|17|18)/);
     expect(dsf).toContain('IMP-019');
     expect(dsf).toMatch(/Tenant settings edit|settings form/i);
     expect(dsf).toMatch(/profile edit/i);

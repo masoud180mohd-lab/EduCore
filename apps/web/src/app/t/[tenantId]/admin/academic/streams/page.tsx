@@ -4,8 +4,16 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import {
   type ClassRow,
   type LifecycleStatus,
@@ -15,53 +23,79 @@ import {
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
+const CLASS_PICKER_LIMIT = 100;
+
 export default function AdminStreamsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
   const [rows, setRows] = useState<StreamRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [classNames, setClassNames] = useState<Record<string, string>>({});
   const [filterClassId, setFilterClassId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [classId, setClassId] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('active');
 
-  async function load(classFilter: string) {
+  async function loadPickers() {
     const auth = readSession();
     if (auth === null) return;
-    setLoading(true);
     try {
-      const classRes = await apiRequest<{ data: ClassRow[] }>('/api/v1/classes?limit=100', {
-        auth,
-      });
+      const q = buildListQuery('/api/v1/classes', { limit: CLASS_PICKER_LIMIT });
+      const classRes = await apiRequest<{ data: ClassRow[] }>(q, { auth });
       const classList = classRes.data ?? [];
       setClasses(classList);
       const map: Record<string, string> = {};
       for (const c of classList) map[c.id] = c.name;
       setClassNames(map);
+    } catch {
+      // Picker failure — form/filter still usable if list loaded
+    }
+  }
 
-      const q =
-        classFilter !== ''
-          ? `/api/v1/streams?limit=50&classId=${encodeURIComponent(classFilter)}`
-          : '/api/v1/streams?limit=50';
-      const streamRes = await apiRequest<{ data: StreamRow[] }>(q, { auth });
-      setRows(streamRes.data ?? []);
+  async function loadPage(opts: {
+    readonly classFilter: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null) return;
+    if (opts.append) setLoadingMore(true);
+    else setLoading(true);
+    try {
+      const q = buildListQuery('/api/v1/streams', {
+        limit: ADMIN_LIST_DEFAULT_LIMIT,
+        cursor: opts.cursor,
+        filters: { classId: opts.classFilter === '' ? undefined : opts.classFilter },
+      });
+      const result = await apiRequest<PaginatedEnvelope<StreamRow>>(q, { auth });
+      const page = readPageMeta(result);
+      setRows((prev) =>
+        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
+      );
+      setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(academicMessage(err));
       else setError('Could not load streams.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load(filterClassId);
+    void loadPickers();
+  }, []);
+
+  useEffect(() => {
+    void loadPage({ classFilter: filterClassId, cursor: null, append: false });
   }, [filterClassId]);
 
   async function onCreate(event: FormEvent) {
@@ -173,11 +207,20 @@ export default function AdminStreamsPage() {
         </button>
       </form>
 
-      {loading ? <p className="muted">Loading…</p> : null}
-      {!loading && rows.length === 0 ? (
-        <div className="banner banner-info">No streams yet.</div>
-      ) : null}
-      <ul className="list">
+      <ResourceList
+        loading={loading}
+        empty="No streams yet."
+        isEmpty={rows.length === 0}
+        footer={
+          <ResourceListPagination
+            nextCursor={nextCursor}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void loadPage({ classFilter: filterClassId, cursor: nextCursor, append: true });
+            }}
+          />
+        }
+      >
         {rows.map((row) => (
           <li key={row.id}>
             <Link className="card" href={`/t/${tenantId}/admin/academic/streams/${row.id}`}>
@@ -190,7 +233,7 @@ export default function AdminStreamsPage() {
             </Link>
           </li>
         ))}
-      </ul>
+      </ResourceList>
     </AdminShell>
   );
 }

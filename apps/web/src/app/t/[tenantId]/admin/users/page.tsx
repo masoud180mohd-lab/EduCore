@@ -4,51 +4,80 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import {
+  AdminPageHeader,
+  AdminTable,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import {
   type InviteRoleCode,
   type UserRow,
   INVITE_ROLE_CODES,
   userMessage,
 } from '@/lib/users/types';
-import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
 export default function AdminUsersPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const [rows, setRows] = useState<UserRow[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [roleCode, setRoleCode] = useState<InviteRoleCode | ''>('staff');
 
-  async function load(searchQ: string) {
+  async function loadPage(opts: {
+    readonly searchQ: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
-    setLoading(true);
+    if (opts.append) setLoadingMore(true);
+    else setLoading(true);
     try {
-      const q =
-        searchQ.trim() !== ''
-          ? `/api/v1/users?limit=50&search=${encodeURIComponent(searchQ.trim())}`
-          : '/api/v1/users?limit=50';
-      const result = await apiRequest<{ data: UserRow[] }>(q, { auth });
-      setRows(result.data ?? []);
+      const q = buildListQuery('/api/v1/users', {
+        limit: ADMIN_LIST_DEFAULT_LIMIT,
+        cursor: opts.cursor,
+        filters: { search: opts.searchQ },
+      });
+      const result = await apiRequest<PaginatedEnvelope<UserRow>>(q, { auth });
+      const page = readPageMeta(result);
+      setRows((prev) =>
+        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
+      );
+      setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(userMessage(err));
       else setError('Could not load users.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load('');
+    void loadPage({ searchQ: '', cursor: null, append: false });
   }, []);
 
   async function onInvite(event: FormEvent) {
@@ -79,7 +108,8 @@ export default function AdminUsersPage() {
       setDisplayName('');
       setRoleCode('staff');
       setInfo('Invitation sent. User appears when membership is active (or search invited).');
-      await load(search);
+      setAppliedSearch(search);
+      await loadPage({ searchQ: search, cursor: null, append: false });
     } catch (err) {
       if (err instanceof ApiClientError) setError(userMessage(err));
       else setError('Could not invite user.');
@@ -90,23 +120,15 @@ export default function AdminUsersPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <h1>Users</h1>
-      <p className="muted">
-        Staff directory. Invite by email (membership); edit display name or disable on detail.
-      </p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Users"
+        description="Staff directory. Invite by email (membership); edit display name or disable on detail."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onInvite(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Invite staff</h2>
+        <h2 className="section-title">Invite staff</h2>
         <div className="field">
           <label htmlFor="email">Email</label>
           <input
@@ -152,7 +174,8 @@ export default function AdminUsersPage() {
         style={{ marginTop: '1.5rem' }}
         onSubmit={(e) => {
           e.preventDefault();
-          void load(search);
+          setAppliedSearch(search);
+          void loadPage({ searchQ: search, cursor: null, append: false });
         }}
       >
         <div className="field">
@@ -164,28 +187,46 @@ export default function AdminUsersPage() {
             placeholder="Name or email"
           />
         </div>
-        <button className="btn btn-secondary" type="submit" disabled={loading}>
+        <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
           Search
         </button>
       </form>
 
-      {loading ? <p className="muted">Loading…</p> : null}
-      {!loading && rows.length === 0 ? (
-        <div className="banner banner-info">No users returned.</div>
-      ) : null}
-      <ul className="list">
-        {rows.map((u) => (
-          <li key={u.id} className="card">
-            <Link href={`/t/${tenantId}/admin/users/${u.id}`}>
-              <strong>{u.displayName || u.email}</strong>
-            </Link>
-            <div className="muted">
-              {u.email}
-              {u.status !== undefined ? ` · ${u.status}` : ''}
-            </div>
-          </li>
-        ))}
-      </ul>
+      <ResourceList
+        loading={loading}
+        empty="No users returned."
+        isEmpty={rows.length === 0}
+        variant="table"
+        footer={
+          <ResourceListPagination
+            nextCursor={nextCursor}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void loadPage({ searchQ: appliedSearch, cursor: nextCursor, append: true });
+            }}
+          />
+        }
+      >
+        <AdminTable caption="Users" headers={['Name', 'Email', 'Status', '']}>
+          {rows.map((u) => (
+            <tr key={u.id}>
+              <td>
+                <Link href={`/t/${tenantId}/admin/users/${u.id}`}>{u.displayName || u.email}</Link>
+              </td>
+              <td className="muted">{u.email}</td>
+              <td>{u.status !== undefined ? <StatusChip label={u.status} /> : '—'}</td>
+              <td className="admin-table-actions">
+                <Link
+                  className="btn btn-secondary admin-table-open"
+                  href={`/t/${tenantId}/admin/users/${u.id}`}
+                >
+                  Open
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
+      </ResourceList>
     </AdminShell>
   );
 }

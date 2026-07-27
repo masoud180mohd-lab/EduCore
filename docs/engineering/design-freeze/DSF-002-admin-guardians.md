@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                       |
-| --------- | ----------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                   |
-| Version   | `1.16`                                                      |
-| Date      | 2026-07-27                                                  |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet) |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                    |
-| Program   | IMP-007 · … · IMP-033 · **IMP-027**                         |
+| Field     | Value                                                                                                                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                                                                                                                                                   |
+| Version   | `1.18`                                                                                                                                                                                      |
+| Date      | 2026-07-27                                                                                                                                                                                  |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                                                                                 |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                                                                    |
+| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · IMP-021 · IMP-022 · IMP-023 · IMP-025 · IMP-026 · IMP-027 · IMP-028 · IMP-030 · IMP-033 |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -49,7 +49,9 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - `AdminShell` (nav: Home / Users / **Memberships** / Orgs / Students / Guardians / **Roles** / **Academic** / Fees / Settings / Logout); header brand = school name from `GET /tenants/current` (fallback `EduCore Admin`)
 - Shared banners, buttons, fields from DSF-001 language
 - **IMP-027 primitives:** `Banner`, `AdminPageHeader`, `ResourceList`, `StatusChip`, `ConfirmDialog` under `apps/web/src/components/admin/`
-- `ResourceList` pattern (loading / empty / error / forbidden)
+- **IMP-028 ops tables:** `AdminTable` for dense registries (Users, Students; fees lists in DSF-004); `ResourceList variant="table"`
+- **IMP-030 pagination:** `ResourceListPagination` (“Load more”) + `ResourceList` optional `footer`; shared helper `apps/web/src/lib/admin/list-pagination.ts`
+- `ResourceList` pattern (loading / empty / error / forbidden / optional Load more footer)
 - Guardian form (displayName, optional phone/email); guardian detail **profile edit** (displayName/phone/email/status)
 - Tenant settings form (timezone/locale/currency + settings JSON; PUT save)
 - Student create/edit forms (displayName, optional studentCode, status default **active**)
@@ -74,6 +76,44 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - Attendance-only staff / parent-only → no AdminShell (teacher or parent workspace)
 - Post-login home preference (`prefersAdminHome`) unchanged — still prefers owner/admin/user-invite surfaces; bursars may open Admin Fees via URL when `finance.*` is present
 
+## List pagination (IMP-030 / ACF)
+
+Primary admin **registry** lists consume ACF envelopes `{ data, page: { nextCursor, limit } }`:
+
+| Rule    | Behavior                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------- |
+| Pattern | **Load more (append)** — not numbered pages / offset                                                    |
+| Control | Show **Load more** only when `page.nextCursor` is non-null; busy label **Loading more…**                |
+| Filters | Load more repeats the **same** search/status/year/class filters as the first page                       |
+| Reset   | Changing a filter clears rows + cursor and fetches a new first page                                     |
+| Honesty | Never invent `totalCount` / “Page N of M”; never imply “all rows” while ignoring `nextCursor`           |
+| Limit   | Keep existing per-list limits (typically 50; roles/subjects may use ≤100); do not raise above 100       |
+| Auth    | Same Bearer + `X-Tenant-Id`; cursor is opaque — pass with `encodeURIComponent`; do not decode for AuthZ |
+
+**Non-goals (pagination):** virtualized infinite-scroll libraries; offset/page-number UI; fetching `limit=10000` to avoid paging; client-side fake paging of a truncated first page; Nest API redesign.
+
+Form **pickers** (student/year/structure dropdowns) may still hard-cap one page — residual until Wave X; primary registries must not silently truncate.
+
+## Ops tables (IMP-028 / EduCore dense admin)
+
+Use **`AdminTable`** for high-traffic operational registries. Keep **cards** for hubs, create forms, pickers, and not-yet-migrated lists (Guardians, Orgs, Memberships, Academic, fee structures).
+
+| Registry | Columns (allowlist only)                                |
+| -------- | ------------------------------------------------------- |
+| Users    | Display name, Email, Status (`StatusChip`), Open        |
+| Students | Display name, Student code, Status (`StatusChip`), Open |
+
+**Density & a11y**
+
+- Tighter row padding than cards; meta/body at 0.875rem; subtle row borders (no loud zebra)
+- Primary actions (Create, Open, Search, Load more) remain ≥44px (`.btn`)
+- Row pattern: identity text + dedicated **Open** control (consistent; focus-visible)
+- Real `<th>` / `<caption>`; wrap in `.admin-table-wrap` with horizontal scroll on narrow viewports — do **not** fall back to pure cards for these lists
+- Compose: `ResourceList variant="table"` → `AdminTable` → `ResourceListPagination` footer
+- No client-side sort without API support; no invented columns / PII beyond prior list cards
+
+**Non-goals (tables):** TanStack Table / shadcn DataGrid; virtualization; migrating every admin list in one PR.
+
 ## Non-goals
 
 - Parent portal chrome (DSF-006)
@@ -86,6 +126,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - Marketing dashboards / charts
 - Org-scoped **permission enforcement** (assignment storage only in IMP-026; AuthZ union unchanged)
 - DELETE role / mutate system role permission grants via product API
+- Offset pagination / invented list totals (IMP-030)
 
 ## Auth storage
 
@@ -103,3 +144,5 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.14 | 2026-07-27 | IMP-026 org-scoped user-role assign (storage + UI)                  |
 | 1.15 | 2026-07-27 | IMP-033 AdminShell /auth/me gate + permission-filtered nav          |
 | 1.16 | 2026-07-27 | IMP-027 shared admin primitives (Banner/ResourceList/ConfirmDialog) |
+| 1.17 | 2026-07-27 | IMP-030 Load more cursor pagination on admin registries             |
+| 1.18 | 2026-07-27 | IMP-028 AdminTable for Users/Students ops lists                     |
