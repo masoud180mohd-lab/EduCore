@@ -133,7 +133,7 @@ export class UserRolesService {
   private async executeAssign(
     actorUserId: string,
     tenantId: string,
-    input: { userId: string; roleId: string },
+    input: { userId: string; roleId: string; organizationId: string | null },
     correlationId: string,
   ): Promise<UserRoleResult> {
     if (!this.userRoles.isAvailable()) {
@@ -155,7 +155,11 @@ export class UserRolesService {
         tenantId,
         resourceType: 'user_role',
         resourceId: assignment.id,
-        metadata: { userId: assignment.userId, roleId: assignment.roleId },
+        metadata: {
+          userId: assignment.userId,
+          roleId: assignment.roleId,
+          organizationId: assignment.organizationId,
+        },
       });
       return { data: assignment };
     } catch (error: unknown) {
@@ -163,7 +167,7 @@ export class UserRolesService {
         throw error;
       }
       if (isPgUniqueViolation(error)) {
-        throw new AppError('CONFLICT', 'This role is already assigned to the user.');
+        throw new AppError('CONFLICT', 'This role is already assigned to the user for this scope.');
       }
       if (isPgInvalidParameter(error)) {
         throw AppError.validation('Invalid user role assignment.');
@@ -213,13 +217,18 @@ export class UserRolesService {
   }
 }
 
-export function parseAssignUserRoleRequest(raw: unknown): { userId: string; roleId: string } {
+export function parseAssignUserRoleRequest(raw: unknown): {
+  userId: string;
+  roleId: string;
+  organizationId: string | null;
+} {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
     throw AppError.validation('Body must be a JSON object.');
   }
   const body = raw as Record<string, unknown>;
+  const allowed = new Set(['userId', 'roleId', 'organizationId']);
   for (const key of Object.keys(body)) {
-    if (key !== 'userId' && key !== 'roleId') {
+    if (!allowed.has(key)) {
       throw AppError.validation(`Unknown field: ${key}.`, { field: key });
     }
   }
@@ -229,7 +238,20 @@ export function parseAssignUserRoleRequest(raw: unknown): { userId: string; role
   if (typeof body['roleId'] !== 'string' || !isUuid(body['roleId'])) {
     throw AppError.validation('roleId must be a uuid.', { field: 'roleId' });
   }
-  return { userId: body['userId'].toLowerCase(), roleId: body['roleId'].toLowerCase() };
+  let organizationId: string | null = null;
+  if (body['organizationId'] !== undefined && body['organizationId'] !== null) {
+    if (typeof body['organizationId'] !== 'string' || !isUuid(body['organizationId'])) {
+      throw AppError.validation('organizationId must be a uuid when provided.', {
+        field: 'organizationId',
+      });
+    }
+    organizationId = body['organizationId'].toLowerCase();
+  }
+  return {
+    userId: body['userId'].toLowerCase(),
+    roleId: body['roleId'].toLowerCase(),
+    organizationId,
+  };
 }
 
 function parseUserIdFilter(raw: unknown): string | undefined {

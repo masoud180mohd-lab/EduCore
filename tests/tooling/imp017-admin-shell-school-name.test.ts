@@ -12,7 +12,7 @@ describe('IMP-017 AdminShell school name', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.(?:[6-9]|10|11|12|13)/);
+    expect(dsf).toMatch(/1\.(?:[6-9]|10|11|12|13|14)/);
     expect(dsf).toContain('IMP-017');
     expect(dsf).toMatch(/header brand = school name|school name from/i);
   });

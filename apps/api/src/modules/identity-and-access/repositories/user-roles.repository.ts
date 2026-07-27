@@ -97,7 +97,12 @@ export class UserRolesRepository {
   async assignForTenant(
     actorUserId: string,
     tenantId: string,
-    input: { readonly userRoleId: string; readonly userId: string; readonly roleId: string },
+    input: {
+      readonly userRoleId: string;
+      readonly userId: string;
+      readonly roleId: string;
+      readonly organizationId: string | null;
+    },
   ): Promise<UserRoleRow | null> {
     if (
       !isUuid(actorUserId) ||
@@ -116,9 +121,16 @@ export class UserRolesRepository {
         async (client) => {
           await client.query(
             `SELECT * FROM app.assign_user_role(
-             $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid
+             $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::uuid
            )`,
-            [actorUserId, tenantId, input.userRoleId, input.userId, input.roleId],
+            [
+              actorUserId,
+              tenantId,
+              input.userRoleId,
+              input.userId,
+              input.roleId,
+              input.organizationId,
+            ],
           );
           return selectUserRole(client, tenantId, input.userRoleId);
         },

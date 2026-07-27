@@ -350,17 +350,17 @@ Creates/finds user, membership `invited`/`active`, optional initial roles. Emits
 
 ### 4.7 Roles & permissions
 
-| Method   | Path                                 | Auth            | Permission    | Idempotency  | Description                        |
-| -------- | ------------------------------------ | --------------- | ------------- | ------------ | ---------------------------------- |
-| `GET`    | `/api/v1/permissions`                | Bearer + tenant | `role.read`   | —            | Global permission catalog          |
-| `GET`    | `/api/v1/roles`                      | Bearer + tenant | `role.read`   | —            | Tenant roles                       |
-| `POST`   | `/api/v1/roles`                      | Bearer + tenant | `role.manage` | **Required** | Create custom role                 |
-| `GET`    | `/api/v1/roles/{roleId}`             | Bearer + tenant | `role.read`   | —            | Role + permissions                 |
-| `PATCH`  | `/api/v1/roles/{roleId}`             | Bearer + tenant | `role.manage` | Recommended  | Rename (not system code change)    |
-| `PUT`    | `/api/v1/roles/{roleId}/permissions` | Bearer + tenant | `role.manage` | Recommended  | Replace permission set             |
-| `GET`    | `/api/v1/user-roles`                 | Bearer + tenant | `role.read`   | —            | List assignments (filter `userId`) |
-| `POST`   | `/api/v1/user-roles`                 | Bearer + tenant | `role.manage` | **Required** | Assign role (± organizationId)     |
-| `DELETE` | `/api/v1/user-roles/{userRoleId}`    | Bearer + tenant | `role.manage` | Recommended  | Unassign                           |
+| Method   | Path                                 | Auth            | Permission    | Idempotency  | Description                                                                                 |
+| -------- | ------------------------------------ | --------------- | ------------- | ------------ | ------------------------------------------------------------------------------------------- |
+| `GET`    | `/api/v1/permissions`                | Bearer + tenant | `role.read`   | —            | Global permission catalog                                                                   |
+| `GET`    | `/api/v1/roles`                      | Bearer + tenant | `role.read`   | —            | Tenant roles                                                                                |
+| `POST`   | `/api/v1/roles`                      | Bearer + tenant | `role.manage` | **Required** | Create custom role                                                                          |
+| `GET`    | `/api/v1/roles/{roleId}`             | Bearer + tenant | `role.read`   | —            | Role + permissions                                                                          |
+| `PATCH`  | `/api/v1/roles/{roleId}`             | Bearer + tenant | `role.manage` | Recommended  | Rename (not system code change)                                                             |
+| `PUT`    | `/api/v1/roles/{roleId}/permissions` | Bearer + tenant | `role.manage` | Recommended  | Replace permission set                                                                      |
+| `GET`    | `/api/v1/user-roles`                 | Bearer + tenant | `role.read`   | —            | List assignments (filter `userId`)                                                          |
+| `POST`   | `/api/v1/user-roles`                 | Bearer + tenant | `role.manage` | **Required** | Assign role; omit/`null` `organizationId` = tenant-wide; non-null = org in tenant (IMP-026) |
+| `DELETE` | `/api/v1/user-roles/{userRoleId}`    | Bearer + tenant | `role.manage` | Recommended  | Unassign                                                                                    |
 
 System roles (`isSystem: true`) cannot be deleted; codes immutable.
 
@@ -576,3 +576,4 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 | 1.3     | 2026-07-20 | P10 OpenAPI P8 filters + session bind; P11/P12 users list/get honesty (AUDIT-R4 Medium)         |
 | 1.4     | 2026-07-20 | Tenants picker list policy (unpaginated + soft cap); shared ILIKE helper (P13)                  |
 | 1.5     | 2026-07-25 | Add `POST /users/{userId}/enable` (IMP-021)                                                     |
+| 1.6     | 2026-07-27 | Implement optional `organizationId` on `POST /user-roles` (IMP-026; AuthZ union unchanged)      |

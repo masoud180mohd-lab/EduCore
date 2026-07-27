@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                                                                                                         |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                                                                                                     |
-| Version   | `1.13`                                                                                                                                        |
-| Date      | 2026-07-27                                                                                                                                    |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                                   |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                      |
-| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · IMP-021 · IMP-022 · IMP-023 · **IMP-025** |
+| Field     | Value                                                                                                                                                   |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                                                                                                               |
+| Version   | `1.14`                                                                                                                                                  |
+| Date      | 2026-07-27                                                                                                                                              |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                                             |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                                |
+| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · IMP-021 · IMP-022 · IMP-023 · IMP-025 · **IMP-026** |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -32,7 +32,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 1. **Login routing** — after bind, `/auth/me` decides admin vs teacher home
 2. **Admin home** — school name + short links (Users, **Memberships**, Orgs, Students, Guardians, **Roles**, **Academic**, Fees, Settings)
-3. **Users list + invite + edit detail** — `GET /users` (search optional); invite via `POST /memberships`; detail `PATCH` displayName + `POST …/disable` + **`POST …/enable`** + **membership suspend / reactivate / remove** via `POST /memberships/{id}/…` (ACF-001; resolve membership with `GET /memberships?userId=`). **User-role assign/unassign** on detail (`GET/POST /user-roles`, `DELETE /user-roles/{id}`).
+3. **Users list + invite + edit detail** — `GET /users` (search optional); invite via `POST /memberships`; detail `PATCH` displayName + `POST …/disable` + **`POST …/enable`** + **membership suspend / reactivate / remove** via `POST /memberships/{id}/…` (ACF-001; resolve membership with `GET /memberships?userId=`). **User-role assign/unassign** on detail (`GET/POST /user-roles`, `DELETE /user-roles/{id}`) with optional **organization scope** (IMP-026).
 4. **Memberships list** — `GET /memberships` with optional status filter; row links to user detail for lifecycle actions (IMP-023).
 5. **Roles list + create + edit detail** — `GET/POST /roles`; detail rename (`PATCH`) + permission replace for **custom** roles (`PUT …/permissions`); system roles read-only grants (ACF-001 §4.7). No role DELETE.
 6. **Organizations list + create + edit detail** — `GET/POST /organizations`; detail `PATCH` + `POST …/deactivate` (ACF-001). No org DELETE.
@@ -53,7 +53,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - Tenant settings form (timezone/locale/currency + settings JSON; PUT save)
 - Student create/edit forms (displayName, optional studentCode, status default **active**)
 - Org create/edit forms (orgType, name, optional code/parent); deactivate confirm on detail
-- User invite form (email, optional displayName, roleCodes owner|admin|staff); detail edit displayName + disable/enable confirm; **membership status + Suspend / Reactivate / Remove** (confirm; no self suspend/remove/enable); **user-role assign/unassign** (tenant-wide)
+- User invite form (email, optional displayName, roleCodes owner|admin|staff); detail edit displayName + disable/enable confirm; **membership status + Suspend / Reactivate / Remove** (confirm; no self suspend/remove/enable); **user-role assign/unassign** with scope select (Entire tenant | organization)
 - Memberships list (status filter: all / invited / active / suspended / removed); link to user detail
 - Roles list + create custom (code, name); detail rename; permission checklist for custom roles (system grants read-only)
 - Link-student control (student picker + relationship type)
@@ -80,7 +80,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - MFA enrollment
 - Full offline sync
 - Marketing dashboards / charts
-- Org-scoped user-role assignment UI
+- Org-scoped **permission enforcement** (assignment storage only in IMP-026; AuthZ union unchanged)
 - DELETE role / mutate system role permission grants via product API
 
 ## Auth storage
@@ -93,6 +93,7 @@ Accepted under acting seats only; revise when a second review seat exists.
 
 ## Revisions
 
-| Ver  | Date       | Notes                                             |
-| ---- | ---------- | ------------------------------------------------- |
-| 1.13 | 2026-07-27 | IMP-025 academic delete dependents listing on 409 |
+| Ver  | Date       | Notes                                              |
+| ---- | ---------- | -------------------------------------------------- |
+| 1.13 | 2026-07-27 | IMP-025 academic delete dependents listing on 409  |
+| 1.14 | 2026-07-27 | IMP-026 org-scoped user-role assign (storage + UI) |

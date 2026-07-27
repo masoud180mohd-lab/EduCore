@@ -33,21 +33,34 @@ describe('UserRolesService', () => {
     });
   });
 
-  it('requires idempotency and rejects organizationId on assign', async () => {
-    const repository = { isAvailable: () => true, assignForTenant: vi.fn() };
+  it('requires idempotency and accepts optional organizationId on assign', async () => {
+    const repository = {
+      isAvailable: () => true,
+      assignForTenant: vi.fn().mockResolvedValue(assignment),
+    };
     const service = new UserRolesService(repository as never);
-    await expect(
-      service.assignForTenant(actorId, tenantId, { userId: targetId, roleId }, undefined, 'c1'),
-    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
     await expect(
       service.assignForTenant(
         actorId,
         tenantId,
-        { userId: targetId, roleId, organizationId: tenantId },
-        'idem-user-role-0001',
+        { userId: targetId, roleId, organizationId: null },
+        undefined,
         'c1',
       ),
-    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
+    await service.assignForTenant(
+      actorId,
+      tenantId,
+      { userId: targetId, roleId, organizationId: tenantId },
+      'idem-user-role-0001',
+      'c1',
+    );
+    expect(repository.assignForTenant).toHaveBeenCalledWith(actorId, tenantId, {
+      userRoleId: expect.any(String) as string,
+      userId: targetId,
+      roleId,
+      organizationId: tenantId,
+    });
   });
 
   it('returns 409 for duplicate assignment', async () => {
@@ -62,7 +75,7 @@ describe('UserRolesService', () => {
       service.assignForTenant(
         actorId,
         tenantId,
-        { userId: targetId, roleId },
+        { userId: targetId, roleId, organizationId: null },
         'idem-user-role-0002',
         'c1',
       ),

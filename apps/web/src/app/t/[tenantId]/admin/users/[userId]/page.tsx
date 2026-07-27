@@ -7,6 +7,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { type RoleRow, type UserRoleRow, roleMessage } from '@/lib/roles/types';
+import { type OrganizationRow } from '@/lib/organizations/types';
 import { type UserRow, userMessage } from '@/lib/users/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -22,6 +23,15 @@ type MembershipRow = {
 
 type LifecycleAction = 'suspend' | 'reactivate' | 'remove';
 
+function assignmentKey(roleId: string, organizationId: string | null): string {
+  return `${roleId}:${organizationId ?? ''}`;
+}
+
+function scopeLabel(organizationId: string | null, orgNames: Record<string, string>): string {
+  if (organizationId === null) return 'Entire tenant';
+  return orgNames[organizationId] ?? organizationId;
+}
+
 export default function AdminUserDetailPage() {
   const params = useParams<{ tenantId: string; userId: string }>();
   const { tenantId, userId } = params;
@@ -29,7 +39,10 @@ export default function AdminUserDetailPage() {
   const [membership, setMembership] = useState<MembershipRow | null>(null);
   const [userRoles, setUserRoles] = useState<UserRoleRow[]>([]);
   const [rolesCatalog, setRolesCatalog] = useState<RoleRow[]>([]);
+  const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
+  const [orgNames, setOrgNames] = useState<Record<string, string>>({});
   const [assignRoleId, setAssignRoleId] = useState('');
+  const [assignOrgId, setAssignOrgId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -90,18 +103,26 @@ export default function AdminUserDetailPage() {
     }
 
     try {
-      const [assignments, roles] = await Promise.all([
+      const [assignments, roles, orgRes] = await Promise.all([
         apiRequest<{ data: UserRoleRow[] }>(
           `/api/v1/user-roles?userId=${encodeURIComponent(userId)}&limit=50`,
           { auth },
         ),
         apiRequest<{ data: RoleRow[] }>('/api/v1/roles?limit=100', { auth }),
+        apiRequest<{ data: OrganizationRow[] }>('/api/v1/organizations?limit=100', { auth }),
       ]);
       setUserRoles(assignments.data ?? []);
       setRolesCatalog(roles.data ?? []);
+      const orgList = orgRes.data ?? [];
+      setOrganizations(orgList);
+      const map: Record<string, string> = {};
+      for (const org of orgList) map[org.id] = org.name;
+      setOrgNames(map);
     } catch {
       setUserRoles([]);
       setRolesCatalog([]);
+      setOrganizations([]);
+      setOrgNames({});
     }
   }, [userId]);
 
@@ -257,20 +278,30 @@ export default function AdminUserDetailPage() {
     if (assignRoleId === '') return;
     const auth = readSession();
     if (auth === null) return;
+    const organizationId = assignOrgId === '' ? null : assignOrgId;
+    if (assignedKeys.has(assignmentKey(assignRoleId, organizationId))) {
+      setError('This role is already assigned for that scope.');
+      return;
+    }
     setBusy(true);
     setError(null);
     setInfo(null);
-    const actionKey = `user-role.assign:${userId}:${assignRoleId}`;
+    const actionKey = `user-role.assign:${userId}:${assignRoleId}:${organizationId ?? 'tenant'}`;
     const idem = readOrCreateIdempotencyKey(actionKey);
     try {
       await apiRequest<{ data: UserRoleRow }>('/api/v1/user-roles', {
         method: 'POST',
         auth,
-        body: { userId, roleId: assignRoleId },
+        body: {
+          userId,
+          roleId: assignRoleId,
+          ...(organizationId !== null ? { organizationId } : {}),
+        },
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
       setAssignRoleId('');
+      setAssignOrgId('');
       setInfo('Role assigned.');
       await load();
     } catch (err) {
@@ -313,8 +344,10 @@ export default function AdminUserDetailPage() {
   const canReactivate = status === 'suspended';
   const canRemove = status !== undefined && status !== 'removed';
   const showUserForm = row !== null;
-  const assignedRoleIds = new Set(userRoles.map((ur) => ur.roleId));
-  const assignableRoles = rolesCatalog.filter((r) => !assignedRoleIds.has(r.id));
+  const assignedKeys = new Set(userRoles.map((ur) => assignmentKey(ur.roleId, ur.organizationId)));
+  const selectedOrgId = assignOrgId === '' ? null : assignOrgId;
+  const assignDuplicate =
+    assignRoleId !== '' && assignedKeys.has(assignmentKey(assignRoleId, selectedOrgId));
 
   return (
     <AdminShell tenantId={tenantId}>
@@ -431,6 +464,10 @@ export default function AdminUserDetailPage() {
       {(showUserForm || membership !== null) && rolesCatalog.length > 0 ? (
         <div className="stack" style={{ marginTop: '1.5rem' }}>
           <h2>Roles</h2>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Organization scope is stored on the assignment only; permissions still apply tenant-wide
+            until org AuthZ ships.
+          </p>
           {userRoles.length === 0 ? (
             <p className="muted">No roles assigned.</p>
           ) : (
@@ -443,7 +480,9 @@ export default function AdminUserDetailPage() {
                 >
                   <span style={{ flex: 1 }}>
                     <strong>{ur.roleCode}</strong>
-                    <div className="muted">Assignment {ur.id}</div>
+                    <div className="muted">
+                      Scope: {scopeLabel(ur.organizationId, orgNames)} · Assignment {ur.id}
+                    </div>
                   </span>
                   <button
                     className="btn btn-secondary"
@@ -457,7 +496,7 @@ export default function AdminUserDetailPage() {
               ))}
             </ul>
           )}
-          {assignableRoles.length > 0 ? (
+          {rolesCatalog.length > 0 ? (
             <form className="stack" onSubmit={(e) => void onAssignRole(e)}>
               <label className="field">
                 <span>Assign role</span>
@@ -467,9 +506,20 @@ export default function AdminUserDetailPage() {
                   required
                 >
                   <option value="">Select a role…</option>
-                  {assignableRoles.map((r) => (
+                  {rolesCatalog.map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.name} ({r.code})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Scope</span>
+                <select value={assignOrgId} onChange={(e) => setAssignOrgId(e.target.value)}>
+                  <option value="">Entire tenant</option>
+                  {organizations.map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
                     </option>
                   ))}
                 </select>
@@ -477,13 +527,13 @@ export default function AdminUserDetailPage() {
               <button
                 className="btn btn-primary"
                 type="submit"
-                disabled={busy || assignRoleId === ''}
+                disabled={busy || assignRoleId === '' || assignDuplicate}
               >
                 {busy ? 'Assigning…' : 'Assign role'}
               </button>
             </form>
           ) : (
-            <p className="muted">All tenant roles are already assigned.</p>
+            <p className="muted">No roles available in this tenant.</p>
           )}
         </div>
       ) : null}

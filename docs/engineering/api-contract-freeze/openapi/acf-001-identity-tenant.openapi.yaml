@@ -2914,6 +2914,9 @@ components:
           $ref: '#/components/schemas/Uuid'
         organizationId:
           $ref: '#/components/schemas/Uuid'
+          description: >-
+            Optional organization scope in the bound tenant. Omitted or null =
+            tenant-wide assignment (IMP-026).
     Session:
       type: object
       required:
