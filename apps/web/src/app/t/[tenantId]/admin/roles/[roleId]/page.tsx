@@ -6,7 +6,8 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
-import { type PermissionRow, type RoleRow, roleMessage } from '@/lib/roles/types';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { type PermissionRow, type RoleRow } from '@/lib/roles/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
 export default function AdminRoleDetailPage() {
@@ -34,7 +35,7 @@ export default function AdminRoleDetailPage() {
       setCatalog(permResult.data ?? []);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(roleMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'roles'));
       else setError('Could not load role.');
     }
   }, [roleId]);
@@ -72,7 +73,7 @@ export default function AdminRoleDetailPage() {
       setInfo('Role renamed.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(roleMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'roles'));
       else setError('Could not rename role.');
     } finally {
       setBusy(false);
@@ -100,7 +101,7 @@ export default function AdminRoleDetailPage() {
       setInfo('Permissions updated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(roleMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'roles'));
       else setError('Could not update permissions.');
     } finally {
       setBusy(false);

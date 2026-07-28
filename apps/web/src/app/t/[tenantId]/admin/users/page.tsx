@@ -21,13 +21,9 @@ import {
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
-import {
-  type InviteRoleCode,
-  type UserRow,
-  INVITE_ROLE_CODES,
-  userMessage,
-} from '@/lib/users/types';
+import { type InviteRoleCode, type UserRow, INVITE_ROLE_CODES } from '@/lib/users/types';
 
 export default function AdminUsersPage() {
   const params = useParams<{ tenantId: string }>();
@@ -68,7 +64,7 @@ export default function AdminUsersPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(userMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'users'));
       else setError('Could not load users.');
     } finally {
       setLoading(false);
@@ -111,7 +107,7 @@ export default function AdminUsersPage() {
       setAppliedSearch(search);
       await loadPage({ searchQ: search, cursor: null, append: false });
     } catch (err) {
-      if (err instanceof ApiClientError) setError(userMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'users'));
       else setError('Could not invite user.');
     } finally {
       setBusy(false);

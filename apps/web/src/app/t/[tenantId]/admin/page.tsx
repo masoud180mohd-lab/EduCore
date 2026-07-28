@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { groupAdminNav, visibleAdminNavIds, type AdminNavId } from '@/lib/auth/admin-access';
 import type { MeLike } from '@/lib/auth/home-preference';
 import { readSession } from '@/lib/auth/session';
@@ -80,7 +81,7 @@ export default function AdminHomePage() {
         setSchool(tenant.data.name ?? tenant.data.code ?? tenant.data.id);
         setNavIds(visibleAdminNavIds(me.data));
       } catch (err) {
-        if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+        if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'tenant'));
         else setError('Could not load school.');
       }
     })();

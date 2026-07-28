@@ -7,8 +7,9 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { AdminPageHeader, Banner, ConfirmDialog, StatusChip } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
-import { type OrganizationRow, organizationMessage } from '@/lib/organizations/types';
+import { type OrganizationRow } from '@/lib/organizations/types';
 
 export default function AdminOrganizationDetailPage() {
   const params = useParams<{ tenantId: string; organizationId: string }>();
@@ -36,7 +37,7 @@ export default function AdminOrganizationDetailPage() {
       setParentOrganizationId(result.data.parentOrganizationId ?? '');
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(organizationMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'organizations'));
       else setError('Could not load organization.');
     }
   }, [organizationId]);
@@ -70,7 +71,7 @@ export default function AdminOrganizationDetailPage() {
       setInfo('Organization updated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(organizationMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'organizations'));
       else setError('Could not update organization.');
     } finally {
       setBusy(false);
@@ -101,7 +102,7 @@ export default function AdminOrganizationDetailPage() {
       setInfo('Organization deactivated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(organizationMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'organizations'));
       else setError('Could not deactivate organization.');
     } finally {
       setBusy(false);

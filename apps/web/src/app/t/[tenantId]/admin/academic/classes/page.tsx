@@ -7,6 +7,7 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -20,7 +21,6 @@ import {
   type LifecycleStatus,
   type TermRow,
   LIFECYCLE_STATUSES,
-  academicMessage,
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -83,7 +83,7 @@ export default function AdminClassesPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load classes.');
     } finally {
       setLoading(false);
@@ -147,7 +147,7 @@ export default function AdminClassesPage() {
       setTermId('');
       router.push(`/t/${tenantId}/admin/academic/classes/${created.data.id}`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not create class.');
     } finally {
       setBusy(false);

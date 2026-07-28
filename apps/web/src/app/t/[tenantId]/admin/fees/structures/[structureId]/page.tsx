@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import { formatTzsMinor, parseMajorToMinor, TZS_MINOR_SCALE } from '@/lib/finance/money';
 
@@ -28,14 +29,6 @@ type FeeStructureDetail = {
 type ItemDraft = { readonly name: string; readonly amountMajor: string };
 
 type StructureStatus = 'draft' | 'active' | 'archived';
-
-function financeMessage(err: ApiClientError): string {
-  if (err.status === 403) return 'You do not have finance access.';
-  if (err.status === 409) {
-    return err.message.trim() !== '' ? err.message : 'Fee structure items are in use by invoices.';
-  }
-  return teacherFriendlyMessage(err);
-}
 
 function minorToMajorInput(amountMinor: number): string {
   if (!Number.isFinite(amountMinor) || !Number.isInteger(amountMinor)) return '';
@@ -113,7 +106,7 @@ export default function AdminFeeStructureDetailPage() {
       }
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not load fee structure.');
     } finally {
       setLoading(false);
@@ -193,7 +186,7 @@ export default function AdminFeeStructureDetailPage() {
           : 'Fee structure details saved (items unchanged).',
       );
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not save fee structure.');
     } finally {
       setBusy(false);

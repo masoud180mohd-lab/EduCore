@@ -7,6 +7,7 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -18,7 +19,6 @@ import {
   type AcademicYearRow,
   type LifecycleStatus,
   LIFECYCLE_STATUSES,
-  academicMessage,
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -56,7 +56,7 @@ export default function AdminAcademicYearsPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load academic years.');
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ export default function AdminAcademicYearsPage() {
       setStatus('active');
       router.push(`/t/${tenantId}/admin/academic/years/${created.data.id}`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not create academic year.');
     } finally {
       setBusy(false);

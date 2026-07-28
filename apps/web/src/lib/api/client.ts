@@ -3,6 +3,8 @@
  * Always sends Bearer + X-Tenant-Id after bind; Idempotency-Key on mutations when provided.
  */
 
+import { apiFriendlyMessage } from './api-friendly-message';
+
 export type ApiError = {
   readonly status: number;
   readonly code: string;
@@ -46,18 +48,7 @@ function apiBase(): string {
 }
 
 export function teacherFriendlyMessage(error: ApiClientError): string {
-  if (error.status === 401) return 'Sign in again.';
-  if (error.status === 403) return 'You do not have access for this school.';
-  if (error.status === 404) return 'Not found.';
-  if (error.status === 409 && /closed/i.test(error.message)) {
-    return 'Session is closed — marking is disabled.';
-  }
-  if (error.status === 409) return error.message;
-  if (error.code === 'IDEMPOTENCY_KEY_REQUIRED') {
-    return 'Save failed — retry key missing. Try again.';
-  }
-  if (error.status === 0) return 'You are offline — queue not enabled yet.';
-  return error.message;
+  return apiFriendlyMessage(error, { closedSession409: true });
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {

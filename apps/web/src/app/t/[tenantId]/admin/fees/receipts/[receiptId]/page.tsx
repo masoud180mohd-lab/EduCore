@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import { canReconcilePayment, reconcileOutcomeLabel } from '@/lib/finance/invoice-actions';
 import { formatTzsMinor } from '@/lib/finance/money';
@@ -35,15 +36,6 @@ type ReconciliationRow = {
   readonly eventAmountMinor: number | null;
   readonly eventOutcome: string | null;
 };
-
-function financeMessage(err: ApiClientError, action?: 'reconcile'): string {
-  if (err.status === 403) {
-    return action === 'reconcile'
-      ? 'You do not have finance reconcile access.'
-      : 'You do not have finance access.';
-  }
-  return teacherFriendlyMessage(err);
-}
 
 export default function AdminReceiptDetailPage() {
   const params = useParams<{ tenantId: string; receiptId: string }>();
@@ -75,7 +67,7 @@ export default function AdminReceiptDetailPage() {
       }
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not load receipt.');
     } finally {
       setLoading(false);
@@ -116,7 +108,8 @@ export default function AdminReceiptDetailPage() {
         `Reconcile: ${reconcileOutcomeLabel(row.outcome)} — compare only (no ledger change). Attempt ${formatTzsMinor(row.attemptAmountMinor)} (${row.attemptStatus}).${eventBit}`,
       );
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err, 'reconcile'));
+      if (err instanceof ApiClientError)
+        setError(adminFriendlyMessage(err, 'finance', { action: 'reconcile' }));
       else setError('Could not reconcile payment.');
     } finally {
       setBusy(false);

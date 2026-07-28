@@ -20,13 +20,9 @@ import {
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
-import {
-  type OrganizationRow,
-  type OrgType,
-  ORG_TYPES,
-  organizationMessage,
-} from '@/lib/organizations/types';
+import { type OrganizationRow, type OrgType, ORG_TYPES } from '@/lib/organizations/types';
 
 export default function AdminOrganizationsPage() {
   const params = useParams<{ tenantId: string }>();
@@ -68,7 +64,7 @@ export default function AdminOrganizationsPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(organizationMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'organizations'));
       else setError('Could not load organizations.');
     } finally {
       setLoading(false);
@@ -110,7 +106,7 @@ export default function AdminOrganizationsPage() {
       setParentOrganizationId('');
       router.push(`/t/${tenantId}/admin/organizations/${created.data.id}`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(organizationMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'organizations'));
       else setError('Could not create organization.');
     } finally {
       setBusy(false);

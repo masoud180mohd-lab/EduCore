@@ -7,6 +7,7 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -21,7 +22,6 @@ import {
   type StreamRow,
   type StudentOption,
   ENROLLMENT_STATUSES,
-  academicMessage,
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -109,7 +109,7 @@ export default function AdminEnrollmentsPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load enrollments.');
     } finally {
       setLoading(false);
@@ -172,7 +172,7 @@ export default function AdminEnrollmentsPage() {
       setStreamId('');
       router.push(`/t/${tenantId}/admin/academic/enrollments/${created.data.id}`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not create enrollment.');
     } finally {
       setBusy(false);

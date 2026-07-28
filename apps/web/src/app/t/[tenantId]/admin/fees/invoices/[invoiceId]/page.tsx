@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import {
   canIssueInvoice,
@@ -18,6 +20,9 @@ import {
   reconcileOutcomeLabel,
 } from '@/lib/finance/invoice-actions';
 import { formatTzsMinor, parseMajorToMinor } from '@/lib/finance/money';
+
+type ConfirmState =
+  { readonly kind: 'void' } | { readonly kind: 'reverse'; readonly paymentId: string } | null;
 
 type InvoiceLine = {
   readonly id: string;
@@ -61,15 +66,6 @@ type ReconciliationRow = {
 
 const OFFICE_METHODS = ['cash', 'bank', 'cheque', 'other'] as const;
 
-function financeMessage(err: ApiClientError, action?: 'reconcile'): string {
-  if (err.status === 403) {
-    return action === 'reconcile'
-      ? 'You do not have finance reconcile access.'
-      : 'You do not have finance access.';
-  }
-  return teacherFriendlyMessage(err);
-}
-
 export default function AdminInvoiceDetailPage() {
   const params = useParams<{ tenantId: string; invoiceId: string }>();
   const { tenantId, invoiceId } = params;
@@ -81,6 +77,7 @@ export default function AdminInvoiceDetailPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmState>(null);
 
   const [payMethod, setPayMethod] = useState<(typeof OFFICE_METHODS)[number]>('cash');
   const [payAmountMajor, setPayAmountMajor] = useState('');
@@ -107,7 +104,7 @@ export default function AdminInvoiceDetailPage() {
       }
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not load invoice.');
     } finally {
       setLoading(false);
@@ -136,17 +133,16 @@ export default function AdminInvoiceDetailPage() {
       setInfo('Invoice issued. Revenue recognized on issue.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not issue invoice.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onVoid() {
+  async function runVoid() {
     const auth = readSession();
     if (auth === null) return;
-    if (!window.confirm('Void this unpaid issued invoice? This cannot be undone.')) return;
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -159,10 +155,11 @@ export default function AdminInvoiceDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('Invoice voided.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not void invoice.');
     } finally {
       setBusy(false);
@@ -213,19 +210,16 @@ export default function AdminInvoiceDetailPage() {
       );
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not record payment.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onReverse(paymentId: string) {
+  async function runReverse(paymentId: string) {
     const auth = readSession();
     if (auth === null) return;
-    if (!window.confirm('Reverse this succeeded payment? Allocations and receipt will reverse.')) {
-      return;
-    }
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -238,10 +232,11 @@ export default function AdminInvoiceDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('Payment reversed.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not reverse payment.');
     } finally {
       setBusy(false);
@@ -277,7 +272,8 @@ export default function AdminInvoiceDetailPage() {
         `Reconcile: ${reconcileOutcomeLabel(row.outcome)} — compare only (no ledger change). Attempt ${formatTzsMinor(row.attemptAmountMinor)} (${row.attemptStatus}).${eventBit}`,
       );
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err, 'reconcile'));
+      if (err instanceof ApiClientError)
+        setError(adminFriendlyMessage(err, 'finance', { action: 'reconcile' }));
       else setError('Could not reconcile payment.');
     } finally {
       setBusy(false);
@@ -342,7 +338,7 @@ export default function AdminInvoiceDetailPage() {
               type="button"
               className="btn btn-danger"
               disabled={busy || !voidOk}
-              onClick={() => void onVoid()}
+              onClick={() => setConfirm({ kind: 'void' })}
             >
               Void
             </button>
@@ -421,7 +417,7 @@ export default function AdminInvoiceDetailPage() {
                     type="button"
                     className="btn btn-secondary"
                     disabled={busy}
-                    onClick={() => void onReverse(p.id)}
+                    onClick={() => setConfirm({ kind: 'reverse', paymentId: p.id })}
                     style={{ marginTop: '0.5rem', marginRight: '0.5rem' }}
                   >
                     Reverse
@@ -444,6 +440,26 @@ export default function AdminInvoiceDetailPage() {
           </ul>
         </>
       ) : null}
+
+      <ConfirmDialog
+        open={confirm !== null}
+        title={confirm?.kind === 'reverse' ? 'Reverse payment?' : 'Void invoice?'}
+        body={
+          confirm?.kind === 'reverse'
+            ? 'Reverse this succeeded payment? Allocations and receipt will reverse.'
+            : 'Void this unpaid issued invoice? This cannot be undone.'
+        }
+        confirmLabel={confirm?.kind === 'reverse' ? 'Reverse' : 'Void'}
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          if (confirm?.kind === 'reverse') void runReverse(confirm.paymentId);
+          else if (confirm?.kind === 'void') void runVoid();
+        }}
+      />
     </AdminShell>
   );
 }

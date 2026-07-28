@@ -4,8 +4,10 @@ import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
+import { ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import { type BindUserOption, formatUserBindLabel } from '@/lib/guardians/bind-user-label';
 
@@ -30,13 +32,10 @@ type StudentRow = { readonly id: string; readonly displayName: string };
 
 type GuardianStatus = 'active' | 'inactive';
 
-const GUARDIAN_STATUSES: ReadonlyArray<GuardianStatus> = ['active', 'inactive'];
+type ConfirmState =
+  { readonly kind: 'end-link'; readonly linkId: string } | { readonly kind: 'unbind' } | null;
 
-function guardianMessage(err: ApiClientError): string {
-  if (err.status === 403) return 'You do not have access for this action.';
-  if (err.status === 409) return err.message || 'Conflict — duplicate email or link.';
-  return teacherFriendlyMessage(err);
-}
+const GUARDIAN_STATUSES: ReadonlyArray<GuardianStatus> = ['active', 'inactive'];
 
 export default function AdminGuardianDetailPage() {
   const params = useParams<{ tenantId: string; guardianId: string }>();
@@ -59,6 +58,7 @@ export default function AdminGuardianDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmState>(null);
 
   const loadUsers = useCallback(async () => {
     const auth = readSession();
@@ -77,7 +77,7 @@ export default function AdminGuardianDetailPage() {
           'Cannot load users for the picker (needs user.read). Use advanced UUID paste or ask an admin.',
         );
       } else if (err instanceof ApiClientError) {
-        setUsersError(teacherFriendlyMessage(err));
+        setUsersError(adminFriendlyMessage(err, 'users'));
       } else {
         setUsersError('Could not load users.');
       }
@@ -119,7 +119,7 @@ export default function AdminGuardianDetailPage() {
       );
       setNames(nameMap);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(guardianMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'guardians'));
       else setError('Could not load guardian.');
     }
   }, [guardianId]);
@@ -154,7 +154,7 @@ export default function AdminGuardianDetailPage() {
       setInfo('Guardian profile updated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(guardianMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'guardians'));
       else setError('Could not update guardian.');
     } finally {
       setBusy(false);
@@ -182,17 +182,16 @@ export default function AdminGuardianDetailPage() {
       setStudentId('');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(guardianMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'guardians'));
       else setError('Could not link student.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onEnd(linkId: string) {
+  async function runEnd(linkId: string) {
     const auth = readSession();
     if (auth === null) return;
-    if (!window.confirm('End this guardian link?')) return;
     setBusy(true);
     setError(null);
     try {
@@ -200,10 +199,11 @@ export default function AdminGuardianDetailPage() {
         method: 'POST',
         auth,
       });
+      setConfirm(null);
       setInfo('Link ended.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(guardianMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'guardians'));
       else setError('Could not end link.');
     } finally {
       setBusy(false);
@@ -239,7 +239,7 @@ export default function AdminGuardianDetailPage() {
           'Cannot bind: this guardian or user is already bound (conflict). Unbind first or pick another user.',
         );
       } else if (err instanceof ApiClientError) {
-        setError(guardianMessage(err));
+        setError(adminFriendlyMessage(err, 'guardians'));
       } else {
         setError('Could not bind user.');
       }
@@ -248,10 +248,9 @@ export default function AdminGuardianDetailPage() {
     }
   }
 
-  async function onUnbind() {
+  async function runUnbind() {
     const auth = readSession();
     if (auth === null) return;
-    if (!window.confirm('Unbind portal user from this guardian?')) return;
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -264,10 +263,11 @@ export default function AdminGuardianDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('Portal user unbound.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(guardianMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'guardians'));
       else setError('Could not unbind user.');
     } finally {
       setBusy(false);
@@ -379,7 +379,7 @@ export default function AdminGuardianDetailPage() {
             type="button"
             className="btn btn-secondary"
             disabled={busy}
-            onClick={() => void onUnbind()}
+            onClick={() => setConfirm({ kind: 'unbind' })}
           >
             Unbind user
           </button>
@@ -454,7 +454,7 @@ export default function AdminGuardianDetailPage() {
                 type="button"
                 className="btn btn-secondary"
                 disabled={busy}
-                onClick={() => void onEnd(link.id)}
+                onClick={() => setConfirm({ kind: 'end-link', linkId: link.id })}
               >
                 End link
               </button>
@@ -498,6 +498,26 @@ export default function AdminGuardianDetailPage() {
           {busy ? 'Saving…' : 'Link'}
         </button>
       </form>
+
+      <ConfirmDialog
+        open={confirm !== null}
+        title={confirm?.kind === 'unbind' ? 'Unbind portal user?' : 'End guardian link?'}
+        body={
+          confirm?.kind === 'unbind'
+            ? 'Unbind portal user from this guardian? They will lose Parent portal access for this guardian.'
+            : 'End this guardian link? The student will no longer be linked to this guardian.'
+        }
+        confirmLabel={confirm?.kind === 'unbind' ? 'Unbind' : 'End link'}
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          if (confirm?.kind === 'unbind') void runUnbind();
+          else if (confirm?.kind === 'end-link') void runEnd(confirm.linkId);
+        }}
+      />
     </AdminShell>
   );
 }

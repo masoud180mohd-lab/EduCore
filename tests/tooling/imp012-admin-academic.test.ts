@@ -12,7 +12,7 @@ describe('IMP-012 admin academic UI', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.(?:[1-9]|10|11|12|13|14|15|16|17|18)/);
+    expect(dsf).toMatch(/1\.(?:[1-9]|10|11|12|13|14|15|16|17|18|19|20)/);
     expect(dsf).toContain('Academic');
     expect(dsf).toContain('/admin/academic');
     expect(dsf).toContain('IMP-012');

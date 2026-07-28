@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { readSession } from '@/lib/auth/session';
 import {
   activeLinkedStudentIds,
@@ -40,16 +41,6 @@ type PaymentRow = {
   readonly status: string;
   readonly receiptId: string | null;
 };
-
-function accessMessage(err: ApiClientError): string {
-  if (err.status === 403) {
-    return 'You do not have finance / guardian access.';
-  }
-  if (err.status === 404) {
-    return 'Invoice not found.';
-  }
-  return teacherFriendlyMessage(err);
-}
 
 export default function GuardianFeesInvoiceDetailPage() {
   const params = useParams<{
@@ -115,7 +106,7 @@ export default function GuardianFeesInvoiceDetailPage() {
       }
       setError(paymentsWarning);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(accessMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not load invoice.');
     } finally {
       setLoading(false);

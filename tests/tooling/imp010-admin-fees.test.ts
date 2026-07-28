@@ -49,19 +49,25 @@ describe('IMP-010 admin fees UI', () => {
   });
 
   it('wires reconcile on invoice and receipt detail (Wave X1)', () => {
+    const mapper = readFileSync(
+      path.join(root, 'apps/web/src/lib/admin/admin-friendly-message.ts'),
+      'utf8',
+    );
+    expect(mapper).toContain('finance reconcile access');
     const invoiceDetail = readFileSync(
       path.join(root, 'apps/web/src/app/t/[tenantId]/admin/fees/invoices/[invoiceId]/page.tsx'),
       'utf8',
     );
     expect(invoiceDetail).toContain('/reconcile');
     expect(invoiceDetail).toContain('no ledger change');
-    expect(invoiceDetail).toContain('finance reconcile access');
+    expect(invoiceDetail).toContain("action: 'reconcile'");
     const receiptDetail = readFileSync(
       path.join(root, 'apps/web/src/app/t/[tenantId]/admin/fees/receipts/[receiptId]/page.tsx'),
       'utf8',
     );
     expect(receiptDetail).toContain('/reconcile');
     expect(receiptDetail).toContain('no ledger change');
+    expect(receiptDetail).toContain("action: 'reconcile'");
   });
 
   it('depends on ACF-012 finance OpenAPI', () => {

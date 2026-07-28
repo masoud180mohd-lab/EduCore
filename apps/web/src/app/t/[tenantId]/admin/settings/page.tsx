@@ -4,7 +4,8 @@ import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
 const KNOWN_KEYS = ['timezone', 'locale', 'currency'] as const;
@@ -14,11 +15,6 @@ type TenantSettingsDoc = {
   readonly settings: Readonly<Record<string, unknown>>;
   readonly updatedAt?: string;
 };
-
-function settingsMessage(err: ApiClientError): string {
-  if (err.status === 403) return 'You do not have access for this action.';
-  return teacherFriendlyMessage(err);
-}
 
 function splitSettings(settings: Readonly<Record<string, unknown>>): {
   timezone: string;
@@ -70,7 +66,7 @@ export default function AdminSettingsPage() {
       setExtrasJson(split.extrasJson);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(settingsMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'settings'));
       else setError('Could not load settings.');
     } finally {
       setLoading(false);
@@ -131,7 +127,7 @@ export default function AdminSettingsPage() {
       setExtrasJson(split.extrasJson);
       setSchemaVersion(result.data.schemaVersion);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(settingsMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'settings'));
       else setError('Could not save settings.');
     } finally {
       setBusy(false);

@@ -14,6 +14,7 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -22,12 +23,7 @@ import {
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
-import {
-  type StudentRow,
-  type StudentStatus,
-  STUDENT_STATUSES,
-  studentMessage,
-} from '@/lib/students/types';
+import { type StudentRow, type StudentStatus, STUDENT_STATUSES } from '@/lib/students/types';
 
 export default function AdminStudentsPage() {
   const params = useParams<{ tenantId: string }>();
@@ -68,7 +64,7 @@ export default function AdminStudentsPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(studentMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'students'));
       else setError('Could not load students.');
     } finally {
       setLoading(false);
@@ -106,7 +102,7 @@ export default function AdminStudentsPage() {
       setStatus('active');
       router.push(`/t/${tenantId}/admin/students/${created.data.id}`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(studentMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'students'));
       else setError('Could not create student.');
     } finally {
       setBusy(false);

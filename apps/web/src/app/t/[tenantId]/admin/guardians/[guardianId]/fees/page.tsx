@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { readSession } from '@/lib/auth/session';
 import {
   activeLinkedStudentIds,
@@ -22,13 +23,6 @@ type LinkRow = GuardianStudentLink & {
   readonly relationshipType: string;
   readonly isPrimary: boolean;
 };
-
-function accessMessage(err: ApiClientError): string {
-  if (err.status === 403) {
-    return 'You do not have finance / guardian access.';
-  }
-  return teacherFriendlyMessage(err);
-}
 
 export default function GuardianFeesEntryPage() {
   const params = useParams<{ tenantId: string; guardianId: string }>();
@@ -70,7 +64,7 @@ export default function GuardianFeesEntryPage() {
       setNames(nameMap);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(accessMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not load guardian fees.');
     } finally {
       setLoading(false);

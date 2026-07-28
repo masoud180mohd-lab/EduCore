@@ -4,17 +4,16 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { type DependentGroup, parseDeleteDependents } from '@/lib/academic/dependents';
-import {
-  type LifecycleStatus,
-  type SubjectRow,
-  LIFECYCLE_STATUSES,
-  academicMessage,
-} from '@/lib/academic/types';
+import { type LifecycleStatus, type SubjectRow, LIFECYCLE_STATUSES } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+
+type ConfirmKind = 'close' | 'delete';
 
 export default function AdminSubjectDetailPage() {
   const params = useParams<{ tenantId: string; subjectId: string }>();
@@ -24,6 +23,7 @@ export default function AdminSubjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('draft');
@@ -42,7 +42,7 @@ export default function AdminSubjectDetailPage() {
       setStatus(result.data.status as LifecycleStatus);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load subject.');
     }
   }, [subjectId]);
@@ -51,13 +51,20 @@ export default function AdminSubjectDetailPage() {
     void load();
   }, [load]);
 
-  async function onSave(event: FormEvent) {
+  function onSave(event: FormEvent) {
     event.preventDefault();
     const auth = readSession();
     if (auth === null || row === null) return;
     if (status === 'closed' && row.status !== 'closed') {
-      if (!window.confirm('Mark this subject as closed?')) return;
+      setConfirm('close');
+      return;
     }
+    void runSave();
+  }
+
+  async function runSave() {
+    const auth = readSession();
+    if (auth === null || row === null) return;
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -75,33 +82,32 @@ export default function AdminSubjectDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('Subject updated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not update subject.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onDelete() {
+  async function runDelete() {
     const auth = readSession();
     if (auth === null) return;
-    if (!window.confirm('Delete this subject? This only works if nothing depends on it.')) {
-      return;
-    }
     setBusy(true);
     setError(null);
     setInfo(null);
     setDeleteDependents(null);
     try {
       await apiRequest<void>(`/api/v1/subjects/${subjectId}`, { method: 'DELETE', auth });
+      setConfirm(null);
       router.push(`/t/${tenantId}/admin/academic/subjects`);
     } catch (err) {
       if (err instanceof ApiClientError) {
         setDeleteDependents(parseDeleteDependents(err));
-        setError(academicMessage(err));
+        setError(adminFriendlyMessage(err, 'academic'));
       } else setError('Could not delete subject.');
       setBusy(false);
     }
@@ -127,7 +133,7 @@ export default function AdminSubjectDetailPage() {
         </div>
       ) : null}
       {row !== null ? (
-        <form className="card stack" onSubmit={(e) => void onSave(e)}>
+        <form className="card stack" onSubmit={onSave}>
           <label className="field">
             <span>Name</span>
             <input
@@ -158,7 +164,7 @@ export default function AdminSubjectDetailPage() {
           <button
             className="btn btn-secondary"
             type="button"
-            onClick={() => void onDelete()}
+            onClick={() => setConfirm('delete')}
             disabled={busy}
           >
             Delete
@@ -167,6 +173,35 @@ export default function AdminSubjectDetailPage() {
       ) : error === null ? (
         <p className="muted">Loading…</p>
       ) : null}
+
+      <ConfirmDialog
+        open={confirm === 'close'}
+        title="Mark subject as closed?"
+        body="Mark this subject as closed?"
+        confirmLabel="Mark closed"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          void runSave();
+        }}
+      />
+      <ConfirmDialog
+        open={confirm === 'delete'}
+        title="Delete subject?"
+        body="Delete this subject? This only works if nothing depends on it."
+        confirmLabel="Delete"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          void runDelete();
+        }}
+      />
     </AdminShell>
   );
 }

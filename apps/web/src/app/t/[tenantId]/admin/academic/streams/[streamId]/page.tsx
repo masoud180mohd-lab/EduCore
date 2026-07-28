@@ -4,18 +4,21 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { type DependentGroup, parseDeleteDependents } from '@/lib/academic/dependents';
 import {
   type ClassRow,
   type LifecycleStatus,
   type StreamRow,
   LIFECYCLE_STATUSES,
-  academicMessage,
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+
+type ConfirmKind = 'close' | 'delete';
 
 export default function AdminStreamDetailPage() {
   const params = useParams<{ tenantId: string; streamId: string }>();
@@ -26,6 +29,7 @@ export default function AdminStreamDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('draft');
@@ -48,7 +52,7 @@ export default function AdminStreamDetailPage() {
       setClasses(classRes.data ?? []);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load stream.');
     }
   }, [streamId]);
@@ -57,13 +61,20 @@ export default function AdminStreamDetailPage() {
     void load();
   }, [load]);
 
-  async function onSave(event: FormEvent) {
+  function onSave(event: FormEvent) {
     event.preventDefault();
     const auth = readSession();
     if (auth === null || row === null) return;
     if (status === 'closed' && row.status !== 'closed') {
-      if (!window.confirm('Mark this stream as closed?')) return;
+      setConfirm('close');
+      return;
     }
+    void runSave();
+  }
+
+  async function runSave() {
+    const auth = readSession();
+    if (auth === null || row === null) return;
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -82,33 +93,32 @@ export default function AdminStreamDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('Stream updated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not update stream.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onDelete() {
+  async function runDelete() {
     const auth = readSession();
     if (auth === null) return;
-    if (!window.confirm('Delete this stream? This only works if nothing depends on it.')) {
-      return;
-    }
     setBusy(true);
     setError(null);
     setInfo(null);
     setDeleteDependents(null);
     try {
       await apiRequest<void>(`/api/v1/streams/${streamId}`, { method: 'DELETE', auth });
+      setConfirm(null);
       router.push(`/t/${tenantId}/admin/academic/streams`);
     } catch (err) {
       if (err instanceof ApiClientError) {
         setDeleteDependents(parseDeleteDependents(err));
-        setError(academicMessage(err));
+        setError(adminFriendlyMessage(err, 'academic'));
       } else setError('Could not delete stream.');
       setBusy(false);
     }
@@ -134,7 +144,7 @@ export default function AdminStreamDetailPage() {
         </div>
       ) : null}
       {row !== null ? (
-        <form className="card stack" onSubmit={(e) => void onSave(e)}>
+        <form className="card stack" onSubmit={onSave}>
           <label className="field">
             <span>Class</span>
             <select value={classId} onChange={(e) => setClassId(e.target.value)}>
@@ -175,7 +185,7 @@ export default function AdminStreamDetailPage() {
           <button
             className="btn btn-secondary"
             type="button"
-            onClick={() => void onDelete()}
+            onClick={() => setConfirm('delete')}
             disabled={busy}
           >
             Delete
@@ -184,6 +194,35 @@ export default function AdminStreamDetailPage() {
       ) : error === null ? (
         <p className="muted">Loading…</p>
       ) : null}
+
+      <ConfirmDialog
+        open={confirm === 'close'}
+        title="Mark stream as closed?"
+        body="Mark this stream as closed?"
+        confirmLabel="Mark closed"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          void runSave();
+        }}
+      />
+      <ConfirmDialog
+        open={confirm === 'delete'}
+        title="Delete stream?"
+        body="Delete this stream? This only works if nothing depends on it."
+        confirmLabel="Delete"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          void runDelete();
+        }}
+      />
     </AdminShell>
   );
 }

@@ -6,7 +6,8 @@ import { type FormEvent, useEffect, useState } from 'react';
 
 import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -31,11 +32,6 @@ type AcademicYearRow = {
 };
 
 type ItemDraft = { readonly name: string; readonly amountMajor: string };
-
-function financeMessage(err: ApiClientError): string {
-  if (err.status === 403) return 'You do not have finance access.';
-  return teacherFriendlyMessage(err);
-}
 
 export default function AdminFeeStructuresPage() {
   const params = useParams<{ tenantId: string }>();
@@ -89,7 +85,7 @@ export default function AdminFeeStructuresPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not load fee structures.');
     } finally {
       setLoading(false);
@@ -150,7 +146,7 @@ export default function AdminFeeStructuresPage() {
       setItems([{ name: '', amountMajor: '' }]);
       router.push(`/t/${tenantId}/admin/fees/structures/${created.data.id}`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not create fee structure.');
     } finally {
       setBusy(false);

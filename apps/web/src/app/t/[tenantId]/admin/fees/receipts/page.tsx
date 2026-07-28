@@ -13,7 +13,8 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -30,11 +31,6 @@ type ReceiptRow = {
   readonly status: string;
   readonly issuedAt: string;
 };
-
-function financeMessage(err: ApiClientError): string {
-  if (err.status === 403) return 'You do not have finance access.';
-  return teacherFriendlyMessage(err);
-}
 
 export default function AdminReceiptsPage() {
   const params = useParams<{ tenantId: string }>();
@@ -63,7 +59,7 @@ export default function AdminReceiptsPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not load receipts.');
     } finally {
       setLoading(false);

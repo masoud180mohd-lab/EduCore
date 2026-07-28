@@ -12,7 +12,7 @@ describe('IMP-021 user re-enable', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf).toMatch(/1\.(?:10|11|12|13|14|15|16|17|18)/);
+    expect(dsf).toMatch(/1\.(?:10|11|12|13|14|15|16|17|18|19|20)/);
     expect(dsf).toContain('IMP-021');
     expect(dsf).toMatch(/enable/i);
   });

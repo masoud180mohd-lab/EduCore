@@ -1,4 +1,5 @@
-import { ApiClientError, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 
 export type LifecycleStatus = 'draft' | 'active' | 'closed';
 
@@ -65,8 +66,7 @@ export const LIFECYCLE_STATUSES: ReadonlyArray<LifecycleStatus> = ['active', 'dr
 export const ENROLLMENT_STATUSES = ['active', 'withdrawn', 'completed', 'suspended'] as const;
 export type EnrollmentStatus = (typeof ENROLLMENT_STATUSES)[number];
 
+/** @deprecated Use adminFriendlyMessage(err, 'academic') */
 export function academicMessage(err: ApiClientError): string {
-  if (err.status === 403) return 'You do not have access for this action.';
-  if (err.status === 409) return err.message || 'Conflict — duplicate code or state.';
-  return teacherFriendlyMessage(err);
+  return adminFriendlyMessage(err, 'academic');
 }

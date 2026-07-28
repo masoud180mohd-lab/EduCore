@@ -4,17 +4,20 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
   type ClassRow,
   type EnrollmentRow,
   type EnrollmentStatus,
   type StreamRow,
   ENROLLMENT_STATUSES,
-  academicMessage,
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+
+type ConfirmState = { readonly kind: 'status' } | { readonly kind: 'transfer' } | null;
 
 export default function AdminEnrollmentDetailPage() {
   const params = useParams<{ tenantId: string; enrollmentId: string }>();
@@ -26,6 +29,7 @@ export default function AdminEnrollmentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [status, setStatus] = useState<EnrollmentStatus>('active');
   const [classId, setClassId] = useState('');
   const [streamId, setStreamId] = useState('');
@@ -73,7 +77,7 @@ export default function AdminEnrollmentDetailPage() {
         setStudentName(data.studentId);
       }
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load enrollment.');
     }
   }, [enrollmentId, loadStreams]);
@@ -82,11 +86,16 @@ export default function AdminEnrollmentDetailPage() {
     void load();
   }, [load]);
 
-  async function onStatus(event: FormEvent) {
+  function onStatus(event: FormEvent) {
     event.preventDefault();
     const auth = readSession();
     if (auth === null || row === null) return;
-    if (!window.confirm(`Change enrollment status to “${status}”?`)) return;
+    setConfirm({ kind: 'status' });
+  }
+
+  async function runStatusUpdate() {
+    const auth = readSession();
+    if (auth === null || row === null) return;
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -100,21 +109,27 @@ export default function AdminEnrollmentDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('Status updated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not update status.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onTransfer(event: FormEvent) {
+  function onTransfer(event: FormEvent) {
     event.preventDefault();
     const auth = readSession();
     if (auth === null || row === null || classId === '') return;
-    if (!window.confirm('Transfer this enrollment to the selected class/stream?')) return;
+    setConfirm({ kind: 'transfer' });
+  }
+
+  async function runTransfer() {
+    const auth = readSession();
+    if (auth === null || row === null || classId === '') return;
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -131,15 +146,22 @@ export default function AdminEnrollmentDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('Enrollment transferred.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not transfer enrollment.');
     } finally {
       setBusy(false);
     }
   }
+
+  const transferClassName = classes.find((c) => c.id === classId)?.name ?? 'the selected class';
+  const transferStreamName =
+    streamId === ''
+      ? null
+      : (streams.find((s) => s.id === streamId)?.name ?? 'the selected stream');
 
   return (
     <AdminShell tenantId={tenantId}>
@@ -168,7 +190,7 @@ export default function AdminEnrollmentDetailPage() {
             <div className="muted">Id: {row.id}</div>
           </div>
 
-          <form className="stack card" onSubmit={(e) => void onTransfer(e)}>
+          <form className="stack card" onSubmit={onTransfer}>
             <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Transfer class / stream</h2>
             <p className="muted">
               Moves this enrollment in place (same id). Year and term update from the target class.
@@ -214,7 +236,7 @@ export default function AdminEnrollmentDetailPage() {
             </button>
           </form>
 
-          <form className="stack card" onSubmit={(e) => void onStatus(e)}>
+          <form className="stack card" onSubmit={onStatus}>
             <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Change status</h2>
             <div className="field">
               <label htmlFor="enroll-patch-status">Status</label>
@@ -238,6 +260,37 @@ export default function AdminEnrollmentDetailPage() {
       ) : error === null ? (
         <p className="muted">Loading…</p>
       ) : null}
+
+      <ConfirmDialog
+        open={confirm?.kind === 'status'}
+        title="Change enrollment status?"
+        body={`Change enrollment status to “${status}”?`}
+        confirmLabel="Update status"
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          void runStatusUpdate();
+        }}
+      />
+      <ConfirmDialog
+        open={confirm?.kind === 'transfer'}
+        title="Transfer enrollment?"
+        body={
+          transferStreamName === null
+            ? `Transfer this enrollment to ${transferClassName}? Year and term will update from the target class.`
+            : `Transfer this enrollment to ${transferClassName} (${transferStreamName})? Year and term will update from the target class.`
+        }
+        confirmLabel="Transfer"
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          void runTransfer();
+        }}
+      />
     </AdminShell>
   );
 }

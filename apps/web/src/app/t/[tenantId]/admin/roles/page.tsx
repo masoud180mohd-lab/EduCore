@@ -7,13 +7,14 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
   appendById,
   buildListQuery,
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
-import { type RoleRow, roleMessage } from '@/lib/roles/types';
+import { type RoleRow } from '@/lib/roles/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
 const ROLES_PAGE_LIMIT = 100;
@@ -49,7 +50,7 @@ export default function AdminRolesPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(roleMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'roles'));
       else setError('Could not load roles.');
     } finally {
       setLoading(false);
@@ -81,7 +82,7 @@ export default function AdminRolesPage() {
       setName('');
       router.push(`/t/${tenantId}/admin/roles/${created.data.id}`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(roleMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'roles'));
       else setError('Could not create role.');
     } finally {
       setBusy(false);

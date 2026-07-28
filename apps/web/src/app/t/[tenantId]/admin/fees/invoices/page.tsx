@@ -13,7 +13,8 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -51,11 +52,6 @@ type FeeStructureItem = {
 };
 
 const STUDENT_PICKER_LIMIT = 100;
-
-function financeMessage(err: ApiClientError): string {
-  if (err.status === 403) return 'You do not have finance access.';
-  return teacherFriendlyMessage(err);
-}
 
 export default function AdminInvoicesPage() {
   const params = useParams<{ tenantId: string }>();
@@ -127,7 +123,7 @@ export default function AdminInvoicesPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not load invoices.');
     } finally {
       setLoading(false);
@@ -167,7 +163,7 @@ export default function AdminInvoicesPage() {
           feeStructureItemId: item.id,
         }));
       } catch (err) {
-        if (err instanceof ApiClientError) setError(financeMessage(err));
+        if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
         else setError('Could not load fee structure items.');
         return;
       }
@@ -205,7 +201,7 @@ export default function AdminInvoicesPage() {
       setFeeStructureId('');
       router.push(`/t/${tenantId}/admin/fees/invoices/${created.data.id}`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(financeMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not create invoice.');
     } finally {
       setBusy(false);

@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                                                                                                                                                                 |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                                                                                                                                                             |
-| Version   | `1.19`                                                                                                                                                                                                |
-| Date      | 2026-07-27                                                                                                                                                                                            |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet)                                                                                                                                           |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                                                                              |
-| Program   | IMP-007 · IMP-012 · IMP-013 · IMP-014 · IMP-015 · IMP-016 · IMP-017 · IMP-018 · IMP-019 · IMP-020 · IMP-021 · IMP-022 · IMP-023 · IMP-025 · IMP-026 · IMP-027 · IMP-028 · IMP-029 · IMP-030 · IMP-033 |
+| Field     | Value                                                             |
+| --------- | ----------------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                         |
+| Version   | `1.21`                                                            |
+| Date      | 2026-07-28                                                        |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet)       |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                          |
+| Program   | IMP-007 · … · IMP-029 · IMP-030 · IMP-033 · IMP-034 · **IMP-035** |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -71,7 +71,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 - Unbound tenant → `/login`
 - 401 → Sign in again
-- 403 → “You do not have access for this action.” (academic: `academic.read` / `academic.manage`; students: `student.read` / `student.manage`; orgs: `organization.manage`; users: `user.invite` / `user.manage` / membership lifecycle; roles: `role.read` / `role.manage`; settings: `tenant.manage`; guardians: `guardian.manage`; fees: `finance.read` / `finance.manage` / `finance.reconcile`)
+- **403 (admin pages):** use central **`adminFriendlyMessage(err, domain)`** (`apps/web/src/lib/admin/admin-friendly-message.ts`) — see Error copy table below. API remains AuthZ truth.
 - **AdminShell gate (IMP-033):** after session↔tenant bind, `GET /auth/me` must show an admin-domain capability (owner/admin role **or** any of tenant/user/org/student/guardian/role/academic/finance read|manage). Otherwise show “Admin unavailable” with link to teacher/parent — do **not** render privileged nav or page children.
 - **Nav filter (IMP-033):** top-nav (and home hub cards) only list domains the actor’s permissions can reach; API remains AuthZ truth for mutations. **IMP-029 does not redesign permissions** — it only groups already-visible ids.
 - Attendance-only staff / parent-only → no AdminShell (teacher or parent workspace)
@@ -141,6 +141,41 @@ Use **`AdminTable`** for high-traffic operational registries. Keep **cards** for
 
 **Non-goals (tables):** TanStack Table / shadcn DataGrid; virtualization; migrating every admin list in one PR.
 
+## Confirm dialogs (IMP-034 / AUDIT G5)
+
+Destructive admin mutations use shared **`ConfirmDialog`** — not `window.confirm`.
+
+| Rule         | Behavior                                                                                                                                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Required for | Money (void, reverse); membership/users (disable, enable, suspend, reactivate, remove, role unassign); org deactivate; guardian end-link / unbind; academic delete + mark closed; enrollment status/transfer |
+| Keyboard     | **Esc** and backdrop dismiss when not busy; initial focus on **Cancel**; Enter activates focused control only (Cancel by default — does **not** auto-confirm)                                                |
+| Focus        | Restore focus to the triggering control after close when practical                                                                                                                                           |
+| Danger       | `danger={true}` for void, reverse, delete, remove, disable, unbind, suspend, end-link, mark closed                                                                                                           |
+| Busy         | Confirm + Cancel + backdrop disabled while mutation in flight (no double POST); Idempotency-Key unchanged                                                                                                    |
+| AuthZ        | Confirm UI ≠ authorization — API remains truth (403/409 after confirm)                                                                                                                                       |
+
+**Non-goals (confirms):** modal libraries (Headless/Radix/shadcn); auto-confirm timers; **picker UX** (Wave X); teacher marks/attendance confirms (Wave X).
+
+## Error copy — central admin mapper (IMP-035 / AUDIT G3)
+
+All routes under `apps/web/src/app/t/[tenantId]/admin/**` MUST map `ApiClientError` via **`adminFriendlyMessage(err, domain)`** — not per-page `*Message` helpers or `teacherFriendlyMessage`.
+
+| Domain / rule                                                                                                | 403 copy                                              |
+| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| `generic`, `users`, `memberships`, `organizations`, `students`, `guardians`, `roles`, `academic`, `settings` | “You do not have access for this action.”             |
+| `finance`                                                                                                    | “You do not have finance access.”                     |
+| `finance` + `action: 'reconcile'`                                                                            | “You do not have finance reconcile access.” (DSF-004) |
+| `tenant` (admin home / shell fetch)                                                                          | “You do not have access for this school.”             |
+
+| Status                | Behavior                                                    |
+| --------------------- | ----------------------------------------------------------- |
+| 401                   | Sign in again                                               |
+| 404                   | Not found                                                   |
+| 409                   | Prefer API `err.message`; domain-safe fallback when empty   |
+| Network / idempotency | Shared `apiFriendlyMessage` core (same as teacher baseline) |
+
+**Non-goals (error copy):** i18n / Kiswahili framework; Nest error envelope changes; toast/snackbar system; teacher/parent shell migration (Wave X).
+
 ## Non-goals
 
 - Parent portal chrome (DSF-006)
@@ -163,6 +198,31 @@ Same as DSF-001: Bearer + `X-Tenant-Id` in `sessionStorage` until httpOnly cooki
 
 Accepted under acting seats only; revise when a second review seat exists.
 
+## Increment traceability
+
+| IMP     | Topic (summary)                                               |
+| ------- | ------------------------------------------------------------- |
+| IMP-012 | Academic hub + entity list/create flows                       |
+| IMP-013 | Academic structure PATCH on detail edit forms                 |
+| IMP-014 | Academic delete + reparent controls on detail                 |
+| IMP-015 | Students list + create + edit detail                          |
+| IMP-016 | Users invite/edit + organizations create/edit/deactivate      |
+| IMP-017 | AdminShell school name brand from `GET /tenants/current`      |
+| IMP-019 | Tenant settings edit + guardian profile edit on detail        |
+| IMP-020 | Membership suspend / reactivate / remove on user detail       |
+| IMP-021 | User enable action on detail                                  |
+| IMP-022 | Roles list + create + custom permission replace               |
+| IMP-023 | Memberships list with status filter                           |
+| IMP-025 | Academic delete 409 dependents listing                        |
+| IMP-026 | Org-scoped user-role assign                                   |
+| IMP-027 | Shared admin primitives (Banner, ResourceList, ConfirmDialog) |
+| IMP-028 | AdminTable for Users/Students ops lists                       |
+| IMP-029 | Grouped AdminShell nav IA for tablet                          |
+| IMP-030 | Load more cursor pagination on admin registries               |
+| IMP-033 | AdminShell /auth/me gate + permission-filtered nav            |
+| IMP-034 | ConfirmDialog replaces window.confirm (destructive admin)     |
+| IMP-035 | Central adminFriendlyMessage error mapper                     |
+
 ## Revisions
 
 | Ver  | Date       | Notes                                                               |
@@ -174,3 +234,5 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.17 | 2026-07-27 | IMP-030 Load more cursor pagination on admin registries             |
 | 1.18 | 2026-07-27 | IMP-028 AdminTable for Users/Students ops lists                     |
 | 1.19 | 2026-07-27 | IMP-029 grouped AdminShell nav IA for tablet (Option A)             |
+| 1.20 | 2026-07-27 | IMP-034 ConfirmDialog replaces window.confirm (destructive admin)   |
+| 1.21 | 2026-07-28 | IMP-035 central adminFriendlyMessage error mapper                   |

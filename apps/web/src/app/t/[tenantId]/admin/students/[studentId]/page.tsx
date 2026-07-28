@@ -6,12 +6,8 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
-import {
-  type StudentRow,
-  type StudentStatus,
-  STUDENT_STATUSES,
-  studentMessage,
-} from '@/lib/students/types';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { type StudentRow, type StudentStatus, STUDENT_STATUSES } from '@/lib/students/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
 export default function AdminStudentDetailPage() {
@@ -38,7 +34,7 @@ export default function AdminStudentDetailPage() {
       setStatus(result.data.status as StudentStatus);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(studentMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'students'));
       else setError('Could not load student.');
     }
   }, [studentId]);
@@ -71,7 +67,7 @@ export default function AdminStudentDetailPage() {
       setInfo('Student updated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(studentMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'students'));
       else setError('Could not update student.');
     } finally {
       setBusy(false);

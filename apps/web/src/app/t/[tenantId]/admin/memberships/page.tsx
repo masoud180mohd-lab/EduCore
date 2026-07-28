@@ -19,7 +19,8 @@ import {
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { readSession } from '@/lib/auth/session';
 
 type MembershipStatus = 'invited' | 'active' | 'suspended' | 'removed';
@@ -41,11 +42,6 @@ const STATUS_FILTERS: ReadonlyArray<{ value: '' | MembershipStatus; label: strin
   { value: 'suspended', label: 'Suspended' },
   { value: 'removed', label: 'Removed' },
 ];
-
-function membershipMessage(err: ApiClientError): string {
-  if (err.status === 403) return 'You do not have access for this action.';
-  return teacherFriendlyMessage(err);
-}
 
 export default function AdminMembershipsPage() {
   const params = useParams<{ tenantId: string }>();
@@ -81,7 +77,7 @@ export default function AdminMembershipsPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(membershipMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'memberships'));
       else setError('Could not load memberships.');
     } finally {
       setLoading(false);

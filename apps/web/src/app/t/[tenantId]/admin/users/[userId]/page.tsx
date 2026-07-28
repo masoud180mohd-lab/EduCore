@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
-import { type RoleRow, type UserRoleRow, roleMessage } from '@/lib/roles/types';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { type RoleRow, type UserRoleRow } from '@/lib/roles/types';
 import { type OrganizationRow } from '@/lib/organizations/types';
-import { type UserRow, userMessage } from '@/lib/users/types';
+import { type UserRow } from '@/lib/users/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
 type MembershipRow = {
@@ -22,6 +24,42 @@ type MembershipRow = {
 };
 
 type LifecycleAction = 'suspend' | 'reactivate' | 'remove';
+
+type ConfirmState =
+  | { readonly kind: 'disable' }
+  | { readonly kind: 'enable' }
+  | { readonly kind: 'membership'; readonly action: LifecycleAction }
+  | { readonly kind: 'unassign'; readonly assignmentId: string; readonly roleCode: string }
+  | null;
+
+const MEMBERSHIP_COPY: Record<
+  LifecycleAction,
+  {
+    readonly title: string;
+    readonly body: string;
+    readonly confirmLabel: string;
+    readonly done: string;
+  }
+> = {
+  suspend: {
+    title: 'Suspend membership?',
+    body: 'Suspend this membership? They will lose access to this school until reactivated.',
+    confirmLabel: 'Suspend',
+    done: 'Membership suspended.',
+  },
+  reactivate: {
+    title: 'Reactivate membership?',
+    body: 'Reactivate this membership? They will regain active access to this school.',
+    confirmLabel: 'Reactivate',
+    done: 'Membership reactivated.',
+  },
+  remove: {
+    title: 'Remove membership?',
+    body: 'Remove this membership? Access ends. You can invite them again later (status becomes invited).',
+    confirmLabel: 'Remove',
+    done: 'Membership removed.',
+  },
+};
 
 function assignmentKey(roleId: string, organizationId: string | null): string {
   return `${roleId}:${organizationId ?? ''}`;
@@ -46,6 +84,7 @@ export default function AdminUserDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [displayName, setDisplayName] = useState('');
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
 
@@ -68,7 +107,7 @@ export default function AdminUserDetailPage() {
       setRow(result.data);
       setDisplayName(result.data.displayName ?? '');
     } catch (err) {
-      if (err instanceof ApiClientError) userError = userMessage(err);
+      if (err instanceof ApiClientError) userError = adminFriendlyMessage(err, 'users');
       else userError = 'Could not load user.';
       setRow(null);
       setDisplayName('');
@@ -96,7 +135,7 @@ export default function AdminUserDetailPage() {
         setMembership(null);
         setError(null);
       } else if (err instanceof ApiClientError) {
-        setError(userMessage(err));
+        setError(adminFriendlyMessage(err, 'users'));
       } else {
         setError(userError ?? 'Could not load membership.');
       }
@@ -150,21 +189,15 @@ export default function AdminUserDetailPage() {
       setInfo('User updated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(userMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'users'));
       else setError('Could not update user.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onDisable() {
+  async function runDisable() {
     if (row === null || row.status === 'disabled') return;
-    if (
-      !window.confirm(
-        `Disable “${row.displayName || row.email}”? They will not be able to sign in.`,
-      )
-    )
-      return;
     const auth = readSession();
     if (auth === null) return;
     setBusy(true);
@@ -180,24 +213,19 @@ export default function AdminUserDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('User disabled.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(userMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'users'));
       else setError('Could not disable user.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onEnable() {
+  async function runEnable() {
     if (row === null || row.status !== 'disabled') return;
-    if (
-      !window.confirm(
-        `Enable “${row.displayName || row.email}”? They will be able to sign in again.`,
-      )
-    )
-      return;
     const auth = readSession();
     if (auth === null) return;
     setBusy(true);
@@ -213,35 +241,19 @@ export default function AdminUserDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('User enabled.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(userMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'users'));
       else setError('Could not enable user.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onMembershipAction(action: LifecycleAction) {
+  async function runMembershipAction(action: LifecycleAction) {
     if (membership === null) return;
-    const labels: Record<LifecycleAction, { confirm: string; done: string }> = {
-      suspend: {
-        confirm: 'Suspend this membership? They will lose access to this school until reactivated.',
-        done: 'Membership suspended.',
-      },
-      reactivate: {
-        confirm: 'Reactivate this membership? They will regain active access to this school.',
-        done: 'Membership reactivated.',
-      },
-      remove: {
-        confirm:
-          'Remove this membership? Access ends. You can invite them again later (status becomes invited).',
-        done: 'Membership removed.',
-      },
-    };
-    if (!window.confirm(labels[action].confirm)) return;
-
     const auth = readSession();
     if (auth === null) return;
     setBusy(true);
@@ -261,12 +273,13 @@ export default function AdminUserDetailPage() {
       );
       clearIdempotencyKey(actionKey);
       setMembership(result.data);
-      setInfo(labels[action].done);
+      setConfirm(null);
+      setInfo(MEMBERSHIP_COPY[action].done);
       if (action === 'reactivate') {
         await load();
       }
     } catch (err) {
-      if (err instanceof ApiClientError) setError(userMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'users'));
       else setError(`Could not ${action} membership.`);
     } finally {
       setBusy(false);
@@ -305,15 +318,14 @@ export default function AdminUserDetailPage() {
       setInfo('Role assigned.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(roleMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'roles'));
       else setError('Could not assign role.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onUnassignRole(assignmentId: string, roleCode: string) {
-    if (!window.confirm(`Remove role “${roleCode}” from this user?`)) return;
+  async function runUnassignRole(assignmentId: string) {
     const auth = readSession();
     if (auth === null) return;
     setBusy(true);
@@ -328,10 +340,11 @@ export default function AdminUserDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('Role removed.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(roleMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'roles'));
       else setError('Could not remove role.');
     } finally {
       setBusy(false);
@@ -389,7 +402,7 @@ export default function AdminUserDetailPage() {
               className="btn btn-secondary"
               type="button"
               disabled={busy}
-              onClick={() => void onDisable()}
+              onClick={() => setConfirm({ kind: 'disable' })}
             >
               Disable user
             </button>
@@ -400,7 +413,7 @@ export default function AdminUserDetailPage() {
                 className="btn btn-primary"
                 type="button"
                 disabled={busy || isSelf}
-                onClick={() => void onEnable()}
+                onClick={() => setConfirm({ kind: 'enable' })}
               >
                 Enable user
               </button>
@@ -425,7 +438,7 @@ export default function AdminUserDetailPage() {
                 className="btn btn-secondary"
                 type="button"
                 disabled={busy || isSelf}
-                onClick={() => void onMembershipAction('suspend')}
+                onClick={() => setConfirm({ kind: 'membership', action: 'suspend' })}
               >
                 Suspend membership
               </button>
@@ -435,7 +448,7 @@ export default function AdminUserDetailPage() {
                 className="btn btn-primary"
                 type="button"
                 disabled={busy}
-                onClick={() => void onMembershipAction('reactivate')}
+                onClick={() => setConfirm({ kind: 'membership', action: 'reactivate' })}
               >
                 Reactivate membership
               </button>
@@ -445,7 +458,7 @@ export default function AdminUserDetailPage() {
                 className="btn btn-secondary"
                 type="button"
                 disabled={busy || isSelf}
-                onClick={() => void onMembershipAction('remove')}
+                onClick={() => setConfirm({ kind: 'membership', action: 'remove' })}
               >
                 Remove membership
               </button>
@@ -488,7 +501,9 @@ export default function AdminUserDetailPage() {
                     className="btn btn-secondary"
                     type="button"
                     disabled={busy}
-                    onClick={() => void onUnassignRole(ur.id, ur.roleCode)}
+                    onClick={() =>
+                      setConfirm({ kind: 'unassign', assignmentId: ur.id, roleCode: ur.roleCode })
+                    }
                   >
                     Remove
                   </button>
@@ -541,6 +556,58 @@ export default function AdminUserDetailPage() {
       {!showUserForm && membership === null && error === null ? (
         <p className="muted">Loading…</p>
       ) : null}
+
+      <ConfirmDialog
+        open={confirm !== null}
+        title={
+          confirm?.kind === 'disable'
+            ? 'Disable user?'
+            : confirm?.kind === 'enable'
+              ? 'Enable user?'
+              : confirm?.kind === 'membership'
+                ? MEMBERSHIP_COPY[confirm.action].title
+                : confirm?.kind === 'unassign'
+                  ? 'Remove role?'
+                  : 'Confirm'
+        }
+        body={
+          confirm?.kind === 'disable' && row !== null
+            ? `Disable “${row.displayName || row.email}”? They will not be able to sign in.`
+            : confirm?.kind === 'enable' && row !== null
+              ? `Enable “${row.displayName || row.email}”? They will be able to sign in again.`
+              : confirm?.kind === 'membership'
+                ? MEMBERSHIP_COPY[confirm.action].body
+                : confirm?.kind === 'unassign'
+                  ? `Remove role “${confirm.roleCode}” from this user?`
+                  : ''
+        }
+        confirmLabel={
+          confirm?.kind === 'disable'
+            ? 'Disable'
+            : confirm?.kind === 'enable'
+              ? 'Enable'
+              : confirm?.kind === 'membership'
+                ? MEMBERSHIP_COPY[confirm.action].confirmLabel
+                : confirm?.kind === 'unassign'
+                  ? 'Remove'
+                  : 'Confirm'
+        }
+        danger={
+          confirm?.kind === 'disable' ||
+          confirm?.kind === 'unassign' ||
+          (confirm?.kind === 'membership' && confirm.action !== 'reactivate')
+        }
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          if (confirm?.kind === 'disable') void runDisable();
+          else if (confirm?.kind === 'enable') void runEnable();
+          else if (confirm?.kind === 'membership') void runMembershipAction(confirm.action);
+          else if (confirm?.kind === 'unassign') void runUnassignRole(confirm.assignmentId);
+        }}
+      />
     </AdminShell>
   );
 }

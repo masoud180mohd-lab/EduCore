@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { type DependentGroup, parseDeleteDependents } from '@/lib/academic/dependents';
 import {
   type AcademicYearRow,
@@ -14,9 +16,10 @@ import {
   type LifecycleStatus,
   type TermRow,
   LIFECYCLE_STATUSES,
-  academicMessage,
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+
+type ConfirmKind = 'close' | 'delete';
 
 export default function AdminClassDetailPage() {
   const params = useParams<{ tenantId: string; classId: string }>();
@@ -28,6 +31,7 @@ export default function AdminClassDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('draft');
@@ -52,7 +56,7 @@ export default function AdminClassDetailPage() {
       setYears(yearRes.data ?? []);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load class.');
     }
   }, [classId]);
@@ -80,13 +84,20 @@ export default function AdminClassDetailPage() {
     })();
   }, [academicYearId]);
 
-  async function onSave(event: FormEvent) {
+  function onSave(event: FormEvent) {
     event.preventDefault();
     const auth = readSession();
     if (auth === null || row === null) return;
     if (status === 'closed' && row.status !== 'closed') {
-      if (!window.confirm('Mark this class as closed?')) return;
+      setConfirm('close');
+      return;
     }
+    void runSave();
+  }
+
+  async function runSave() {
+    const auth = readSession();
+    if (auth === null || row === null) return;
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -106,33 +117,32 @@ export default function AdminClassDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('Class updated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not update class.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onDelete() {
+  async function runDelete() {
     const auth = readSession();
     if (auth === null) return;
-    if (!window.confirm('Delete this class? This only works if nothing depends on it.')) {
-      return;
-    }
     setBusy(true);
     setError(null);
     setInfo(null);
     setDeleteDependents(null);
     try {
       await apiRequest<void>(`/api/v1/classes/${classId}`, { method: 'DELETE', auth });
+      setConfirm(null);
       router.push(`/t/${tenantId}/admin/academic/classes`);
     } catch (err) {
       if (err instanceof ApiClientError) {
         setDeleteDependents(parseDeleteDependents(err));
-        setError(academicMessage(err));
+        setError(adminFriendlyMessage(err, 'academic'));
       } else setError('Could not delete class.');
       setBusy(false);
     }
@@ -159,7 +169,7 @@ export default function AdminClassDetailPage() {
       ) : null}
       {row !== null ? (
         <div className="stack">
-          <form className="card stack" onSubmit={(e) => void onSave(e)}>
+          <form className="card stack" onSubmit={onSave}>
             <label className="field">
               <span>Academic year</span>
               <select
@@ -217,7 +227,7 @@ export default function AdminClassDetailPage() {
             <button
               className="btn btn-secondary"
               type="button"
-              onClick={() => void onDelete()}
+              onClick={() => setConfirm('delete')}
               disabled={busy}
             >
               Delete
@@ -235,6 +245,35 @@ export default function AdminClassDetailPage() {
       ) : error === null ? (
         <p className="muted">Loading…</p>
       ) : null}
+
+      <ConfirmDialog
+        open={confirm === 'close'}
+        title="Mark class as closed?"
+        body="Mark this class as closed?"
+        confirmLabel="Mark closed"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          void runSave();
+        }}
+      />
+      <ConfirmDialog
+        open={confirm === 'delete'}
+        title="Delete class?"
+        body="Delete this class? This only works if nothing depends on it."
+        confirmLabel="Delete"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          void runDelete();
+        }}
+      />
     </AdminShell>
   );
 }

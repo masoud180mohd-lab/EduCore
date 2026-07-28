@@ -4,18 +4,21 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { type DependentGroup, parseDeleteDependents } from '@/lib/academic/dependents';
 import {
   type AcademicYearRow,
   type LifecycleStatus,
   type TermRow,
   LIFECYCLE_STATUSES,
-  academicMessage,
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+
+type ConfirmKind = 'close' | 'delete';
 
 export default function AdminTermDetailPage() {
   const params = useParams<{ tenantId: string; termId: string }>();
@@ -26,6 +29,7 @@ export default function AdminTermDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [startsOn, setStartsOn] = useState('');
@@ -52,7 +56,7 @@ export default function AdminTermDetailPage() {
       setYears(yearRes.data ?? []);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load term.');
     }
   }, [termId]);
@@ -61,13 +65,20 @@ export default function AdminTermDetailPage() {
     void load();
   }, [load]);
 
-  async function onSave(event: FormEvent) {
+  function onSave(event: FormEvent) {
     event.preventDefault();
     const auth = readSession();
     if (auth === null || row === null) return;
     if (status === 'closed' && row.status !== 'closed') {
-      if (!window.confirm('Mark this term as closed?')) return;
+      setConfirm('close');
+      return;
     }
+    void runSave();
+  }
+
+  async function runSave() {
+    const auth = readSession();
+    if (auth === null || row === null) return;
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -88,33 +99,32 @@ export default function AdminTermDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      setConfirm(null);
       setInfo('Term updated.');
       await load();
     } catch (err) {
-      if (err instanceof ApiClientError) setError(academicMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not update term.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function onDelete() {
+  async function runDelete() {
     const auth = readSession();
     if (auth === null) return;
-    if (!window.confirm('Delete this term? This only works if nothing depends on it.')) {
-      return;
-    }
     setBusy(true);
     setError(null);
     setInfo(null);
     setDeleteDependents(null);
     try {
       await apiRequest<void>(`/api/v1/terms/${termId}`, { method: 'DELETE', auth });
+      setConfirm(null);
       router.push(`/t/${tenantId}/admin/academic/terms`);
     } catch (err) {
       if (err instanceof ApiClientError) {
         setDeleteDependents(parseDeleteDependents(err));
-        setError(academicMessage(err));
+        setError(adminFriendlyMessage(err, 'academic'));
       } else setError('Could not delete term.');
       setBusy(false);
     }
@@ -140,7 +150,7 @@ export default function AdminTermDetailPage() {
         </div>
       ) : null}
       {row !== null ? (
-        <form className="card stack" onSubmit={(e) => void onSave(e)}>
+        <form className="card stack" onSubmit={onSave}>
           <label className="field">
             <span>Academic year</span>
             <select value={academicYearId} onChange={(e) => setAcademicYearId(e.target.value)}>
@@ -189,7 +199,7 @@ export default function AdminTermDetailPage() {
           <button
             className="btn btn-secondary"
             type="button"
-            onClick={() => void onDelete()}
+            onClick={() => setConfirm('delete')}
             disabled={busy}
           >
             Delete
@@ -198,6 +208,35 @@ export default function AdminTermDetailPage() {
       ) : error === null ? (
         <p className="muted">Loading…</p>
       ) : null}
+
+      <ConfirmDialog
+        open={confirm === 'close'}
+        title="Mark term as closed?"
+        body="Mark this term as closed?"
+        confirmLabel="Mark closed"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          void runSave();
+        }}
+      />
+      <ConfirmDialog
+        open={confirm === 'delete'}
+        title="Delete term?"
+        body="Delete this term? This only works if nothing depends on it."
+        confirmLabel="Delete"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={() => {
+          void runDelete();
+        }}
+      />
     </AdminShell>
   );
 }

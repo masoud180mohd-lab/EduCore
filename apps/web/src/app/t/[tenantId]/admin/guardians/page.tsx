@@ -19,7 +19,8 @@ import {
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
-import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
+import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
 type GuardianRow = {
@@ -62,7 +63,7 @@ export default function AdminGuardiansPage() {
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'guardians'));
       else setError('Could not load guardians.');
     } finally {
       setLoading(false);
@@ -98,7 +99,7 @@ export default function AdminGuardiansPage() {
       setEmail('');
       router.push(`/t/${tenantId}/admin/guardians/${created.data.id}`);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'guardians'));
       else setError('Could not create guardian.');
     } finally {
       setBusy(false);
