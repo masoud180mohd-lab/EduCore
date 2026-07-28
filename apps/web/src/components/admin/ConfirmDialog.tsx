@@ -3,8 +3,9 @@
 import { useEffect, useId, useRef } from 'react';
 
 /**
- * Accessible confirm dialog (IMP-027) — replaces `window.confirm` for admin destructive actions.
- * Focuses the cancel button on open; Esc closes without confirming.
+ * Accessible confirm dialog (IMP-027 / IMP-034) — replaces `window.confirm` for admin destructive actions.
+ * Focuses Cancel on open; Esc / backdrop cancel when not busy; restores focus to opener on close.
+ * Enter activates the focused control only (Cancel by default) — does not auto-confirm.
  */
 export function ConfirmDialog({
   open,
@@ -29,15 +30,35 @@ export function ConfirmDialog({
 }) {
   const titleId = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    previouslyFocused.current = opener;
     cancelRef.current?.focus();
+
     function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !busy) onCancel();
+      if (event.key === 'Escape' && !busy) {
+        event.preventDefault();
+        onCancel();
+      }
     }
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      const el = previouslyFocused.current;
+      previouslyFocused.current = null;
+      if (el !== null && typeof el.focus === 'function') {
+        queueMicrotask(() => {
+          try {
+            el.focus();
+          } catch {
+            /* opener may have unmounted */
+          }
+        });
+      }
+    };
   }, [open, busy, onCancel]);
 
   if (!open) return null;

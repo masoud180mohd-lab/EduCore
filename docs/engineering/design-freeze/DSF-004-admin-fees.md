@@ -68,7 +68,7 @@ Same as DSF-002:
 - Structure detail edit form (name, status, replaceable items; year/currency read-only)
 - Invoice create form (student picker, year, structure → prefill lines, or manual lines)
 - Office payment form (method: cash | bank | cheque | other; amount ≤ balance)
-- Confirm dialogs for void / reverse (destructive)
+- Confirm dialogs for void / reverse (destructive) — **IMP-034 `ConfirmDialog`** (not `window.confirm`)
 
 ## AuthZ UX
 
@@ -125,3 +125,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.0 | 2026-07-22 | IMP-010 provisional bursar fees UI                                  |
 | 1.1 | 2026-07-26 | IMP-024 fee structure detail edit (`PATCH`, items replace + 409 UX) |
 | 1.2 | 2026-07-27 | IMP-028 AdminTable for Invoices + Receipts lists                    |
+| 1.3 | 2026-07-27 | IMP-034 ConfirmDialog for void / reverse (not window.confirm)       |
