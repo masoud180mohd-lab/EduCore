@@ -14,15 +14,23 @@ npm run dev:web     # :3001
 
 Login: `admin@educore.local` / `ChangeMe-Local-Only-1`
 
-## Checklist — Settings
+## Checklist — Settings (IMP-032 operator-safe)
+
+| #   | Step                                                      | Expected                            | Pass? |
+| --- | --------------------------------------------------------- | ----------------------------------- | ----- |
+| 1   | Open Settings                                             | Known keys only; no JSON textarea   |       |
+| 2   | Set timezone / locale / currency → Save (Advanced closed) | Success; extras preserved on reload |       |
+| 3   | Expand Advanced → edit JSON → Save                        | ConfirmDialog → success             |       |
+| 4   | Invalid JSON → Save (Advanced open)                       | Client error, no PUT                |       |
+| 5   | tenant.read only (no manage) → page                       | Read-only; no Save                  |       |
+| 6   | tenant.read only → PUT via API                            | 403                                 |       |
+
+## Checklist — Settings (legacy IMP-019)
 
 | #   | Step                                    | Expected                   | Pass? |
 | --- | --------------------------------------- | -------------------------- | ----- |
 | 1   | Open Settings                           | Form (not “edit deferred”) |       |
 | 2   | Set timezone / locale / currency → Save | Success banner; reload OK  |       |
-| 3   | Edit additional JSON → Save             | Merged into settings       |       |
-| 4   | Invalid JSON → Save                     | Client error, no PUT       |       |
-| 5   | Parent / no tenant.manage → Save        | 403                        |       |
 
 ## Checklist — Guardian profile
 

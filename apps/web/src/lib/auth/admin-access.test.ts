@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   adminDeniedFallback,
   canAccessAdminShell,
+  canManageTenantSettings,
   groupAdminNav,
   visibleAdminNavIds,
   type AdminNavId,
@@ -65,6 +66,21 @@ describe('visibleAdminNavIds', () => {
     expect(ids.has('users')).toBe(false);
     expect(ids.has('settings')).toBe(false);
     expect(ids.has('roles')).toBe(false);
+  });
+});
+
+describe('canManageTenantSettings', () => {
+  it('allows owner/admin and tenant.manage', () => {
+    expect(canManageTenantSettings({ roles: [{ code: 'owner' }], permissions: [] })).toBe(true);
+    expect(
+      canManageTenantSettings({ roles: [{ code: 'staff' }], permissions: ['tenant.manage'] }),
+    ).toBe(true);
+  });
+
+  it('denies tenant.read only', () => {
+    expect(
+      canManageTenantSettings({ roles: [{ code: 'staff' }], permissions: ['tenant.read'] }),
+    ).toBe(false);
   });
 });
 

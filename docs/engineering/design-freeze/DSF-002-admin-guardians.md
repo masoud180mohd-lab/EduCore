@@ -3,11 +3,11 @@
 | Field     | Value                                                       |
 | --------- | ----------------------------------------------------------- |
 | Freeze ID | `DSF-002`                                                   |
-| Version   | `1.22`                                                      |
+| Version   | `1.23`                                                      |
 | Date      | 2026-07-28                                                  |
 | Audience  | School admin / headmaster (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                    |
-| Program   | IMP-007 · … · IMP-034 · IMP-035 · **IMP-031**               |
+| Program   | IMP-007 · … · IMP-031 · **IMP-032**                         |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -37,7 +37,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 5. **Roles list + create + edit detail** — `GET/POST /roles`; detail rename (`PATCH`) + permission replace for **custom** roles (`PUT …/permissions`); system roles read-only grants (ACF-001 §4.7). No role DELETE.
 6. **Organizations list + create + edit detail** — `GET/POST /organizations`; detail `PATCH` + `POST …/deactivate` (ACF-001). No org DELETE.
 7. **Students list + create + edit detail** — `GET/POST /students`, `GET/PATCH /students/{id}` (ACF-002). No student DELETE in UI.
-8. **Tenant settings edit** — `GET` + `PUT /tenant-settings` (ACF-001); form for known keys + settings JSON merge
+8. **Tenant settings edit** — `GET` + `PUT /tenant-settings` (ACF-001); **operator form** timezone/locale/currency; Advanced JSON disclosure (IMP-032)
 9. **Guardians list** — `GET /guardians`
 10. **Guardian detail** — get + **profile edit** (displayName/phone/email/status PATCH); linked students; create guardian; link/unbind portal user
 11. **Academic hub** — `/admin/academic` short links (Years, Terms, Classes, Streams, Subjects, Enrollments) — **IMP-012**
@@ -54,7 +54,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - **IMP-029 nav model:** `groupAdminNav(visibleAdminNavIds)` in `apps/web/src/lib/auth/admin-access.ts`
 - `ResourceList` pattern (loading / empty / error / forbidden / optional Load more footer)
 - Guardian form (displayName, optional phone/email); guardian detail **profile edit** (displayName/phone/email/status)
-- Tenant settings form (timezone/locale/currency + settings JSON; PUT save)
+- Tenant settings form — timezone/locale/currency default; Advanced JSON disclosure + confirm (IMP-032)
 - Student create/edit forms (displayName, optional studentCode, status default **active**)
 - Org create/edit forms (orgType, name, optional code/parent); deactivate confirm on detail
 - User invite form (email, optional displayName, roleCodes owner|admin|staff); detail edit displayName + disable/enable confirm; **membership status + Suspend / Reactivate / Remove** (confirm; no self suspend/remove/enable); **user-role assign/unassign** with scope select (Entire tenant | organization)
@@ -199,6 +199,21 @@ All routes under `apps/web/src/app/t/[tenantId]/admin/**` MUST map `ApiClientErr
 
 **Non-goals (error copy):** i18n / Kiswahili framework; Nest error envelope changes; toast/snackbar system; teacher/parent shell migration (Wave X).
 
+## Tenant settings — operator-safe form (IMP-032 / AUDIT G7)
+
+| Rule            | Behavior                                                                                              |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| Default UI      | Timezone, locale, currency only — no always-visible JSON textarea                                     |
+| Advanced        | Toggle “Advanced: edit additional JSON”; warning banner; monospace textarea only when expanded        |
+| Advanced policy | **Option A** — visible to all admins who can open Settings, with strong warning (not staff-only gate) |
+| Normal save     | `mergeSettingsForSave(loadedExtras, known)` — **preserves server extras** not shown in form           |
+| Advanced save   | Parse JSON object; merge known keys on top; **ConfirmDialog** if extras JSON changed                  |
+| Read-only       | Without `tenant.manage` (and not owner/admin): disabled inputs, no Save; API 403 on PUT if attempted  |
+| Helpers         | `lib/admin/tenant-settings-form.ts` — split, merge, validate                                          |
+| API             | Unchanged PUT envelope `{ schemaVersion, settings }` — no Nest schema expansion                       |
+
+**Non-goals (settings):** new validated keys without product decision; entitlements UI; settings audit history; auto-migration of legacy keys into form fields.
+
 ## Non-goals
 
 - Parent portal chrome (DSF-006)
@@ -223,29 +238,30 @@ Accepted under acting seats only; revise when a second review seat exists.
 
 ## Increment traceability
 
-| IMP     | Topic (summary)                                               |
-| ------- | ------------------------------------------------------------- |
-| IMP-012 | Academic hub + entity list/create flows                       |
-| IMP-013 | Academic structure PATCH on detail edit forms                 |
-| IMP-014 | Academic delete + reparent controls on detail                 |
-| IMP-015 | Students list + create + edit detail                          |
-| IMP-016 | Users invite/edit + organizations create/edit/deactivate      |
-| IMP-017 | AdminShell school name brand from `GET /tenants/current`      |
-| IMP-019 | Tenant settings edit + guardian profile edit on detail        |
-| IMP-020 | Membership suspend / reactivate / remove on user detail       |
-| IMP-021 | User enable action on detail                                  |
-| IMP-022 | Roles list + create + custom permission replace               |
-| IMP-023 | Memberships list with status filter                           |
-| IMP-025 | Academic delete 409 dependents listing                        |
-| IMP-026 | Org-scoped user-role assign                                   |
-| IMP-027 | Shared admin primitives (Banner, ResourceList, ConfirmDialog) |
-| IMP-028 | AdminTable for Users/Students ops lists                       |
-| IMP-029 | Grouped AdminShell nav IA for tablet                          |
-| IMP-030 | Load more cursor pagination on admin registries               |
-| IMP-033 | AdminShell /auth/me gate + permission-filtered nav            |
-| IMP-034 | ConfirmDialog replaces window.confirm (destructive admin)     |
-| IMP-035 | Central adminFriendlyMessage error mapper                     |
-| IMP-031 | Admin cross-links (student ↔ enrollment/fees/guardian)        |
+| IMP     | Topic (summary)                                                |
+| ------- | -------------------------------------------------------------- |
+| IMP-012 | Academic hub + entity list/create flows                        |
+| IMP-013 | Academic structure PATCH on detail edit forms                  |
+| IMP-014 | Academic delete + reparent controls on detail                  |
+| IMP-015 | Students list + create + edit detail                           |
+| IMP-016 | Users invite/edit + organizations create/edit/deactivate       |
+| IMP-017 | AdminShell school name brand from `GET /tenants/current`       |
+| IMP-019 | Tenant settings edit + guardian profile edit on detail         |
+| IMP-020 | Membership suspend / reactivate / remove on user detail        |
+| IMP-021 | User enable action on detail                                   |
+| IMP-022 | Roles list + create + custom permission replace                |
+| IMP-023 | Memberships list with status filter                            |
+| IMP-025 | Academic delete 409 dependents listing                         |
+| IMP-026 | Org-scoped user-role assign                                    |
+| IMP-027 | Shared admin primitives (Banner, ResourceList, ConfirmDialog)  |
+| IMP-028 | AdminTable for Users/Students ops lists                        |
+| IMP-029 | Grouped AdminShell nav IA for tablet                           |
+| IMP-030 | Load more cursor pagination on admin registries                |
+| IMP-033 | AdminShell /auth/me gate + permission-filtered nav             |
+| IMP-034 | ConfirmDialog replaces window.confirm (destructive admin)      |
+| IMP-035 | Central adminFriendlyMessage error mapper                      |
+| IMP-031 | Admin cross-links (student ↔ enrollment/fees/guardian)         |
+| IMP-032 | Operator-safe tenant settings (Advanced JSON + preserve-merge) |
 
 ## Revisions
 
@@ -261,3 +277,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.20 | 2026-07-27 | IMP-034 ConfirmDialog replaces window.confirm (destructive admin)   |
 | 1.21 | 2026-07-28 | IMP-035 central adminFriendlyMessage error mapper                   |
 | 1.22 | 2026-07-28 | IMP-031 admin cross-links (student detail + invoice guardians)      |
+| 1.23 | 2026-07-28 | IMP-032 operator-safe tenant settings form (Advanced JSON)          |

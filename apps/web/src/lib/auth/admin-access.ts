@@ -99,6 +99,13 @@ export function visibleAdminNavIds(me: MeLike): ReadonlySet<AdminNavId> {
   return visible;
 }
 
+/** True when actor may PUT tenant settings (tenant.manage or owner/admin). */
+export function canManageTenantSettings(me: MeLike): boolean {
+  const roles = me.roles ?? [];
+  if (roles.some((r) => r.code === 'owner' || r.code === 'admin')) return true;
+  return new Set(me.permissions ?? []).has('tenant.manage');
+}
+
 export type AdminFallbackHome = 'teacher' | 'parent';
 
 /** Where to send actors who opened /admin without shell access. */
