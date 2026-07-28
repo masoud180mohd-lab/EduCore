@@ -7,7 +7,15 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import {
+  adminGuardianFeesPath,
+  adminGuardianPath,
+  adminStudentPath,
+} from '@/lib/admin/admin-paths';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { resolveGuardianNames } from '@/lib/admin/resolve-related-names';
+import { visibleAdminNavIds } from '@/lib/auth/admin-access';
+import type { MeLike } from '@/lib/auth/home-preference';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import {
   canIssueInvoice,
@@ -66,6 +74,17 @@ type ReconciliationRow = {
 
 const OFFICE_METHODS = ['cash', 'bank', 'cheque', 'other'] as const;
 
+type StudentGuardianLink = {
+  readonly id: string;
+  readonly guardianId: string;
+  readonly studentId: string;
+  readonly relationshipType: string;
+  readonly isPrimary: boolean;
+  readonly status: string;
+};
+
+type MeEnvelope = { readonly data: MeLike };
+
 export default function AdminInvoiceDetailPage() {
   const params = useParams<{ tenantId: string; invoiceId: string }>();
   const { tenantId, invoiceId } = params;
@@ -81,6 +100,49 @@ export default function AdminInvoiceDetailPage() {
 
   const [payMethod, setPayMethod] = useState<(typeof OFFICE_METHODS)[number]>('cash');
   const [payAmountMajor, setPayAmountMajor] = useState('');
+
+  const [showGuardians, setShowGuardians] = useState(false);
+  const [showGuardianFees, setShowGuardianFees] = useState(false);
+  const [guardianLinks, setGuardianLinks] = useState<StudentGuardianLink[]>([]);
+  const [guardianNames, setGuardianNames] = useState<Record<string, string>>({});
+  const [guardianLoading, setGuardianLoading] = useState(false);
+  const [guardianError, setGuardianError] = useState<string | null>(null);
+
+  const loadGuardians = useCallback(async (forStudentId: string) => {
+    const auth = readSession();
+    if (auth === null) return;
+    setGuardianLoading(true);
+    try {
+      const me = await apiRequest<MeEnvelope>('/api/v1/auth/me', { auth });
+      const navIds = visibleAdminNavIds(me.data);
+      const canGuardians = navIds.has('guardians');
+      const canFees = navIds.has('fees');
+      setShowGuardians(canGuardians);
+      setShowGuardianFees(canGuardians && canFees);
+      if (!canGuardians) {
+        setGuardianLinks([]);
+        return;
+      }
+      const result = await apiRequest<{ data: StudentGuardianLink[] }>(
+        `/api/v1/students/${forStudentId}/guardians`,
+        { auth },
+      );
+      const active = (result.data ?? []).filter((link) => link.status === 'active');
+      setGuardianLinks(active);
+      const names = await resolveGuardianNames(
+        auth,
+        active.map((link) => link.guardianId),
+      );
+      setGuardianNames(names);
+      setGuardianError(null);
+    } catch (err) {
+      if (err instanceof ApiClientError) setGuardianError(adminFriendlyMessage(err, 'guardians'));
+      else setGuardianError('Could not load guardian links.');
+      setGuardianLinks([]);
+    } finally {
+      setGuardianLoading(false);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     const auth = readSession();
@@ -102,6 +164,7 @@ export default function AdminInvoiceDetailPage() {
       } catch {
         setStudentName(invRes.data.studentId);
       }
+      void loadGuardians(invRes.data.studentId);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
@@ -109,7 +172,7 @@ export default function AdminInvoiceDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [invoiceId]);
+  }, [invoiceId, loadGuardians]);
 
   useEffect(() => {
     void load();
@@ -308,7 +371,9 @@ export default function AdminInvoiceDetailPage() {
           <p className="muted">
             <span className="chip">{invoiceStatusLabel(invoice.status)}</span>
             {' · '}
-            {studentName ?? invoice.studentId}
+            <Link href={adminStudentPath(tenantId, invoice.studentId)}>
+              {studentName ?? invoice.studentId}
+            </Link>
             {' · '}
             {invoice.currency}
           </p>
@@ -324,6 +389,49 @@ export default function AdminInvoiceDetailPage() {
               <div className="muted">Issued {new Date(invoice.issuedAt).toLocaleString()}</div>
             ) : null}
           </div>
+
+          {showGuardians ? (
+            <section
+              className="card stack related-records-section"
+              style={{ marginBottom: '1rem' }}
+            >
+              <h2 className="section-title" style={{ margin: 0 }}>
+                Linked guardians
+              </h2>
+              {guardianLoading ? <p className="muted">Loading…</p> : null}
+              {guardianError !== null ? (
+                <div className="banner banner-error" role="alert">
+                  {guardianError}
+                </div>
+              ) : null}
+              {!guardianLoading && guardianError === null && guardianLinks.length === 0 ? (
+                <div className="banner banner-info">No active guardian links for this student.</div>
+              ) : null}
+              {!guardianLoading && guardianError === null && guardianLinks.length > 0 ? (
+                <ul className="list">
+                  {guardianLinks.map((link) => (
+                    <li key={link.id} className="card">
+                      <Link href={adminGuardianPath(tenantId, link.guardianId)}>
+                        <strong>{guardianNames[link.guardianId] ?? link.guardianId}</strong>
+                      </Link>
+                      <div className="muted">
+                        {link.relationshipType}
+                        {link.isPrimary ? ' · primary' : ''}
+                        {showGuardianFees ? (
+                          <>
+                            {' · '}
+                            <Link href={adminGuardianFeesPath(tenantId, link.guardianId)}>
+                              Guardian fees
+                            </Link>
+                          </>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          ) : null}
 
           <div className="actions" style={{ marginBottom: '1rem' }}>
             <button

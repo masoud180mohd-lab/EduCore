@@ -1,13 +1,13 @@
 # DSF-002 — Admin shell + Guardians / Academic UI (provisional)
 
-| Field     | Value                                                             |
-| --------- | ----------------------------------------------------------------- |
-| Freeze ID | `DSF-002`                                                         |
-| Version   | `1.21`                                                            |
-| Date      | 2026-07-28                                                        |
-| Audience  | School admin / headmaster (desktop-first, usable on tablet)       |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                          |
-| Program   | IMP-007 · … · IMP-029 · IMP-030 · IMP-033 · IMP-034 · **IMP-035** |
+| Field     | Value                                                       |
+| --------- | ----------------------------------------------------------- |
+| Freeze ID | `DSF-002`                                                   |
+| Version   | `1.22`                                                      |
+| Date      | 2026-07-28                                                  |
+| Audience  | School admin / headmaster (desktop-first, usable on tablet) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                    |
+| Program   | IMP-007 · … · IMP-034 · IMP-035 · **IMP-031**               |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -156,6 +156,29 @@ Destructive admin mutations use shared **`ConfirmDialog`** — not `window.confi
 
 **Non-goals (confirms):** modal libraries (Headless/Radix/shadcn); auto-confirm timers; **picker UX** (Wave X); teacher marks/attendance confirms (Wave X).
 
+## Cross-links (IMP-031 / AUDIT G13)
+
+Deep links reduce hub hunting. Compose existing list/detail APIs — no nested BFF expansions.
+
+| From           | To                | Route                              | API                            | Permission gate                                 |
+| -------------- | ----------------- | ---------------------------------- | ------------------------------ | ----------------------------------------------- |
+| Student detail | Enrollment detail | `/admin/academic/enrollments/[id]` | `GET /enrollments?studentId=`  | `academic.read` (nav: Academic)                 |
+| Student detail | Invoice detail    | `/admin/fees/invoices/[id]`        | `GET /invoices?studentId=`     | `finance.read` (nav: Fees)                      |
+| Student detail | Guardian detail   | `/admin/guardians/[id]`            | `GET /students/{id}/guardians` | `guardian.read` (nav: Guardians)                |
+| Invoice detail | Student detail    | `/admin/students/[id]`             | `invoice.studentId`            | `student.read` (link always when invoice loads) |
+| Invoice detail | Guardian detail   | `/admin/guardians/[id]`            | `GET /students/{id}/guardians` | `guardian.read`                                 |
+| Invoice detail | Guardian fees hub | `/admin/guardians/[id]/fees`       | —                              | `guardian.read` + `finance.read`                |
+
+**UX rules**
+
+- Sections on student detail: **Enrollments**, **Fees**, **Guardians** — each gated by IMP-033 nav visibility (`visibleAdminNavIds`).
+- Per-section loading/error; 403 in one section does not break the edit form or sibling sections.
+- Empty copy: “No enrollments yet for this student.” / “No invoices yet…” / “No active guardian links…”
+- Create shortcuts link to existing create pages (Wave X: `?studentId=` prefill).
+- Shared primitives: `RelatedRecordsSection`, `ResourceListPagination` (limit 25), `admin-paths` helpers.
+
+**Non-goals (cross-links):** CRM graph; auto-create from link; parent portal (DSF-006).
+
 ## Error copy — central admin mapper (IMP-035 / AUDIT G3)
 
 All routes under `apps/web/src/app/t/[tenantId]/admin/**` MUST map `ApiClientError` via **`adminFriendlyMessage(err, domain)`** — not per-page `*Message` helpers or `teacherFriendlyMessage`.
@@ -222,6 +245,7 @@ Accepted under acting seats only; revise when a second review seat exists.
 | IMP-033 | AdminShell /auth/me gate + permission-filtered nav            |
 | IMP-034 | ConfirmDialog replaces window.confirm (destructive admin)     |
 | IMP-035 | Central adminFriendlyMessage error mapper                     |
+| IMP-031 | Admin cross-links (student ↔ enrollment/fees/guardian)        |
 
 ## Revisions
 
@@ -236,3 +260,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.19 | 2026-07-27 | IMP-029 grouped AdminShell nav IA for tablet (Option A)             |
 | 1.20 | 2026-07-27 | IMP-034 ConfirmDialog replaces window.confirm (destructive admin)   |
 | 1.21 | 2026-07-28 | IMP-035 central adminFriendlyMessage error mapper                   |
+| 1.22 | 2026-07-28 | IMP-031 admin cross-links (student detail + invoice guardians)      |
