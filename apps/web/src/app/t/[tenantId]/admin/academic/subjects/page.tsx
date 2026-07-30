@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { ResourceList, ResourceListPagination } from '@/components/admin';
+import { AdminTable, ResourceList, ResourceListPagination, StatusChip } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -144,6 +144,7 @@ export default function AdminSubjectsPage() {
         loading={loading}
         empty="No subjects yet."
         isEmpty={rows.length === 0}
+        variant="table"
         footer={
           <ResourceListPagination
             nextCursor={nextCursor}
@@ -154,17 +155,27 @@ export default function AdminSubjectsPage() {
           />
         }
       >
-        {rows.map((row) => (
-          <li key={row.id}>
-            <Link className="card" href={`/t/${tenantId}/admin/academic/subjects/${row.id}`}>
-              <strong>{row.name}</strong>
-              <div className="muted">
-                <span className="chip">{row.status}</span>
-                {row.code !== null && row.code !== '' ? ` · ${row.code}` : ''}
-              </div>
-            </Link>
-          </li>
-        ))}
+        <AdminTable caption="Subjects" headers={['Name', 'Code', 'Status', '']}>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td>
+                <Link href={`/t/${tenantId}/admin/academic/subjects/${row.id}`}>{row.name}</Link>
+              </td>
+              <td className="muted">{row.code !== null && row.code !== '' ? row.code : '—'}</td>
+              <td>
+                <StatusChip label={row.status} />
+              </td>
+              <td className="admin-table-actions">
+                <Link
+                  className="btn btn-secondary admin-table-open"
+                  href={`/t/${tenantId}/admin/academic/subjects/${row.id}`}
+                >
+                  Open
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
       </ResourceList>
     </AdminShell>
   );

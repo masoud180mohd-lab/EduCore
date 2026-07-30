@@ -3,8 +3,8 @@
 | Field     | Value                                                   |
 | --------- | ------------------------------------------------------- |
 | Freeze ID | `DSF-004`                                               |
-| Version   | `1.2`                                                   |
-| Date      | 2026-07-27                                              |
+| Version   | `1.4`                                                   |
+| Date      | 2026-07-31                                              |
 | Audience  | School admin / bursar (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                |
 | Program   | **IMP-010** / **IMP-024** / **IMP-028**                 |
@@ -42,7 +42,7 @@ Same as DSF-002:
 ## Screens in scope
 
 1. **Fees hub** — short links: Structures, Invoices, Receipts
-2. **Fee structures list** — `GET /fee-structures` + create form (`POST`, Idempotency-Key)
+2. **Fee structures list** — `GET /fee-structures` + create form (`POST`, Idempotency-Key); **AdminTable** (name, year, status chip, currency, Open) + Load more
 3. **Fee structure detail** — `GET /fee-structures/{id}` with items; **edit** name / status / items via `PATCH` (Idempotency-Key). Item payload is full replace and only sent when the item list changed; **409** when items are referenced by invoices.
 4. **Invoices list** — `GET /invoices` + create draft form; **AdminTable** (student, status chip, totalMinor, balanceMinor, Open) + Load more
 5. **Invoice detail** — lines, balance; **Issue** (draft); **Void** (issued, unpaid); **Record office payment**; payments list; **Reverse** on succeeded payment; **Reconcile** (Wave X — `finance.reconcile`) outcome display only
@@ -62,7 +62,7 @@ Same as DSF-002:
 
 - `AdminShell` nav: **Fees** (between Guardians and Settings)
 - Shared banners / buttons / fields from DSF-001–002
-- Resource list pattern (loading / empty / error / forbidden) + **IMP-028 AdminTable** for Invoices/Receipts registries
+- Resource list pattern (loading / empty / error / forbidden) + **IMP-028 AdminTable** for Structures/Invoices/Receipts registries
 - Money format helper (`formatTzsMinor`) — table money cells read-only from API minor units
 - Structure create form (name, year, status, line items)
 - Structure detail edit form (name, status, replaceable items; year/currency read-only)
@@ -126,3 +126,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.1 | 2026-07-26 | IMP-024 fee structure detail edit (`PATCH`, items replace + 409 UX) |
 | 1.2 | 2026-07-27 | IMP-028 AdminTable for Invoices + Receipts lists                    |
 | 1.3 | 2026-07-27 | IMP-034 ConfirmDialog for void / reverse (not window.confirm)       |
+| 1.4 | 2026-07-31 | IMP-028 residual: Fee structures list → AdminTable                  |

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { ResourceList, ResourceListPagination } from '@/components/admin';
+import { AdminTable, ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -127,6 +127,7 @@ export default function AdminRolesPage() {
         loading={loading}
         empty="No roles found."
         isEmpty={rows.length === 0}
+        variant="table"
         footer={
           <ResourceListPagination
             nextCursor={nextCursor}
@@ -137,17 +138,26 @@ export default function AdminRolesPage() {
           />
         }
       >
-        {rows.map((role) => (
-          <li key={role.id}>
-            <Link className="card" href={`/t/${tenantId}/admin/roles/${role.id}`}>
-              <strong>{role.name}</strong>
-              <div className="muted">
-                {role.code}
-                {role.isSystem ? ' · system' : ' · custom'} · {role.permissions.length} permissions
-              </div>
-            </Link>
-          </li>
-        ))}
+        <AdminTable caption="Roles" headers={['Name', 'Code', 'Kind', 'Permissions', '']}>
+          {rows.map((role) => (
+            <tr key={role.id}>
+              <td>
+                <Link href={`/t/${tenantId}/admin/roles/${role.id}`}>{role.name}</Link>
+              </td>
+              <td className="muted">{role.code}</td>
+              <td className="muted">{role.isSystem ? 'system' : 'custom'}</td>
+              <td className="muted">{role.permissions.length}</td>
+              <td className="admin-table-actions">
+                <Link
+                  className="btn btn-secondary admin-table-open"
+                  href={`/t/${tenantId}/admin/roles/${role.id}`}
+                >
+                  Open
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
       </ResourceList>
     </AdminShell>
   );

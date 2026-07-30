@@ -6,6 +6,7 @@ import { type FormEvent, useEffect, useState } from 'react';
 
 import {
   AdminPageHeader,
+  AdminTable,
   Banner,
   ResourceList,
   ResourceListPagination,
@@ -126,6 +127,7 @@ export default function AdminMembershipsPage() {
         loading={loading}
         empty="No memberships for this filter."
         isEmpty={rows.length === 0}
+        variant="table"
         footer={
           <ResourceListPagination
             nextCursor={nextCursor}
@@ -140,20 +142,25 @@ export default function AdminMembershipsPage() {
           />
         }
       >
-        {rows.map((m) => (
-          <li key={m.id}>
-            <Link className="card" href={`/t/${tenantId}/admin/users/${m.userId}`}>
-              <strong>
+        <AdminTable caption="Memberships" headers={['Status', 'User', 'Joined', '']}>
+          {rows.map((m) => (
+            <tr key={m.id}>
+              <td>
                 <StatusChip label={m.status} />
-              </strong>
-              <div className="muted">
-                User {m.userId}
-                {m.joinedAt !== null ? ` · Joined ${m.joinedAt}` : null}
-              </div>
-              <div className="muted">Membership {m.id}</div>
-            </Link>
-          </li>
-        ))}
+              </td>
+              <td className="muted">{m.userId}</td>
+              <td className="muted">{m.joinedAt ?? '—'}</td>
+              <td className="admin-table-actions">
+                <Link
+                  className="btn btn-secondary admin-table-open"
+                  href={`/t/${tenantId}/admin/users/${m.userId}`}
+                >
+                  Open
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
       </ResourceList>
     </AdminShell>
   );

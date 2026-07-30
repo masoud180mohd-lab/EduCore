@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 
-import { ResourceList, ResourceListPagination } from '@/components/admin';
+import { AdminTable, ResourceList, ResourceListPagination, StatusChip } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -410,6 +410,7 @@ export default function AdminEnrollmentsPage() {
         loading={loading}
         empty="No enrollments yet."
         isEmpty={rows.length === 0}
+        variant="table"
         footer={
           <ResourceListPagination
             nextCursor={nextCursor}
@@ -425,18 +426,29 @@ export default function AdminEnrollmentsPage() {
           />
         }
       >
-        {rows.map((row) => (
-          <li key={row.id}>
-            <Link className="card" href={`/t/${tenantId}/admin/academic/enrollments/${row.id}`}>
-              <strong>{studentNames[row.studentId] ?? row.studentId}</strong>
-              <div className="muted">
-                <span className="chip">{row.status}</span>
-                {' · '}
-                {classNames[row.classId] ?? row.classId}
-              </div>
-            </Link>
-          </li>
-        ))}
+        <AdminTable caption="Enrollments" headers={['Student', 'Class', 'Status', '']}>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td>
+                <Link href={`/t/${tenantId}/admin/academic/enrollments/${row.id}`}>
+                  {studentNames[row.studentId] ?? row.studentId}
+                </Link>
+              </td>
+              <td className="muted">{classNames[row.classId] ?? row.classId}</td>
+              <td>
+                <StatusChip label={row.status} />
+              </td>
+              <td className="admin-table-actions">
+                <Link
+                  className="btn btn-secondary admin-table-open"
+                  href={`/t/${tenantId}/admin/academic/enrollments/${row.id}`}
+                >
+                  Open
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
       </ResourceList>
     </AdminShell>
   );

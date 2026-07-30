@@ -3,8 +3,8 @@
 | Field     | Value                                                       |
 | --------- | ----------------------------------------------------------- |
 | Freeze ID | `DSF-002`                                                   |
-| Version   | `1.25`                                                      |
-| Date      | 2026-07-28                                                  |
+| Version   | `1.26`                                                      |
+| Date      | 2026-07-31                                                  |
 | Audience  | School admin / headmaster (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                    |
 | Program   | IMP-007 · … · IMP-031 · **IMP-032**                         |
@@ -49,7 +49,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - `AdminShell` — header brand = school name from `GET /tenants/current` (fallback `EduCore Admin`); Logout; **grouped top nav (IMP-029 Option A)** — see Nav IA below
 - Shared banners, buttons, fields from DSF-001 language
 - **IMP-027 primitives:** `Banner`, `AdminPageHeader`, `ResourceList`, `StatusChip`, `ConfirmDialog` under `apps/web/src/components/admin/`
-- **IMP-028 ops tables:** `AdminTable` for dense registries (Users, Students; fees lists in DSF-004); `ResourceList variant="table"`
+- **IMP-028 ops tables:** `AdminTable` for dense registries (Users, Students, Guardians, Orgs, Memberships, Roles, Academic lists; fees lists in DSF-004); `ResourceList variant="table"`
 - **IMP-030 pagination:** `ResourceListPagination` (“Load more”) + `ResourceList` optional `footer`; shared helper `apps/web/src/lib/admin/list-pagination.ts`
 - **IMP-029 nav model:** `groupAdminNav(visibleAdminNavIds)` in `apps/web/src/lib/auth/admin-access.ts`
 - `ResourceList` pattern (loading / empty / error / forbidden / optional Load more footer)
@@ -123,12 +123,22 @@ Form **pickers** on create/bind/detail forms (invoice, enrollment, streams, clas
 
 ## Ops tables (IMP-028 / EduCore dense admin)
 
-Use **`AdminTable`** for high-traffic operational registries. Keep **cards** for hubs, create forms, pickers, and not-yet-migrated lists (Guardians, Orgs, Memberships, Academic, fee structures).
+Use **`AdminTable`** for operational registries. Keep **cards** for hubs, create forms, and pickers (not list registries).
 
-| Registry | Columns (allowlist only)                                |
-| -------- | ------------------------------------------------------- |
-| Users    | Display name, Email, Status (`StatusChip`), Open        |
-| Students | Display name, Student code, Status (`StatusChip`), Open |
+| Registry     | Columns (allowlist only)                                         |
+| ------------ | ---------------------------------------------------------------- |
+| Users        | Display name, Email, Status (`StatusChip`), Open                 |
+| Students     | Display name, Student code, Status (`StatusChip`), Open          |
+| Guardians    | Name, Contact, Status (`StatusChip`), Open                       |
+| Organizations| Name, Code, Type, Status (`StatusChip`), Open                    |
+| Memberships  | Status (`StatusChip`), User, Joined, Open                        |
+| Roles        | Name, Code, Kind, Permissions, Open                              |
+| Years        | Name, Code, Status (`StatusChip`), Open                          |
+| Terms        | Name, Year, Status (`StatusChip`), Open                          |
+| Classes      | Name, Year, Status (`StatusChip`), Open                          |
+| Streams      | Name, Class, Status (`StatusChip`), Open                         |
+| Subjects     | Name, Code, Status (`StatusChip`), Open                          |
+| Enrollments  | Student, Class, Status (`StatusChip`), Open                      |
 
 **Density & a11y**
 
@@ -254,7 +264,7 @@ Accepted under acting seats only; revise when a second review seat exists.
 | IMP-025 | Academic delete 409 dependents listing                         |
 | IMP-026 | Org-scoped user-role assign                                    |
 | IMP-027 | Shared admin primitives (Banner, ResourceList, ConfirmDialog)  |
-| IMP-028 | AdminTable for Users/Students ops lists                        |
+| IMP-028 | AdminTable for admin ops registries (Users → Academic)         |
 | IMP-029 | Grouped AdminShell nav IA for tablet                           |
 | IMP-030 | Load more cursor pagination on admin registries                |
 | IMP-033 | AdminShell /auth/me gate + permission-filtered nav             |
@@ -283,3 +293,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.23 | 2026-07-28 | IMP-032 operator-safe tenant settings form (Advanced JSON)          |
 | 1.24 | 2026-07-30 | Wave X: P0 picker Load more + teacher ConfirmDialog                 |
 | 1.25 | 2026-07-31 | Wave X closeout: detail pickers + `?studentId=` prefill             |
+| 1.26 | 2026-07-31 | IMP-028 residual: Guardians/Orgs/Memberships/Roles/Academic tables  |

@@ -6,6 +6,24 @@ import { describe, expect, it } from 'vitest';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
+const MIGRATED_LISTS = [
+  'apps/web/src/app/t/[tenantId]/admin/users/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/students/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/guardians/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/organizations/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/memberships/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/roles/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/academic/years/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/academic/terms/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/academic/classes/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/academic/streams/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/academic/subjects/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/academic/enrollments/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/fees/structures/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/fees/invoices/page.tsx',
+  'apps/web/src/app/t/[tenantId]/admin/fees/receipts/page.tsx',
+] as const;
+
 describe('IMP-028 admin ops tables', () => {
   it('exports AdminTable and DSF documents ops tables', () => {
     expect(existsSync(path.join(root, 'apps/web/src/components/admin/AdminTable.tsx'))).toBe(true);
@@ -15,24 +33,19 @@ describe('IMP-028 admin ops tables', () => {
       path.join(root, 'docs/engineering/design-freeze/DSF-002-admin-guardians.md'),
       'utf8',
     );
-    expect(dsf2).toMatch(/1\.18/);
+    expect(dsf2).toMatch(/1\.26/);
     expect(dsf2).toContain('AdminTable');
     expect(dsf2).toContain('IMP-028');
     const dsf4 = readFileSync(
       path.join(root, 'docs/engineering/design-freeze/DSF-004-admin-fees.md'),
       'utf8',
     );
-    expect(dsf4).toMatch(/1\.2/);
+    expect(dsf4).toMatch(/1\.4/);
     expect(dsf4).toContain('AdminTable');
   });
 
-  it('migrates Users Students Invoices Receipts to AdminTable + Load more', () => {
-    for (const file of [
-      'apps/web/src/app/t/[tenantId]/admin/users/page.tsx',
-      'apps/web/src/app/t/[tenantId]/admin/students/page.tsx',
-      'apps/web/src/app/t/[tenantId]/admin/fees/invoices/page.tsx',
-      'apps/web/src/app/t/[tenantId]/admin/fees/receipts/page.tsx',
-    ]) {
+  it('migrates admin registries to AdminTable + Load more', () => {
+    for (const file of MIGRATED_LISTS) {
       const src = readFileSync(path.join(root, file), 'utf8');
       expect(src, file).toContain('AdminTable');
       expect(src, file).toContain('variant="table"');

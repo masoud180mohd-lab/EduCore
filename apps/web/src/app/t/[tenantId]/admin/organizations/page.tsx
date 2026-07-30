@@ -6,6 +6,7 @@ import { type FormEvent, useEffect, useState } from 'react';
 
 import {
   AdminPageHeader,
+  AdminTable,
   Banner,
   ResourceList,
   ResourceListPagination,
@@ -198,6 +199,7 @@ export default function AdminOrganizationsPage() {
         loading={loading}
         empty="No organizations yet."
         isEmpty={rows.length === 0}
+        variant="table"
         footer={
           <ResourceListPagination
             nextCursor={nextCursor}
@@ -208,18 +210,28 @@ export default function AdminOrganizationsPage() {
           />
         }
       >
-        {rows.map((o) => (
-          <li key={o.id} className="card">
-            <Link href={`/t/${tenantId}/admin/organizations/${o.id}`}>
-              <strong>{o.name}</strong>
-            </Link>
-            <div className="muted">
-              {[o.code, o.orgType].filter(Boolean).join(' · ')}
-              {[o.code, o.orgType].some(Boolean) ? ' · ' : null}
-              <StatusChip label={o.status} tone={o.status === 'active' ? 'ok' : 'muted'} />
-            </div>
-          </li>
-        ))}
+        <AdminTable caption="Organizations" headers={['Name', 'Code', 'Type', 'Status', '']}>
+          {rows.map((o) => (
+            <tr key={o.id}>
+              <td>
+                <Link href={`/t/${tenantId}/admin/organizations/${o.id}`}>{o.name}</Link>
+              </td>
+              <td className="muted">{o.code ?? '—'}</td>
+              <td className="muted">{o.orgType ?? '—'}</td>
+              <td>
+                <StatusChip label={o.status} tone={o.status === 'active' ? 'ok' : 'muted'} />
+              </td>
+              <td className="admin-table-actions">
+                <Link
+                  className="btn btn-secondary admin-table-open"
+                  href={`/t/${tenantId}/admin/organizations/${o.id}`}
+                >
+                  Open
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
       </ResourceList>
     </AdminShell>
   );

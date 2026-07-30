@@ -6,6 +6,7 @@ import { type FormEvent, useEffect, useState } from 'react';
 
 import {
   AdminPageHeader,
+  AdminTable,
   Banner,
   ResourceList,
   ResourceListPagination,
@@ -142,6 +143,7 @@ export default function AdminGuardiansPage() {
         loading={loading}
         empty="No guardians yet."
         isEmpty={rows.length === 0}
+        variant="table"
         footer={
           <ResourceListPagination
             nextCursor={nextCursor}
@@ -152,18 +154,27 @@ export default function AdminGuardiansPage() {
           />
         }
       >
-        {rows.map((g) => (
-          <li key={g.id}>
-            <Link className="card" href={`/t/${tenantId}/admin/guardians/${g.id}`}>
-              <strong>{g.displayName}</strong>
-              <div className="muted">
-                {[g.email, g.phone].filter(Boolean).join(' · ')}
-                {[g.email, g.phone].some(Boolean) ? ' · ' : null}
+        <AdminTable caption="Guardians" headers={['Name', 'Contact', 'Status', '']}>
+          {rows.map((g) => (
+            <tr key={g.id}>
+              <td>
+                <Link href={`/t/${tenantId}/admin/guardians/${g.id}`}>{g.displayName}</Link>
+              </td>
+              <td className="muted">{[g.email, g.phone].filter(Boolean).join(' · ') || '—'}</td>
+              <td>
                 <StatusChip label={g.status} />
-              </div>
-            </Link>
-          </li>
-        ))}
+              </td>
+              <td className="admin-table-actions">
+                <Link
+                  className="btn btn-secondary admin-table-open"
+                  href={`/t/${tenantId}/admin/guardians/${g.id}`}
+                >
+                  Open
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
       </ResourceList>
     </AdminShell>
   );

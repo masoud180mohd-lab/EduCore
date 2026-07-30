@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { ResourceList, ResourceListPagination } from '@/components/admin';
+import { AdminTable, ResourceList, ResourceListPagination, StatusChip } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -282,6 +282,7 @@ export default function AdminFeeStructuresPage() {
         loading={loading}
         empty="No fee structures yet."
         isEmpty={rows.length === 0}
+        variant="table"
         footer={
           <ResourceListPagination
             nextCursor={nextCursor}
@@ -292,20 +293,28 @@ export default function AdminFeeStructuresPage() {
           />
         }
       >
-        {rows.map((row) => (
-          <li key={row.id}>
-            <Link className="card" href={`/t/${tenantId}/admin/fees/structures/${row.id}`}>
-              <strong>{row.name}</strong>
-              <div className="muted">
-                <span className="chip">{row.status}</span>
-                {' · '}
-                {yearNames[row.academicYearId] ?? row.academicYearId}
-                {' · '}
-                {row.currency}
-              </div>
-            </Link>
-          </li>
-        ))}
+        <AdminTable caption="Fee structures" headers={['Name', 'Year', 'Status', 'Currency', '']}>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td>
+                <Link href={`/t/${tenantId}/admin/fees/structures/${row.id}`}>{row.name}</Link>
+              </td>
+              <td className="muted">{yearNames[row.academicYearId] ?? row.academicYearId}</td>
+              <td>
+                <StatusChip label={row.status} />
+              </td>
+              <td className="muted">{row.currency}</td>
+              <td className="admin-table-actions">
+                <Link
+                  className="btn btn-secondary admin-table-open"
+                  href={`/t/${tenantId}/admin/fees/structures/${row.id}`}
+                >
+                  Open
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
       </ResourceList>
     </AdminShell>
   );
