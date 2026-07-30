@@ -311,7 +311,7 @@ export default function AdminStudentDetailPage() {
               error={enrollmentError}
               emptyMessage="No enrollments yet for this student."
               isEmpty={enrollments.length === 0}
-              createHref={adminEnrollmentsCreatePath(tenantId)}
+              createHref={adminEnrollmentsCreatePath(tenantId, studentId)}
               createLabel="Create enrollment"
               footer={
                 <ResourceListPagination
@@ -346,7 +346,7 @@ export default function AdminStudentDetailPage() {
               error={invoiceError}
               emptyMessage="No invoices yet for this student."
               isEmpty={invoices.length === 0}
-              createHref={adminInvoicesCreatePath(tenantId)}
+              createHref={adminInvoicesCreatePath(tenantId, studentId)}
               createLabel="Create invoice"
               footer={
                 <ResourceListPagination

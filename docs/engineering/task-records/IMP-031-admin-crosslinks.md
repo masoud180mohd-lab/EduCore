@@ -56,7 +56,7 @@ Uses `visibleAdminNavIds` from IMP-033:
 | L1 student detail            | Done        |
 | L2 invoice detail            | Done        |
 | L3 tests + check             | Done        |
-| Wave X prefill `?studentId=` | **Skipped** |
+| Wave X prefill `?studentId=` | **Done** (IMP-031x) |
 
 ## Manual QA
 

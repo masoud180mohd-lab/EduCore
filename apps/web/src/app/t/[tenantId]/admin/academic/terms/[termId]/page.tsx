@@ -4,12 +4,19 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog } from '@/components/admin';
+import { ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { type DependentGroup, parseDeleteDependents } from '@/lib/academic/dependents';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import {
   type AcademicYearRow,
   type LifecycleStatus,
@@ -26,6 +33,8 @@ export default function AdminTermDetailPage() {
   const router = useRouter();
   const [row, setRow] = useState<TermRow | null>(null);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
+  const [yearsCursor, setYearsCursor] = useState<string | null>(null);
+  const [loadingMoreYears, setLoadingMoreYears] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -38,14 +47,40 @@ export default function AdminTermDetailPage() {
   const [academicYearId, setAcademicYearId] = useState('');
   const [deleteDependents, setDeleteDependents] = useState<DependentGroup[] | null>(null);
 
+  const loadYearPicker = useCallback(
+    async (opts: { readonly cursor: string | null; readonly append: boolean }) => {
+      const auth = readSession();
+      if (auth === null) return;
+      if (opts.append) setLoadingMoreYears(true);
+      try {
+        const result = await apiRequest<PaginatedEnvelope<AcademicYearRow>>(
+          buildListQuery('/api/v1/academic-years', {
+            limit: ADMIN_LIST_DEFAULT_LIMIT,
+            cursor: opts.cursor,
+          }),
+          { auth },
+        );
+        const page = readPageMeta(result);
+        const list = result.data ?? [];
+        setYears((prev) => (opts.append ? appendById(prev, list) : [...list]));
+        setYearsCursor(page.nextCursor);
+      } catch {
+        if (!opts.append) {
+          setYears([]);
+          setYearsCursor(null);
+        }
+      } finally {
+        setLoadingMoreYears(false);
+      }
+    },
+    [],
+  );
+
   const load = useCallback(async () => {
     const auth = readSession();
     if (auth === null) return;
     try {
-      const [result, yearRes] = await Promise.all([
-        apiRequest<{ data: TermRow }>(`/api/v1/terms/${termId}`, { auth }),
-        apiRequest<{ data: AcademicYearRow[] }>('/api/v1/academic-years?limit=50', { auth }),
-      ]);
+      const result = await apiRequest<{ data: TermRow }>(`/api/v1/terms/${termId}`, { auth });
       setRow(result.data);
       setName(result.data.name);
       setCode(result.data.code ?? '');
@@ -53,13 +88,22 @@ export default function AdminTermDetailPage() {
       setEndsOn(result.data.endsOn ?? '');
       setStatus(result.data.status as LifecycleStatus);
       setAcademicYearId(result.data.academicYearId);
-      setYears(yearRes.data ?? []);
       setError(null);
+      await loadYearPicker({ cursor: null, append: false });
+      try {
+        const year = await apiRequest<{ data: AcademicYearRow }>(
+          `/api/v1/academic-years/${result.data.academicYearId}`,
+          { auth },
+        );
+        setYears((prev) => appendById(prev, [year.data]));
+      } catch {
+        /* picker may already include year */
+      }
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load term.');
     }
-  }, [termId]);
+  }, [loadYearPicker, termId]);
 
   useEffect(() => {
     void load();
@@ -160,6 +204,13 @@ export default function AdminTermDetailPage() {
                 </option>
               ))}
             </select>
+            <ResourceListPagination
+              nextCursor={yearsCursor}
+              loadingMore={loadingMoreYears}
+              onLoadMore={() => {
+                void loadYearPicker({ cursor: yearsCursor, append: true });
+              }}
+            />
           </label>
           <label className="field">
             <span>Name</span>

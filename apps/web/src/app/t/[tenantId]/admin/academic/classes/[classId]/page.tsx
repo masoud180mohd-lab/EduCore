@@ -4,12 +4,19 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog } from '@/components/admin';
+import { ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { type DependentGroup, parseDeleteDependents } from '@/lib/academic/dependents';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import {
   type AcademicYearRow,
   type ClassRow,
@@ -27,7 +34,11 @@ export default function AdminClassDetailPage() {
   const router = useRouter();
   const [row, setRow] = useState<ClassRow | null>(null);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
+  const [yearsCursor, setYearsCursor] = useState<string | null>(null);
+  const [loadingMoreYears, setLoadingMoreYears] = useState(false);
   const [terms, setTerms] = useState<TermRow[]>([]);
+  const [termsCursor, setTermsCursor] = useState<string | null>(null);
+  const [loadingMoreTerms, setLoadingMoreTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -39,50 +50,129 @@ export default function AdminClassDetailPage() {
   const [termId, setTermId] = useState('');
   const [deleteDependents, setDeleteDependents] = useState<DependentGroup[] | null>(null);
 
+  const loadYearPicker = useCallback(
+    async (opts: { readonly cursor: string | null; readonly append: boolean }) => {
+      const auth = readSession();
+      if (auth === null) return;
+      if (opts.append) setLoadingMoreYears(true);
+      try {
+        const result = await apiRequest<PaginatedEnvelope<AcademicYearRow>>(
+          buildListQuery('/api/v1/academic-years', {
+            limit: ADMIN_LIST_DEFAULT_LIMIT,
+            cursor: opts.cursor,
+          }),
+          { auth },
+        );
+        const page = readPageMeta(result);
+        const list = result.data ?? [];
+        setYears((prev) => (opts.append ? appendById(prev, list) : [...list]));
+        setYearsCursor(page.nextCursor);
+      } catch {
+        if (!opts.append) {
+          setYears([]);
+          setYearsCursor(null);
+        }
+      } finally {
+        setLoadingMoreYears(false);
+      }
+    },
+    [],
+  );
+
+  const loadTermPicker = useCallback(
+    async (opts: {
+      readonly forYearId: string;
+      readonly cursor: string | null;
+      readonly append: boolean;
+    }) => {
+      const auth = readSession();
+      if (auth === null || opts.forYearId === '') {
+        setTerms([]);
+        setTermsCursor(null);
+        return;
+      }
+      if (opts.append) setLoadingMoreTerms(true);
+      try {
+        const result = await apiRequest<PaginatedEnvelope<TermRow>>(
+          buildListQuery('/api/v1/terms', {
+            limit: ADMIN_LIST_DEFAULT_LIMIT,
+            cursor: opts.cursor,
+            filters: { academicYearId: opts.forYearId },
+          }),
+          { auth },
+        );
+        const page = readPageMeta(result);
+        const list = result.data ?? [];
+        setTerms((prev) => (opts.append ? appendById(prev, list) : [...list]));
+        setTermsCursor(page.nextCursor);
+      } catch {
+        if (!opts.append) {
+          setTerms([]);
+          setTermsCursor(null);
+        }
+      } finally {
+        setLoadingMoreTerms(false);
+      }
+    },
+    [],
+  );
+
   const load = useCallback(async () => {
     const auth = readSession();
     if (auth === null) return;
     try {
-      const [result, yearRes] = await Promise.all([
-        apiRequest<{ data: ClassRow }>(`/api/v1/classes/${classId}`, { auth }),
-        apiRequest<{ data: AcademicYearRow[] }>('/api/v1/academic-years?limit=50', { auth }),
-      ]);
+      const result = await apiRequest<{ data: ClassRow }>(`/api/v1/classes/${classId}`, {
+        auth,
+      });
       setRow(result.data);
       setName(result.data.name);
       setCode(result.data.code ?? '');
       setStatus(result.data.status as LifecycleStatus);
       setAcademicYearId(result.data.academicYearId);
       setTermId(result.data.termId ?? '');
-      setYears(yearRes.data ?? []);
       setError(null);
+      await loadYearPicker({ cursor: null, append: false });
+      try {
+        const year = await apiRequest<{ data: AcademicYearRow }>(
+          `/api/v1/academic-years/${result.data.academicYearId}`,
+          { auth },
+        );
+        setYears((prev) => appendById(prev, [year.data]));
+      } catch {
+        /* picker may already include year */
+      }
+      await loadTermPicker({
+        forYearId: result.data.academicYearId,
+        cursor: null,
+        append: false,
+      });
+      if (result.data.termId !== null) {
+        try {
+          const term = await apiRequest<{ data: TermRow }>(
+            `/api/v1/terms/${result.data.termId}`,
+            { auth },
+          );
+          setTerms((prev) => appendById(prev, [term.data]));
+        } catch {
+          /* picker may already include term */
+        }
+      }
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load class.');
     }
-  }, [classId]);
+  }, [classId, loadTermPicker, loadYearPicker]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   useEffect(() => {
-    const auth = readSession();
-    if (auth === null || academicYearId === '') {
-      setTerms([]);
-      return;
-    }
-    void (async () => {
-      try {
-        const termRes = await apiRequest<{ data: TermRow[] }>(
-          `/api/v1/terms?limit=50&academicYearId=${encodeURIComponent(academicYearId)}`,
-          { auth },
-        );
-        setTerms(termRes.data ?? []);
-      } catch {
-        setTerms([]);
-      }
-    })();
-  }, [academicYearId]);
+    if (row === null) return;
+    if (academicYearId === row.academicYearId) return;
+    setTermId('');
+    void loadTermPicker({ forYearId: academicYearId, cursor: null, append: false });
+  }, [academicYearId, loadTermPicker, row]);
 
   function onSave(event: FormEvent) {
     event.preventDefault();
@@ -176,7 +266,6 @@ export default function AdminClassDetailPage() {
                 value={academicYearId}
                 onChange={(e) => {
                   setAcademicYearId(e.target.value);
-                  setTermId('');
                 }}
               >
                 {years.map((y) => (
@@ -185,6 +274,13 @@ export default function AdminClassDetailPage() {
                   </option>
                 ))}
               </select>
+              <ResourceListPagination
+                nextCursor={yearsCursor}
+                loadingMore={loadingMoreYears}
+                onLoadMore={() => {
+                  void loadYearPicker({ cursor: yearsCursor, append: true });
+                }}
+              />
             </label>
             <label className="field">
               <span>Term (optional)</span>
@@ -196,6 +292,17 @@ export default function AdminClassDetailPage() {
                   </option>
                 ))}
               </select>
+              <ResourceListPagination
+                nextCursor={termsCursor}
+                loadingMore={loadingMoreTerms}
+                onLoadMore={() => {
+                  void loadTermPicker({
+                    forYearId: academicYearId,
+                    cursor: termsCursor,
+                    append: true,
+                  });
+                }}
+              />
             </label>
             <label className="field">
               <span>Name</span>

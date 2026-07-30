@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { type FormEvent, useEffect, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 
 import {
   AdminPageHeader,
@@ -51,18 +51,24 @@ type FeeStructureItem = {
   readonly amountMinor: number;
 };
 
-const STUDENT_PICKER_LIMIT = 100;
-
 export default function AdminInvoicesPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const prefillApplied = useRef(false);
 
   const [rows, setRows] = useState<InvoiceRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentRow[]>([]);
+  const [studentsCursor, setStudentsCursor] = useState<string | null>(null);
+  const [loadingMoreStudents, setLoadingMoreStudents] = useState(false);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
+  const [yearsCursor, setYearsCursor] = useState<string | null>(null);
+  const [loadingMoreYears, setLoadingMoreYears] = useState(false);
   const [structures, setStructures] = useState<FeeStructureRow[]>([]);
+  const [structuresCursor, setStructuresCursor] = useState<string | null>(null);
+  const [loadingMoreStructures, setLoadingMoreStructures] = useState(false);
   const [studentNames, setStudentNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,33 +81,89 @@ export default function AdminInvoicesPage() {
   const [lineDescription, setLineDescription] = useState('');
   const [lineAmountMajor, setLineAmountMajor] = useState('');
 
-  async function loadPickers() {
+  async function loadStudentPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
     const auth = readSession();
     if (auth === null) return;
+    if (opts.append) setLoadingMoreStudents(true);
     try {
-      const [stRes, yrRes, fsRes] = await Promise.all([
-        apiRequest<{ data: StudentRow[] }>(
-          buildListQuery('/api/v1/students', { limit: STUDENT_PICKER_LIMIT }),
-          { auth },
-        ),
-        apiRequest<{ data: AcademicYearRow[] }>(
-          buildListQuery('/api/v1/academic-years', { limit: ADMIN_LIST_DEFAULT_LIMIT }),
-          { auth },
-        ),
-        apiRequest<{ data: FeeStructureRow[] }>(
-          buildListQuery('/api/v1/fee-structures', { limit: ADMIN_LIST_DEFAULT_LIMIT }),
-          { auth },
-        ),
-      ]);
-      const studentList = stRes.data ?? [];
-      setStudents(studentList);
-      setYears(yrRes.data ?? []);
-      setStructures(fsRes.data ?? []);
-      const names: Record<string, string> = {};
-      for (const s of studentList) names[s.id] = s.displayName;
-      setStudentNames(names);
+      const result = await apiRequest<PaginatedEnvelope<StudentRow>>(
+        buildListQuery('/api/v1/students', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setStudents((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setStudentsCursor(page.nextCursor);
+      setStudentNames((prev) => {
+        const next = opts.append ? { ...prev } : {};
+        for (const s of list) next[s.id] = s.displayName;
+        return next;
+      });
     } catch {
-      // Picker failure — form still usable if list loaded
+      if (!opts.append) {
+        setStudents([]);
+        setStudentsCursor(null);
+      }
+    } finally {
+      setLoadingMoreStudents(false);
+    }
+  }
+
+  async function loadYearPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
+    const auth = readSession();
+    if (auth === null) return;
+    if (opts.append) setLoadingMoreYears(true);
+    try {
+      const result = await apiRequest<PaginatedEnvelope<AcademicYearRow>>(
+        buildListQuery('/api/v1/academic-years', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setYears((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setYearsCursor(page.nextCursor);
+    } catch {
+      if (!opts.append) {
+        setYears([]);
+        setYearsCursor(null);
+      }
+    } finally {
+      setLoadingMoreYears(false);
+    }
+  }
+
+  async function loadStructurePicker(opts: {
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null) return;
+    if (opts.append) setLoadingMoreStructures(true);
+    try {
+      const result = await apiRequest<PaginatedEnvelope<FeeStructureRow>>(
+        buildListQuery('/api/v1/fee-structures', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setStructures((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setStructuresCursor(page.nextCursor);
+    } catch {
+      if (!opts.append) {
+        setStructures([]);
+        setStructuresCursor(null);
+      }
+    } finally {
+      setLoadingMoreStructures(false);
     }
   }
 
@@ -132,9 +194,30 @@ export default function AdminInvoicesPage() {
   }
 
   useEffect(() => {
-    void loadPickers();
+    void loadStudentPicker({ cursor: null, append: false });
+    void loadYearPicker({ cursor: null, append: false });
+    void loadStructurePicker({ cursor: null, append: false });
     void loadPage({ cursor: null, append: false });
   }, []);
+
+  useEffect(() => {
+    if (prefillApplied.current) return;
+    const raw = searchParams.get('studentId')?.trim() ?? '';
+    if (raw === '') return;
+    prefillApplied.current = true;
+    setStudentId(raw);
+    void (async () => {
+      const auth = readSession();
+      if (auth === null) return;
+      try {
+        const st = await apiRequest<{ data: StudentRow }>(`/api/v1/students/${raw}`, { auth });
+        setStudents((prev) => appendById(prev, [st.data]));
+        setStudentNames((prev) => ({ ...prev, [st.data.id]: st.data.displayName }));
+      } catch {
+        /* select still holds UUID until picker catches up */
+      }
+    })();
+  }, [searchParams]);
 
   async function onCreate(event: FormEvent) {
     event.preventDefault();
@@ -240,6 +323,13 @@ export default function AdminInvoicesPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={studentsCursor}
+            loadingMore={loadingMoreStudents}
+            onLoadMore={() => {
+              void loadStudentPicker({ cursor: studentsCursor, append: true });
+            }}
+          />
         </div>
         <div className="field">
           <label htmlFor="inv-year">Academic year</label>
@@ -259,6 +349,13 @@ export default function AdminInvoicesPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={yearsCursor}
+            loadingMore={loadingMoreYears}
+            onLoadMore={() => {
+              void loadYearPicker({ cursor: yearsCursor, append: true });
+            }}
+          />
         </div>
         <div className="field">
           <label htmlFor="inv-structure">Fee structure (optional)</label>
@@ -274,6 +371,13 @@ export default function AdminInvoicesPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={structuresCursor}
+            loadingMore={loadingMoreStructures}
+            onLoadMore={() => {
+              void loadStructurePicker({ cursor: structuresCursor, append: true });
+            }}
+          />
         </div>
         {feeStructureId === '' ? (
           <>

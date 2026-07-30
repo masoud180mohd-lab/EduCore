@@ -16,7 +16,8 @@ describe('IMP-031 admin cross-links', () => {
     expect(dsf).toContain('Cross-links');
     expect(dsf).toContain('GET /enrollments?studentId=');
     expect(dsf).toContain('GET /invoices?studentId=');
-    expect(dsf).toMatch(/1\.22/);
+    expect(dsf).toContain('?studentId=');
+    expect(dsf).toMatch(/1\.2[4-9]|1\.[3-9]\d/);
   });
 
   it('student detail has enrollments and fees sections', () => {
@@ -31,6 +32,8 @@ describe('IMP-031 admin cross-links', () => {
     expect(src).toContain('buildListQuery');
     expect(src).toContain('visibleAdminNavIds');
     expect(src).toContain('adminEnrollmentPath');
+    expect(src).toContain('adminEnrollmentsCreatePath(tenantId, studentId)');
+    expect(src).toContain('adminInvoicesCreatePath(tenantId, studentId)');
   });
 
   it('invoice detail links student and lists guardians', () => {
@@ -43,10 +46,27 @@ describe('IMP-031 admin cross-links', () => {
     expect(src).toContain('/students/${forStudentId}/guardians');
   });
 
+  it('create pages read studentId query prefill', () => {
+    const enroll = readFileSync(
+      path.join(root, 'apps/web/src/app/t/[tenantId]/admin/academic/enrollments/page.tsx'),
+      'utf8',
+    );
+    const invoices = readFileSync(
+      path.join(root, 'apps/web/src/app/t/[tenantId]/admin/fees/invoices/page.tsx'),
+      'utf8',
+    );
+    expect(enroll).toContain('useSearchParams');
+    expect(enroll).toContain("searchParams.get('studentId')");
+    expect(invoices).toContain('useSearchParams');
+    expect(invoices).toContain("searchParams.get('studentId')");
+  });
+
   it('ships admin-path helpers and RelatedRecordsSection', () => {
-    expect(
-      readFileSync(path.join(root, 'apps/web/src/lib/admin/admin-paths.ts'), 'utf8'),
-    ).toContain('adminEnrollmentPath');
+    const paths = readFileSync(path.join(root, 'apps/web/src/lib/admin/admin-paths.ts'), 'utf8');
+    expect(paths).toContain('adminEnrollmentPath');
+    expect(paths).toContain('studentId');
+    expect(paths).toContain('adminEnrollmentsCreatePath');
+    expect(paths).toContain('adminInvoicesCreatePath');
     expect(
       readFileSync(
         path.join(root, 'apps/web/src/components/admin/RelatedRecordsSection.tsx'),

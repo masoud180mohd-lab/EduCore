@@ -4,10 +4,17 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog } from '@/components/admin';
+import { ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import {
   type ClassRow,
   type EnrollmentRow,
@@ -25,7 +32,11 @@ export default function AdminEnrollmentDetailPage() {
   const [row, setRow] = useState<EnrollmentRow | null>(null);
   const [studentName, setStudentName] = useState<string | null>(null);
   const [classes, setClasses] = useState<ClassRow[]>([]);
+  const [classesCursor, setClassesCursor] = useState<string | null>(null);
+  const [loadingMoreClasses, setLoadingMoreClasses] = useState(false);
   const [streams, setStreams] = useState<StreamRow[]>([]);
+  const [streamsCursor, setStreamsCursor] = useState<string | null>(null);
+  const [loadingMoreStreams, setLoadingMoreStreams] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -34,20 +45,92 @@ export default function AdminEnrollmentDetailPage() {
   const [classId, setClassId] = useState('');
   const [streamId, setStreamId] = useState('');
 
-  const loadStreams = useCallback(async (forClassId: string) => {
+  const loadClassPicker = useCallback(
+    async (opts: { readonly cursor: string | null; readonly append: boolean }) => {
+      const auth = readSession();
+      if (auth === null) return;
+      if (opts.append) setLoadingMoreClasses(true);
+      try {
+        const result = await apiRequest<PaginatedEnvelope<ClassRow>>(
+          buildListQuery('/api/v1/classes', {
+            limit: ADMIN_LIST_DEFAULT_LIMIT,
+            cursor: opts.cursor,
+          }),
+          { auth },
+        );
+        const page = readPageMeta(result);
+        const list = result.data ?? [];
+        setClasses((prev) => (opts.append ? appendById(prev, list) : [...list]));
+        setClassesCursor(page.nextCursor);
+      } catch {
+        if (!opts.append) {
+          setClasses([]);
+          setClassesCursor(null);
+        }
+      } finally {
+        setLoadingMoreClasses(false);
+      }
+    },
+    [],
+  );
+
+  const loadStreamPicker = useCallback(
+    async (opts: {
+      readonly forClassId: string;
+      readonly cursor: string | null;
+      readonly append: boolean;
+    }) => {
+      const auth = readSession();
+      if (auth === null || opts.forClassId === '') {
+        setStreams([]);
+        setStreamsCursor(null);
+        return;
+      }
+      if (opts.append) setLoadingMoreStreams(true);
+      try {
+        const result = await apiRequest<PaginatedEnvelope<StreamRow>>(
+          buildListQuery('/api/v1/streams', {
+            limit: ADMIN_LIST_DEFAULT_LIMIT,
+            cursor: opts.cursor,
+            filters: { classId: opts.forClassId },
+          }),
+          { auth },
+        );
+        const page = readPageMeta(result);
+        const list = result.data ?? [];
+        setStreams((prev) => (opts.append ? appendById(prev, list) : [...list]));
+        setStreamsCursor(page.nextCursor);
+      } catch {
+        if (!opts.append) {
+          setStreams([]);
+          setStreamsCursor(null);
+        }
+      } finally {
+        setLoadingMoreStreams(false);
+      }
+    },
+    [],
+  );
+
+  const ensureClassOption = useCallback(async (id: string) => {
     const auth = readSession();
-    if (auth === null || forClassId === '') {
-      setStreams([]);
-      return;
-    }
+    if (auth === null || id === '') return;
     try {
-      const res = await apiRequest<{ data: StreamRow[] }>(
-        `/api/v1/streams?limit=100&classId=${encodeURIComponent(forClassId)}`,
-        { auth },
-      );
-      setStreams(res.data ?? []);
+      const res = await apiRequest<{ data: ClassRow }>(`/api/v1/classes/${id}`, { auth });
+      setClasses((prev) => appendById(prev, [res.data]));
     } catch {
-      setStreams([]);
+      /* keep list as-is */
+    }
+  }, []);
+
+  const ensureStreamOption = useCallback(async (id: string) => {
+    const auth = readSession();
+    if (auth === null || id === '') return;
+    try {
+      const res = await apiRequest<{ data: StreamRow }>(`/api/v1/streams/${id}`, { auth });
+      setStreams((prev) => appendById(prev, [res.data]));
+    } catch {
+      /* keep list as-is */
     }
   }, []);
 
@@ -55,18 +138,20 @@ export default function AdminEnrollmentDetailPage() {
     const auth = readSession();
     if (auth === null) return;
     try {
-      const [enrollRes, classRes] = await Promise.all([
-        apiRequest<{ data: EnrollmentRow }>(`/api/v1/enrollments/${enrollmentId}`, { auth }),
-        apiRequest<{ data: ClassRow[] }>('/api/v1/classes?limit=100', { auth }),
-      ]);
+      const enrollRes = await apiRequest<{ data: EnrollmentRow }>(
+        `/api/v1/enrollments/${enrollmentId}`,
+        { auth },
+      );
       const data = enrollRes.data;
       setRow(data);
       setStatus(data.status as EnrollmentStatus);
       setClassId(data.classId);
       setStreamId(data.streamId ?? '');
-      setClasses(classRes.data ?? []);
       setError(null);
-      await loadStreams(data.classId);
+      await loadClassPicker({ cursor: null, append: false });
+      await ensureClassOption(data.classId);
+      await loadStreamPicker({ forClassId: data.classId, cursor: null, append: false });
+      if (data.streamId !== null) await ensureStreamOption(data.streamId);
       try {
         const st = await apiRequest<{ data: { displayName: string } }>(
           `/api/v1/students/${data.studentId}`,
@@ -80,7 +165,7 @@ export default function AdminEnrollmentDetailPage() {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load enrollment.');
     }
-  }, [enrollmentId, loadStreams]);
+  }, [enrollmentId, ensureClassOption, ensureStreamOption, loadClassPicker, loadStreamPicker]);
 
   useEffect(() => {
     void load();
@@ -205,7 +290,7 @@ export default function AdminEnrollmentDetailPage() {
                   const next = e.target.value;
                   setClassId(next);
                   setStreamId('');
-                  void loadStreams(next);
+                  void loadStreamPicker({ forClassId: next, cursor: null, append: false });
                 }}
               >
                 <option value="">Select class</option>
@@ -215,6 +300,13 @@ export default function AdminEnrollmentDetailPage() {
                   </option>
                 ))}
               </select>
+              <ResourceListPagination
+                nextCursor={classesCursor}
+                loadingMore={loadingMoreClasses}
+                onLoadMore={() => {
+                  void loadClassPicker({ cursor: classesCursor, append: true });
+                }}
+              />
             </div>
             <div className="field">
               <label htmlFor="enroll-stream">Stream (optional)</label>
@@ -230,6 +322,17 @@ export default function AdminEnrollmentDetailPage() {
                   </option>
                 ))}
               </select>
+              <ResourceListPagination
+                nextCursor={streamsCursor}
+                loadingMore={loadingMoreStreams}
+                onLoadMore={() => {
+                  void loadStreamPicker({
+                    forClassId: classId,
+                    cursor: streamsCursor,
+                    append: true,
+                  });
+                }}
+              />
             </div>
             <button type="submit" className="btn btn-primary" disabled={busy || classId === ''}>
               {busy ? 'Saving…' : 'Transfer'}

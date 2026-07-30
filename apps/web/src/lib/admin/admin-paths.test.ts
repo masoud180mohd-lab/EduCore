@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   adminEnrollmentPath,
+  adminEnrollmentsCreatePath,
   adminGuardianFeesPath,
   adminGuardianPath,
   adminInvoicePath,
+  adminInvoicesCreatePath,
   adminStudentPath,
 } from './admin-paths.js';
 
@@ -20,5 +22,18 @@ describe('admin-paths', () => {
     expect(adminInvoicePath(tenantId, id)).toBe(`/t/${tenantId}/admin/fees/invoices/${id}`);
     expect(adminGuardianPath(tenantId, id)).toBe(`/t/${tenantId}/admin/guardians/${id}`);
     expect(adminGuardianFeesPath(tenantId, id)).toBe(`/t/${tenantId}/admin/guardians/${id}/fees`);
+  });
+
+  it('create paths append optional studentId query', () => {
+    expect(adminEnrollmentsCreatePath(tenantId)).toBe(
+      `/t/${tenantId}/admin/academic/enrollments`,
+    );
+    expect(adminInvoicesCreatePath(tenantId)).toBe(`/t/${tenantId}/admin/fees/invoices`);
+    expect(adminEnrollmentsCreatePath(tenantId, id)).toBe(
+      `/t/${tenantId}/admin/academic/enrollments?studentId=${id}`,
+    );
+    expect(adminInvoicesCreatePath(tenantId, id)).toBe(
+      `/t/${tenantId}/admin/fees/invoices?studentId=${id}`,
+    );
   });
 });

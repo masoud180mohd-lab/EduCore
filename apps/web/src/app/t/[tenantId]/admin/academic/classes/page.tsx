@@ -31,7 +31,11 @@ export default function AdminClassesPage() {
   const [rows, setRows] = useState<ClassRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
+  const [yearsCursor, setYearsCursor] = useState<string | null>(null);
+  const [loadingMoreYears, setLoadingMoreYears] = useState(false);
   const [terms, setTerms] = useState<TermRow[]>([]);
+  const [termsCursor, setTermsCursor] = useState<string | null>(null);
+  const [loadingMoreTerms, setLoadingMoreTerms] = useState(false);
   const [yearNames, setYearNames] = useState<Record<string, string>>({});
   const [filterYearId, setFilterYearId] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -44,19 +48,69 @@ export default function AdminClassesPage() {
   const [termId, setTermId] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('active');
 
-  async function loadPickers() {
+  async function loadYearPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
     const auth = readSession();
     if (auth === null) return;
+    if (opts.append) setLoadingMoreYears(true);
     try {
-      const q = buildListQuery('/api/v1/academic-years', { limit: ADMIN_LIST_DEFAULT_LIMIT });
-      const yearRes = await apiRequest<{ data: AcademicYearRow[] }>(q, { auth });
-      const yearList = yearRes.data ?? [];
-      setYears(yearList);
-      const map: Record<string, string> = {};
-      for (const y of yearList) map[y.id] = y.name;
-      setYearNames(map);
+      const result = await apiRequest<PaginatedEnvelope<AcademicYearRow>>(
+        buildListQuery('/api/v1/academic-years', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setYears((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setYearsCursor(page.nextCursor);
+      setYearNames((prev) => {
+        const next = opts.append ? { ...prev } : {};
+        for (const y of list) next[y.id] = y.name;
+        return next;
+      });
     } catch {
-      // Picker failure — form/filter still usable if list loaded
+      if (!opts.append) {
+        setYears([]);
+        setYearsCursor(null);
+      }
+    } finally {
+      setLoadingMoreYears(false);
+    }
+  }
+
+  async function loadTermPicker(opts: {
+    readonly forYearId: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null || opts.forYearId === '') {
+      setTerms([]);
+      setTermsCursor(null);
+      return;
+    }
+    if (opts.append) setLoadingMoreTerms(true);
+    try {
+      const result = await apiRequest<PaginatedEnvelope<TermRow>>(
+        buildListQuery('/api/v1/terms', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+          filters: { academicYearId: opts.forYearId },
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setTerms((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setTermsCursor(page.nextCursor);
+    } catch {
+      if (!opts.append) {
+        setTerms([]);
+        setTermsCursor(null);
+      }
+    } finally {
+      setLoadingMoreTerms(false);
     }
   }
 
@@ -92,7 +146,7 @@ export default function AdminClassesPage() {
   }
 
   useEffect(() => {
-    void loadPickers();
+    void loadYearPicker({ cursor: null, append: false });
   }, []);
 
   useEffect(() => {
@@ -100,23 +154,8 @@ export default function AdminClassesPage() {
   }, [filterYearId]);
 
   useEffect(() => {
-    const auth = readSession();
-    if (auth === null || academicYearId === '') {
-      setTerms([]);
-      return;
-    }
-    void (async () => {
-      try {
-        const q = buildListQuery('/api/v1/terms', {
-          limit: ADMIN_LIST_DEFAULT_LIMIT,
-          filters: { academicYearId },
-        });
-        const termRes = await apiRequest<{ data: TermRow[] }>(q, { auth });
-        setTerms(termRes.data ?? []);
-      } catch {
-        setTerms([]);
-      }
-    })();
+    setTermId('');
+    void loadTermPicker({ forYearId: academicYearId, cursor: null, append: false });
   }, [academicYearId]);
 
   async function onCreate(event: FormEvent) {
@@ -181,6 +220,13 @@ export default function AdminClassesPage() {
             </option>
           ))}
         </select>
+        <ResourceListPagination
+          nextCursor={yearsCursor}
+          loadingMore={loadingMoreYears}
+          onLoadMore={() => {
+            void loadYearPicker({ cursor: yearsCursor, append: true });
+          }}
+        />
       </div>
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
@@ -193,7 +239,6 @@ export default function AdminClassesPage() {
             value={academicYearId}
             onChange={(e) => {
               setAcademicYearId(e.target.value);
-              setTermId('');
             }}
           >
             <option value="">Select year</option>
@@ -203,6 +248,13 @@ export default function AdminClassesPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={yearsCursor}
+            loadingMore={loadingMoreYears}
+            onLoadMore={() => {
+              void loadYearPicker({ cursor: yearsCursor, append: true });
+            }}
+          />
         </div>
         <div className="field">
           <label htmlFor="class-term">Term (optional)</label>
@@ -214,6 +266,17 @@ export default function AdminClassesPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={termsCursor}
+            loadingMore={loadingMoreTerms}
+            onLoadMore={() => {
+              void loadTermPicker({
+                forYearId: academicYearId,
+                cursor: termsCursor,
+                append: true,
+              });
+            }}
+          />
         </div>
         <div className="field">
           <label htmlFor="class-name">Name</label>

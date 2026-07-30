@@ -3,7 +3,7 @@
 | Field     | Value                                    |
 | --------- | ---------------------------------------- |
 | Freeze ID | `DSF-001`                                |
-| Version   | `1.0`                                    |
+| Version   | `1.1`                                    |
 | Date      | 2026-07-21                               |
 | Audience  | Teacher / staff (mobile-first)           |
 | Authority | Solo-operator provisional (SOLO-GOV-001) |
@@ -59,6 +59,7 @@ Avoid purple-on-white gradients, terracotta cream “AI brochure” looks, and d
 - `StudentMarkRow` (name + status control)
 - `ShellNav` (Attend / Sessions / Logout)
 - `EmptyState`
+- **ConfirmDialog** for Close session (shared admin primitive; Esc / Cancel focus / danger)
 
 ## AuthZ / error UX
 
@@ -86,3 +87,10 @@ WCAG 2.1 AA target for primary flows: labeled controls, visible focus, keyboard-
 ## Binding contracts
 
 ACF-009 attendance · ACF-008 enrollments · ACF-005 classes · ACF-002 students · Auth login/select-tenant.
+
+## Revisions
+
+| Ver | Date       | Notes                                            |
+| --- | ---------- | ------------------------------------------------ |
+| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-006)             |
+| 1.1 | 2026-07-30 | Close session uses ConfirmDialog (IMP-034 Wave X) |

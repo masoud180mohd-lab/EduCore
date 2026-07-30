@@ -4,10 +4,17 @@ import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
-import { ConfirmDialog } from '@/components/admin';
+import { ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import { type BindUserOption, formatUserBindLabel } from '@/lib/guardians/bind-user-label';
 
@@ -44,7 +51,11 @@ export default function AdminGuardianDetailPage() {
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [students, setStudents] = useState<StudentRow[]>([]);
+  const [studentsCursor, setStudentsCursor] = useState<string | null>(null);
+  const [loadingMoreStudents, setLoadingMoreStudents] = useState(false);
   const [users, setUsers] = useState<BindUserOption[]>([]);
+  const [usersCursor, setUsersCursor] = useState<string | null>(null);
+  const [loadingMoreUsers, setLoadingMoreUsers] = useState(false);
   const [usersError, setUsersError] = useState<string | null>(null);
   const [usersLoading, setUsersLoading] = useState(true);
   const [studentId, setStudentId] = useState('');
@@ -60,41 +71,82 @@ export default function AdminGuardianDetailPage() {
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmState>(null);
 
-  const loadUsers = useCallback(async () => {
+  const loadUsers = useCallback(async (opts: { readonly cursor: string | null; readonly append: boolean }) => {
     const auth = readSession();
     if (auth === null) return;
-    setUsersLoading(true);
-    setUsersError(null);
+    if (!opts.append) setUsersLoading(true);
+    else setLoadingMoreUsers(true);
+    if (!opts.append) setUsersError(null);
     try {
-      const result = await apiRequest<{ data: BindUserOption[] }>('/api/v1/users?limit=50', {
-        auth,
-      });
-      setUsers(result.data ?? []);
+      const result = await apiRequest<PaginatedEnvelope<BindUserOption>>(
+        buildListQuery('/api/v1/users', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setUsers((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setUsersCursor(page.nextCursor);
     } catch (err) {
-      setUsers([]);
-      if (err instanceof ApiClientError && err.status === 403) {
-        setUsersError(
-          'Cannot load users for the picker (needs user.read). Use advanced UUID paste or ask an admin.',
-        );
-      } else if (err instanceof ApiClientError) {
-        setUsersError(adminFriendlyMessage(err, 'users'));
-      } else {
-        setUsersError('Could not load users.');
+      if (!opts.append) {
+        setUsers([]);
+        setUsersCursor(null);
+        if (err instanceof ApiClientError && err.status === 403) {
+          setUsersError(
+            'Cannot load users for the picker (needs user.read). Use advanced UUID paste or ask an admin.',
+          );
+        } else if (err instanceof ApiClientError) {
+          setUsersError(adminFriendlyMessage(err, 'users'));
+        } else {
+          setUsersError('Could not load users.');
+        }
       }
     } finally {
       setUsersLoading(false);
+      setLoadingMoreUsers(false);
     }
   }, []);
+
+  const loadStudentPicker = useCallback(
+    async (opts: { readonly cursor: string | null; readonly append: boolean }) => {
+      const auth = readSession();
+      if (auth === null) return;
+      if (opts.append) setLoadingMoreStudents(true);
+      try {
+        const result = await apiRequest<PaginatedEnvelope<StudentRow>>(
+          buildListQuery('/api/v1/students', {
+            limit: ADMIN_LIST_DEFAULT_LIMIT,
+            cursor: opts.cursor,
+            filters: { status: 'active' },
+          }),
+          { auth },
+        );
+        const page = readPageMeta(result);
+        const list = result.data ?? [];
+        setStudents((prev) => (opts.append ? appendById(prev, list) : [...list]));
+        setStudentsCursor(page.nextCursor);
+      } catch {
+        if (!opts.append) {
+          setStudents([]);
+          setStudentsCursor(null);
+        }
+      } finally {
+        setLoadingMoreStudents(false);
+      }
+    },
+    [],
+  );
 
   const load = useCallback(async () => {
     const auth = readSession();
     if (auth === null) return;
     setError(null);
     try {
-      const [gRes, lRes, sRes] = await Promise.all([
+      const [gRes, lRes] = await Promise.all([
         apiRequest<{ data: Guardian }>(`/api/v1/guardians/${guardianId}`, { auth }),
         apiRequest<{ data: LinkRow[] }>(`/api/v1/guardians/${guardianId}/links`, { auth }),
-        apiRequest<{ data: StudentRow[] }>('/api/v1/students?limit=100&status=active', { auth }),
       ]);
       setGuardian(gRes.data);
       setDisplayName(gRes.data.displayName);
@@ -102,7 +154,6 @@ export default function AdminGuardianDetailPage() {
       setEmail(gRes.data.email ?? '');
       setStatus((gRes.data.status as GuardianStatus) === 'inactive' ? 'inactive' : 'active');
       setLinks(lRes.data ?? []);
-      setStudents(sRes.data ?? []);
       const nameMap: Record<string, string> = {};
       await Promise.all(
         (lRes.data ?? []).map(async (link) => {
@@ -126,8 +177,9 @@ export default function AdminGuardianDetailPage() {
 
   useEffect(() => {
     void load();
-    void loadUsers();
-  }, [load, loadUsers]);
+    void loadUsers({ cursor: null, append: false });
+    void loadStudentPicker({ cursor: null, append: false });
+  }, [load, loadUsers, loadStudentPicker]);
 
   async function onSaveProfile(event: FormEvent) {
     event.preventDefault();
@@ -232,7 +284,7 @@ export default function AdminGuardianDetailPage() {
       setBindUserId('');
       setShowAdvancedUuid(false);
       await load();
-      await loadUsers();
+      await loadUsers({ cursor: null, append: false });
     } catch (err) {
       if (err instanceof ApiClientError && err.status === 409) {
         setError(
@@ -408,6 +460,14 @@ export default function AdminGuardianDetailPage() {
                 </option>
               ))}
             </select>
+            <ResourceListPagination
+              nextCursor={usersCursor}
+              loadingMore={loadingMoreUsers}
+              disabled={showAdvancedUuid}
+              onLoadMore={() => {
+                void loadUsers({ cursor: usersCursor, append: true });
+              }}
+            />
           </div>
           <div>
             <button
@@ -480,6 +540,13 @@ export default function AdminGuardianDetailPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={studentsCursor}
+            loadingMore={loadingMoreStudents}
+            onLoadMore={() => {
+              void loadStudentPicker({ cursor: studentsCursor, append: true });
+            }}
+          />
         </div>
         <div className="field">
           <label htmlFor="relationshipType">Relationship</label>

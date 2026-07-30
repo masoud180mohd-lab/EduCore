@@ -4,12 +4,19 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog } from '@/components/admin';
+import { ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { type DependentGroup, parseDeleteDependents } from '@/lib/academic/dependents';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import {
   type ClassRow,
   type LifecycleStatus,
@@ -26,6 +33,8 @@ export default function AdminStreamDetailPage() {
   const router = useRouter();
   const [row, setRow] = useState<StreamRow | null>(null);
   const [classes, setClasses] = useState<ClassRow[]>([]);
+  const [classesCursor, setClassesCursor] = useState<string | null>(null);
+  const [loadingMoreClasses, setLoadingMoreClasses] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -36,26 +45,63 @@ export default function AdminStreamDetailPage() {
   const [classId, setClassId] = useState('');
   const [deleteDependents, setDeleteDependents] = useState<DependentGroup[] | null>(null);
 
+  const loadClassPicker = useCallback(
+    async (opts: { readonly cursor: string | null; readonly append: boolean }) => {
+      const auth = readSession();
+      if (auth === null) return;
+      if (opts.append) setLoadingMoreClasses(true);
+      try {
+        const result = await apiRequest<PaginatedEnvelope<ClassRow>>(
+          buildListQuery('/api/v1/classes', {
+            limit: ADMIN_LIST_DEFAULT_LIMIT,
+            cursor: opts.cursor,
+          }),
+          { auth },
+        );
+        const page = readPageMeta(result);
+        const list = result.data ?? [];
+        setClasses((prev) => (opts.append ? appendById(prev, list) : [...list]));
+        setClassesCursor(page.nextCursor);
+      } catch {
+        if (!opts.append) {
+          setClasses([]);
+          setClassesCursor(null);
+        }
+      } finally {
+        setLoadingMoreClasses(false);
+      }
+    },
+    [],
+  );
+
   const load = useCallback(async () => {
     const auth = readSession();
     if (auth === null) return;
     try {
-      const [result, classRes] = await Promise.all([
-        apiRequest<{ data: StreamRow }>(`/api/v1/streams/${streamId}`, { auth }),
-        apiRequest<{ data: ClassRow[] }>('/api/v1/classes?limit=50', { auth }),
-      ]);
+      const result = await apiRequest<{ data: StreamRow }>(`/api/v1/streams/${streamId}`, {
+        auth,
+      });
       setRow(result.data);
       setName(result.data.name);
       setCode(result.data.code ?? '');
       setStatus(result.data.status as LifecycleStatus);
       setClassId(result.data.classId);
-      setClasses(classRes.data ?? []);
       setError(null);
+      await loadClassPicker({ cursor: null, append: false });
+      try {
+        const cls = await apiRequest<{ data: ClassRow }>(
+          `/api/v1/classes/${result.data.classId}`,
+          { auth },
+        );
+        setClasses((prev) => appendById(prev, [cls.data]));
+      } catch {
+        /* picker may already include class */
+      }
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load stream.');
     }
-  }, [streamId]);
+  }, [loadClassPicker, streamId]);
 
   useEffect(() => {
     void load();
@@ -154,6 +200,13 @@ export default function AdminStreamDetailPage() {
                 </option>
               ))}
             </select>
+            <ResourceListPagination
+              nextCursor={classesCursor}
+              loadingMore={loadingMoreClasses}
+              onLoadMore={() => {
+                void loadClassPicker({ cursor: classesCursor, append: true });
+              }}
+            />
           </label>
           <label className="field">
             <span>Name</span>

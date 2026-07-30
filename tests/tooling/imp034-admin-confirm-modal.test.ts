@@ -30,7 +30,7 @@ const ADMIN_MUST_PATHS = [
   'apps/web/src/app/t/[tenantId]/admin/academic/enrollments/[enrollmentId]/page.tsx',
 ] as const;
 
-const WAVE_X_ALLOWLIST = [
+const TEACHER_MUST_PATHS = [
   'apps/web/src/app/t/[tenantId]/teacher/marks/subjects/[examSubjectId]/page.tsx',
   'apps/web/src/app/t/[tenantId]/teacher/attendance/sessions/[sessionId]/page.tsx',
 ] as const;
@@ -55,7 +55,7 @@ describe('IMP-034 admin ConfirmDialog', () => {
     }
   });
 
-  it('admin tree has no window.confirm (teacher Wave X allowlisted separately)', () => {
+  it('admin tree has no window.confirm', () => {
     const adminRoot = path.join(root, 'apps/web/src/app/t/[tenantId]/admin');
     const offenders: string[] = [];
     for (const file of walkTsx(adminRoot)) {
@@ -67,11 +67,24 @@ describe('IMP-034 admin ConfirmDialog', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('documents Wave X teacher residuals that still use window.confirm', () => {
-    for (const rel of WAVE_X_ALLOWLIST) {
+  it('teacher marks submit and attendance close use ConfirmDialog (Wave X)', () => {
+    for (const rel of TEACHER_MUST_PATHS) {
       const src = readFileSync(path.join(root, rel), 'utf8');
-      expect(src).toContain('window.confirm');
+      expect(src, rel).not.toContain('window.confirm');
+      expect(src, rel).toContain('ConfirmDialog');
     }
+  });
+
+  it('teacher tree has no window.confirm', () => {
+    const teacherRoot = path.join(root, 'apps/web/src/app/t/[tenantId]/teacher');
+    const offenders: string[] = [];
+    for (const file of walkTsx(teacherRoot)) {
+      const src = readFileSync(file, 'utf8');
+      if (src.includes('window.confirm')) {
+        offenders.push(path.relative(root, file).replace(/\\/g, '/'));
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 
   it('DSF-002 documents ConfirmDialog rules', () => {

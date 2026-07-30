@@ -4,10 +4,17 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog } from '@/components/admin';
+import { ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import { type RoleRow, type UserRoleRow } from '@/lib/roles/types';
 import { type OrganizationRow } from '@/lib/organizations/types';
 import { type UserRow } from '@/lib/users/types';
@@ -77,7 +84,11 @@ export default function AdminUserDetailPage() {
   const [membership, setMembership] = useState<MembershipRow | null>(null);
   const [userRoles, setUserRoles] = useState<UserRoleRow[]>([]);
   const [rolesCatalog, setRolesCatalog] = useState<RoleRow[]>([]);
+  const [rolesCursor, setRolesCursor] = useState<string | null>(null);
+  const [loadingMoreRoles, setLoadingMoreRoles] = useState(false);
   const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
+  const [orgsCursor, setOrgsCursor] = useState<string | null>(null);
+  const [loadingMoreOrgs, setLoadingMoreOrgs] = useState(false);
   const [orgNames, setOrgNames] = useState<Record<string, string>>({});
   const [assignRoleId, setAssignRoleId] = useState('');
   const [assignOrgId, setAssignOrgId] = useState('');
@@ -142,28 +153,92 @@ export default function AdminUserDetailPage() {
     }
 
     try {
-      const [assignments, roles, orgRes] = await Promise.all([
-        apiRequest<{ data: UserRoleRow[] }>(
-          `/api/v1/user-roles?userId=${encodeURIComponent(userId)}&limit=50`,
-          { auth },
-        ),
-        apiRequest<{ data: RoleRow[] }>('/api/v1/roles?limit=100', { auth }),
-        apiRequest<{ data: OrganizationRow[] }>('/api/v1/organizations?limit=100', { auth }),
-      ]);
+      const assignments = await apiRequest<{ data: UserRoleRow[] }>(
+        `/api/v1/user-roles?userId=${encodeURIComponent(userId)}&limit=50`,
+        { auth },
+      );
       setUserRoles(assignments.data ?? []);
-      setRolesCatalog(roles.data ?? []);
+    } catch {
+      setUserRoles([]);
+    }
+
+    try {
+      const roles = await apiRequest<PaginatedEnvelope<RoleRow>>(
+        buildListQuery('/api/v1/roles', { limit: ADMIN_LIST_DEFAULT_LIMIT }),
+        { auth },
+      );
+      const page = readPageMeta(roles);
+      setRolesCatalog([...(roles.data ?? [])]);
+      setRolesCursor(page.nextCursor);
+    } catch {
+      setRolesCatalog([]);
+      setRolesCursor(null);
+    }
+
+    try {
+      const orgRes = await apiRequest<PaginatedEnvelope<OrganizationRow>>(
+        buildListQuery('/api/v1/organizations', { limit: ADMIN_LIST_DEFAULT_LIMIT }),
+        { auth },
+      );
+      const page = readPageMeta(orgRes);
       const orgList = orgRes.data ?? [];
-      setOrganizations(orgList);
+      setOrganizations([...orgList]);
+      setOrgsCursor(page.nextCursor);
       const map: Record<string, string> = {};
       for (const org of orgList) map[org.id] = org.name;
       setOrgNames(map);
     } catch {
-      setUserRoles([]);
-      setRolesCatalog([]);
       setOrganizations([]);
+      setOrgsCursor(null);
       setOrgNames({});
     }
   }, [userId]);
+
+  async function loadMoreRoles() {
+    const auth = readSession();
+    if (auth === null || rolesCursor === null) return;
+    setLoadingMoreRoles(true);
+    try {
+      const roles = await apiRequest<PaginatedEnvelope<RoleRow>>(
+        buildListQuery('/api/v1/roles', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: rolesCursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(roles);
+      setRolesCatalog((prev) => appendById(prev, roles.data ?? []));
+      setRolesCursor(page.nextCursor);
+    } finally {
+      setLoadingMoreRoles(false);
+    }
+  }
+
+  async function loadMoreOrgs() {
+    const auth = readSession();
+    if (auth === null || orgsCursor === null) return;
+    setLoadingMoreOrgs(true);
+    try {
+      const orgRes = await apiRequest<PaginatedEnvelope<OrganizationRow>>(
+        buildListQuery('/api/v1/organizations', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: orgsCursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(orgRes);
+      const list = orgRes.data ?? [];
+      setOrganizations((prev) => appendById(prev, list));
+      setOrgsCursor(page.nextCursor);
+      setOrgNames((prev) => {
+        const next = { ...prev };
+        for (const org of list) next[org.id] = org.name;
+        return next;
+      });
+    } finally {
+      setLoadingMoreOrgs(false);
+    }
+  }
 
   useEffect(() => {
     void load();
@@ -511,7 +586,7 @@ export default function AdminUserDetailPage() {
               ))}
             </ul>
           )}
-          {rolesCatalog.length > 0 ? (
+          {rolesCatalog.length > 0 || rolesCursor !== null ? (
             <form className="stack" onSubmit={(e) => void onAssignRole(e)}>
               <label className="field">
                 <span>Assign role</span>
@@ -527,6 +602,13 @@ export default function AdminUserDetailPage() {
                     </option>
                   ))}
                 </select>
+                <ResourceListPagination
+                  nextCursor={rolesCursor}
+                  loadingMore={loadingMoreRoles}
+                  onLoadMore={() => {
+                    void loadMoreRoles();
+                  }}
+                />
               </label>
               <label className="field">
                 <span>Scope</span>
@@ -538,6 +620,13 @@ export default function AdminUserDetailPage() {
                     </option>
                   ))}
                 </select>
+                <ResourceListPagination
+                  nextCursor={orgsCursor}
+                  loadingMore={loadingMoreOrgs}
+                  onLoadMore={() => {
+                    void loadMoreOrgs();
+                  }}
+                />
               </label>
               <button
                 className="btn btn-primary"

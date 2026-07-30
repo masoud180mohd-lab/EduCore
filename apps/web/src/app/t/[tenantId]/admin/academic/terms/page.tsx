@@ -30,6 +30,8 @@ export default function AdminTermsPage() {
   const [rows, setRows] = useState<TermRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
+  const [yearsCursor, setYearsCursor] = useState<string | null>(null);
+  const [loadingMoreYears, setLoadingMoreYears] = useState(false);
   const [yearNames, setYearNames] = useState<Record<string, string>>({});
   const [filterYearId, setFilterYearId] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -43,19 +45,34 @@ export default function AdminTermsPage() {
   const [endsOn, setEndsOn] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('active');
 
-  async function loadPickers() {
+  async function loadYearPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
     const auth = readSession();
     if (auth === null) return;
+    if (opts.append) setLoadingMoreYears(true);
     try {
-      const q = buildListQuery('/api/v1/academic-years', { limit: ADMIN_LIST_DEFAULT_LIMIT });
-      const yearRes = await apiRequest<{ data: AcademicYearRow[] }>(q, { auth });
-      const yearList = yearRes.data ?? [];
-      setYears(yearList);
-      const map: Record<string, string> = {};
-      for (const y of yearList) map[y.id] = y.name;
-      setYearNames(map);
+      const result = await apiRequest<PaginatedEnvelope<AcademicYearRow>>(
+        buildListQuery('/api/v1/academic-years', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setYears((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setYearsCursor(page.nextCursor);
+      setYearNames((prev) => {
+        const next = opts.append ? { ...prev } : {};
+        for (const y of list) next[y.id] = y.name;
+        return next;
+      });
     } catch {
-      // Picker failure — form/filter still usable if list loaded
+      if (!opts.append) {
+        setYears([]);
+        setYearsCursor(null);
+      }
+    } finally {
+      setLoadingMoreYears(false);
     }
   }
 
@@ -91,7 +108,7 @@ export default function AdminTermsPage() {
   }
 
   useEffect(() => {
-    void loadPickers();
+    void loadYearPicker({ cursor: null, append: false });
   }, []);
 
   useEffect(() => {
@@ -162,6 +179,13 @@ export default function AdminTermsPage() {
             </option>
           ))}
         </select>
+        <ResourceListPagination
+          nextCursor={yearsCursor}
+          loadingMore={loadingMoreYears}
+          onLoadMore={() => {
+            void loadYearPicker({ cursor: yearsCursor, append: true });
+          }}
+        />
       </div>
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
@@ -181,6 +205,13 @@ export default function AdminTermsPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={yearsCursor}
+            loadingMore={loadingMoreYears}
+            onLoadMore={() => {
+              void loadYearPicker({ cursor: yearsCursor, append: true });
+            }}
+          />
         </div>
         <div className="field">
           <label htmlFor="term-name">Name</label>

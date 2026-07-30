@@ -20,10 +20,17 @@ export function adminGuardianFeesPath(tenantId: string, guardianId: string): str
   return `/t/${tenantId}/admin/guardians/${guardianId}/fees`;
 }
 
-export function adminEnrollmentsCreatePath(tenantId: string): string {
-  return `/t/${tenantId}/admin/academic/enrollments`;
+export function adminEnrollmentsCreatePath(
+  tenantId: string,
+  studentId?: string | null,
+): string {
+  const base = `/t/${tenantId}/admin/academic/enrollments`;
+  if (studentId === undefined || studentId === null || studentId === '') return base;
+  return `${base}?studentId=${encodeURIComponent(studentId)}`;
 }
 
-export function adminInvoicesCreatePath(tenantId: string): string {
-  return `/t/${tenantId}/admin/fees/invoices`;
+export function adminInvoicesCreatePath(tenantId: string, studentId?: string | null): string {
+  const base = `/t/${tenantId}/admin/fees/invoices`;
+  if (studentId === undefined || studentId === null || studentId === '') return base;
+  return `${base}?studentId=${encodeURIComponent(studentId)}`;
 }

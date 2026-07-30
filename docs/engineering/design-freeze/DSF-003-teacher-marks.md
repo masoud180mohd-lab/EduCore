@@ -3,7 +3,7 @@
 | Field     | Value                                    |
 | --------- | ---------------------------------------- |
 | Freeze ID | `DSF-003`                                |
-| Version   | `1.0`                                    |
+| Version   | `1.1`                                    |
 | Date      | 2026-07-21                               |
 | Audience  | Teacher / staff (mobile-first)           |
 | Authority | Solo-operator provisional (SOLO-GOV-001) |
@@ -31,6 +31,7 @@ Reuse DSF-001 CSS variables. No purple-on-white AI defaults.
 - ScoreField (number input, labeled)
 - StatusChip for exam-subject workflow
 - Banner / empty / forbidden states
+- **ConfirmDialog** for Submit (shared admin primitive; Esc / Cancel focus / danger)
 
 ## AuthZ UX
 
@@ -47,3 +48,10 @@ Reuse DSF-001 CSS variables. No purple-on-white AI defaults.
 ## Solo-operator honesty
 
 Acting seats only.
+
+## Revisions
+
+| Ver | Date       | Notes                                      |
+| --- | ---------- | ------------------------------------------ |
+| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-008)       |
+| 1.1 | 2026-07-30 | Submit uses ConfirmDialog (IMP-034 Wave X) |

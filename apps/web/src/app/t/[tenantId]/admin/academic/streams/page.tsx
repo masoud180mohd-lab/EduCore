@@ -23,8 +23,6 @@ import {
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
-const CLASS_PICKER_LIMIT = 100;
-
 export default function AdminStreamsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
@@ -32,6 +30,8 @@ export default function AdminStreamsPage() {
   const [rows, setRows] = useState<StreamRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [classes, setClasses] = useState<ClassRow[]>([]);
+  const [classesCursor, setClassesCursor] = useState<string | null>(null);
+  const [loadingMoreClasses, setLoadingMoreClasses] = useState(false);
   const [classNames, setClassNames] = useState<Record<string, string>>({});
   const [filterClassId, setFilterClassId] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -43,19 +43,34 @@ export default function AdminStreamsPage() {
   const [classId, setClassId] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('active');
 
-  async function loadPickers() {
+  async function loadClassPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
     const auth = readSession();
     if (auth === null) return;
+    if (opts.append) setLoadingMoreClasses(true);
     try {
-      const q = buildListQuery('/api/v1/classes', { limit: CLASS_PICKER_LIMIT });
-      const classRes = await apiRequest<{ data: ClassRow[] }>(q, { auth });
-      const classList = classRes.data ?? [];
-      setClasses(classList);
-      const map: Record<string, string> = {};
-      for (const c of classList) map[c.id] = c.name;
-      setClassNames(map);
+      const result = await apiRequest<PaginatedEnvelope<ClassRow>>(
+        buildListQuery('/api/v1/classes', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setClasses((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setClassesCursor(page.nextCursor);
+      setClassNames((prev) => {
+        const next = opts.append ? { ...prev } : {};
+        for (const c of list) next[c.id] = c.name;
+        return next;
+      });
     } catch {
-      // Picker failure — form/filter still usable if list loaded
+      if (!opts.append) {
+        setClasses([]);
+        setClassesCursor(null);
+      }
+    } finally {
+      setLoadingMoreClasses(false);
     }
   }
 
@@ -91,7 +106,7 @@ export default function AdminStreamsPage() {
   }
 
   useEffect(() => {
-    void loadPickers();
+    void loadClassPicker({ cursor: null, append: false });
   }, []);
 
   useEffect(() => {
@@ -154,6 +169,13 @@ export default function AdminStreamsPage() {
             </option>
           ))}
         </select>
+        <ResourceListPagination
+          nextCursor={classesCursor}
+          loadingMore={loadingMoreClasses}
+          onLoadMore={() => {
+            void loadClassPicker({ cursor: classesCursor, append: true });
+          }}
+        />
       </div>
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
@@ -173,6 +195,13 @@ export default function AdminStreamsPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={classesCursor}
+            loadingMore={loadingMoreClasses}
+            onLoadMore={() => {
+              void loadClassPicker({ cursor: classesCursor, append: true });
+            }}
+          />
         </div>
         <div className="field">
           <label htmlFor="stream-name">Name</label>

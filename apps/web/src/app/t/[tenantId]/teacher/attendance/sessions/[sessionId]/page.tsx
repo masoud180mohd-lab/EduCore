@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { ConfirmDialog } from '@/components/admin';
 import { TeacherShell } from '@/components/TeacherShell';
 import {
   type AttendanceRecordStatus,
@@ -37,6 +38,7 @@ export default function MarkSessionPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const closed = session?.status === 'closed';
 
@@ -131,10 +133,9 @@ export default function MarkSessionPage() {
     }
   }
 
-  async function onClose() {
+  async function runClose() {
     const auth = readSession();
     if (auth === null || closed) return;
-    if (!window.confirm('Close this session? Marks cannot be edited after closing.')) return;
     setBusy(true);
     setError(null);
     const actionKey = `session.close:${sessionId}`;
@@ -145,6 +146,7 @@ export default function MarkSessionPage() {
         { method: 'POST', auth, idempotencyKey: idem },
       );
       clearIdempotencyKey(actionKey);
+      setConfirmClose(false);
       setSession(result.data);
       setInfo('Session closed.');
     } catch (err) {
@@ -226,11 +228,26 @@ export default function MarkSessionPage() {
           type="button"
           className="btn btn-danger"
           disabled={closed || busy}
-          onClick={() => void onClose()}
+          onClick={() => setConfirmClose(true)}
         >
           Close session
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmClose}
+        title="Close this session?"
+        body="Marks cannot be edited after closing."
+        confirmLabel="Close session"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirmClose(false);
+        }}
+        onConfirm={() => {
+          void runClose();
+        }}
+      />
     </TeacherShell>
   );
 }

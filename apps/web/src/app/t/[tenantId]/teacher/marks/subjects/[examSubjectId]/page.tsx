@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { ConfirmDialog } from '@/components/admin';
 import { TeacherShell } from '@/components/TeacherShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -40,6 +41,7 @@ export default function MarkEntryPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [confirmSubmit, setConfirmSubmit] = useState(false);
 
   const locked = subject !== null && subject.status !== 'draft';
   const canApprove = subject?.status === 'submitted';
@@ -134,10 +136,9 @@ export default function MarkEntryPage() {
     }
   }
 
-  async function onSubmit() {
+  async function runSubmit() {
     const auth = readSession();
     if (auth === null || locked) return;
-    if (!window.confirm('Submit marks? You will not be able to edit after submit.')) return;
     setBusy(true);
     setError(null);
     try {
@@ -145,6 +146,7 @@ export default function MarkEntryPage() {
         method: 'POST',
         auth,
       });
+      setConfirmSubmit(false);
       setInfo('Submitted for approval.');
       await load();
     } catch (err) {
@@ -248,7 +250,7 @@ export default function MarkEntryPage() {
           type="button"
           className="btn btn-secondary"
           disabled={locked || busy}
-          onClick={() => void onSubmit()}
+          onClick={() => setConfirmSubmit(true)}
         >
           Submit
         </button>
@@ -263,6 +265,21 @@ export default function MarkEntryPage() {
           </button>
         ) : null}
       </div>
+
+      <ConfirmDialog
+        open={confirmSubmit}
+        title="Submit marks?"
+        body="You will not be able to edit after submit."
+        confirmLabel="Submit"
+        danger
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirmSubmit(false);
+        }}
+        onConfirm={() => {
+          void runSubmit();
+        }}
+      />
     </TeacherShell>
   );
 }

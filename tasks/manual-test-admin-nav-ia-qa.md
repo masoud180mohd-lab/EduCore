@@ -1,6 +1,8 @@
 # Manual QA — IMP-029 AdminShell nav IA
 
-Lab: admin `admin@educore.local` / owner password; optional finance-only staff if seeded.
+Lab: admin `admin@educore.local` / `ChangeMe-Local-Only-1`; optional finance-only staff if seeded.
+
+**2026-07-28:** Source/static checks PASS (`scripts/manual-qa-admin-polish.ts`). Headless browser PASS for owner @ 768px, grouped nav, Fees current, no overflow (`scripts/manual-qa-admin-browser.ts`). Finance-only + keyboard @ 1280 still need GUI if desired.
 
 ## Owner @ 768px
 

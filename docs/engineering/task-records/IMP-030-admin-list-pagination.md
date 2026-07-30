@@ -54,13 +54,13 @@ Helpers: `buildListQuery`, `readPageMeta`, `appendById`, `hasMorePages`, `ADMIN_
 | P2 registries                    | Done                   |
 | P3 academic + fees (+ roles)     | Done                   |
 | P4 tooling + check + task record | Done                   |
-| Wave X pickers / teacher lists   | **Skipped** (residual) |
+| Wave X pickers / teacher lists   | **Done** (P0 pickers — see IMP-030x) |
 
 ## Residuals
 
-- Form pickers still hard-cap one page (students/classes ≤100; years/structures/terms/streams ≤50) — invoice create, enroll form, guardian bind-user, user-detail role/org pickers, etc.
-- Teacher / parent lists out of MVP.
+- Teacher / parent **list** pages out of MVP (not form pickers).
 - No Playwright multi-page harness in this program.
+- Admin form/detail pickers: see IMP-030x (closed).
 
 ## Doubt checks
 

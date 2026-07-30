@@ -3,7 +3,7 @@
 | Field     | Value                                                       |
 | --------- | ----------------------------------------------------------- |
 | Freeze ID | `DSF-002`                                                   |
-| Version   | `1.23`                                                      |
+| Version   | `1.25`                                                      |
 | Date      | 2026-07-28                                                  |
 | Audience  | School admin / headmaster (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                    |
@@ -119,7 +119,7 @@ Primary admin **registry** lists consume ACF envelopes `{ data, page: { nextCurs
 
 **Non-goals (pagination):** virtualized infinite-scroll libraries; offset/page-number UI; fetching `limit=10000` to avoid paging; client-side fake paging of a truncated first page; Nest API redesign.
 
-Form **pickers** (student/year/structure dropdowns) may still hard-cap one page — residual until Wave X; primary registries must not silently truncate.
+Form **pickers** on create/bind/detail forms (invoice, enrollment, streams, classes, terms, fee structures, guardian bind/link, user role/org, enrollment transfer, academic reparent) use the same **Load more** + `page.nextCursor` pattern as registries (IMP-030x). Teacher/parent list pickers remain out of MVP.
 
 ## Ops tables (IMP-028 / EduCore dense admin)
 
@@ -143,18 +143,18 @@ Use **`AdminTable`** for high-traffic operational registries. Keep **cards** for
 
 ## Confirm dialogs (IMP-034 / AUDIT G5)
 
-Destructive admin mutations use shared **`ConfirmDialog`** — not `window.confirm`.
+Destructive admin mutations use shared **`ConfirmDialog`** — not `window.confirm`. Teacher marks **Submit** and attendance **Close session** also use the same `ConfirmDialog` (Wave X).
 
 | Rule         | Behavior                                                                                                                                                                                                     |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Required for | Money (void, reverse); membership/users (disable, enable, suspend, reactivate, remove, role unassign); org deactivate; guardian end-link / unbind; academic delete + mark closed; enrollment status/transfer |
+| Required for | Money (void, reverse); membership/users (disable, enable, suspend, reactivate, remove, role unassign); org deactivate; guardian end-link / unbind; academic delete + mark closed; enrollment status/transfer; teacher marks submit; attendance session close |
 | Keyboard     | **Esc** and backdrop dismiss when not busy; initial focus on **Cancel**; Enter activates focused control only (Cancel by default — does **not** auto-confirm)                                                |
 | Focus        | Restore focus to the triggering control after close when practical                                                                                                                                           |
-| Danger       | `danger={true}` for void, reverse, delete, remove, disable, unbind, suspend, end-link, mark closed                                                                                                           |
+| Danger       | `danger={true}` for void, reverse, delete, remove, disable, unbind, suspend, end-link, mark closed, marks submit, session close                                                                              |
 | Busy         | Confirm + Cancel + backdrop disabled while mutation in flight (no double POST); Idempotency-Key unchanged                                                                                                    |
 | AuthZ        | Confirm UI ≠ authorization — API remains truth (403/409 after confirm)                                                                                                                                       |
 
-**Non-goals (confirms):** modal libraries (Headless/Radix/shadcn); auto-confirm timers; **picker UX** (Wave X); teacher marks/attendance confirms (Wave X).
+**Non-goals (confirms):** modal libraries (Headless/Radix/shadcn); auto-confirm timers; remaining detail reparent/transfer picker UX polish.
 
 ## Cross-links (IMP-031 / AUDIT G13)
 
@@ -174,7 +174,7 @@ Deep links reduce hub hunting. Compose existing list/detail APIs — no nested B
 - Sections on student detail: **Enrollments**, **Fees**, **Guardians** — each gated by IMP-033 nav visibility (`visibleAdminNavIds`).
 - Per-section loading/error; 403 in one section does not break the edit form or sibling sections.
 - Empty copy: “No enrollments yet for this student.” / “No invoices yet…” / “No active guardian links…”
-- Create shortcuts link to existing create pages (Wave X: `?studentId=` prefill).
+- Create shortcuts link to existing create pages with `?studentId=` prefill (IMP-031x).
 - Shared primitives: `RelatedRecordsSection`, `ResourceListPagination` (limit 25), `admin-paths` helpers.
 
 **Non-goals (cross-links):** CRM graph; auto-create from link; parent portal (DSF-006).
@@ -262,6 +262,9 @@ Accepted under acting seats only; revise when a second review seat exists.
 | IMP-035 | Central adminFriendlyMessage error mapper                      |
 | IMP-031 | Admin cross-links (student ↔ enrollment/fees/guardian)         |
 | IMP-032 | Operator-safe tenant settings (Advanced JSON + preserve-merge) |
+| IMP-030x | Wave X: Load more on P0 form pickers                           |
+| IMP-034x | Wave X: teacher marks submit + attendance close ConfirmDialog  |
+| IMP-031x | Wave X: create enrollment/invoice `?studentId=` prefill        |
 
 ## Revisions
 
@@ -278,3 +281,5 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.21 | 2026-07-28 | IMP-035 central adminFriendlyMessage error mapper                   |
 | 1.22 | 2026-07-28 | IMP-031 admin cross-links (student detail + invoice guardians)      |
 | 1.23 | 2026-07-28 | IMP-032 operator-safe tenant settings form (Advanced JSON)          |
+| 1.24 | 2026-07-30 | Wave X: P0 picker Load more + teacher ConfirmDialog                 |
+| 1.25 | 2026-07-31 | Wave X closeout: detail pickers + `?studentId=` prefill             |

@@ -26,8 +26,8 @@ Replace native `window.confirm` on admin money + membership (+ other admin destr
 | guardians/[id]             | end link / unbind                        | Should / danger       | Migrated       |
 | academic */[id]            | mark closed + delete                     | Should / danger       | Migrated       |
 | enrollments/[id]           | status + transfer                        | Should                | Migrated       |
-| teacher marks / attendance | submit / close                           | Wave X                | Residual       |
-| Pickers                    | —                                        | Wave X                | Untouched      |
+| teacher marks / attendance | submit / close                           | Wave X                | **Done** (IMP-034x) |
+| Pickers                    | —                                        | Wave X                | See IMP-030x        |
 
 ## ConfirmDialog API changes
 
@@ -41,7 +41,7 @@ Replace native `window.confirm` on admin money + membership (+ other admin destr
 | Scope                       | Before (approx) | After           |
 | --------------------------- | --------------- | --------------- |
 | `admin/**` `window.confirm` | ~20 call sites  | **0**           |
-| Teacher Wave X              | 2               | 2 (allowlisted) |
+| Teacher Wave X              | 2               | **0**           |
 
 ## Waves
 
@@ -52,7 +52,7 @@ Replace native `window.confirm` on admin money + membership (+ other admin destr
 | C2 users/membership         | Done        |
 | C3 guardian + academic      | Done        |
 | C4 tooling + check          | Done        |
-| Wave X pickers / teacher    | **Skipped** |
+| Wave X pickers / teacher    | **Done** (IMP-034x + IMP-030x) |
 
 ## Verify
 

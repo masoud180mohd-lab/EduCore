@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { type FormEvent, useEffect, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 
 import { ResourceList, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
@@ -25,18 +25,23 @@ import {
 } from '@/lib/academic/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
-const CLASS_PICKER_LIMIT = 100;
-const STUDENT_PICKER_LIMIT = 100;
-
 export default function AdminEnrollmentsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const prefillApplied = useRef(false);
   const [rows, setRows] = useState<EnrollmentRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [classes, setClasses] = useState<ClassRow[]>([]);
+  const [classesCursor, setClassesCursor] = useState<string | null>(null);
+  const [loadingMoreClasses, setLoadingMoreClasses] = useState(false);
   const [students, setStudents] = useState<StudentOption[]>([]);
+  const [studentsCursor, setStudentsCursor] = useState<string | null>(null);
+  const [loadingMoreStudents, setLoadingMoreStudents] = useState(false);
   const [streams, setStreams] = useState<StreamRow[]>([]);
+  const [streamsCursor, setStreamsCursor] = useState<string | null>(null);
+  const [loadingMoreStreams, setLoadingMoreStreams] = useState(false);
   const [classNames, setClassNames] = useState<Record<string, string>>({});
   const [studentNames, setStudentNames] = useState<Record<string, string>>({});
   const [filterClassId, setFilterClassId] = useState('');
@@ -50,35 +55,104 @@ export default function AdminEnrollmentsPage() {
   const [streamId, setStreamId] = useState('');
   const [status, setStatus] = useState<EnrollmentStatus>('active');
 
-  async function loadPickers() {
+  async function loadClassPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
     const auth = readSession();
     if (auth === null) return;
+    if (opts.append) setLoadingMoreClasses(true);
     try {
-      const [classRes, studentRes] = await Promise.all([
-        apiRequest<{ data: ClassRow[] }>(
-          buildListQuery('/api/v1/classes', { limit: CLASS_PICKER_LIMIT }),
-          { auth },
-        ),
-        apiRequest<{ data: StudentOption[] }>(
-          buildListQuery('/api/v1/students', {
-            limit: STUDENT_PICKER_LIMIT,
-            filters: { status: 'active' },
-          }),
-          { auth },
-        ),
-      ]);
-      const classList = classRes.data ?? [];
-      const studentList = studentRes.data ?? [];
-      setClasses(classList);
-      setStudents(studentList);
-      const cMap: Record<string, string> = {};
-      for (const c of classList) cMap[c.id] = c.name;
-      setClassNames(cMap);
-      const sMap: Record<string, string> = {};
-      for (const s of studentList) sMap[s.id] = s.displayName;
-      setStudentNames(sMap);
+      const result = await apiRequest<PaginatedEnvelope<ClassRow>>(
+        buildListQuery('/api/v1/classes', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setClasses((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setClassesCursor(page.nextCursor);
+      setClassNames((prev) => {
+        const next = opts.append ? { ...prev } : {};
+        for (const c of list) next[c.id] = c.name;
+        return next;
+      });
     } catch {
-      // Picker failure — form/filter still usable if list loaded
+      if (!opts.append) {
+        setClasses([]);
+        setClassesCursor(null);
+      }
+    } finally {
+      setLoadingMoreClasses(false);
+    }
+  }
+
+  async function loadStudentPicker(opts: {
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null) return;
+    if (opts.append) setLoadingMoreStudents(true);
+    try {
+      const result = await apiRequest<PaginatedEnvelope<StudentOption>>(
+        buildListQuery('/api/v1/students', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+          filters: { status: 'active' },
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setStudents((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setStudentsCursor(page.nextCursor);
+      setStudentNames((prev) => {
+        const next = opts.append ? { ...prev } : {};
+        for (const s of list) next[s.id] = s.displayName;
+        return next;
+      });
+    } catch {
+      if (!opts.append) {
+        setStudents([]);
+        setStudentsCursor(null);
+      }
+    } finally {
+      setLoadingMoreStudents(false);
+    }
+  }
+
+  async function loadStreamPicker(opts: {
+    readonly forClassId: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null || opts.forClassId === '') {
+      setStreams([]);
+      setStreamsCursor(null);
+      return;
+    }
+    if (opts.append) setLoadingMoreStreams(true);
+    try {
+      const result = await apiRequest<PaginatedEnvelope<StreamRow>>(
+        buildListQuery('/api/v1/streams', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+          filters: { classId: opts.forClassId },
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setStreams((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setStreamsCursor(page.nextCursor);
+    } catch {
+      if (!opts.append) {
+        setStreams([]);
+        setStreamsCursor(null);
+      }
+    } finally {
+      setLoadingMoreStreams(false);
     }
   }
 
@@ -118,8 +192,30 @@ export default function AdminEnrollmentsPage() {
   }
 
   useEffect(() => {
-    void loadPickers();
+    void loadClassPicker({ cursor: null, append: false });
+    void loadStudentPicker({ cursor: null, append: false });
   }, []);
+
+  useEffect(() => {
+    if (prefillApplied.current) return;
+    const raw = searchParams.get('studentId')?.trim() ?? '';
+    if (raw === '') return;
+    prefillApplied.current = true;
+    setStudentId(raw);
+    void (async () => {
+      const auth = readSession();
+      if (auth === null) return;
+      try {
+        const st = await apiRequest<{ data: StudentOption }>(`/api/v1/students/${raw}`, {
+          auth,
+        });
+        setStudents((prev) => appendById(prev, [st.data]));
+        setStudentNames((prev) => ({ ...prev, [st.data.id]: st.data.displayName }));
+      } catch {
+        /* select still holds UUID until picker catches up */
+      }
+    })();
+  }, [searchParams]);
 
   useEffect(() => {
     void loadPage({
@@ -131,23 +227,8 @@ export default function AdminEnrollmentsPage() {
   }, [filterClassId, filterStatus]);
 
   useEffect(() => {
-    const auth = readSession();
-    if (auth === null || classId === '') {
-      setStreams([]);
-      return;
-    }
-    void (async () => {
-      try {
-        const q = buildListQuery('/api/v1/streams', {
-          limit: ADMIN_LIST_DEFAULT_LIMIT,
-          filters: { classId },
-        });
-        const streamRes = await apiRequest<{ data: StreamRow[] }>(q, { auth });
-        setStreams(streamRes.data ?? []);
-      } catch {
-        setStreams([]);
-      }
-    })();
+    setStreamId('');
+    void loadStreamPicker({ forClassId: classId, cursor: null, append: false });
   }, [classId]);
 
   async function onCreate(event: FormEvent) {
@@ -206,6 +287,13 @@ export default function AdminEnrollmentsPage() {
             </option>
           ))}
         </select>
+        <ResourceListPagination
+          nextCursor={classesCursor}
+          loadingMore={loadingMoreClasses}
+          onLoadMore={() => {
+            void loadClassPicker({ cursor: classesCursor, append: true });
+          }}
+        />
       </div>
       <div className="field">
         <label htmlFor="filter-status">Filter by status</label>
@@ -240,6 +328,13 @@ export default function AdminEnrollmentsPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={studentsCursor}
+            loadingMore={loadingMoreStudents}
+            onLoadMore={() => {
+              void loadStudentPicker({ cursor: studentsCursor, append: true });
+            }}
+          />
         </div>
         <div className="field">
           <label htmlFor="enroll-class">Class</label>
@@ -249,7 +344,6 @@ export default function AdminEnrollmentsPage() {
             value={classId}
             onChange={(e) => {
               setClassId(e.target.value);
-              setStreamId('');
             }}
           >
             <option value="">Select class</option>
@@ -259,6 +353,13 @@ export default function AdminEnrollmentsPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={classesCursor}
+            loadingMore={loadingMoreClasses}
+            onLoadMore={() => {
+              void loadClassPicker({ cursor: classesCursor, append: true });
+            }}
+          />
         </div>
         <div className="field">
           <label htmlFor="enroll-stream">Stream (optional)</label>
@@ -270,6 +371,17 @@ export default function AdminEnrollmentsPage() {
               </option>
             ))}
           </select>
+          <ResourceListPagination
+            nextCursor={streamsCursor}
+            loadingMore={loadingMoreStreams}
+            onLoadMore={() => {
+              void loadStreamPicker({
+                forClassId: classId,
+                cursor: streamsCursor,
+                append: true,
+              });
+            }}
+          />
         </div>
         <div className="field">
           <label htmlFor="enroll-status">Status</label>
