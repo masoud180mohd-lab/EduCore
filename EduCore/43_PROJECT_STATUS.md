@@ -4,24 +4,57 @@
 
 This is the canonical status page for EduCore. It answers what is complete, what is frozen, what is flexible, what is allowed now, and what must happen next. It does not override the Development Constitution, accepted ADRs, or an approved freeze record.
 
+**Honesty:** Freeze acceptance language below is under **solo-operator consolidation (SOLO-GOV-001)** unless an independent multi-person countersign is recorded. That is not the same as unrestricted production approval.
+
 ## Current Phase
 
-**Pre-implementation controls and downstream design freeze.**
+**Controlled MVP vertical-slice implementation (lab / local), post–Engineering Sprint 0.**
 
-The independent readiness verdict is **NO GO for unrestricted production feature development**. Controlled, non-business Engineering Sprint 0 work is allowed.
+- Architecture Freeze v1.0 remains the kit baseline (`38_ARCHITECTURE_FREEZE_RECORD.md`).
+- Independent Engineering Readiness Review (`42_ENGINEERING_READINESS_REVIEW.md`) remains **NO GO for unrestricted production / public pilot**.
+- Domain work proceeds only behind **slice** Database / API / provisional Design freezes and IMP gates under SOLO-GOV-001 — not as open-ended production feature development.
+
+Last status sync: **2026-07-31**.
 
 ## Completed And Approved
+
+### Kit / architecture
 
 - Product vision, project brief, product requirements, and consolidated SRS.
 - Domain vocabulary and bounded-context direction.
 - Architecture Review and Architecture Freeze v1.0.
-- ADR-001 through ADR-011.
+- ADR-001 through ADR-011 (kit); engineering ADRs including ADR-012 (historical sequencing exception) and PAY-PROVIDER-001 (Fake-only until superseded).
 - AI Development Kit v2.0, implementation roadmap, Master Engineering Execution Prompt, and AI-EOS.
-- Engineering Readiness Review and its blocker register.
+- Engineering Readiness Review and its blocker register (verdict still NO GO for unrestricted production).
+
+### Engineering foundation
+
+- Monorepo workspace, CI (`npm run check`), Nest modular monolith skeleton, Postgres + RLS tooling, local Docker path, structured logging / health / error envelope.
+- Engineering Sprint 0 foundation work largely executed (see `roadmap/sprint0_engineering_foundation.md` and `docs/engineering/`).
+
+### Slice freezes (solo-operator Accepted / provisional)
+
+Authoritative artifacts live under `docs/engineering/` (not rewritten into kit freeze v1.0 wording):
+
+| Gate | Coverage (summary) |
+| ---- | ------------------ |
+| DBF-001…012 | Identity/tenant, students, academic structure, enrollments, attendance, guardians, marks, finance fees |
+| ACF-001…013 | Matching API contract slices + parent portal fees |
+| DSF-001…006 | Provisional UI slices: teacher attendance/marks, admin shell/guardians/academic, admin fees, parent fees/portal |
+| FREEZE-ACC-001 | Identity & Tenant Accepted v1.0 (solo-operator) |
+
+### Product surface shipped in lab (gated IMP)
+
+- Auth sessions, tenant bind, memberships/roles/permissions (deny-by-default).
+- Admin ops UI polish closed for AUDIT-ADMIN-UI-R1 (IMP-027…035 + Wave X + IMP-028 AdminTable residual).
+- Teacher attendance/marks UI; parent/guardian fee visibility (Fake payments path).
+- Office fees path: structures → invoices → office payment → receipts (real MoMo **not** integrated).
 
 ## Frozen
 
-The frozen baseline is defined by `38_ARCHITECTURE_FREEZE_RECORD.md`:
+### Architecture (kit)
+
+The architecture baseline is defined by `38_ARCHITECTURE_FREEZE_RECORD.md`:
 
 - `03_DEVELOPMENT_CONSTITUTION.md`.
 - `34_SOFTWARE_REQUIREMENTS_SPECIFICATION.md`.
@@ -30,46 +63,61 @@ The frozen baseline is defined by `38_ARCHITECTURE_FREEZE_RECORD.md`:
 - `37_FINAL_ARCHITECTURE_REVIEW.md`.
 - Accepted ADRs.
 
-A material change requires an ADR, impact review, affected-document update, and a new freeze record.
+A material architecture change requires an ADR, impact review, affected-document update, and a new freeze record.
 
-## Still Flexible
+### Slice contracts (engineering)
 
-The following are intentionally not frozen and must not be invented in production code:
+Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze requires a slice revision. Provisional DSF slices do **not** equal kit-wide Design System Freeze acceptance.
 
-- Database schema, ERD, RLS policy specifications, indexes, migration, and seed strategy.
-- API endpoint contracts, payloads, error catalogue, and compatibility rules.
-- Design tokens, navigation, core components, states, and accessibility implementation.
-- Identity provider/session implementation choice.
-- Hosting/region topology, IaC, secrets provider, and committed RPO/RTO.
-- First payment provider and AI provider implementation choices.
+## Still Flexible / open
+
+| Area | Status |
+| ---- | ------ |
+| Kit-wide Design System Freeze | Not accepted — provisional DSF slices only |
+| Production IdP / MFA | Not chosen / not implemented for privileged users |
+| Hosting, IaC, secrets provider, RPO/RTO | Not chosen |
+| First **real** payment provider | Open — `PAY-PROVIDER-001` allows Fake only |
+| AI provider / release gate | Open — no production AI feature |
+| Offline attendance worker | Foundation/docs path; not production offline cutover |
+| Independent multi-person freeze re-sign | Open (SOLO-GOV-001 honesty residual) |
 
 ## Work Allowed Now
 
-Only the non-business Engineering Sprint 0 scope in `roadmap/sprint0_engineering_foundation.md` is allowed. This includes repository/workspace, quality enforcement, local environment, CI, test harness, logging/errors, configuration, flags, health/observability scaffolding, neutral authorization/tenant interfaces, migration tooling, design-token pipeline, and developer documentation.
+1. Gated IMP increments behind **existing** accepted/provisional slice freezes (DBF/ACF/DSF), with SOLO-GOV-001 honesty in docs.
+2. Hardening, isolation tests, OpenAPI/docs sync, and Admin/Teacher/Parent UX polish **within** frozen contracts.
+3. Decision briefs that close open limitations (especially **PAY-001** provider selection superseding Fake-only).
+4. Engineering Readiness **re-review preparation** before any production/pilot claim.
 
 ## Work Not Allowed Now
 
-Do not implement a production domain model, business API, business database schema, production role-specific UI, payments, offline workflow, or AI feature until the relevant freeze gates and readiness blockers are closed.
+- Unrestricted production feature development or public pilot cutover.
+- Real mobile-money vendor SDK/credentials without a superseding payment decision + sandbox contract + webhook security spec.
+- Inventing schema/API/UI outside the governing slice freeze.
+- High-risk AI, MFA-less privileged production finance admin claims, or silent architecture redesign.
+- Treating solo-operator signatures as independent external peer review.
 
 ## Next Milestone
 
-**First-slice design freeze: Identity and Organization.**
+**MVP payment provider decision and path (EPIC-PAY-01 / PAY-001).**
 
 Required outputs:
 
-1. Database Freeze evidence for the slice.
-2. API Contract Freeze evidence for the slice.
-3. Design System Freeze evidence for the slice.
-4. Threat model and identity/session decision.
-5. Sprint 0 exit evidence.
-6. Re-review request against `42_ENGINEERING_READINESS_REVIEW.md`.
+1. Product/finance decision selecting MVP MoMo (or interim) provider and sandbox contract owner.
+2. Supersede or amend `docs/engineering/decisions/PAY-PROVIDER-001.md` (leave Fake for CI).
+3. Adapter + webhook signature/replay + reconciliation acceptance against ledger rules.
+4. Keep office cash/bank path; do not remove Fake provider from automated tests.
+
+**Parallel / immediately after:** SMS notification epic (EPIC-COMMS) remains High priority once payment direction is clear; MFA for privileged/finance admins remains constitution-required before production finance trust.
+
+**Governance:** Request Engineering Readiness Re-Review against `42_ENGINEERING_READINESS_REVIEW.md` before claiming production readiness.
 
 ## Naming Convention
 
-- **Architecture Sprint 0**: completed planning and architecture validation, recorded in `roadmap/sprint0_planning_validation.md`.
-- **Engineering Sprint 0**: current non-business technical foundation, recorded in `roadmap/sprint0_engineering_foundation.md`.
-- **Feature Sprint 1**: first approved production Identity and Organization vertical slice.
+- **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
+- **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
+- **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
+- **Next epic focus**: Payment provider (real MoMo path) — not another Admin UI polish wave.
 
 ## Status Update Rules
 
-Update this page when a freeze gate changes, a blocker closes, the active sprint changes, a decision affects implementation permission, or a release/pilot status changes. Record material decisions through ADRs and material history in `CHANGELOG.md`.
+Update this page when a freeze gate changes, a blocker closes, the active sprint/epic changes, a decision affects implementation permission, or a release/pilot status changes. Record material decisions through ADRs and material history in `CHANGELOG.md`.

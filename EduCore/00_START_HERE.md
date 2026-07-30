@@ -14,22 +14,28 @@ The MVP focuses on tenant onboarding, identity and access, student registry, aca
 
 ## Current Project Phase
 
-**Phase: Pre-implementation controls and downstream design freeze.**
+**Phase: Controlled MVP vertical-slice implementation (lab / local), post–Engineering Sprint 0.**
 
-Completed:
+Completed (kit):
 
 - Product vision, brief, requirements, and SRS.
 - Architecture review and Architecture Freeze v1.0.
 - AI Development Kit v2.0, execution roadmap, Master Engineering Execution Prompt, and AI-EOS.
-- Independent Engineering Readiness Review.
+- Independent Engineering Readiness Review (verdict retained below).
 
-Current Board position:
+Completed (engineering, under SOLO-GOV-001 honesty):
 
-- **NO GO for unrestricted production feature development.**
-- **Controlled Sprint 0 Engineering Foundation work is allowed.**
-- No production domain feature may start until its relevant Database, API Contract, and Design System freeze gates are accepted and the applicable readiness blockers are closed.
+- Engineering Sprint 0 foundation largely executed.
+- Slice DBF/ACF freezes and provisional DSF UI slices for identity, students, academic, attendance, marks, guardians, fees, and admin/teacher/parent lab UIs.
+- Admin UI polish program (AUDIT-ADMIN-UI-R1 / IMP-027…035 + residuals) closed on `main`.
 
-The authoritative readiness verdict and blockers are in `42_ENGINEERING_READINESS_REVIEW.md`.
+Current Board / readiness position:
+
+- **NO GO for unrestricted production feature development or public pilot.**
+- **Gated IMP work is allowed** only behind accepted/provisional slice freezes (`docs/engineering/…`) with solo-operator qualification (SOLO-GOV-001).
+- Real mobile-money cutover remains blocked until a payment-provider decision supersedes Fake-only (`PAY-PROVIDER-001`).
+
+Canonical phase detail: `43_PROJECT_STATUS.md`. Readiness blockers: `42_ENGINEERING_READINESS_REVIEW.md`.
 
 ## Source Of Truth
 
@@ -74,21 +80,22 @@ For a task affecting a specific domain, read its related bible before proposing 
 
 ## What AI And Engineers Must Not Do
 
-- Do not write production domain code, business APIs, persistence schemas, or role-specific production UI before the applicable freeze gates are accepted.
+- Do not write domain code, business APIs, persistence schemas, or role-specific UI outside an accepted/provisional slice freeze (DBF/ACF/DSF) and IMP gate; do not treat SOLO-GOV-001 as unrestricted production approval.
 - Do not silently redesign frozen architecture; raise an ADR-required decision instead.
 - Do not bypass tenant isolation, authorization, audit, ledger, offline-sync, AI Gateway, privacy, or observability controls.
 - Do not add a technology, dependency, data store, service, provider, or public contract without documented fit and required approval.
-- Do not commit secrets, log sensitive data, expose internal errors, or use fake financial balances.
+- Do not commit secrets, log sensitive data, expose internal errors, or use fake financial balances as if they were real ledgers in production.
 - Do not claim tests, reviews, approvals, restore drills, or operational checks were completed when they were not run.
 - Do not expand the MVP or introduce unrelated refactors under a feature task.
+- Do not integrate a real payment vendor while `PAY-PROVIDER-001` remains Fake-only.
 
 ## Expected Next Step
 
-1. Use the Master Engineering Execution Prompt and AI-EOS for every task.
-2. Execute only the neutral, non-business work in `roadmap/sprint0_engineering_foundation.md`.
-3. Prepare and accept Database, API Contract, and Design System freeze records for the first Identity and Organization slice.
-4. Close the applicable blockers B-01 through B-07 in `42_ENGINEERING_READINESS_REVIEW.md`.
-5. Request an Engineering Readiness Re-Review before starting the first production feature slice.
+1. Read `43_PROJECT_STATUS.md` before planning or coding — it is the canonical phase page.
+2. Use the Master Engineering Execution Prompt and AI-EOS for every task; confirm the governing DBF/ACF/DSF slice exists before changing contracts or UI.
+3. **Next MVP milestone:** PAY-001 — select MVP payment provider and supersede Fake-only (`PAY-PROVIDER-001`); then adapter, signed webhooks, and reconciliation (EPIC-PAY-01).
+4. Do not open another Admin UI polish wave as the default next epic; SMS (EPIC-COMMS) and privileged MFA remain high follow-ons.
+5. Close applicable readiness blockers and request an Engineering Readiness Re-Review before any production/pilot claim.
 
 ## Task Start Checklist
 
