@@ -2,6 +2,19 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-07-31 - PAY-002 ClickPesa adapter contract
+
+- Accepted PAY-002: Order BillPay initiate, HMAC-SHA256 webhook checksum, status/amount maps, env allowlist.
+- Preview ACF-012.x routes; next = PAY-003 implementation (Fake default).
+- Updated project status expected next step.
+
+## 2026-07-31 - PAY-001 Accepted (ClickPesa / Zanzibar)
+
+- Accepted PAY-001: Option A aggregator **ClickPesa** for Zanzibar MVP (M-Pesa + Mixx rails; Selcom fallback).
+- Amended `PAY-PROVIDER-001`; Fake remains CI/default until adapter + secrets.
+- Next milestone: **PAY-002** adapter contract.
+- Updated `43_PROJECT_STATUS.md`, `46_KNOWN_LIMITATIONS.md`, `00_START_HERE.md`.
+
 ## 2026-07-31 - Project status sync (post Admin UI polish)
 
 - Updated `43_PROJECT_STATUS.md` to controlled MVP vertical-slice phase (lab), reflecting executed Engineering Sprint 0, slice freezes under SOLO-GOV-001, and closed Admin UI polish.

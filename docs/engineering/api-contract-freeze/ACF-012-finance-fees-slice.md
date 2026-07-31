@@ -3,8 +3,8 @@
 | Field     | Value                                     |
 | --------- | ----------------------------------------- |
 | Freeze ID | `ACF-012`                                 |
-| Version   | `1.4`                                     |
-| Date      | 2026-07-26                                |
+| Version   | `1.5`                                     |
+| Date      | 2026-07-31 (rev 1.5 MoMo contract preview; 1.4 on 2026-07-26) |
 | Companion | DBF-012                                   |
 | Program   | **IMP-009** (prompt IMP-007 ID collision) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)  |
@@ -16,10 +16,11 @@
 | In scope                                   | Out of scope                       |
 | ------------------------------------------ | ---------------------------------- |
 | Fee structures list/get/create/patch       | Parent portal pay UI               |
-| Invoices list/get/create/issue/void        | Real MoMo vendor                   |
+| Invoices list/get/create/issue/void        | Selcom; USSD Push; cards; payouts  |
 | Manual payment + receipt + reverse         | Multi-currency beyond TZS          |
 | Derived `balanceMinor` on invoice get/list | Writable balance column            |
-| Fake webhook event store + reconcile       | Gateway pending→succeeded complete |
+| Fake webhook event store + reconcile       | Completing pending via Fake webhook |
+| **PAY-002 contract:** ClickPesa BillPay (HTTP not shipped) | Parent portal pay UI |
 
 ## Money
 
@@ -89,6 +90,19 @@ Revenue recognized **on issue** (DBF-012). Receipt only after succeeded payment 
 - Allows any non-empty subset of `name`, `status`, and `items`; unknown fields are rejected.
 - `items` is a full replacement. Replacement is blocked with `409 CONFLICT` when an invoice line references a current item.
 
+## Rev 1.5 — ClickPesa MoMo contract preview (PAY-002)
+
+Binding semantics: `docs/engineering/decisions/PAY-002-clickpesa-adapter-contract.md`. **HTTP routes below are not live until PAY-004.**
+
+| Method | Path | AuthZ (planned) |
+| ------ | ---- | --------------- |
+| POST | `/api/v1/payments/mobile-money` | finance.manage + Idempotency-Key — create `mobile_money` attempt + BillPay number |
+| POST | `/api/v1/payments/webhooks/clickpesa` | No session; HMAC-SHA256 checksum (ClickPesa); tenant from attempt id |
+
+- Amounts: EduCore minor; ClickPesa major TZS (÷/× 100); reject non-divisible initiate.
+- Dedupe: `(tenant_id, provider_code=clickpesa, provider_event_id=data.id)`.
+- Fake webhook path retained for CI.
+
 ## Solo-operator honesty
 
-Provisional for IMP-009.
+Provisional for IMP-009 / EPIC-PAY-01.

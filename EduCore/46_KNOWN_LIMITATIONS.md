@@ -15,7 +15,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 | Design | Provisional DSF-001…006 only; **kit-wide Design System Freeze not accepted** | Stay inside provisional DSF; no Tailwind/shadcn redesign without DSF amend |
 | Identity | Lab opaque-session AuthN exists; production OIDC/IdP and **MFA** for privileged/finance admins not done | Constitution still requires MFA before production privileged finance trust |
 | Infrastructure | Hosting, region, IaC, secrets provider, RPO/RTO, and DR operations not chosen | Record deployment/DR decision before production deployment |
-| Payments | **FakePaymentProvider only** (`PAY-PROVIDER-001`); real MoMo vendor/sandbox not chosen | No vendor SDK/credentials until PAY-001 supersedes; ledger + reconciliation still mandatory |
+| Payments | **Vendor chosen:** ClickPesa (`PAY-001`); **adapter contract** `PAY-002` Accepted; runtime still **Fake** until PAY-003+ | No vendor secrets in git; implement only behind PAY-002; ledger + reconciliation still mandatory |
 | Offline | Attendance offline foundation/docs path; 72h offline teacher cutover not production-proven | Do not claim offline MVP complete without worker + conflict UX evidence |
 | AI | Provider/model, evaluation thresholds, and fallback UX not chosen | No AI feature until AI release gate exists; route via AI Gateway rules |
 | Scale | Active-active multi-region and 10 million-user architecture are out of MVP | Do not design for them without a later ADR |

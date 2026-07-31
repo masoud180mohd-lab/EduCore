@@ -23,7 +23,7 @@ Last status sync: **2026-07-31**.
 - Product vision, project brief, product requirements, and consolidated SRS.
 - Domain vocabulary and bounded-context direction.
 - Architecture Review and Architecture Freeze v1.0.
-- ADR-001 through ADR-011 (kit); engineering ADRs including ADR-012 (historical sequencing exception) and PAY-PROVIDER-001 (Fake-only until superseded).
+- ADR-001 through ADR-011 (kit); engineering ADRs including ADR-012 (historical sequencing exception); **PAY-001 Accepted** (ClickPesa / Zanzibar) amending `PAY-PROVIDER-001` (Fake remains CI default).
 - AI Development Kit v2.0, implementation roadmap, Master Engineering Execution Prompt, and AI-EOS.
 - Engineering Readiness Review and its blocker register (verdict still NO GO for unrestricted production).
 
@@ -76,7 +76,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 | Kit-wide Design System Freeze | Not accepted — provisional DSF slices only |
 | Production IdP / MFA | Not chosen / not implemented for privileged users |
 | Hosting, IaC, secrets provider, RPO/RTO | Not chosen |
-| First **real** payment provider | Open — `PAY-PROVIDER-001` allows Fake only |
+| First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until adapter + secrets |
 | AI provider / release gate | Open — no production AI feature |
 | Offline attendance worker | Foundation/docs path; not production offline cutover |
 | Independent multi-person freeze re-sign | Open (SOLO-GOV-001 honesty residual) |
@@ -85,7 +85,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 1. Gated IMP increments behind **existing** accepted/provisional slice freezes (DBF/ACF/DSF), with SOLO-GOV-001 honesty in docs.
 2. Hardening, isolation tests, OpenAPI/docs sync, and Admin/Teacher/Parent UX polish **within** frozen contracts.
-3. Decision briefs that close open limitations (especially **PAY-001** provider selection superseding Fake-only).
+3. Decision briefs that close open limitations (**PAY-001 done**; next **PAY-002** ClickPesa adapter contract).
 4. Engineering Readiness **re-review preparation** before any production/pilot claim.
 
 ## Work Not Allowed Now
@@ -98,16 +98,18 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**MVP payment provider decision and path (EPIC-PAY-01 / PAY-001).**
+**PAY-003 — ClickPesa provider client + port** (Fake remains default; then PAY-004 webhook + ACF-012.x).
 
 Required outputs:
 
-1. Product/finance decision selecting MVP MoMo (or interim) provider and sandbox contract owner.
-2. Supersede or amend `docs/engineering/decisions/PAY-PROVIDER-001.md` (leave Fake for CI).
-3. Adapter + webhook signature/replay + reconciliation acceptance against ledger rules.
-4. Keep office cash/bank path; do not remove Fake provider from automated tests.
+1. ~~PAY-001 provider selection~~ — **Done** (ClickPesa / Zanzibar; Selcom fallback).
+2. ~~PAY-002 adapter contract~~ — **Done** (`PAY-002-clickpesa-adapter-contract.md`).
+3. PAY-003 ClickPesa HTTP client + port binding behind env flag.
+4. PAY-004 signed webhook + attempt completion + ACF-012 HTTP freeze amend.
+5. PAY-005 reconciliation via query API.
+6. Operator: obtain ClickPesa sandbox / merchant credentials (never commit to git).
 
-**Parallel / immediately after:** SMS notification epic (EPIC-COMMS) remains High priority once payment direction is clear; MFA for privileged/finance admins remains constitution-required before production finance trust.
+**Parallel / immediately after:** SMS notification epic (EPIC-COMMS) remains High priority; MFA for privileged/finance admins remains constitution-required before production finance trust.
 
 **Governance:** Request Engineering Readiness Re-Review against `42_ENGINEERING_READINESS_REVIEW.md` before claiming production readiness.
 
@@ -116,7 +118,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: Payment provider (real MoMo path) — not another Admin UI polish wave.
+- **Next epic focus**: ClickPesa implementation (PAY-003+) for Zanzibar MoMo — not another Admin UI polish wave.
 
 ## Status Update Rules
 
