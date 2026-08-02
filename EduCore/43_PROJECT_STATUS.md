@@ -98,13 +98,13 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**Pilot readiness for ClickPesa sandbox** *or* **EPIC-COMMS (SMS)** — choose deliberately; do not expand both silently.
+**PAY-OPS-001 — ClickPesa sandbox pilot** (path **A** chosen 2026-08-02). EPIC-COMMS deferred until sandbox MoMo is proven or explicitly re-prioritized.
 
 Required outputs:
 
-1. ~~PAY-001~~ … ~~PAY-006~~ — **Done** (ClickPesa stack + bursar payment status UI).
-2. Operator: sandbox credentials (never in git) + MoMo migration if not applied — before live MoMo claims.
-3. Or start EPIC-COMMS if SMS is the chosen next epic.
+1. ~~PAY-001~~ … ~~PAY-006~~ — **Done**.
+2. Operator: sandbox credentials in local `.env` only; `npm run db:migrate` includes `20260802150000_finance_clickpesa_momo`.
+3. Manual QA per `docs/engineering/task-records/PAY-OPS-001-clickpesa-sandbox-pilot.md` (initiate → BillPay → webhook/Refresh).
 
 **Parallel:** MFA for privileged/finance admins remains constitution-required before production finance trust.
 
@@ -115,7 +115,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: ClickPesa sandbox ops **or** EPIC-COMMS — Fake remains CI default.
+- **Next epic focus**: **PAY-OPS-001** ClickPesa sandbox pilot (path A) — Fake remains CI default.
 
 ## Status Update Rules
 
