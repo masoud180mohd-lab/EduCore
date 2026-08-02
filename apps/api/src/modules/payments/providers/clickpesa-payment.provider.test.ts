@@ -127,7 +127,12 @@ describe('ClickPesaPaymentProvider', () => {
       }
       if (url.includes('/payments/attempt-9')) {
         return jsonResponse(200, [
-          { status: 'SUCCESS', orderReference: 'attempt-9', collectedAmount: 100 },
+          {
+            id: 'tx-9',
+            status: 'SUCCESS',
+            orderReference: 'attempt-9',
+            collectedAmount: 100,
+          },
         ]);
       }
       throw new Error(`unexpected url ${url}`);
@@ -138,6 +143,8 @@ describe('ClickPesaPaymentProvider', () => {
     );
     const result = await provider.queryStatus('attempt-9');
     expect(result.status).toBe('succeeded');
+    expect(result.amountMinor).toBe(10_000);
+    expect(result.providerEventId).toBe('tx-9');
   });
 });
 

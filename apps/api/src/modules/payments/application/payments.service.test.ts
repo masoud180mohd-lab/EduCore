@@ -269,3 +269,195 @@ describe('PaymentsService.reconcileForTenant', () => {
     expect(reconcilePayment).toHaveBeenCalledOnce();
   });
 });
+
+function makeClickPesaPendingAttempt(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: paymentId,
+    tenantId,
+    invoiceId,
+    method: 'mobile_money',
+    amountMinor: 10_000,
+    currency: 'TZS',
+    status: 'pending',
+    receiptId: null,
+    providerCode: 'clickpesa',
+    providerRef: 'bill-1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+function makeClickPesaService(
+  repo: Record<string, unknown>,
+  queryStatus: ReturnType<typeof vi.fn>,
+): PaymentsService {
+  return new PaymentsService(
+    repo as never,
+    {
+      providerCode: 'clickpesa',
+      initiate: vi.fn(),
+      queryStatus,
+    } as never,
+    null,
+    null,
+  );
+}
+
+describe('PaymentsService.syncProviderForTenant', () => {
+  it('rejects sync without idempotency key', async () => {
+    const service = makeClickPesaService({ isAvailable: () => true }, vi.fn());
+    await expect(
+      service.syncProviderForTenant(actorUserId, tenantId, paymentId, undefined, 'corr'),
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
+  });
+
+  it('rejects when Fake provider is bound', async () => {
+    const service = makeService({
+      isAvailable: () => true,
+      getPayment: vi.fn().mockResolvedValue(makeClickPesaPendingAttempt()),
+    });
+    await expect(
+      service.syncProviderForTenant(actorUserId, tenantId, paymentId, idempotencyKey, 'corr'),
+    ).rejects.toMatchObject({ code: 'NOT_IMPLEMENTED' });
+  });
+
+  it('returns still_pending when ClickPesa reports pending', async () => {
+    const queryStatus = vi.fn().mockResolvedValue({
+      providerCode: 'clickpesa',
+      providerRef: paymentId,
+      status: 'pending',
+    });
+    const ingestClickPesaGatewayEvent = vi.fn();
+    const service = makeClickPesaService(
+      {
+        isAvailable: () => true,
+        getPayment: vi.fn().mockResolvedValue(makeClickPesaPendingAttempt()),
+        ingestClickPesaGatewayEvent,
+      },
+      queryStatus,
+    );
+    const result = await service.syncProviderForTenant(
+      actorUserId,
+      tenantId,
+      paymentId,
+      idempotencyKey,
+      'corr',
+    );
+    expect(result.data).toMatchObject({
+      paymentAttemptId: paymentId,
+      providerStatus: 'pending',
+      completed: false,
+      detail: 'still_pending',
+    });
+    expect(ingestClickPesaGatewayEvent).not.toHaveBeenCalled();
+  });
+
+  it('ingests succeeded query and reports completed', async () => {
+    const queryStatus = vi.fn().mockResolvedValue({
+      providerCode: 'clickpesa',
+      providerRef: paymentId,
+      status: 'succeeded',
+      amountMinor: 10_000,
+      providerEventId: 'tx-sync-1',
+    });
+    const ingestClickPesaGatewayEvent = vi.fn().mockResolvedValue({
+      completed: true,
+      detail: 'completed',
+    });
+    const service = makeClickPesaService(
+      {
+        isAvailable: () => true,
+        getPayment: vi.fn().mockResolvedValue(makeClickPesaPendingAttempt()),
+        ingestClickPesaGatewayEvent,
+      },
+      queryStatus,
+    );
+    const result = await service.syncProviderForTenant(
+      actorUserId,
+      tenantId,
+      paymentId,
+      idempotencyKey,
+      'corr',
+    );
+    expect(result.data.completed).toBe(true);
+    expect(result.data.providerStatus).toBe('succeeded');
+    expect(ingestClickPesaGatewayEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerEventId: 'tx-sync-1',
+        orderReference: paymentId,
+        amountMinor: 10_000,
+        providerOutcome: 'succeeded',
+      }),
+    );
+  });
+
+  it('returns not_pending without querying when attempt already settled', async () => {
+    const queryStatus = vi.fn();
+    const service = makeClickPesaService(
+      {
+        isAvailable: () => true,
+        getPayment: vi
+          .fn()
+          .mockResolvedValue(makeClickPesaPendingAttempt({ status: 'succeeded' })),
+      },
+      queryStatus,
+    );
+    const result = await service.syncProviderForTenant(
+      actorUserId,
+      tenantId,
+      paymentId,
+      idempotencyKey,
+      'corr',
+    );
+    expect(result.data.detail).toBe('not_pending');
+    expect(queryStatus).not.toHaveBeenCalled();
+  });
+});
+
+describe('PaymentsService.syncPendingClickPesaForTenant', () => {
+  it('scans pending attempts and aggregates completed count', async () => {
+    const queryStatus = vi.fn().mockResolvedValue({
+      providerCode: 'clickpesa',
+      providerRef: paymentId,
+      status: 'succeeded',
+      amountMinor: 10_000,
+      providerEventId: 'tx-batch-1',
+    });
+    const service = makeClickPesaService(
+      {
+        isAvailable: () => true,
+        listPendingClickPesa: vi.fn().mockResolvedValue([makeClickPesaPendingAttempt()]),
+        getPayment: vi.fn().mockResolvedValue(makeClickPesaPendingAttempt()),
+        ingestClickPesaGatewayEvent: vi.fn().mockResolvedValue({
+          completed: true,
+          detail: 'completed',
+        }),
+      },
+      queryStatus,
+    );
+    const result = await service.syncPendingClickPesaForTenant(
+      actorUserId,
+      tenantId,
+      { limit: 10 },
+      idempotencyKey,
+      'corr',
+    );
+    expect(result.data.scanned).toBe(1);
+    expect(result.data.completed).toBe(1);
+    expect(result.data.results).toHaveLength(1);
+  });
+
+  it('rejects invalid limit', async () => {
+    const service = makeClickPesaService({ isAvailable: () => true }, vi.fn());
+    await expect(
+      service.syncPendingClickPesaForTenant(
+        actorUserId,
+        tenantId,
+        { limit: 0 },
+        idempotencyKey,
+        'corr',
+      ),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+});

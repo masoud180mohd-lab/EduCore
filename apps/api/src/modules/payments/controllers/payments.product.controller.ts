@@ -82,6 +82,24 @@ export class PaymentsProductController {
     );
   }
 
+  @Post('api/v1/payments/sync-provider-pending')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('finance.reconcile'))
+  async syncPendingClickPesa(
+    @Req() request: AuthedRequest,
+    @Body() body: unknown,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.paymentsService.syncPendingClickPesaForTenant(
+      auth.userId,
+      tenant.tenantId,
+      body,
+      idempotencyKey,
+      resolveCorrelationId(request),
+    );
+  }
+
   @Get('api/v1/payments/:paymentId')
   @UseGuards(RequirePermission('finance.read'))
   async getPayment(
@@ -120,6 +138,24 @@ export class PaymentsProductController {
   ): Promise<unknown> {
     const { auth, tenant } = requireAuthTenant(request);
     return this.paymentsService.reconcileForTenant(
+      auth.userId,
+      tenant.tenantId,
+      paymentId,
+      idempotencyKey,
+      resolveCorrelationId(request),
+    );
+  }
+
+  @Post('api/v1/payments/:paymentId/sync-provider')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('finance.reconcile'))
+  async syncProviderPayment(
+    @Req() request: AuthedRequest,
+    @Param('paymentId') paymentId: string,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.paymentsService.syncProviderForTenant(
       auth.userId,
       tenant.tenantId,
       paymentId,

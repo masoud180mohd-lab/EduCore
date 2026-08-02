@@ -23,6 +23,10 @@ export type PaymentProviderResult = {
   readonly status: PaymentProviderStatus;
   /** Order / bill reference sent to the provider (often = attempt id). */
   readonly orderReference?: string;
+  /** Collected amount in EduCore minor units when known (PAY-005 query). */
+  readonly amountMinor?: number;
+  /** Opaque provider transaction id for gateway-event dedupe. */
+  readonly providerEventId?: string;
 };
 
 export interface PaymentProviderPort {

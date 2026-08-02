@@ -366,6 +366,42 @@ export class PaymentAttemptsRepository {
     }
   }
 
+  /** PAY-005: pending ClickPesa mobile_money attempts for a tenant. */
+  async listPendingClickPesa(
+    actorUserId: string,
+    tenantId: string,
+    limit: number,
+  ): Promise<ReadonlyArray<PaymentRow>> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) {
+      return [];
+    }
+    const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 100) : 25;
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<PaymentDbRow>(
+            `${PAYMENT_SELECT}
+             WHERE pa.tenant_id = $1::uuid
+               AND pa.provider_code = 'clickpesa'
+               AND pa.method = 'mobile_money'
+               AND pa.status = 'pending'
+             ORDER BY pa.created_at ASC, pa.id ASC
+             LIMIT $2`,
+            [tenantId, safeLimit],
+          );
+          return result.rows.map(mapPayment);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'PaymentAttemptsRepository', error, {
+        operation: 'listPendingClickPesa',
+      });
+      return [];
+    }
+  }
+
   async getPayment(
     actorUserId: string,
     tenantId: string,

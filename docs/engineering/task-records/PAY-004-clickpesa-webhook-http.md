@@ -19,4 +19,4 @@
 
 ## Next
 
-**PAY-005** — reconciliation job via ClickPesa query API.
+**PAY-005** — reconciliation via ClickPesa query API (**Done**).

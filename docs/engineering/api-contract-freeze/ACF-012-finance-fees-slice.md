@@ -3,8 +3,8 @@
 | Field     | Value                                     |
 | --------- | ----------------------------------------- |
 | Freeze ID | `ACF-012`                                 |
-| Version   | `1.6`                                     |
-| Date      | 2026-08-02 (rev 1.6 ClickPesa HTTP; 1.5 contract preview 2026-07-31) |
+| Version   | `1.7`                                     |
+| Date      | 2026-08-02 (rev 1.7 sync-provider; 1.6 ClickPesa HTTP) |
 | Companion | DBF-012                                   |
 | Program   | **IMP-009** (prompt IMP-007 ID collision) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)  |
@@ -21,6 +21,7 @@
 | Derived `balanceMinor` on invoice get/list | Writable balance column            |
 | Fake webhook event store + reconcile       | Completing pending via Fake webhook |
 | ClickPesa BillPay MoMo HTTP (PAY-004)      | Parent portal pay UI; Selcom; USSD Push; cards |
+| ClickPesa query sync (PAY-005)             | Background cron daemon; Selcom               |
 
 ## Money
 
@@ -49,6 +50,8 @@
 | GET    | `/api/v1/receipts/{id}`           | finance.read                                                 |
 | POST   | `/api/v1/payments/webhooks/fake`  | finance.manage (no Idempotency-Key — dedupe is by `eventId`) |
 | POST   | `/api/v1/payments/mobile-money`   | finance.manage + Idempotency-Key — pending MoMo + BillPay   |
+| POST   | `/api/v1/payments/{id}/sync-provider` | finance.reconcile + Idempotency-Key — query ClickPesa + ingest |
+| POST   | `/api/v1/payments/sync-provider-pending` | finance.reconcile + Idempotency-Key — batch pending sync (`limit` 1–100) |
 | POST   | `/api/v1/payments/webhooks/clickpesa` | **No session**; ClickPesa HMAC-SHA256 checksum required |
 
 ## Allowlists
@@ -102,6 +105,13 @@ Binding semantics: `docs/engineering/decisions/PAY-002-clickpesa-adapter-contrac
 - `POST /api/v1/payments/webhooks/clickpesa` — public; verifies HMAC-SHA256 checksum; dedupes; completes pending on amount match (`PAYMENT RECEIVED`); marks failed on `PAYMENT FAILED`.
 - Migration `20260802150000_finance_clickpesa_momo` — `create_pending_mobile_money_attempt` + `ingest_clickpesa_gateway_event`.
 - Fake default / CI unchanged.
+
+## Rev 1.7 — ClickPesa query sync (PAY-005)
+
+- `POST /api/v1/payments/{id}/sync-provider` — `finance.reconcile` + `Idempotency-Key`; queries ClickPesa by orderReference (= attempt id); ingests via same SECURITY DEFINER path as webhook (complete / fail / amount mismatch); no double-post.
+- `POST /api/v1/payments/sync-provider-pending` — same auth; body `{ limit? }` (default 25, max 100); scans pending `clickpesa` `mobile_money` attempts for the tenant.
+- Requires `PAYMENT_PROVIDER=clickpesa` + secrets; returns `NOT_IMPLEMENTED` under Fake.
+- Response `data`: `paymentAttemptId`, `providerStatus`, `completed`, `detail` (`still_pending` \| `not_pending` \| ingest detail \| …). Batch adds `scanned`, `completed`, `results`.
 
 ## Solo-operator honesty
 

@@ -12,7 +12,11 @@ import {
   type ClickPesaConfig,
 } from './clickpesa-config.js';
 import { ClickPesaHttpClient } from './clickpesa-http.client.js';
-import { mapClickPesaStatus, minorToClickPesaMajor } from './clickpesa-money.js';
+import {
+  clickPesaMajorToMinor,
+  mapClickPesaStatus,
+  minorToClickPesaMajor,
+} from './clickpesa-money.js';
 import type {
   PaymentProviderInitiateInput,
   PaymentProviderPort,
@@ -128,11 +132,29 @@ export class ClickPesaPaymentProvider implements PaymentProviderPort {
         ? first['orderReference']
         : orderReference;
 
+    const providerEventId =
+      typeof first['id'] === 'string' && first['id'].trim() !== ''
+        ? first['id'].trim()
+        : typeof first['paymentReference'] === 'string' && first['paymentReference'].trim() !== ''
+          ? first['paymentReference'].trim()
+          : undefined;
+
+    let amountMinor: number | undefined;
+    if (first['collectedAmount'] !== undefined && first['collectedAmount'] !== null) {
+      try {
+        amountMinor = clickPesaMajorToMinor(first['collectedAmount'] as string | number);
+      } catch {
+        amountMinor = undefined;
+      }
+    }
+
     return {
       providerCode: this.providerCode,
       providerRef,
       status,
       orderReference,
+      ...(providerEventId !== undefined ? { providerEventId } : {}),
+      ...(amountMinor !== undefined ? { amountMinor } : {}),
     };
   }
 

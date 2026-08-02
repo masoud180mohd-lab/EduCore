@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-02 - PAY-005 ClickPesa query sync
+
+- Added `POST /payments/{id}/sync-provider` and batch `POST /payments/sync-provider-pending`.
+- Reuses webhook ingest helper so ledger never double-posts; Fake returns `NOT_IMPLEMENTED`.
+- ACF-012 rev 1.7; next = PAY-006 payment status UI.
+
 ## 2026-08-02 - PAY-004 ClickPesa webhook + mobile-money HTTP
 
 - Added pending MoMo attempt helpers + ClickPesa webhook ingest migration.

@@ -33,7 +33,7 @@ Current Board / readiness position:
 
 - **NO GO for unrestricted production feature development or public pilot.**
 - **Gated IMP work is allowed** only behind accepted/provisional slice freezes (`docs/engineering/…`) with solo-operator qualification (SOLO-GOV-001).
-- Real mobile-money cutover remains blocked until ClickPesa adapter + signed webhooks ship and readiness/MFA gates allow pilot (`PAY-001` chose ClickPesa; runtime Fake until then).
+- Real mobile-money cutover remains blocked until ClickPesa secrets + readiness/MFA gates allow pilot (`PAY-001`…`PAY-005` shipped; runtime Fake until secrets).
 
 Canonical phase detail: `43_PROJECT_STATUS.md`. Readiness blockers: `42_ENGINEERING_READINESS_REVIEW.md`.
 
@@ -87,13 +87,13 @@ For a task affecting a specific domain, read its related bible before proposing 
 - Do not commit secrets, log sensitive data, expose internal errors, or use fake financial balances as if they were real ledgers in production.
 - Do not claim tests, reviews, approvals, restore drills, or operational checks were completed when they were not run.
 - Do not expand the MVP or introduce unrelated refactors under a feature task.
-- Do not enable `PAYMENT_PROVIDER=clickpesa` without secrets; do not commit ClickPesa credentials; webhook cutover waits for PAY-004.
+- Do not enable `PAYMENT_PROVIDER=clickpesa` without secrets; do not commit ClickPesa credentials.
 
 ## Expected Next Step
 
 1. Read `43_PROJECT_STATUS.md` before planning or coding — it is the canonical phase page.
 2. Use the Master Engineering Execution Prompt and AI-EOS for every task; confirm the governing DBF/ACF/DSF slice exists before changing contracts or UI.
-3. **Next MVP milestone:** PAY-005 — ClickPesa reconcile job (PAY-004 webhook/HTTP Done; Fake still default).
+3. **Next MVP milestone:** PAY-006 — payment status UI (PAY-005 query sync Done; Fake still default).
 4. Do not open another Admin UI polish wave as the default next epic; SMS (EPIC-COMMS) and privileged MFA remain high follow-ons.
 5. Close applicable readiness blockers and request an Engineering Readiness Re-Review before any production/pilot claim.
 

@@ -56,6 +56,21 @@ export type ClickPesaWebhookResult = {
     readonly detail: string;
   };
 };
+export type SyncProviderPaymentResult = {
+  readonly data: {
+    readonly paymentAttemptId: string;
+    readonly providerStatus: string;
+    readonly completed: boolean;
+    readonly detail: string;
+  };
+};
+export type SyncPendingClickPesaResult = {
+  readonly data: {
+    readonly scanned: number;
+    readonly completed: number;
+    readonly results: ReadonlyArray<SyncProviderPaymentResult['data']>;
+  };
+};
 export type CreateMobileMoneyResult = {
   readonly data: Payment & { readonly billPayNumber: string };
 };
@@ -77,6 +92,8 @@ export type ReconcilePaymentResult = {
 const PAYMENT_METHODS = new Set(['cash', 'bank', 'cheque', 'other', 'mobile_money']);
 const PAYMENTS_ROUTE = '/api/v1/payments';
 const MOBILE_MONEY_ROUTE = '/api/v1/payments/mobile-money';
+const SYNC_PROVIDER_SUFFIX = '/sync-provider';
+const SYNC_PENDING_ROUTE = '/api/v1/payments/sync-provider-pending';
 const REVERSE_SUFFIX = '/reverse';
 const RECONCILE_SUFFIX = '/reconcile';
 const WEBHOOK_OUTCOMES = new Set(['succeeded', 'failed']);
@@ -210,6 +227,96 @@ export class PaymentsService {
     }
 
     return this.executeReconcile(actorUserId, tenantId, paymentId, correlationId);
+  }
+
+  /**
+   * PAY-005: query ClickPesa for one pending attempt and ingest (complete / fail / mismatch).
+   * Independent of webhooks — bible reconciliation path.
+   */
+  async syncProviderForTenant(
+    actorUserId: string,
+    tenantId: string,
+    paymentId: string,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<SyncProviderPaymentResult> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    if (!isUuid(paymentId)) throw AppError.notFound('Payment not found.');
+
+    const key = assertIdempotencyKey(idempotencyKeyHeader);
+    const route = `${PAYMENTS_ROUTE}/${paymentId}${SYNC_PROVIDER_SUFFIX}`;
+    const bodyJson = '{}';
+
+    if (this.idempotency !== null) {
+      const scopeKey = buildIdempotencyScopeKey(
+        { actorUserId, tenantId, method: 'POST', route },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) return JSON.parse(replay.responseBody) as SyncProviderPaymentResult;
+
+      const result = await this.executeSyncProvider(
+        actorUserId,
+        tenantId,
+        paymentId,
+        correlationId,
+      );
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executeSyncProvider(actorUserId, tenantId, paymentId, correlationId);
+  }
+
+  /**
+   * PAY-005: scan pending ClickPesa attempts for the tenant and sync each via query API.
+   */
+  async syncPendingClickPesaForTenant(
+    actorUserId: string,
+    tenantId: string,
+    rawBody: unknown,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<SyncPendingClickPesaResult> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+
+    const key = assertIdempotencyKey(idempotencyKeyHeader);
+    const limit = parseSyncPendingLimit(rawBody);
+    const bodyJson = JSON.stringify({ limit });
+
+    if (this.idempotency !== null) {
+      const scopeKey = buildIdempotencyScopeKey(
+        { actorUserId, tenantId, method: 'POST', route: SYNC_PENDING_ROUTE },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) return JSON.parse(replay.responseBody) as SyncPendingClickPesaResult;
+
+      const result = await this.executeSyncPending(
+        actorUserId,
+        tenantId,
+        limit,
+        correlationId,
+      );
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 200,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executeSyncPending(actorUserId, tenantId, limit, correlationId);
   }
 
   /**
@@ -627,6 +734,190 @@ export class PaymentsService {
     }
   }
 
+  private async executeSyncProvider(
+    actorUserId: string,
+    tenantId: string,
+    paymentId: string,
+    correlationId: string,
+  ): Promise<SyncProviderPaymentResult> {
+    if (!this.payments.isAvailable()) {
+      throw AppError.notFound('Payment not found.');
+    }
+    if (this.provider.providerCode !== CLICKPESA_PROVIDER_CODE) {
+      throw new AppError(
+        'NOT_IMPLEMENTED',
+        'Provider sync requires PAYMENT_PROVIDER=clickpesa with secrets configured.',
+      );
+    }
+    if (this.provider.queryStatus === undefined) {
+      throw new AppError('NOT_IMPLEMENTED', 'Provider does not support queryStatus.');
+    }
+
+    const attempt = await this.payments.getPayment(actorUserId, tenantId, paymentId);
+    if (attempt === null) throw AppError.notFound('Payment not found.');
+    if (attempt.providerCode !== CLICKPESA_PROVIDER_CODE || attempt.method !== 'mobile_money') {
+      throw AppError.validation('Payment is not a ClickPesa mobile_money attempt.', {
+        field: 'paymentId',
+      });
+    }
+    if (attempt.status !== 'pending') {
+      return {
+        data: {
+          paymentAttemptId: paymentId,
+          providerStatus: attempt.status,
+          completed: false,
+          detail: 'not_pending',
+        },
+      };
+    }
+
+    let queried;
+    try {
+      queried = await this.provider.queryStatus(paymentId);
+    } catch {
+      throw new AppError('INTERNAL_ERROR', 'ClickPesa query failed.');
+    }
+
+    if (queried.status === 'pending') {
+      return {
+        data: {
+          paymentAttemptId: paymentId,
+          providerStatus: 'pending',
+          completed: false,
+          detail: 'still_pending',
+        },
+      };
+    }
+
+    const providerEventId =
+      queried.providerEventId ??
+      `query:${paymentId}:${queried.status}:${String(queried.amountMinor ?? 'na')}`;
+
+    if (queried.status === 'failed') {
+      const ingested = await this.payments.ingestClickPesaGatewayEvent({
+        gatewayEventId: randomUUID(),
+        providerEventId,
+        payloadSha256: hashRequestBody(
+          JSON.stringify({ source: 'query', paymentId, status: 'failed' }),
+        ),
+        orderReference: paymentId,
+        amountMinor: attempt.amountMinor,
+        providerOutcome: 'failed',
+        receiptId: randomUUID(),
+      });
+      await this.safeAudit({
+        action: 'payment.sync_provider',
+        outcome: 'success',
+        correlationId,
+        actorUserId,
+        tenantId,
+        resourceType: 'payment_attempt',
+        resourceId: paymentId,
+        metadata: { detail: ingested.detail, providerStatus: 'failed' },
+      });
+      return {
+        data: {
+          paymentAttemptId: paymentId,
+          providerStatus: 'failed',
+          completed: false,
+          detail: ingested.detail,
+        },
+      };
+    }
+
+    // succeeded
+    if (queried.amountMinor === undefined) {
+      return {
+        data: {
+          paymentAttemptId: paymentId,
+          providerStatus: 'succeeded',
+          completed: false,
+          detail: 'missing_amount',
+        },
+      };
+    }
+
+    const ingested = await this.payments.ingestClickPesaGatewayEvent({
+      gatewayEventId: randomUUID(),
+      providerEventId,
+      payloadSha256: hashRequestBody(
+        JSON.stringify({
+          source: 'query',
+          paymentId,
+          status: 'succeeded',
+          amountMinor: queried.amountMinor,
+        }),
+      ),
+      orderReference: paymentId,
+      amountMinor: queried.amountMinor,
+      providerOutcome: 'succeeded',
+      receiptId: randomUUID(),
+    });
+
+    await this.safeAudit({
+      action: 'payment.sync_provider',
+      outcome: 'success',
+      correlationId,
+      actorUserId,
+      tenantId,
+      resourceType: 'payment_attempt',
+      resourceId: paymentId,
+      metadata: {
+        detail: ingested.detail,
+        completed: ingested.completed,
+        providerStatus: 'succeeded',
+      },
+    });
+
+    return {
+      data: {
+        paymentAttemptId: paymentId,
+        providerStatus: 'succeeded',
+        completed: ingested.completed,
+        detail: ingested.detail,
+      },
+    };
+  }
+
+  private async executeSyncPending(
+    actorUserId: string,
+    tenantId: string,
+    limit: number,
+    correlationId: string,
+  ): Promise<SyncPendingClickPesaResult> {
+    if (!this.payments.isAvailable()) {
+      return { data: { scanned: 0, completed: 0, results: [] } };
+    }
+    if (this.provider.providerCode !== CLICKPESA_PROVIDER_CODE) {
+      throw new AppError(
+        'NOT_IMPLEMENTED',
+        'Provider sync requires PAYMENT_PROVIDER=clickpesa with secrets configured.',
+      );
+    }
+
+    const pending = await this.payments.listPendingClickPesa(actorUserId, tenantId, limit);
+    const results: Array<SyncProviderPaymentResult['data']> = [];
+    let completed = 0;
+    for (const row of pending) {
+      const one = await this.executeSyncProvider(actorUserId, tenantId, row.id, correlationId);
+      results.push(one.data);
+      if (one.data.completed) completed += 1;
+    }
+
+    await this.safeAudit({
+      action: 'payment.sync_provider_pending',
+      outcome: 'success',
+      correlationId,
+      actorUserId,
+      tenantId,
+      resourceType: 'payment_attempt',
+      resourceId: tenantId,
+      metadata: { scanned: pending.length, completed },
+    });
+
+    return { data: { scanned: pending.length, completed, results } };
+  }
+
   private async safeAudit(input: {
     readonly action: string;
     readonly outcome: 'success' | 'failure';
@@ -801,6 +1092,25 @@ function stripForHash(payload: Record<string, unknown>): Record<string, unknown>
     next[k] = v;
   }
   return next;
+}
+
+function parseSyncPendingLimit(raw: unknown): number {
+  if (raw === null || raw === undefined) return 25;
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    throw AppError.validation('Body must be a JSON object.');
+  }
+  const body = raw as Record<string, unknown>;
+  for (const key of Object.keys(body)) {
+    if (key !== 'limit') throw AppError.validation(`Unknown field: ${key}.`, { field: key });
+  }
+  if (body['limit'] === undefined) return 25;
+  if (typeof body['limit'] !== 'number' || !Number.isInteger(body['limit'])) {
+    throw AppError.validation('limit must be an integer.', { field: 'limit' });
+  }
+  if (body['limit'] < 1 || body['limit'] > 100) {
+    throw AppError.validation('limit must be between 1 and 100.', { field: 'limit' });
+  }
+  return body['limit'];
 }
 
 type ParsedFakeWebhook = {

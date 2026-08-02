@@ -98,13 +98,13 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**PAY-005 — ClickPesa reconciliation query job** (bible: reconcile independent of webhook).
+**PAY-006 — payment status UI** (bursar refresh / pending MoMo visibility).
 
 Required outputs:
 
-1. ~~PAY-001~~ … ~~PAY-004~~ — **Done** (ClickPesa client + mobile-money HTTP + signed webhook).
-2. PAY-005 reconciliation via query API for pending attempts.
-3. Operator: obtain ClickPesa sandbox / merchant credentials (never commit to git); run migration `20260802150000_finance_clickpesa_momo`.
+1. ~~PAY-001~~ … ~~PAY-005~~ — **Done** (ClickPesa client + HTTP + webhook + query sync).
+2. PAY-006 payment status UI (roadmap EPIC-PAY-01).
+3. Operator: obtain ClickPesa sandbox / merchant credentials (never commit to git); run migration `20260802150000_finance_clickpesa_momo` if not applied.
 
 **Parallel / immediately after:** SMS notification epic (EPIC-COMMS) remains High priority; MFA for privileged/finance admins remains constitution-required before production finance trust.
 
@@ -115,7 +115,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: ClickPesa reconcile (PAY-005) for Zanzibar MoMo — Fake remains CI default.
+- **Next epic focus**: Payment status UI (PAY-006) — Fake remains CI default; sync-provider available when ClickPesa secrets set.
 
 ## Status Update Rules
 
