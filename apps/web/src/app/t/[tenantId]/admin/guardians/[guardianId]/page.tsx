@@ -71,43 +71,46 @@ export default function AdminGuardianDetailPage() {
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmState>(null);
 
-  const loadUsers = useCallback(async (opts: { readonly cursor: string | null; readonly append: boolean }) => {
-    const auth = readSession();
-    if (auth === null) return;
-    if (!opts.append) setUsersLoading(true);
-    else setLoadingMoreUsers(true);
-    if (!opts.append) setUsersError(null);
-    try {
-      const result = await apiRequest<PaginatedEnvelope<BindUserOption>>(
-        buildListQuery('/api/v1/users', {
-          limit: ADMIN_LIST_DEFAULT_LIMIT,
-          cursor: opts.cursor,
-        }),
-        { auth },
-      );
-      const page = readPageMeta(result);
-      const list = result.data ?? [];
-      setUsers((prev) => (opts.append ? appendById(prev, list) : [...list]));
-      setUsersCursor(page.nextCursor);
-    } catch (err) {
-      if (!opts.append) {
-        setUsers([]);
-        setUsersCursor(null);
-        if (err instanceof ApiClientError && err.status === 403) {
-          setUsersError(
-            'Cannot load users for the picker (needs user.read). Use advanced UUID paste or ask an admin.',
-          );
-        } else if (err instanceof ApiClientError) {
-          setUsersError(adminFriendlyMessage(err, 'users'));
-        } else {
-          setUsersError('Could not load users.');
+  const loadUsers = useCallback(
+    async (opts: { readonly cursor: string | null; readonly append: boolean }) => {
+      const auth = readSession();
+      if (auth === null) return;
+      if (!opts.append) setUsersLoading(true);
+      else setLoadingMoreUsers(true);
+      if (!opts.append) setUsersError(null);
+      try {
+        const result = await apiRequest<PaginatedEnvelope<BindUserOption>>(
+          buildListQuery('/api/v1/users', {
+            limit: ADMIN_LIST_DEFAULT_LIMIT,
+            cursor: opts.cursor,
+          }),
+          { auth },
+        );
+        const page = readPageMeta(result);
+        const list = result.data ?? [];
+        setUsers((prev) => (opts.append ? appendById(prev, list) : [...list]));
+        setUsersCursor(page.nextCursor);
+      } catch (err) {
+        if (!opts.append) {
+          setUsers([]);
+          setUsersCursor(null);
+          if (err instanceof ApiClientError && err.status === 403) {
+            setUsersError(
+              'Cannot load users for the picker (needs user.read). Use advanced UUID paste or ask an admin.',
+            );
+          } else if (err instanceof ApiClientError) {
+            setUsersError(adminFriendlyMessage(err, 'users'));
+          } else {
+            setUsersError('Could not load users.');
+          }
         }
+      } finally {
+        setUsersLoading(false);
+        setLoadingMoreUsers(false);
       }
-    } finally {
-      setUsersLoading(false);
-      setLoadingMoreUsers(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const loadStudentPicker = useCallback(
     async (opts: { readonly cursor: string | null; readonly append: boolean }) => {

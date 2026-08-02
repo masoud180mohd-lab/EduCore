@@ -1,11 +1,11 @@
 # PAY-PROVIDER-001 — Payment provider decision
 
-| Field     | Value                                      |
-| --------- | ------------------------------------------ |
-| Decision  | PAY-PROVIDER-001                           |
-| Date      | 2026-07-21 (amended 2026-07-31)            |
-| Program   | IMP-009 / EPIC-PAY-01                      |
-| Authority | Solo-operator provisional (SOLO-GOV-001)   |
+| Field     | Value                                       |
+| --------- | ------------------------------------------- |
+| Decision  | PAY-PROVIDER-001                            |
+| Date      | 2026-07-21 (amended 2026-07-31)             |
+| Program   | IMP-009 / EPIC-PAY-01                       |
+| Authority | Solo-operator provisional (SOLO-GOV-001)    |
 | Related   | **PAY-001** Accepted — ClickPesa (Zanzibar) |
 
 ## Decision

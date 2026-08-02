@@ -125,20 +125,20 @@ Form **pickers** on create/bind/detail forms (invoice, enrollment, streams, clas
 
 Use **`AdminTable`** for operational registries. Keep **cards** for hubs, create forms, and pickers (not list registries).
 
-| Registry     | Columns (allowlist only)                                         |
-| ------------ | ---------------------------------------------------------------- |
-| Users        | Display name, Email, Status (`StatusChip`), Open                 |
-| Students     | Display name, Student code, Status (`StatusChip`), Open          |
-| Guardians    | Name, Contact, Status (`StatusChip`), Open                       |
-| Organizations| Name, Code, Type, Status (`StatusChip`), Open                    |
-| Memberships  | Status (`StatusChip`), User, Joined, Open                        |
-| Roles        | Name, Code, Kind, Permissions, Open                              |
-| Years        | Name, Code, Status (`StatusChip`), Open                          |
-| Terms        | Name, Year, Status (`StatusChip`), Open                          |
-| Classes      | Name, Year, Status (`StatusChip`), Open                          |
-| Streams      | Name, Class, Status (`StatusChip`), Open                         |
-| Subjects     | Name, Code, Status (`StatusChip`), Open                          |
-| Enrollments  | Student, Class, Status (`StatusChip`), Open                      |
+| Registry      | Columns (allowlist only)                                |
+| ------------- | ------------------------------------------------------- |
+| Users         | Display name, Email, Status (`StatusChip`), Open        |
+| Students      | Display name, Student code, Status (`StatusChip`), Open |
+| Guardians     | Name, Contact, Status (`StatusChip`), Open              |
+| Organizations | Name, Code, Type, Status (`StatusChip`), Open           |
+| Memberships   | Status (`StatusChip`), User, Joined, Open               |
+| Roles         | Name, Code, Kind, Permissions, Open                     |
+| Years         | Name, Code, Status (`StatusChip`), Open                 |
+| Terms         | Name, Year, Status (`StatusChip`), Open                 |
+| Classes       | Name, Year, Status (`StatusChip`), Open                 |
+| Streams       | Name, Class, Status (`StatusChip`), Open                |
+| Subjects      | Name, Code, Status (`StatusChip`), Open                 |
+| Enrollments   | Student, Class, Status (`StatusChip`), Open             |
 
 **Density & a11y**
 
@@ -155,14 +155,14 @@ Use **`AdminTable`** for operational registries. Keep **cards** for hubs, create
 
 Destructive admin mutations use shared **`ConfirmDialog`** — not `window.confirm`. Teacher marks **Submit** and attendance **Close session** also use the same `ConfirmDialog` (Wave X).
 
-| Rule         | Behavior                                                                                                                                                                                                     |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Rule         | Behavior                                                                                                                                                                                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Required for | Money (void, reverse); membership/users (disable, enable, suspend, reactivate, remove, role unassign); org deactivate; guardian end-link / unbind; academic delete + mark closed; enrollment status/transfer; teacher marks submit; attendance session close |
-| Keyboard     | **Esc** and backdrop dismiss when not busy; initial focus on **Cancel**; Enter activates focused control only (Cancel by default — does **not** auto-confirm)                                                |
-| Focus        | Restore focus to the triggering control after close when practical                                                                                                                                           |
-| Danger       | `danger={true}` for void, reverse, delete, remove, disable, unbind, suspend, end-link, mark closed, marks submit, session close                                                                              |
-| Busy         | Confirm + Cancel + backdrop disabled while mutation in flight (no double POST); Idempotency-Key unchanged                                                                                                    |
-| AuthZ        | Confirm UI ≠ authorization — API remains truth (403/409 after confirm)                                                                                                                                       |
+| Keyboard     | **Esc** and backdrop dismiss when not busy; initial focus on **Cancel**; Enter activates focused control only (Cancel by default — does **not** auto-confirm)                                                                                                |
+| Focus        | Restore focus to the triggering control after close when practical                                                                                                                                                                                           |
+| Danger       | `danger={true}` for void, reverse, delete, remove, disable, unbind, suspend, end-link, mark closed, marks submit, session close                                                                                                                              |
+| Busy         | Confirm + Cancel + backdrop disabled while mutation in flight (no double POST); Idempotency-Key unchanged                                                                                                                                                    |
+| AuthZ        | Confirm UI ≠ authorization — API remains truth (403/409 after confirm)                                                                                                                                                                                       |
 
 **Non-goals (confirms):** modal libraries (Headless/Radix/shadcn); auto-confirm timers; remaining detail reparent/transfer picker UX polish.
 
@@ -248,30 +248,30 @@ Accepted under acting seats only; revise when a second review seat exists.
 
 ## Increment traceability
 
-| IMP     | Topic (summary)                                                |
-| ------- | -------------------------------------------------------------- |
-| IMP-012 | Academic hub + entity list/create flows                        |
-| IMP-013 | Academic structure PATCH on detail edit forms                  |
-| IMP-014 | Academic delete + reparent controls on detail                  |
-| IMP-015 | Students list + create + edit detail                           |
-| IMP-016 | Users invite/edit + organizations create/edit/deactivate       |
-| IMP-017 | AdminShell school name brand from `GET /tenants/current`       |
-| IMP-019 | Tenant settings edit + guardian profile edit on detail         |
-| IMP-020 | Membership suspend / reactivate / remove on user detail        |
-| IMP-021 | User enable action on detail                                   |
-| IMP-022 | Roles list + create + custom permission replace                |
-| IMP-023 | Memberships list with status filter                            |
-| IMP-025 | Academic delete 409 dependents listing                         |
-| IMP-026 | Org-scoped user-role assign                                    |
-| IMP-027 | Shared admin primitives (Banner, ResourceList, ConfirmDialog)  |
-| IMP-028 | AdminTable for admin ops registries (Users → Academic)         |
-| IMP-029 | Grouped AdminShell nav IA for tablet                           |
-| IMP-030 | Load more cursor pagination on admin registries                |
-| IMP-033 | AdminShell /auth/me gate + permission-filtered nav             |
-| IMP-034 | ConfirmDialog replaces window.confirm (destructive admin)      |
-| IMP-035 | Central adminFriendlyMessage error mapper                      |
-| IMP-031 | Admin cross-links (student ↔ enrollment/fees/guardian)         |
-| IMP-032 | Operator-safe tenant settings (Advanced JSON + preserve-merge) |
+| IMP      | Topic (summary)                                                |
+| -------- | -------------------------------------------------------------- |
+| IMP-012  | Academic hub + entity list/create flows                        |
+| IMP-013  | Academic structure PATCH on detail edit forms                  |
+| IMP-014  | Academic delete + reparent controls on detail                  |
+| IMP-015  | Students list + create + edit detail                           |
+| IMP-016  | Users invite/edit + organizations create/edit/deactivate       |
+| IMP-017  | AdminShell school name brand from `GET /tenants/current`       |
+| IMP-019  | Tenant settings edit + guardian profile edit on detail         |
+| IMP-020  | Membership suspend / reactivate / remove on user detail        |
+| IMP-021  | User enable action on detail                                   |
+| IMP-022  | Roles list + create + custom permission replace                |
+| IMP-023  | Memberships list with status filter                            |
+| IMP-025  | Academic delete 409 dependents listing                         |
+| IMP-026  | Org-scoped user-role assign                                    |
+| IMP-027  | Shared admin primitives (Banner, ResourceList, ConfirmDialog)  |
+| IMP-028  | AdminTable for admin ops registries (Users → Academic)         |
+| IMP-029  | Grouped AdminShell nav IA for tablet                           |
+| IMP-030  | Load more cursor pagination on admin registries                |
+| IMP-033  | AdminShell /auth/me gate + permission-filtered nav             |
+| IMP-034  | ConfirmDialog replaces window.confirm (destructive admin)      |
+| IMP-035  | Central adminFriendlyMessage error mapper                      |
+| IMP-031  | Admin cross-links (student ↔ enrollment/fees/guardian)         |
+| IMP-032  | Operator-safe tenant settings (Advanced JSON + preserve-merge) |
 | IMP-030x | Wave X: Load more on P0 form pickers                           |
 | IMP-034x | Wave X: teacher marks submit + attendance close ConfirmDialog  |
 | IMP-031x | Wave X: create enrollment/invoice `?studentId=` prefill        |

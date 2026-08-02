@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-02 - PAY-006 payment status UI
+
+- Bursar invoice detail: pending MoMo + BillPay + Refresh from provider; Request mobile money with Fake honesty.
+- Fees hub: Sync pending (tenant); DSF-004 rev 1.5.
+- Next: pilot secrets/ops or EPIC-COMMS (not silent dual scope).
+
 ## 2026-08-02 - PAY-005 ClickPesa query sync
 
 - Added `POST /payments/{id}/sync-provider` and batch `POST /payments/sync-provider-pending`.

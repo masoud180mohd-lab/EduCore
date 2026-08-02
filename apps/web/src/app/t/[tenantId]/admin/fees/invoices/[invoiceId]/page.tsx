@@ -14,18 +14,22 @@ import {
 } from '@/lib/admin/admin-paths';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { resolveGuardianNames } from '@/lib/admin/resolve-related-names';
-import { visibleAdminNavIds } from '@/lib/auth/admin-access';
+import { canFinanceManage, canFinanceReconcile, visibleAdminNavIds } from '@/lib/auth/admin-access';
 import type { MeLike } from '@/lib/auth/home-preference';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import {
+  billPayDisplay,
   canIssueInvoice,
   canRecordPayment,
   canReconcilePayment,
   canReversePayment,
+  canSyncProviderPayment,
   canVoidInvoice,
   invoiceStatusLabel,
+  paymentMethodLabel,
   paymentStatusLabel,
   reconcileOutcomeLabel,
+  syncProviderDetailLabel,
 } from '@/lib/finance/invoice-actions';
 import { formatTzsMinor, parseMajorToMinor } from '@/lib/finance/money';
 
@@ -59,6 +63,9 @@ type PaymentRow = {
   readonly currency: string;
   readonly status: string;
   readonly receiptId: string | null;
+  readonly providerCode?: string | null;
+  readonly providerRef?: string | null;
+  readonly billPayNumber?: string | null;
 };
 
 type ReconciliationRow = {
@@ -72,7 +79,17 @@ type ReconciliationRow = {
   readonly createdAt: string;
 };
 
+type SyncProviderResult = {
+  readonly paymentAttemptId: string;
+  readonly providerStatus: string;
+  readonly completed: boolean;
+  readonly detail: string;
+};
+
 const OFFICE_METHODS = ['cash', 'bank', 'cheque', 'other'] as const;
+
+const FAKE_PROVIDER_BANNER =
+  'Mobile money provider not configured (Fake default). Set ClickPesa secrets for sandbox.';
 
 type StudentGuardianLink = {
   readonly id: string;
@@ -84,6 +101,10 @@ type StudentGuardianLink = {
 };
 
 type MeEnvelope = { readonly data: MeLike };
+
+function isProviderNotConfigured(err: ApiClientError): boolean {
+  return err.status === 501 || err.code === 'NOT_IMPLEMENTED';
+}
 
 export default function AdminInvoiceDetailPage() {
   const params = useParams<{ tenantId: string; invoiceId: string }>();
@@ -97,9 +118,14 @@ export default function AdminInvoiceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmState>(null);
+  const [momoConfigured, setMomoConfigured] = useState(true);
 
   const [payMethod, setPayMethod] = useState<(typeof OFFICE_METHODS)[number]>('cash');
   const [payAmountMajor, setPayAmountMajor] = useState('');
+  const [momoAmountMajor, setMomoAmountMajor] = useState('');
+
+  const [canManageFinance, setCanManageFinance] = useState(false);
+  const [canReconcileFinance, setCanReconcileFinance] = useState(false);
 
   const [showGuardians, setShowGuardians] = useState(false);
   const [showGuardianFees, setShowGuardianFees] = useState(false);
@@ -108,13 +134,12 @@ export default function AdminInvoiceDetailPage() {
   const [guardianLoading, setGuardianLoading] = useState(false);
   const [guardianError, setGuardianError] = useState<string | null>(null);
 
-  const loadGuardians = useCallback(async (forStudentId: string) => {
+  const loadGuardians = useCallback(async (forStudentId: string, me: MeLike) => {
     const auth = readSession();
     if (auth === null) return;
     setGuardianLoading(true);
     try {
-      const me = await apiRequest<MeEnvelope>('/api/v1/auth/me', { auth });
-      const navIds = visibleAdminNavIds(me.data);
+      const navIds = visibleAdminNavIds(me);
       const canGuardians = navIds.has('guardians');
       const canFees = navIds.has('fees');
       setShowGuardians(canGuardians);
@@ -149,12 +174,15 @@ export default function AdminInvoiceDetailPage() {
     if (auth === null) return;
     setLoading(true);
     try {
-      const [invRes, payRes] = await Promise.all([
+      const [invRes, payRes, me] = await Promise.all([
         apiRequest<{ data: InvoiceDetail }>(`/api/v1/invoices/${invoiceId}`, { auth }),
         apiRequest<{ data: PaymentRow[] }>(`/api/v1/invoices/${invoiceId}/payments`, { auth }),
+        apiRequest<MeEnvelope>('/api/v1/auth/me', { auth }),
       ]);
       setInvoice(invRes.data);
       setPayments(payRes.data ?? []);
+      setCanManageFinance(canFinanceManage(me.data));
+      setCanReconcileFinance(canFinanceReconcile(me.data));
       try {
         const st = await apiRequest<{ data: { displayName: string } }>(
           `/api/v1/students/${invRes.data.studentId}`,
@@ -164,7 +192,7 @@ export default function AdminInvoiceDetailPage() {
       } catch {
         setStudentName(invRes.data.studentId);
       }
-      void loadGuardians(invRes.data.studentId);
+      void loadGuardians(invRes.data.studentId, me.data);
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
@@ -280,6 +308,67 @@ export default function AdminInvoiceDetailPage() {
     }
   }
 
+  async function onRequestMobileMoney(event: FormEvent) {
+    event.preventDefault();
+    const auth = readSession();
+    if (auth === null || invoice === null) return;
+
+    const amountMinor = parseMajorToMinor(momoAmountMajor);
+    if (amountMinor === null) {
+      setError('Enter a valid mobile money amount in TZS (up to 2 decimals).');
+      return;
+    }
+    if (amountMinor > invoice.balanceMinor) {
+      setError(
+        `Amount exceeds balance (${formatTzsMinor(invoice.balanceMinor)}). Reduce the amount.`,
+      );
+      return;
+    }
+    if (amountMinor % 100 !== 0) {
+      setError('Mobile money amounts must map to whole TZS (divisible by 100 minor units).');
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `payment.mobile-money:${invoiceId}:${amountMinor}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      const created = await apiRequest<{ data: PaymentRow }>('/api/v1/payments/mobile-money', {
+        method: 'POST',
+        auth,
+        body: {
+          invoiceId,
+          amountMinor,
+          currency: 'TZS',
+        },
+        idempotencyKey: idem,
+      });
+      clearIdempotencyKey(actionKey);
+      setMomoConfigured(true);
+      setMomoAmountMajor('');
+      const billPay = billPayDisplay(created.data);
+      setInfo(
+        billPay !== null
+          ? `Mobile money pending. BillPay number: ${billPay}. Ask parent to pay; webhook or Refresh updates status.`
+          : 'Mobile money pending. Ask parent to pay; webhook or Refresh updates status.',
+      );
+      await load();
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        if (isProviderNotConfigured(err)) {
+          setMomoConfigured(false);
+          setError(FAKE_PROVIDER_BANNER);
+        } else {
+          setError(adminFriendlyMessage(err, 'finance'));
+        }
+      } else setError('Could not request mobile money.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function runReverse(paymentId: string) {
     const auth = readSession();
     if (auth === null) return;
@@ -343,10 +432,52 @@ export default function AdminInvoiceDetailPage() {
     }
   }
 
+  async function onSyncProvider(paymentId: string) {
+    const auth = readSession();
+    if (auth === null) return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `payment.sync-provider:${paymentId}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      const result = await apiRequest<{ data: SyncProviderResult }>(
+        `/api/v1/payments/${paymentId}/sync-provider`,
+        {
+          method: 'POST',
+          auth,
+          idempotencyKey: idem,
+        },
+      );
+      clearIdempotencyKey(actionKey);
+      setMomoConfigured(true);
+      const row = result.data;
+      setInfo(
+        `Refresh from provider: ${paymentStatusLabel(row.providerStatus)} — ${syncProviderDetailLabel(row.detail)}${
+          row.completed ? ' (ledger updated).' : '.'
+        }`,
+      );
+      await load();
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        if (isProviderNotConfigured(err)) {
+          setMomoConfigured(false);
+          setError(FAKE_PROVIDER_BANNER);
+        } else {
+          setError(adminFriendlyMessage(err, 'finance', { action: 'reconcile' }));
+        }
+      } else setError('Could not refresh payment from provider.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const issueOk = invoice !== null && canIssueInvoice(invoice.status);
   const voidOk =
     invoice !== null && canVoidInvoice(invoice.status, invoice.balanceMinor, invoice.totalMinor);
-  const payOk = invoice !== null && canRecordPayment(invoice.status, invoice.balanceMinor);
+  const payOk =
+    invoice !== null && canRecordPayment(invoice.status, invoice.balanceMinor) && canManageFinance;
+  const momoOk = payOk && momoConfigured;
 
   return (
     <AdminShell tenantId={tenantId}>
@@ -363,6 +494,11 @@ export default function AdminInvoiceDetailPage() {
       {info !== null ? (
         <div className="banner banner-info" role="status">
           {info}
+        </div>
+      ) : null}
+      {!momoConfigured ? (
+        <div className="banner banner-warn" role="status">
+          {FAKE_PROVIDER_BANNER}
         </div>
       ) : null}
 
@@ -466,7 +602,7 @@ export default function AdminInvoiceDetailPage() {
             <form className="stack card" onSubmit={(e) => void onPay(e)}>
               <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Record office payment</h2>
               <p className="muted">
-                Cash / bank / cheque / other only. Mobile money: not enabled (PAY-PROVIDER-001).
+                Cash / bank / cheque / other. Mobile money uses the form below.
               </p>
               <div className="field">
                 <label htmlFor="pay-method">Method</label>
@@ -499,52 +635,110 @@ export default function AdminInvoiceDetailPage() {
             </form>
           ) : null}
 
+          {canManageFinance && canRecordPayment(invoice.status, invoice.balanceMinor) ? (
+            <form
+              className="stack card"
+              style={{ marginTop: '1rem' }}
+              onSubmit={(e) => void onRequestMobileMoney(e)}
+            >
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Request mobile money</h2>
+              <p className="muted">
+                Creates a pending BillPay attempt (ClickPesa). Ask parent to pay the number; webhook
+                or Refresh updates status.
+              </p>
+              {!momoConfigured ? (
+                <div className="banner banner-warn" role="status">
+                  {FAKE_PROVIDER_BANNER}
+                </div>
+              ) : null}
+              <div className="field">
+                <label htmlFor="momo-amount">Amount (TZS major, ≤ balance)</label>
+                <input
+                  id="momo-amount"
+                  required
+                  inputMode="decimal"
+                  placeholder={String(invoice.balanceMinor / 100)}
+                  value={momoAmountMajor}
+                  onChange={(e) => setMomoAmountMajor(e.target.value)}
+                  disabled={!momoOk || busy}
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={busy || !momoOk}>
+                {busy ? 'Requesting…' : 'Request mobile money'}
+              </button>
+            </form>
+          ) : null}
+
           <h2 style={{ fontSize: '1.1rem' }}>Payments</h2>
           {payments.length === 0 ? (
             <div className="banner banner-info">No payments yet.</div>
           ) : null}
           <ul className="list">
-            {payments.map((p) => (
-              <li key={p.id} className="card">
-                <strong>
-                  {formatTzsMinor(p.amountMinor)} · {p.method}
-                </strong>
-                <div className="muted">
-                  <span className="chip">{paymentStatusLabel(p.status)}</span>
-                  {p.receiptId !== null && p.receiptId !== undefined ? (
-                    <>
-                      {' · '}
-                      <Link href={`/t/${tenantId}/admin/fees/receipts/${p.receiptId}`}>
-                        Receipt
-                      </Link>
-                    </>
+            {payments.map((p) => {
+              const billPay = billPayDisplay(p);
+              const showSync = canSyncProviderPayment(p.status, p.method) && canReconcileFinance;
+              return (
+                <li key={p.id} className="card">
+                  <strong>
+                    {formatTzsMinor(p.amountMinor)} · {paymentMethodLabel(p.method)}
+                  </strong>
+                  <div className="muted">
+                    <span className="chip">{paymentStatusLabel(p.status)}</span>
+                    {p.receiptId !== null && p.receiptId !== undefined ? (
+                      <>
+                        {' · '}
+                        <Link href={`/t/${tenantId}/admin/fees/receipts/${p.receiptId}`}>
+                          Receipt
+                        </Link>
+                      </>
+                    ) : null}
+                  </div>
+                  {billPay !== null && p.status === 'pending' ? (
+                    <div>
+                      <div className="muted" style={{ marginTop: '0.5rem' }}>
+                        BillPay number — ask parent to pay; webhook or Refresh updates status.
+                      </div>
+                      <span className="billpay-number">{billPay}</span>
+                    </div>
                   ) : null}
-                </div>
-                {canReversePayment(p.status) ? (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    disabled={busy}
-                    onClick={() => setConfirm({ kind: 'reverse', paymentId: p.id })}
-                    style={{ marginTop: '0.5rem', marginRight: '0.5rem' }}
-                  >
-                    Reverse
-                  </button>
-                ) : null}
-                {canReconcilePayment(p.status) ? (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    disabled={busy}
-                    onClick={() => void onReconcile(p.id)}
-                    style={{ marginTop: '0.5rem' }}
-                    title="Compare payment to last gateway event. Does not change ledger or balances."
-                  >
-                    Reconcile
-                  </button>
-                ) : null}
-              </li>
-            ))}
+                  {canReversePayment(p.status) ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      disabled={busy}
+                      onClick={() => setConfirm({ kind: 'reverse', paymentId: p.id })}
+                      style={{ marginTop: '0.5rem', marginRight: '0.5rem' }}
+                    >
+                      Reverse
+                    </button>
+                  ) : null}
+                  {showSync ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      disabled={busy}
+                      onClick={() => void onSyncProvider(p.id)}
+                      style={{ marginTop: '0.5rem', marginRight: '0.5rem' }}
+                      title="Query ClickPesa and update pending payment. May complete ledger."
+                    >
+                      Refresh from provider
+                    </button>
+                  ) : null}
+                  {canReconcilePayment(p.status) && canReconcileFinance ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      disabled={busy}
+                      onClick={() => void onReconcile(p.id)}
+                      style={{ marginTop: '0.5rem' }}
+                      title="Compare payment to last gateway event. Does not change ledger or balances."
+                    >
+                      Reconcile
+                    </button>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         </>
       ) : null}

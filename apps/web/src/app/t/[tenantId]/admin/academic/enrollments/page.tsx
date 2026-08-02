@@ -55,7 +55,10 @@ export default function AdminEnrollmentsPage() {
   const [streamId, setStreamId] = useState('');
   const [status, setStatus] = useState<EnrollmentStatus>('active');
 
-  async function loadClassPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadClassPicker(opts: {
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMoreClasses(true);

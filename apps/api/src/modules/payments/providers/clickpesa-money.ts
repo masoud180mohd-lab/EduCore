@@ -27,16 +27,7 @@ export function clickPesaMajorToMinor(collectedAmount: string | number): number 
   return minor;
 }
 
-export type ClickPesaPaymentStatus =
-  | 'SUCCESS'
-  | 'SETTLED'
-  | 'PROCESSING'
-  | 'PENDING'
-  | 'FAILED'
-  | 'ON-HOLD'
-  | 'REFUNDED'
-  | 'REVERSED'
-  | string;
+export type ClickPesaPaymentStatus = string;
 
 /** Maps ClickPesa payment status → EduCore provider status (PAY-002). */
 export function mapClickPesaStatus(

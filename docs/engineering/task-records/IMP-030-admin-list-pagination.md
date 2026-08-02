@@ -47,13 +47,13 @@ Helpers: `buildListQuery`, `readPageMeta`, `appendById`, `hasMorePages`, `ADMIN_
 
 ## Waves
 
-| Wave                             | Status                 |
-| -------------------------------- | ---------------------- |
-| P0 inventory + DSF-002 amend     | Done                   |
-| P1 helper + pagination control   | Done                   |
-| P2 registries                    | Done                   |
-| P3 academic + fees (+ roles)     | Done                   |
-| P4 tooling + check + task record | Done                   |
+| Wave                             | Status                               |
+| -------------------------------- | ------------------------------------ |
+| P0 inventory + DSF-002 amend     | Done                                 |
+| P1 helper + pagination control   | Done                                 |
+| P2 registries                    | Done                                 |
+| P3 academic + fees (+ roles)     | Done                                 |
+| P4 tooling + check + task record | Done                                 |
 | Wave X pickers / teacher lists   | **Done** (P0 pickers — see IMP-030x) |
 
 ## Residuals

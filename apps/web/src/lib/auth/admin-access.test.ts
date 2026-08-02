@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   adminDeniedFallback,
   canAccessAdminShell,
+  canFinanceManage,
+  canFinanceReconcile,
   canManageTenantSettings,
   groupAdminNav,
   visibleAdminNavIds,
@@ -80,6 +82,28 @@ describe('canManageTenantSettings', () => {
   it('denies tenant.read only', () => {
     expect(
       canManageTenantSettings({ roles: [{ code: 'staff' }], permissions: ['tenant.read'] }),
+    ).toBe(false);
+  });
+});
+
+describe('canFinanceManage / canFinanceReconcile (PAY-006)', () => {
+  it('allows owner/admin and matching permission codes', () => {
+    expect(canFinanceManage({ roles: [{ code: 'owner' }], permissions: [] })).toBe(true);
+    expect(canFinanceReconcile({ roles: [{ code: 'admin' }], permissions: [] })).toBe(true);
+    expect(canFinanceManage({ roles: [{ code: 'staff' }], permissions: ['finance.manage'] })).toBe(
+      true,
+    );
+    expect(
+      canFinanceReconcile({ roles: [{ code: 'staff' }], permissions: ['finance.reconcile'] }),
+    ).toBe(true);
+  });
+
+  it('denies read-only finance for manage/reconcile UX gates', () => {
+    expect(canFinanceManage({ roles: [{ code: 'staff' }], permissions: ['finance.read'] })).toBe(
+      false,
+    );
+    expect(
+      canFinanceReconcile({ roles: [{ code: 'staff' }], permissions: ['finance.manage'] }),
     ).toBe(false);
   });
 });

@@ -20,10 +20,7 @@ export function adminGuardianFeesPath(tenantId: string, guardianId: string): str
   return `/t/${tenantId}/admin/guardians/${guardianId}/fees`;
 }
 
-export function adminEnrollmentsCreatePath(
-  tenantId: string,
-  studentId?: string | null,
-): string {
+export function adminEnrollmentsCreatePath(tenantId: string, studentId?: string | null): string {
   const base = `/t/${tenantId}/admin/academic/enrollments`;
   if (studentId === undefined || studentId === null || studentId === '') return base;
   return `${base}?studentId=${encodeURIComponent(studentId)}`;

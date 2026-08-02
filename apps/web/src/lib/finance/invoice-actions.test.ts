@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  billPayDisplay,
   canIssueInvoice,
   canRecordPayment,
   canReconcilePayment,
   canReversePayment,
+  canSyncProviderPayment,
   canVoidInvoice,
+  paymentMethodLabel,
+  paymentStatusLabel,
   reconcileOutcomeLabel,
+  syncProviderDetailLabel,
 } from './invoice-actions.js';
 
 describe('invoice action enablement', () => {
@@ -50,5 +55,44 @@ describe('invoice action enablement', () => {
     expect(reconcileOutcomeLabel('matched')).toBe('Matched');
     expect(reconcileOutcomeLabel('missing_event')).toBe('No gateway event');
     expect(reconcileOutcomeLabel('amount_mismatch')).toBe('Amount mismatch');
+  });
+
+  it('allows sync-provider only for pending mobile_money', () => {
+    expect(canSyncProviderPayment('pending', 'mobile_money')).toBe(true);
+    expect(canSyncProviderPayment('succeeded', 'mobile_money')).toBe(false);
+    expect(canSyncProviderPayment('pending', 'cash')).toBe(false);
+    expect(canSyncProviderPayment('failed', 'mobile_money')).toBe(false);
+  });
+
+  it('labels payment status including pending and failed', () => {
+    expect(paymentStatusLabel('pending')).toBe('Pending');
+    expect(paymentStatusLabel('failed')).toBe('Failed');
+    expect(paymentStatusLabel('succeeded')).toBe('Succeeded');
+    expect(paymentStatusLabel('reversed')).toBe('Reversed');
+  });
+
+  it('labels payment methods for bursar list', () => {
+    expect(paymentMethodLabel('mobile_money')).toBe('Mobile money');
+    expect(paymentMethodLabel('cash')).toBe('Cash');
+  });
+
+  it('shows BillPay from allowlist fields only', () => {
+    expect(billPayDisplay({ method: 'mobile_money', providerRef: '55042914871931' })).toBe(
+      '55042914871931',
+    );
+    expect(
+      billPayDisplay({
+        method: 'mobile_money',
+        billPayNumber: '111',
+        providerRef: '222',
+      }),
+    ).toBe('111');
+    expect(billPayDisplay({ method: 'cash', providerRef: 'x' })).toBeNull();
+    expect(billPayDisplay({ method: 'mobile_money', providerRef: null })).toBeNull();
+  });
+
+  it('labels sync-provider details', () => {
+    expect(syncProviderDetailLabel('still_pending')).toBe('Still pending at provider');
+    expect(syncProviderDetailLabel('completed')).toBe('Completed');
   });
 });

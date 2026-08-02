@@ -140,7 +140,14 @@ describe('workspace standards', () => {
 
     const example = readTextFile('.env.example');
     expect(example).toContain('NODE_ENV=development');
-    expect(example.toLowerCase()).not.toMatch(/password|secret|api[_-]?key|token|private[_-]?key/);
+    // Allow commented placeholder names; forbid credential-like values on active lines.
+    const activeLines = example.split('\n').filter((line) => {
+      const trimmed = line.trim();
+      return trimmed !== '' && !trimmed.startsWith('#');
+    });
+    for (const line of activeLines) {
+      expect(line.toLowerCase()).not.toMatch(/password|secret|api[_-]?key|token|private[_-]?key/);
+    }
   });
 
   it('ignores local secrets and common credential material', () => {

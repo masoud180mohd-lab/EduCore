@@ -1,14 +1,14 @@
 # PAY-002 — ClickPesa adapter contract
 
-| Field     | Value                                                          |
-| --------- | -------------------------------------------------------------- |
-| Program   | **PAY-002** / EPIC-PAY-01                                      |
-| Date      | 2026-07-31                                                     |
-| Status    | **Accepted** (solo-operator)                                   |
+| Field     | Value                                                              |
+| --------- | ------------------------------------------------------------------ |
+| Program   | **PAY-002** / EPIC-PAY-01                                          |
+| Date      | 2026-07-31                                                         |
+| Status    | **Accepted** (solo-operator)                                       |
 | Contract  | `docs/engineering/decisions/PAY-002-clickpesa-adapter-contract.md` |
-| Depends   | PAY-001 Accepted (ClickPesa / Zanzibar)                        |
-| Next      | **PAY-003** client + port (Fake remains default)               |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                       |
+| Depends   | PAY-001 Accepted (ClickPesa / Zanzibar)                            |
+| Next      | **PAY-003** client + port (Fake remains default)                   |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                           |
 
 ## Goal
 

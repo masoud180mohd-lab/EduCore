@@ -25,7 +25,10 @@ function record(id: string, pass: boolean, note: string): void {
   process.stdout.write(`[${mark}] ${id}: ${note}\n`);
 }
 
-async function json<T>(path: string, init?: RequestInit & { token?: string }): Promise<{
+async function json<T>(
+  path: string,
+  init?: RequestInit & { token?: string },
+): Promise<{
   status: number;
   body: T;
 }> {
@@ -56,13 +59,21 @@ async function loginToken(): Promise<string | undefined> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: EMAIL, password: PASS, tenantId: TENANT_ID }),
   });
-  record('prep.login', login.status === 200 && login.body?.data?.accessToken !== undefined, `status ${login.status}`);
-  return login.body?.data?.accessToken;
+  record(
+    'prep.login',
+    login.status === 200 && login.body.data?.accessToken !== undefined,
+    `status ${login.status}`,
+  );
+  return login.body.data?.accessToken;
 }
 
 function staticUiChecks(): void {
   const shell = readFileSync(path.join(root, 'apps/web/src/components/AdminShell.tsx'), 'utf8');
-  record('imp029.source_grouped_nav', shell.includes('admin-nav-groups') && shell.includes('groupAdminNav'), 'AdminShell.tsx');
+  record(
+    'imp029.source_grouped_nav',
+    shell.includes('admin-nav-groups') && shell.includes('groupAdminNav'),
+    'AdminShell.tsx',
+  );
 
   const settings = readFileSync(
     path.join(root, 'apps/web/src/app/t/[tenantId]/admin/settings/page.tsx'),
@@ -84,15 +95,31 @@ function staticUiChecks(): void {
     'settings/page.tsx',
   );
 
-  const grepAdminConfirm = readFileSync(path.join(root, 'tests/tooling/imp034-admin-confirm-modal.test.ts'), 'utf8');
-  record('imp034.tooling_no_window_confirm', grepAdminConfirm.includes('window.confirm'), 'imp034 test');
+  const grepAdminConfirm = readFileSync(
+    path.join(root, 'tests/tooling/imp034-admin-confirm-modal.test.ts'),
+    'utf8',
+  );
+  record(
+    'imp034.tooling_no_window_confirm',
+    grepAdminConfirm.includes('window.confirm'),
+    'imp034 test',
+  );
 
-  const mapper = readFileSync(path.join(root, 'apps/web/src/lib/admin/admin-friendly-message.ts'), 'utf8');
-  record('imp035.source_mapper', mapper.includes('adminFriendlyMessage'), 'admin-friendly-message.ts');
+  const mapper = readFileSync(
+    path.join(root, 'apps/web/src/lib/admin/admin-friendly-message.ts'),
+    'utf8',
+  );
+  record(
+    'imp035.source_mapper',
+    mapper.includes('adminFriendlyMessage'),
+    'admin-friendly-message.ts',
+  );
 }
 
 async function main(): Promise<void> {
-  process.stdout.write(`\n=== Admin polish manual QA ===\nAPI: ${API}\nDate: ${new Date().toISOString()}\n\n`);
+  process.stdout.write(
+    `\n=== Admin polish manual QA ===\nAPI: ${API}\nDate: ${new Date().toISOString()}\n\n`,
+  );
 
   try {
     const health = await fetch(`${API}/health`);
@@ -113,8 +140,8 @@ async function main(): Promise<void> {
     '/api/v1/auth/me',
     { token },
   );
-  const perms = new Set(me.body?.data?.permissions ?? []);
-  const roles = me.body?.data?.roles ?? [];
+  const perms = new Set(me.body.data?.permissions ?? []);
+  const roles = me.body.data?.roles ?? [];
   record(
     'imp033.me_owner',
     roles.some((r) => r.code === 'owner') || perms.has('tenant.manage'),
@@ -125,8 +152,8 @@ async function main(): Promise<void> {
     '/api/v1/tenant-settings',
     { token },
   );
-  const schemaVersion = get0.body?.data?.schemaVersion ?? 1;
-  const settings0 = get0.body?.data?.settings ?? {};
+  const schemaVersion = get0.body.data?.schemaVersion ?? 1;
+  const settings0 = get0.body.data?.settings ?? {};
   const extrasKey = '__qa_extra_imp032';
   const withExtra = {
     ...settings0,
@@ -156,7 +183,7 @@ async function main(): Promise<void> {
     '/api/v1/tenant-settings',
     { token },
   );
-  const extraAfter = get1.body?.data?.settings?.[extrasKey];
+  const extraAfter = get1.body.data?.settings[extrasKey];
   record(
     'imp032.extra_preserved',
     typeof extraAfter === 'object' &&
@@ -166,8 +193,8 @@ async function main(): Promise<void> {
   );
   record(
     'imp032.timezone_updated',
-    get1.body?.data?.settings?.['timezone'] === 'Africa/Nairobi',
-    String(get1.body?.data?.settings?.['timezone']),
+    get1.body.data?.settings['timezone'] === 'Africa/Nairobi',
+    String(get1.body.data?.settings['timezone']),
   );
 
   record('imp032.invalid_json_client', true, 'tenant-settings-form.test.ts');
@@ -181,7 +208,11 @@ async function main(): Promise<void> {
 
   staticUiChecks();
 
-  record('manual.browser_nav_768', false, 'REQUIRES BROWSER — see tasks/manual-test-admin-nav-ia-qa.md');
+  record(
+    'manual.browser_nav_768',
+    false,
+    'REQUIRES BROWSER — see tasks/manual-test-admin-nav-ia-qa.md',
+  );
   record('manual.browser_confirm_void', false, 'REQUIRES BROWSER — void invoice ConfirmDialog');
   record('manual.browser_finance_only', false, 'REQUIRES BROWSER — finance-only staff seed');
 

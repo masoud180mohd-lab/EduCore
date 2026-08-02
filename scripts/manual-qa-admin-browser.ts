@@ -45,9 +45,9 @@ async function apiToken(): Promise<string> {
 async function findStudentId(token: string): Promise<string | null> {
   const res = await fetch(`${API}/api/v1/students?limit=5`, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
       'X-Tenant-Id': TENANT_ID,
-      Accept: 'application/json',
+      'Accept': 'application/json',
     },
   });
   if (!res.ok) return null;
@@ -58,9 +58,9 @@ async function findStudentId(token: string): Promise<string | null> {
 async function findIssuedInvoiceId(token: string): Promise<string | null> {
   const res = await fetch(`${API}/api/v1/invoices?limit=50`, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
       'X-Tenant-Id': TENANT_ID,
-      Accept: 'application/json',
+      'Accept': 'application/json',
     },
   });
   if (!res.ok) return null;
@@ -87,14 +87,22 @@ async function main(): Promise<void> {
     await page.waitForSelector('nav.admin-nav-groups, nav[aria-label="Admin"]', {
       timeout: 15000,
     });
-    record('browser.nav_groups', await page.locator('.admin-nav-group').count() >= 3, 'grouped nav visible');
+    record(
+      'browser.nav_groups',
+      (await page.locator('.admin-nav-group').count()) >= 3,
+      'grouped nav visible',
+    );
 
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto(`${WEB}${adminBase}`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(500);
     const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
     const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
-    record('browser.nav_768_no_overflow', scrollWidth <= clientWidth + 2, `scroll ${scrollWidth} vs ${clientWidth}`);
+    record(
+      'browser.nav_768_no_overflow',
+      scrollWidth <= clientWidth + 2,
+      `scroll ${scrollWidth} vs ${clientWidth}`,
+    );
 
     await page.goto(`${WEB}${adminBase}/fees/invoices`, { waitUntil: 'networkidle' });
     const feesLink = page.locator('nav a[aria-current="page"]', { hasText: 'Fees' });

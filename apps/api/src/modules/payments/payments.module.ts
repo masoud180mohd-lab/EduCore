@@ -9,10 +9,7 @@ import { PaymentsProductController } from './controllers/payments.product.contro
 import { PaymentsWebhooksController } from './controllers/payments.webhooks.controller.js';
 import { PaymentsDomainService } from './domain/payments.domain-service.js';
 import { PaymentsPolicy } from './policies/payments.policy.js';
-import {
-  loadClickPesaConfig,
-  resolvePaymentProviderName,
-} from './providers/clickpesa-config.js';
+import { loadClickPesaConfig, resolvePaymentProviderName } from './providers/clickpesa-config.js';
 import { ClickPesaPaymentProvider } from './providers/clickpesa-payment.provider.js';
 import { FakePaymentProvider } from './providers/fake-payment.provider.js';
 import { PAYMENT_PROVIDER_PORT } from './providers/payment-provider.port.js';

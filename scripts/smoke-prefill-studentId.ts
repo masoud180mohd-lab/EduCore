@@ -40,7 +40,9 @@ async function main(): Promise<void> {
     await page.goto(`${WEB}/t/${TENANT}/admin/students/${STUDENT}`, {
       waitUntil: 'networkidle',
     });
-    const enrollHref = await page.locator('a', { hasText: 'Create enrollment' }).getAttribute('href');
+    const enrollHref = await page
+      .locator('a', { hasText: 'Create enrollment' })
+      .getAttribute('href');
     const invoiceHref = await page.locator('a', { hasText: 'Create invoice' }).getAttribute('href');
     rec(
       !!enrollHref && enrollHref.includes(`studentId=${STUDENT}`),

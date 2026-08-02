@@ -39,9 +39,18 @@ export function canReversePayment(status: PaymentStatus): boolean {
 /**
  * Reconcile compares attempt vs last gateway event (ACF-012).
  * Allowed for any known payment; outcome is display-only (no ledger mutation).
+ * Not the same as Refresh from provider (sync-provider).
  */
 export function canReconcilePayment(status: PaymentStatus): boolean {
   return status !== '' && status !== 'created';
+}
+
+/**
+ * PAY-006: Refresh from provider (ClickPesa query sync) — pending mobile_money only.
+ * UX gate; API still enforces finance.reconcile + provider config.
+ */
+export function canSyncProviderPayment(status: PaymentStatus, method: string): boolean {
+  return status === 'pending' && method === 'mobile_money';
 }
 
 export type ReconcileOutcome =
@@ -89,7 +98,64 @@ export function paymentStatusLabel(status: PaymentStatus): string {
       return 'Pending';
     case 'failed':
       return 'Failed';
+    case 'initiated':
+      return 'Initiated';
+    case 'expired':
+      return 'Expired';
     default:
       return status;
   }
+}
+
+export function paymentMethodLabel(method: string): string {
+  switch (method) {
+    case 'mobile_money':
+      return 'Mobile money';
+    case 'cash':
+      return 'Cash';
+    case 'bank':
+      return 'Bank';
+    case 'cheque':
+      return 'Cheque';
+    case 'other':
+      return 'Other';
+    default:
+      return method;
+  }
+}
+
+/** Humanize sync-provider `detail` for bursar banner (PAY-005/006). */
+export function syncProviderDetailLabel(detail: string): string {
+  switch (detail) {
+    case 'still_pending':
+      return 'Still pending at provider';
+    case 'not_pending':
+      return 'Already settled (not pending)';
+    case 'missing_amount':
+      return 'Provider succeeded but amount missing';
+    case 'completed':
+      return 'Completed';
+    case 'amount_mismatch':
+      return 'Amount mismatch';
+    case 'failed':
+      return 'Marked failed';
+    case 'duplicate':
+      return 'Already ingested (no double-post)';
+    default:
+      return detail;
+  }
+}
+
+/** BillPay / control number from allowlist fields (never invent). */
+export function billPayDisplay(payment: {
+  readonly method: string;
+  readonly providerRef?: string | null;
+  readonly billPayNumber?: string | null;
+}): string | null {
+  if (payment.method !== 'mobile_money') return null;
+  const fromCreate = payment.billPayNumber?.trim();
+  if (fromCreate !== undefined && fromCreate !== '') return fromCreate;
+  const fromRef = payment.providerRef?.trim();
+  if (fromRef !== undefined && fromRef !== '') return fromRef;
+  return null;
 }

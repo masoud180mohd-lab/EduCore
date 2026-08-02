@@ -25,9 +25,7 @@ describe('admin-paths', () => {
   });
 
   it('create paths append optional studentId query', () => {
-    expect(adminEnrollmentsCreatePath(tenantId)).toBe(
-      `/t/${tenantId}/admin/academic/enrollments`,
-    );
+    expect(adminEnrollmentsCreatePath(tenantId)).toBe(`/t/${tenantId}/admin/academic/enrollments`);
     expect(adminInvoicesCreatePath(tenantId)).toBe(`/t/${tenantId}/admin/fees/invoices`);
     expect(adminEnrollmentsCreatePath(tenantId, id)).toBe(
       `/t/${tenantId}/admin/academic/enrollments?studentId=${id}`,

@@ -15,17 +15,17 @@ Replace native `window.confirm` on admin money + membership (+ other admin destr
 
 ## Inventory
 
-| Path                       | Action                                   | Severity              | Status         |
-| -------------------------- | ---------------------------------------- | --------------------- | -------------- |
-| fees/invoices/[id]         | void                                     | Must / danger         | Migrated       |
-| fees/invoices/[id]         | payment reverse                          | Must / danger         | Migrated       |
-| users/[id]                 | disable / enable                         | Must                  | Migrated       |
-| users/[id]                 | membership suspend / reactivate / remove | Must                  | Migrated       |
-| users/[id]                 | role unassign                            | Must / danger         | Migrated       |
-| organizations/[id]         | deactivate                               | Already ConfirmDialog | Unchanged twin |
-| guardians/[id]             | end link / unbind                        | Should / danger       | Migrated       |
-| academic */[id]            | mark closed + delete                     | Should / danger       | Migrated       |
-| enrollments/[id]           | status + transfer                        | Should                | Migrated       |
+| Path                       | Action                                   | Severity              | Status              |
+| -------------------------- | ---------------------------------------- | --------------------- | ------------------- |
+| fees/invoices/[id]         | void                                     | Must / danger         | Migrated            |
+| fees/invoices/[id]         | payment reverse                          | Must / danger         | Migrated            |
+| users/[id]                 | disable / enable                         | Must                  | Migrated            |
+| users/[id]                 | membership suspend / reactivate / remove | Must                  | Migrated            |
+| users/[id]                 | role unassign                            | Must / danger         | Migrated            |
+| organizations/[id]         | deactivate                               | Already ConfirmDialog | Unchanged twin      |
+| guardians/[id]             | end link / unbind                        | Should / danger       | Migrated            |
+| academic */[id]            | mark closed + delete                     | Should / danger       | Migrated            |
+| enrollments/[id]           | status + transfer                        | Should                | Migrated            |
 | teacher marks / attendance | submit / close                           | Wave X                | **Done** (IMP-034x) |
 | Pickers                    | —                                        | Wave X                | See IMP-030x        |
 
@@ -38,20 +38,20 @@ Replace native `window.confirm` on admin money + membership (+ other admin destr
 
 ## Grep
 
-| Scope                       | Before (approx) | After           |
-| --------------------------- | --------------- | --------------- |
-| `admin/**` `window.confirm` | ~20 call sites  | **0**           |
-| Teacher Wave X              | 2               | **0**           |
+| Scope                       | Before (approx) | After |
+| --------------------------- | --------------- | ----- |
+| `admin/**` `window.confirm` | ~20 call sites  | **0** |
+| Teacher Wave X              | 2               | **0** |
 
 ## Waves
 
-| Wave                        | Status      |
-| --------------------------- | ----------- |
-| C0 inventory + DSF + harden | Done        |
-| C1 money                    | Done        |
-| C2 users/membership         | Done        |
-| C3 guardian + academic      | Done        |
-| C4 tooling + check          | Done        |
+| Wave                        | Status                         |
+| --------------------------- | ------------------------------ |
+| C0 inventory + DSF + harden | Done                           |
+| C1 money                    | Done                           |
+| C2 users/membership         | Done                           |
+| C3 guardian + academic      | Done                           |
+| C4 tooling + check          | Done                           |
 | Wave X pickers / teacher    | **Done** (IMP-034x + IMP-030x) |
 
 ## Verify

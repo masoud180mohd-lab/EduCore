@@ -48,7 +48,10 @@ export default function AdminClassesPage() {
   const [termId, setTermId] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('active');
 
-  async function loadYearPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadYearPicker(opts: {
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMoreYears(true);

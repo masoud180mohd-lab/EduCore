@@ -89,10 +89,9 @@ export default function AdminStreamDetailPage() {
       setError(null);
       await loadClassPicker({ cursor: null, append: false });
       try {
-        const cls = await apiRequest<{ data: ClassRow }>(
-          `/api/v1/classes/${result.data.classId}`,
-          { auth },
-        );
+        const cls = await apiRequest<{ data: ClassRow }>(`/api/v1/classes/${result.data.classId}`, {
+          auth,
+        });
         setClasses((prev) => appendById(prev, [cls.data]));
       } catch {
         /* picker may already include class */

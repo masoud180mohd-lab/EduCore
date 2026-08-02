@@ -90,7 +90,7 @@ ACF-009 attendance · ACF-008 enrollments · ACF-005 classes · ACF-002 students
 
 ## Revisions
 
-| Ver | Date       | Notes                                            |
-| --- | ---------- | ------------------------------------------------ |
-| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-006)             |
+| Ver | Date       | Notes                                             |
+| --- | ---------- | ------------------------------------------------- |
+| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-006)              |
 | 1.1 | 2026-07-30 | Close session uses ConfirmDialog (IMP-034 Wave X) |

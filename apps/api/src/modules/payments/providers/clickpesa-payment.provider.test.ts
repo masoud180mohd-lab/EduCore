@@ -41,9 +41,9 @@ describe('ClickPesaPaymentProvider', () => {
   });
 
   it('initiates Order BillPay and returns pending + billPayNumber', async () => {
-    const fetchImpl = vi.fn<ClickPesaHttpFetch>(async (url, init) => {
+    const fetchImpl = vi.fn<ClickPesaHttpFetch>((url, init) => {
       if (url.endsWith('/generate-token')) {
-        return jsonResponse(200, { success: true, token: 'Bearer tok' });
+        return Promise.resolve(jsonResponse(200, { success: true, token: 'Bearer tok' }));
       }
       if (url.endsWith('/billpay/create-order-control-number')) {
         expect(init?.method).toBe('POST');
@@ -53,9 +53,9 @@ describe('ClickPesaPaymentProvider', () => {
           billPaymentMode: 'EXACT',
           billReference: 'attempt-1',
         });
-        return jsonResponse(200, { billPayNumber: '55042914871931' });
+        return Promise.resolve(jsonResponse(200, { billPayNumber: '55042914871931' }));
       }
-      throw new Error(`unexpected url ${url}`);
+      return Promise.reject(new Error(`unexpected url ${url}`));
     });
     const client = new ClickPesaHttpClient(config, fetchImpl);
     const provider = new ClickPesaPaymentProvider(config, client);
@@ -91,17 +91,19 @@ describe('ClickPesaPaymentProvider', () => {
   });
 
   it('recovers on 409 by querying status', async () => {
-    const fetchImpl = vi.fn<ClickPesaHttpFetch>(async (url) => {
+    const fetchImpl = vi.fn<ClickPesaHttpFetch>((url) => {
       if (url.endsWith('/generate-token')) {
-        return jsonResponse(200, { success: true, token: 'tok' });
+        return Promise.resolve(jsonResponse(200, { success: true, token: 'tok' }));
       }
       if (url.endsWith('/billpay/create-order-control-number')) {
-        return jsonResponse(409, { message: 'Bill reference already used' });
+        return Promise.resolve(jsonResponse(409, { message: 'Bill reference already used' }));
       }
       if (url.includes('/payments/attempt-1')) {
-        return jsonResponse(200, [{ status: 'PENDING', orderReference: 'attempt-1' }]);
+        return Promise.resolve(
+          jsonResponse(200, [{ status: 'PENDING', orderReference: 'attempt-1' }]),
+        );
       }
-      throw new Error(`unexpected url ${url}`);
+      return Promise.reject(new Error(`unexpected url ${url}`));
     });
     const provider = new ClickPesaPaymentProvider(
       config,
@@ -121,21 +123,23 @@ describe('ClickPesaPaymentProvider', () => {
   });
 
   it('maps query SUCCESS to succeeded', async () => {
-    const fetchImpl = vi.fn<ClickPesaHttpFetch>(async (url) => {
+    const fetchImpl = vi.fn<ClickPesaHttpFetch>((url) => {
       if (url.endsWith('/generate-token')) {
-        return jsonResponse(200, { success: true, token: 'tok' });
+        return Promise.resolve(jsonResponse(200, { success: true, token: 'tok' }));
       }
       if (url.includes('/payments/attempt-9')) {
-        return jsonResponse(200, [
-          {
-            id: 'tx-9',
-            status: 'SUCCESS',
-            orderReference: 'attempt-9',
-            collectedAmount: 100,
-          },
-        ]);
+        return Promise.resolve(
+          jsonResponse(200, [
+            {
+              id: 'tx-9',
+              status: 'SUCCESS',
+              orderReference: 'attempt-9',
+              collectedAmount: 100,
+            },
+          ]),
+        );
       }
-      throw new Error(`unexpected url ${url}`);
+      return Promise.reject(new Error(`unexpected url ${url}`));
     });
     const provider = new ClickPesaPaymentProvider(
       config,
@@ -153,7 +157,7 @@ function jsonResponse(status: number, body: unknown) {
   return {
     status,
     ok: status >= 200 && status < 300,
-    text: async () => text,
-    json: async () => body,
+    text: () => Promise.resolve(text),
+    json: () => Promise.resolve(body),
   };
 }

@@ -301,12 +301,7 @@ export class PaymentsService {
       const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
       if (replay !== null) return JSON.parse(replay.responseBody) as SyncPendingClickPesaResult;
 
-      const result = await this.executeSyncPending(
-        actorUserId,
-        tenantId,
-        limit,
-        correlationId,
-      );
+      const result = await this.executeSyncPending(actorUserId, tenantId, limit, correlationId);
       await this.idempotency.put(scopeKey, {
         bodyHash,
         statusCode: 200,
@@ -998,9 +993,12 @@ function parseCreateMobileMoneyRequest(raw: unknown): ParsedCreateMobileMoney {
   }
   const amountMinor = requirePositiveIntegerMinor(body['amountMinor'], 'amountMinor');
   if (amountMinor % 100 !== 0) {
-    throw AppError.validation('amountMinor must be divisible by 100 for mobile money (whole TZS).', {
-      field: 'amountMinor',
-    });
+    throw AppError.validation(
+      'amountMinor must be divisible by 100 for mobile money (whole TZS).',
+      {
+        field: 'amountMinor',
+      },
+    );
   }
   let currency = 'TZS';
   if (body['currency'] !== undefined) {
@@ -1070,9 +1068,7 @@ function parseClickPesaWebhookPayload(payload: Record<string, unknown>): {
   }
   let amountMinor: number;
   try {
-    amountMinor = clickPesaMajorToMinor(
-      data['collectedAmount'] as string | number,
-    );
+    amountMinor = clickPesaMajorToMinor(data['collectedAmount'] as string | number);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Invalid collectedAmount.';
     throw AppError.validation(message, { field: 'collectedAmount' });

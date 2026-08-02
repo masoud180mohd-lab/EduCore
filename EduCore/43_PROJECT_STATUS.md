@@ -98,15 +98,15 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**PAY-006 — payment status UI** (bursar refresh / pending MoMo visibility).
+**Pilot readiness for ClickPesa sandbox** *or* **EPIC-COMMS (SMS)** — choose deliberately; do not expand both silently.
 
 Required outputs:
 
-1. ~~PAY-001~~ … ~~PAY-005~~ — **Done** (ClickPesa client + HTTP + webhook + query sync).
-2. PAY-006 payment status UI (roadmap EPIC-PAY-01).
-3. Operator: obtain ClickPesa sandbox / merchant credentials (never commit to git); run migration `20260802150000_finance_clickpesa_momo` if not applied.
+1. ~~PAY-001~~ … ~~PAY-006~~ — **Done** (ClickPesa stack + bursar payment status UI).
+2. Operator: sandbox credentials (never in git) + MoMo migration if not applied — before live MoMo claims.
+3. Or start EPIC-COMMS if SMS is the chosen next epic.
 
-**Parallel / immediately after:** SMS notification epic (EPIC-COMMS) remains High priority; MFA for privileged/finance admins remains constitution-required before production finance trust.
+**Parallel:** MFA for privileged/finance admins remains constitution-required before production finance trust.
 
 **Governance:** Request Engineering Readiness Re-Review against `42_ENGINEERING_READINESS_REVIEW.md` before claiming production readiness.
 
@@ -115,7 +115,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: Payment status UI (PAY-006) — Fake remains CI default; sync-provider available when ClickPesa secrets set.
+- **Next epic focus**: ClickPesa sandbox ops **or** EPIC-COMMS — Fake remains CI default.
 
 ## Status Update Rules
 

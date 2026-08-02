@@ -1,13 +1,13 @@
 # PAY-005 — ClickPesa reconciliation query job
 
-| Field     | Value                                      |
-| --------- | ------------------------------------------ |
-| Program   | **PAY-005** / EPIC-PAY-01                  |
-| Date      | 2026-08-02                                 |
-| Status    | **Done** (solo-operator)                   |
-| Depends   | PAY-004 Done                               |
-| Contract  | PAY-002 + ACF-012 rev **1.7**              |
-| Authority | Solo-operator provisional (SOLO-GOV-001)   |
+| Field     | Value                                    |
+| --------- | ---------------------------------------- |
+| Program   | **PAY-005** / EPIC-PAY-01                |
+| Date      | 2026-08-02                               |
+| Status    | **Done** (solo-operator)                 |
+| Depends   | PAY-004 Done                             |
+| Contract  | PAY-002 + ACF-012 rev **1.7**            |
+| Authority | Solo-operator provisional (SOLO-GOV-001) |
 
 ## Delivered
 

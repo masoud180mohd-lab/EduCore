@@ -81,7 +81,10 @@ export default function AdminInvoicesPage() {
   const [lineDescription, setLineDescription] = useState('');
   const [lineAmountMajor, setLineAmountMajor] = useState('');
 
-  async function loadStudentPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadStudentPicker(opts: {
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMoreStudents(true);
@@ -112,7 +115,10 @@ export default function AdminInvoicesPage() {
     }
   }
 
-  async function loadYearPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadYearPicker(opts: {
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMoreYears(true);

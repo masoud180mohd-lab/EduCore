@@ -106,6 +106,20 @@ export function canManageTenantSettings(me: MeLike): boolean {
   return new Set(me.permissions ?? []).has('tenant.manage');
 }
 
+/** UX gate for office pay / MoMo initiate (API still enforces finance.manage). */
+export function canFinanceManage(me: MeLike): boolean {
+  const roles = me.roles ?? [];
+  if (roles.some((r) => r.code === 'owner' || r.code === 'admin')) return true;
+  return new Set(me.permissions ?? []).has('finance.manage');
+}
+
+/** UX gate for Reconcile + Refresh from provider (API enforces finance.reconcile). */
+export function canFinanceReconcile(me: MeLike): boolean {
+  const roles = me.roles ?? [];
+  if (roles.some((r) => r.code === 'owner' || r.code === 'admin')) return true;
+  return new Set(me.permissions ?? []).has('finance.reconcile');
+}
+
 export type AdminFallbackHome = 'teacher' | 'parent';
 
 /** Where to send actors who opened /admin without shell access. */

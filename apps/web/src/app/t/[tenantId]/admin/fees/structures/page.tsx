@@ -53,7 +53,10 @@ export default function AdminFeeStructuresPage() {
   const [status, setStatus] = useState<'draft' | 'active'>('active');
   const [items, setItems] = useState<ItemDraft[]>([{ name: '', amountMajor: '' }]);
 
-  async function loadYearPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadYearPicker(opts: {
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMoreYears(true);

@@ -19,11 +19,15 @@ describe('clickpesa-checksum', () => {
     };
     const checksum = createClickPesaPayloadChecksum(key, payload);
     expect(
-      verifyClickPesaPayloadChecksum(key, { ...payload, checksum, checksumMethod: 'HMAC-SHA256' }, checksum),
+      verifyClickPesaPayloadChecksum(
+        key,
+        { ...payload, checksum, checksumMethod: 'HMAC-SHA256' },
+        checksum,
+      ),
     ).toBe(true);
-    expect(verifyClickPesaPayloadChecksum(key, { ...payload, checksum: 'deadbeef' }, 'deadbeef')).toBe(
-      false,
-    );
+    expect(
+      verifyClickPesaPayloadChecksum(key, { ...payload, checksum: 'deadbeef' }, 'deadbeef'),
+    ).toBe(false);
   });
 
   it('is order-independent for object keys', () => {

@@ -67,7 +67,7 @@ export class ClickPesaHttpClient {
     const response = await this.fetchImpl(`${this.config.baseUrl}${path}`, {
       method: 'POST',
       headers: {
-        Authorization: auth,
+        'Authorization': auth,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),

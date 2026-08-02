@@ -60,9 +60,7 @@ export class ClickPesaPaymentProvider implements PaymentProviderPort {
       billAmount,
       billPaymentMode: 'EXACT',
       billReference: input.reference,
-      billDescription:
-        input.description?.trim() ||
-        `Invoice ${input.invoiceId.slice(0, 8)}…`,
+      billDescription: input.description?.trim() || `Invoice ${input.invoiceId.slice(0, 8)}…`,
     };
 
     const created = await client.postJson('/billpay/create-order-control-number', body);

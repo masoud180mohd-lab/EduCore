@@ -34,7 +34,7 @@ describe('IMP-011-PX1 parent demo path', () => {
       path.join(root, 'apps/web/src/app/t/[tenantId]/admin/guardians/[guardianId]/page.tsx'),
       'utf8',
     );
-    expect(page).toContain('/api/v1/users?limit=50');
+    expect(page).toContain("buildListQuery('/api/v1/users'");
     expect(page).toContain('bindUserSelect');
     expect(page).toContain('formatUserBindLabel');
     expect(page).toContain('Advanced: paste user UUID');

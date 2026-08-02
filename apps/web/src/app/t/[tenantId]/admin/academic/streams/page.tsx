@@ -43,7 +43,10 @@ export default function AdminStreamsPage() {
   const [classId, setClassId] = useState('');
   const [status, setStatus] = useState<LifecycleStatus>('active');
 
-  async function loadClassPicker(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadClassPicker(opts: {
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMoreClasses(true);

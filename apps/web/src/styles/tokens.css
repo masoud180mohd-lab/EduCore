@@ -349,6 +349,18 @@ h1 {
   color: var(--color-muted);
 }
 
+/* PAY-006: BillPay / control number — selectable mono, never invent */
+.billpay-number {
+  display: block;
+  margin-top: var(--space-2);
+  font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, monospace;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  user-select: all;
+  word-break: break-all;
+}
+
 .section-title {
   margin: 0;
   font-size: 1.1rem;

@@ -1,12 +1,12 @@
 # IMP-028 — Admin ops tables + density
 
-| Field     | Value                               |
-| --------- | ----------------------------------- |
-| Program   | **IMP-028**                         |
+| Field     | Value                                  |
+| --------- | -------------------------------------- |
+| Program   | **IMP-028**                            |
 | Date      | 2026-07-27 (residual close 2026-07-31) |
-| From      | AUDIT-ADMIN-UI-R1 G4 / T1 roadmap   |
-| Freezes   | DSF-002 v**1.26**; DSF-004 v**1.4** |
-| Authority | Solo-operator provisional           |
+| From      | AUDIT-ADMIN-UI-R1 G4 / T1 roadmap      |
+| Freezes   | DSF-002 v**1.26**; DSF-004 v**1.4**    |
+| Authority | Solo-operator provisional              |
 
 ## Goal
 

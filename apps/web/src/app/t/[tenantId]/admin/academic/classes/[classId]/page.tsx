@@ -148,10 +148,9 @@ export default function AdminClassDetailPage() {
       });
       if (result.data.termId !== null) {
         try {
-          const term = await apiRequest<{ data: TermRow }>(
-            `/api/v1/terms/${result.data.termId}`,
-            { auth },
-          );
+          const term = await apiRequest<{ data: TermRow }>(`/api/v1/terms/${result.data.termId}`, {
+            auth,
+          });
           setTerms((prev) => appendById(prev, [term.data]));
         } catch {
           /* picker may already include term */

@@ -146,14 +146,16 @@ describe('IMP-009 finance fees foundation', () => {
     expect(gateway).toContain('app.record_gateway_event');
   });
 
-  it('binds PAYMENT_PROVIDER_PORT to Fake only', () => {
+  it('binds PAYMENT_PROVIDER_PORT with Fake default (ClickPesa optional)', () => {
     const mod = readFileSync(
       path.join(root, 'apps/api/src/modules/payments/payments.module.ts'),
       'utf8',
     );
     expect(mod).toContain('PAYMENT_PROVIDER_PORT');
     expect(mod).toContain('FakePaymentProvider');
-    expect(mod).toContain('useExisting: FakePaymentProvider');
+    expect(mod).toContain('ClickPesaPaymentProvider');
+    expect(mod).toContain('resolvePaymentProviderName()');
+    expect(mod).toMatch(/return fake/);
   });
 
   it('OpenAPI ACF-012 covers finance paths with session_tenant_bind', () => {

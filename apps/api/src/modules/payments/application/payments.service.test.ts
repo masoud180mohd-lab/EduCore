@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { AppError } from '../../../common/errors/app-error.js';
+import type { PaymentProviderResult } from '../providers/payment-provider.port.js';
 import { PaymentsService } from './payments.service.js';
 
 const actorUserId = '01900000-0000-7000-8000-000000000001';
@@ -15,7 +16,7 @@ function makeService(repo: Record<string, unknown>): PaymentsService {
     initiate: vi.fn(),
     queryStatus: vi.fn(),
   };
-  return new PaymentsService(repo as never, provider as never, null, null);
+  return new PaymentsService(repo as never, provider, null, null);
 }
 
 function makeReversedPayment(): Record<string, unknown> {
@@ -110,7 +111,7 @@ describe('PaymentsService.reverseForTenant', () => {
     };
     const service = new PaymentsService(
       { isAvailable: () => true, reversePayment } as never,
-      { providerCode: 'fake', initiate: vi.fn(), queryStatus: vi.fn() } as never,
+      { providerCode: 'fake', initiate: vi.fn(), queryStatus: vi.fn() },
       idempotency,
       null,
     );
@@ -270,7 +271,9 @@ describe('PaymentsService.reconcileForTenant', () => {
   });
 });
 
-function makeClickPesaPendingAttempt(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+function makeClickPesaPendingAttempt(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
   return {
     id: paymentId,
     tenantId,
@@ -290,7 +293,7 @@ function makeClickPesaPendingAttempt(overrides: Record<string, unknown> = {}): R
 
 function makeClickPesaService(
   repo: Record<string, unknown>,
-  queryStatus: ReturnType<typeof vi.fn>,
+  queryStatus: (orderReference: string) => Promise<PaymentProviderResult>,
 ): PaymentsService {
   return new PaymentsService(
     repo as never,
@@ -298,7 +301,7 @@ function makeClickPesaService(
       providerCode: 'clickpesa',
       initiate: vi.fn(),
       queryStatus,
-    } as never,
+    },
     null,
     null,
   );
@@ -397,9 +400,7 @@ describe('PaymentsService.syncProviderForTenant', () => {
     const service = makeClickPesaService(
       {
         isAvailable: () => true,
-        getPayment: vi
-          .fn()
-          .mockResolvedValue(makeClickPesaPendingAttempt({ status: 'succeeded' })),
+        getPayment: vi.fn().mockResolvedValue(makeClickPesaPendingAttempt({ status: 'succeeded' })),
       },
       queryStatus,
     );
