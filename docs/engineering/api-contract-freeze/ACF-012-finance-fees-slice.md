@@ -3,8 +3,8 @@
 | Field     | Value                                     |
 | --------- | ----------------------------------------- |
 | Freeze ID | `ACF-012`                                 |
-| Version   | `1.5`                                     |
-| Date      | 2026-07-31 (rev 1.5 MoMo contract preview; 1.4 on 2026-07-26) |
+| Version   | `1.6`                                     |
+| Date      | 2026-08-02 (rev 1.6 ClickPesa HTTP; 1.5 contract preview 2026-07-31) |
 | Companion | DBF-012                                   |
 | Program   | **IMP-009** (prompt IMP-007 ID collision) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)  |
@@ -20,7 +20,7 @@
 | Manual payment + receipt + reverse         | Multi-currency beyond TZS          |
 | Derived `balanceMinor` on invoice get/list | Writable balance column            |
 | Fake webhook event store + reconcile       | Completing pending via Fake webhook |
-| **PAY-002 contract:** ClickPesa BillPay (HTTP not shipped) | Parent portal pay UI |
+| ClickPesa BillPay MoMo HTTP (PAY-004)      | Parent portal pay UI; Selcom; USSD Push; cards |
 
 ## Money
 
@@ -48,6 +48,8 @@
 | GET    | `/api/v1/receipts`                | finance.read                                                 |
 | GET    | `/api/v1/receipts/{id}`           | finance.read                                                 |
 | POST   | `/api/v1/payments/webhooks/fake`  | finance.manage (no Idempotency-Key — dedupe is by `eventId`) |
+| POST   | `/api/v1/payments/mobile-money`   | finance.manage + Idempotency-Key — pending MoMo + BillPay   |
+| POST   | `/api/v1/payments/webhooks/clickpesa` | **No session**; ClickPesa HMAC-SHA256 checksum required |
 
 ## Allowlists
 
@@ -59,7 +61,7 @@
 
 **InvoiceLine:** id, invoiceId, description, amountMinor, feeStructureItemId
 
-**Payment:** id, tenantId, invoiceId, method, amountMinor, currency, status, receiptId, createdAt, updatedAt
+**Payment:** id, tenantId, invoiceId, method, amountMinor, currency, status, receiptId, providerCode, providerRef, createdAt, updatedAt (+ `billPayNumber` on mobile-money create)
 
 **Receipt:** id, tenantId, paymentAttemptId, receiptNumber, status, issuedAt
 
@@ -92,16 +94,14 @@ Revenue recognized **on issue** (DBF-012). Receipt only after succeeded payment 
 
 ## Rev 1.5 — ClickPesa MoMo contract preview (PAY-002)
 
-Binding semantics: `docs/engineering/decisions/PAY-002-clickpesa-adapter-contract.md`. **HTTP routes below are not live until PAY-004.**
+Binding semantics: `docs/engineering/decisions/PAY-002-clickpesa-adapter-contract.md`.
 
-| Method | Path | AuthZ (planned) |
-| ------ | ---- | --------------- |
-| POST | `/api/v1/payments/mobile-money` | finance.manage + Idempotency-Key — create `mobile_money` attempt + BillPay number |
-| POST | `/api/v1/payments/webhooks/clickpesa` | No session; HMAC-SHA256 checksum (ClickPesa); tenant from attempt id |
+## Rev 1.6 — ClickPesa HTTP (PAY-004)
 
-- Amounts: EduCore minor; ClickPesa major TZS (÷/× 100); reject non-divisible initiate.
-- Dedupe: `(tenant_id, provider_code=clickpesa, provider_event_id=data.id)`.
-- Fake webhook path retained for CI.
+- `POST /api/v1/payments/mobile-money` — creates `pending` `mobile_money` attempt + Order BillPay (`billPayNumber`); requires `PAYMENT_PROVIDER=clickpesa` + secrets.
+- `POST /api/v1/payments/webhooks/clickpesa` — public; verifies HMAC-SHA256 checksum; dedupes; completes pending on amount match (`PAYMENT RECEIVED`); marks failed on `PAYMENT FAILED`.
+- Migration `20260802150000_finance_clickpesa_momo` — `create_pending_mobile_money_attempt` + `ingest_clickpesa_gateway_event`.
+- Fake default / CI unchanged.
 
 ## Solo-operator honesty
 

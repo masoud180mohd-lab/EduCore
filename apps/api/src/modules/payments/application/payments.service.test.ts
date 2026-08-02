@@ -10,7 +10,12 @@ const paymentId = '01900000-0000-7000-8000-0000000000d1';
 const idempotencyKey = '0193f0c2-7c2a-7b1e-9c1d-5f2e1a0b9c8d';
 
 function makeService(repo: Record<string, unknown>): PaymentsService {
-  return new PaymentsService(repo as never, null, null);
+  const provider = {
+    providerCode: 'fake',
+    initiate: vi.fn(),
+    queryStatus: vi.fn(),
+  };
+  return new PaymentsService(repo as never, provider as never, null, null);
 }
 
 function makeReversedPayment(): Record<string, unknown> {
@@ -23,6 +28,8 @@ function makeReversedPayment(): Record<string, unknown> {
     currency: 'TZS',
     status: 'reversed',
     receiptId: '01900000-0000-7000-8000-0000000000e1',
+    providerCode: null,
+    providerRef: null,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-03T00:00:00.000Z',
   };
@@ -103,6 +110,7 @@ describe('PaymentsService.reverseForTenant', () => {
     };
     const service = new PaymentsService(
       { isAvailable: () => true, reversePayment } as never,
+      { providerCode: 'fake', initiate: vi.fn(), queryStatus: vi.fn() } as never,
       idempotency,
       null,
     );

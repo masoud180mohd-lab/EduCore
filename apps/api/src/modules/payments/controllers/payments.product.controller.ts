@@ -64,6 +64,24 @@ export class PaymentsProductController {
     );
   }
 
+  @Post('api/v1/payments/mobile-money')
+  @HttpCode(201)
+  @UseGuards(RequirePermission('finance.manage'))
+  async createMobileMoney(
+    @Req() request: AuthedRequest,
+    @Body() body: unknown,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
+  ): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.paymentsService.createMobileMoneyForTenant(
+      auth.userId,
+      tenant.tenantId,
+      body,
+      idempotencyKey,
+      resolveCorrelationId(request),
+    );
+  }
+
   @Get('api/v1/payments/:paymentId')
   @UseGuards(RequirePermission('finance.read'))
   async getPayment(

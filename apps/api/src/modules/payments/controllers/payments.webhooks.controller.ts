@@ -22,11 +22,10 @@ type AuthedRequest = Request & {
 
 /**
  * Fake payment provider webhook stub (IMP-009 Wave G / PAY-PROVIDER-001).
- * No real MoMo vendor is wired (PAY-PROVIDER-001) — this exists purely to
- * exercise event dedupe. v1 requires RequireAuth + finance.manage rather
- * than a signature-header scheme, since no sandbox contract exists yet.
+ * ClickPesa public webhook (PAY-004) — checksum only, no session.
  *
- * POST /api/v1/payments/webhooks/fake — dedupe + acknowledge (finance.manage)
+ * POST /api/v1/payments/webhooks/fake — finance.manage
+ * POST /api/v1/payments/webhooks/clickpesa — HMAC checksum (no RequirePermission)
  */
 @Controller()
 export class PaymentsWebhooksController {
@@ -43,6 +42,15 @@ export class PaymentsWebhooksController {
       body,
       resolveCorrelationId(request),
     );
+  }
+
+  @Post('api/v1/payments/webhooks/clickpesa')
+  @HttpCode(200)
+  async handleClickPesaWebhook(
+    @Req() request: AuthedRequest,
+    @Body() body: unknown,
+  ): Promise<unknown> {
+    return this.paymentsService.handleClickPesaWebhook(body, resolveCorrelationId(request));
   }
 }
 

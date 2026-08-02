@@ -13,7 +13,7 @@ import { PG_POOL } from '../../../common/persistence/pg.tokens.js';
 import { withTenantTransaction } from '../../../common/persistence/tenant-transaction.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
 
-/** ACF-012 Payment allowlist. */
+/** ACF-012 Payment allowlist (+ PAY-004 provider opaque fields). */
 export type PaymentRow = {
   readonly id: string;
   readonly tenantId: string;
@@ -23,6 +23,8 @@ export type PaymentRow = {
   readonly currency: string;
   readonly status: string;
   readonly receiptId: string | null;
+  readonly providerCode: string | null;
+  readonly providerRef: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 };
@@ -82,6 +84,7 @@ export type ReconciliationRow = {
 
 const PAYMENT_SELECT = `
   SELECT pa.id, pa.tenant_id, pa.invoice_id, pa.method, pa.amount_minor, pa.currency, pa.status,
+         pa.provider_code, pa.provider_ref,
          r.id AS receipt_id, pa.created_at, pa.updated_at
   FROM payment_attempts pa
   LEFT JOIN receipts r ON r.payment_attempt_id = pa.id`;
@@ -94,6 +97,8 @@ type PaymentDbRow = {
   amount_minor: string | number;
   currency: string;
   status: string;
+  provider_code: string | null;
+  provider_ref: string | null;
   receipt_id: string | null;
   created_at: Date;
   updated_at: Date;
@@ -149,7 +154,11 @@ export class PaymentAttemptsRepository {
       );
       const row = result.rows[0];
       if (row === undefined) throw new Error('post_manual_payment returned no row');
-      return mapPayment(row);
+      return mapPayment({
+        ...row,
+        provider_code: null,
+        provider_ref: null,
+      });
     });
   }
 
@@ -169,7 +178,11 @@ export class PaymentAttemptsRepository {
       );
       const row = result.rows[0];
       if (row === undefined) throw new Error('reverse_payment returned no row');
-      return mapPayment(row);
+      return mapPayment({
+        ...row,
+        provider_code: null,
+        provider_ref: null,
+      });
     });
   }
 
@@ -246,6 +259,111 @@ export class PaymentAttemptsRepository {
         createdAt: row.created_at.toISOString(),
       };
     });
+  }
+
+  /** PAY-004: pending mobile_money attempt with BillPay provider_ref. */
+  async createPendingMobileMoney(
+    actorUserId: string,
+    tenantId: string,
+    input: {
+      readonly paymentId: string;
+      readonly invoiceId: string;
+      readonly amountMinor: number;
+      readonly currency: string;
+      readonly providerCode: string;
+      readonly providerRef: string;
+    },
+  ): Promise<PaymentRow> {
+    if (this.pool === null) throw new Error('database unavailable');
+    return withTenantTransaction(this.pool, { userId: actorUserId, tenantId }, async (client) => {
+      const result = await client.query<PaymentDbRow>(
+        `SELECT id, tenant_id, invoice_id, method, amount_minor, currency, status,
+                provider_code, provider_ref, created_at, updated_at,
+                NULL::uuid AS receipt_id
+         FROM app.create_pending_mobile_money_attempt(
+           $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::bigint, $6::text, $7::text, $8::text
+         )`,
+        [
+          actorUserId,
+          tenantId,
+          input.paymentId,
+          input.invoiceId,
+          input.amountMinor,
+          input.currency,
+          input.providerCode,
+          input.providerRef,
+        ],
+      );
+      const row = result.rows[0];
+      if (row === undefined) throw new Error('create_pending_mobile_money_attempt returned no row');
+      return mapPayment(row);
+    });
+  }
+
+  /** PAY-004: ClickPesa webhook ingest (no membership; SECURITY DEFINER). */
+  async ingestClickPesaGatewayEvent(input: {
+    readonly gatewayEventId: string;
+    readonly providerEventId: string;
+    readonly payloadSha256: string;
+    readonly orderReference: string;
+    readonly amountMinor: number;
+    readonly providerOutcome: 'succeeded' | 'failed';
+    readonly receiptId: string;
+  }): Promise<{
+    readonly tenantId: string | null;
+    readonly gatewayEventId: string | null;
+    readonly inserted: boolean;
+    readonly paymentAttemptId: string | null;
+    readonly completed: boolean;
+    readonly detail: string;
+  }> {
+    if (this.pool === null) throw new Error('database unavailable');
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await client.query<{
+        tenant_id: string | null;
+        gateway_event_id: string | null;
+        inserted: boolean;
+        payment_attempt_id: string | null;
+        completed: boolean;
+        detail: string;
+      }>(
+        `SELECT tenant_id, gateway_event_id, inserted, payment_attempt_id, completed, detail
+         FROM app.ingest_clickpesa_gateway_event(
+           $1::uuid, $2::text, $3::text, $4::uuid, $5::bigint, $6::text, $7::uuid
+         )`,
+        [
+          input.gatewayEventId,
+          input.providerEventId,
+          input.payloadSha256,
+          input.orderReference,
+          input.amountMinor,
+          input.providerOutcome,
+          input.receiptId,
+        ],
+      );
+      await client.query('COMMIT');
+      const row = result.rows[0];
+      if (row === undefined) throw new Error('ingest_clickpesa_gateway_event returned no row');
+      return {
+        tenantId: row.tenant_id,
+        gatewayEventId: row.gateway_event_id,
+        inserted: row.inserted,
+        paymentAttemptId: row.payment_attempt_id,
+        completed: row.completed,
+        detail: row.detail,
+      };
+    } catch (error) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // ignore
+      }
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async getPayment(
@@ -398,6 +516,8 @@ function mapPayment(row: PaymentDbRow): PaymentRow {
     currency: row.currency,
     status: row.status,
     receiptId: row.receipt_id,
+    providerCode: row.provider_code ?? null,
+    providerRef: row.provider_ref ?? null,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   };

@@ -22,7 +22,14 @@ import {
 } from '../../../common/pagination/index.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
 import { AUDIT_PUBLISHER, type AuditPublisher } from '../../platform-operations/index.js';
+import { loadClickPesaConfig, CLICKPESA_PROVIDER_CODE } from '../providers/clickpesa-config.js';
+import { verifyClickPesaPayloadChecksum } from '../providers/clickpesa-checksum.js';
+import { clickPesaMajorToMinor } from '../providers/clickpesa-money.js';
 import { FAKE_PROVIDER_CODE } from '../providers/fake-payment.provider.js';
+import {
+  PAYMENT_PROVIDER_PORT,
+  type PaymentProviderPort,
+} from '../providers/payment-provider.port.js';
 import {
   PaymentAttemptsRepository,
   type PaymentRow,
@@ -41,6 +48,17 @@ export type GetReceiptResult = { readonly data: Receipt };
 export type FakeWebhookResult = {
   readonly data: { readonly accepted: true; readonly duplicate: boolean };
 };
+export type ClickPesaWebhookResult = {
+  readonly data: {
+    readonly accepted: true;
+    readonly duplicate: boolean;
+    readonly completed: boolean;
+    readonly detail: string;
+  };
+};
+export type CreateMobileMoneyResult = {
+  readonly data: Payment & { readonly billPayNumber: string };
+};
 export type ReconcilePaymentResult = {
   readonly data: {
     readonly id: string;
@@ -58,6 +76,7 @@ export type ReconcilePaymentResult = {
 
 const PAYMENT_METHODS = new Set(['cash', 'bank', 'cheque', 'other', 'mobile_money']);
 const PAYMENTS_ROUTE = '/api/v1/payments';
+const MOBILE_MONEY_ROUTE = '/api/v1/payments/mobile-money';
 const REVERSE_SUFFIX = '/reverse';
 const RECONCILE_SUFFIX = '/reconcile';
 const WEBHOOK_OUTCOMES = new Set(['succeeded', 'failed']);
@@ -66,6 +85,7 @@ const WEBHOOK_OUTCOMES = new Set(['succeeded', 'failed']);
 export class PaymentsService {
   constructor(
     private readonly payments: PaymentAttemptsRepository,
+    @Inject(PAYMENT_PROVIDER_PORT) private readonly provider: PaymentProviderPort,
     @Optional()
     @Inject(IDEMPOTENCY_STORE)
     private readonly idempotency: IdempotencyStore | null = null,
@@ -250,6 +270,123 @@ export class PaymentsService {
     }
   }
 
+  /**
+   * PAY-004: create pending mobile_money attempt + ClickPesa Order BillPay number.
+   */
+  async createMobileMoneyForTenant(
+    actorUserId: string,
+    tenantId: string,
+    rawBody: unknown,
+    idempotencyKeyHeader: string | undefined,
+    correlationId: string,
+  ): Promise<CreateMobileMoneyResult> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+
+    const key = assertIdempotencyKey(idempotencyKeyHeader);
+    const parsed = parseCreateMobileMoneyRequest(rawBody);
+    const bodyJson = JSON.stringify(parsed);
+
+    if (this.idempotency !== null) {
+      const scopeKey = buildIdempotencyScopeKey(
+        { actorUserId, tenantId, method: 'POST', route: MOBILE_MONEY_ROUTE },
+        key,
+      );
+      const bodyHash = hashRequestBody(bodyJson);
+      const replay = await resolveIdempotentReplay(this.idempotency, scopeKey, bodyHash);
+      if (replay !== null) return JSON.parse(replay.responseBody) as CreateMobileMoneyResult;
+
+      const result = await this.executeCreateMobileMoney(
+        actorUserId,
+        tenantId,
+        parsed,
+        correlationId,
+      );
+      await this.idempotency.put(scopeKey, {
+        bodyHash,
+        statusCode: 201,
+        responseBody: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+      return result;
+    }
+
+    return this.executeCreateMobileMoney(actorUserId, tenantId, parsed, correlationId);
+  }
+
+  /**
+   * PAY-004: public ClickPesa webhook — checksum only, no session/tenant header.
+   */
+  async handleClickPesaWebhook(
+    rawBody: unknown,
+    correlationId: string,
+  ): Promise<ClickPesaWebhookResult> {
+    const config = loadClickPesaConfig();
+    if (config === null) {
+      throw new AppError('INTERNAL_ERROR', 'ClickPesa webhook is not configured.');
+    }
+    if (!this.payments.isAvailable()) {
+      throw new AppError('INTERNAL_ERROR', 'Payments store unavailable.');
+    }
+    if (rawBody === null || typeof rawBody !== 'object' || Array.isArray(rawBody)) {
+      throw AppError.validation('Body must be a JSON object.');
+    }
+    const payload = rawBody as Record<string, unknown>;
+    const checksum = payload['checksum'];
+    if (typeof checksum !== 'string' || checksum.trim() === '') {
+      throw AppError.unauthorized('Missing ClickPesa checksum.');
+    }
+    if (!verifyClickPesaPayloadChecksum(config.checksumKey, payload, checksum.trim())) {
+      throw AppError.unauthorized('Invalid ClickPesa checksum.');
+    }
+
+    const parsed = parseClickPesaWebhookPayload(payload);
+    const payloadSha256 = hashRequestBody(JSON.stringify(stripForHash(payload)));
+
+    try {
+      const result = await this.payments.ingestClickPesaGatewayEvent({
+        gatewayEventId: randomUUID(),
+        providerEventId: parsed.providerEventId,
+        payloadSha256,
+        orderReference: parsed.orderReference,
+        amountMinor: parsed.amountMinor,
+        providerOutcome: parsed.outcome,
+        receiptId: randomUUID(),
+      });
+
+      if (result.detail === 'attempt_not_found') {
+        throw AppError.notFound('Payment attempt not found for order reference.');
+      }
+
+      await this.safeAudit({
+        action: 'payment.webhook.clickpesa',
+        outcome: 'success',
+        correlationId,
+        actorUserId: parsed.orderReference,
+        tenantId: result.tenantId ?? parsed.orderReference,
+        resourceType: 'payment_gateway_event',
+        resourceId: result.gatewayEventId ?? parsed.providerEventId,
+        metadata: {
+          duplicate: !result.inserted,
+          completed: result.completed,
+          detail: result.detail,
+        },
+      });
+
+      return {
+        data: {
+          accepted: true,
+          duplicate: !result.inserted,
+          completed: result.completed,
+          detail: result.detail,
+        },
+      };
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('INTERNAL_ERROR', 'Failed to ingest ClickPesa webhook.');
+    }
+  }
+
   async getForTenant(
     actorUserId: string,
     tenantId: string,
@@ -346,6 +483,67 @@ export class PaymentsService {
         metadata: { invoiceId: parsed.invoiceId, method: parsed.method },
       });
       return { data: row };
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      throw mapPaymentWriteError(error);
+    }
+  }
+
+  private async executeCreateMobileMoney(
+    actorUserId: string,
+    tenantId: string,
+    parsed: ParsedCreateMobileMoney,
+    correlationId: string,
+  ): Promise<CreateMobileMoneyResult> {
+    if (!this.payments.isAvailable()) {
+      throw new AppError('INTERNAL_ERROR', 'Payments store unavailable.');
+    }
+    if (this.provider.providerCode !== CLICKPESA_PROVIDER_CODE) {
+      throw new AppError(
+        'NOT_IMPLEMENTED',
+        'Mobile money initiate requires PAYMENT_PROVIDER=clickpesa with secrets configured.',
+      );
+    }
+
+    const paymentId = randomUUID();
+    let initiated;
+    try {
+      const initiateInput = {
+        tenantId,
+        invoiceId: parsed.invoiceId,
+        amountMinor: parsed.amountMinor,
+        currency: parsed.currency,
+        reference: paymentId,
+        ...(parsed.description !== undefined ? { description: parsed.description } : {}),
+      };
+      initiated = await this.provider.initiate(initiateInput);
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('INTERNAL_ERROR', 'ClickPesa initiate failed.');
+    }
+
+    try {
+      const row = await this.payments.createPendingMobileMoney(actorUserId, tenantId, {
+        paymentId,
+        invoiceId: parsed.invoiceId,
+        amountMinor: parsed.amountMinor,
+        currency: parsed.currency,
+        providerCode: CLICKPESA_PROVIDER_CODE,
+        providerRef: initiated.providerRef,
+      });
+
+      await this.safeAudit({
+        action: 'payment.mobile_money.create',
+        outcome: 'success',
+        correlationId,
+        actorUserId,
+        tenantId,
+        resourceType: 'payment_attempt',
+        resourceId: row.id,
+        metadata: { invoiceId: parsed.invoiceId, billPayNumber: initiated.providerRef },
+      });
+
+      return { data: { ...row, billPayNumber: initiated.providerRef } };
     } catch (error: unknown) {
       if (error instanceof AppError) throw error;
       throw mapPaymentWriteError(error);
@@ -455,6 +653,13 @@ type ParsedCreatePayment = {
   readonly currency: string;
 };
 
+type ParsedCreateMobileMoney = {
+  readonly invoiceId: string;
+  readonly amountMinor: number;
+  readonly currency: string;
+  readonly description?: string | undefined;
+};
+
 function parseCreatePaymentRequest(raw: unknown): ParsedCreatePayment {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
     throw AppError.validation('Body must be a JSON object.');
@@ -486,6 +691,116 @@ function parseCreatePaymentRequest(raw: unknown): ParsedCreatePayment {
   }
 
   return { invoiceId: body['invoiceId'], method: body['method'], amountMinor, currency };
+}
+
+function parseCreateMobileMoneyRequest(raw: unknown): ParsedCreateMobileMoney {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw AppError.validation('Body must be a JSON object.');
+  }
+  const body = raw as Record<string, unknown>;
+  const allowed = new Set(['invoiceId', 'amountMinor', 'currency', 'description']);
+  for (const key of Object.keys(body)) {
+    if (!allowed.has(key)) throw AppError.validation(`Unknown field: ${key}.`, { field: key });
+  }
+  if (typeof body['invoiceId'] !== 'string' || !isUuid(body['invoiceId'])) {
+    throw AppError.validation('invoiceId is required and must be a UUID.', { field: 'invoiceId' });
+  }
+  const amountMinor = requirePositiveIntegerMinor(body['amountMinor'], 'amountMinor');
+  if (amountMinor % 100 !== 0) {
+    throw AppError.validation('amountMinor must be divisible by 100 for mobile money (whole TZS).', {
+      field: 'amountMinor',
+    });
+  }
+  let currency = 'TZS';
+  if (body['currency'] !== undefined) {
+    if (typeof body['currency'] !== 'string' || body['currency'] !== 'TZS') {
+      throw AppError.validation('currency must be TZS.', { field: 'currency' });
+    }
+    currency = body['currency'];
+  }
+  let description: string | undefined;
+  if (body['description'] !== undefined) {
+    if (typeof body['description'] !== 'string' || body['description'].trim() === '') {
+      throw AppError.validation('description must be a non-empty string when provided.', {
+        field: 'description',
+      });
+    }
+    description = body['description'].trim().slice(0, 200);
+  }
+  return {
+    invoiceId: body['invoiceId'],
+    amountMinor,
+    currency,
+    ...(description !== undefined ? { description } : {}),
+  };
+}
+
+function parseClickPesaWebhookPayload(payload: Record<string, unknown>): {
+  readonly providerEventId: string;
+  readonly orderReference: string;
+  readonly amountMinor: number;
+  readonly outcome: 'succeeded' | 'failed';
+} {
+  const event = payload['event'];
+  const dataRaw = payload['data'];
+  if (dataRaw === null || typeof dataRaw !== 'object' || Array.isArray(dataRaw)) {
+    throw AppError.validation('data object is required.');
+  }
+  const data = dataRaw as Record<string, unknown>;
+
+  if (event === 'PAYMENT FAILED') {
+    const id = typeof data['id'] === 'string' ? data['id'].trim() : '';
+    const orderReference =
+      typeof data['orderReference'] === 'string' ? data['orderReference'].trim() : '';
+    if (id === '' || !isUuid(orderReference)) {
+      throw AppError.validation('PAYMENT FAILED requires id and UUID orderReference.');
+    }
+    // Amount may be absent on failure — use 1 minor placeholder for schema; completion path unused.
+    return {
+      providerEventId: id,
+      orderReference,
+      amountMinor: 1,
+      outcome: 'failed',
+    };
+  }
+
+  if (event !== 'PAYMENT RECEIVED') {
+    throw AppError.validation('Unsupported ClickPesa event for MVP webhook.', { field: 'event' });
+  }
+
+  const id = typeof data['id'] === 'string' ? data['id'].trim() : '';
+  const orderReference =
+    typeof data['orderReference'] === 'string' ? data['orderReference'].trim() : '';
+  if (id === '' || !isUuid(orderReference)) {
+    throw AppError.validation('PAYMENT RECEIVED requires id and UUID orderReference.');
+  }
+  if (data['collectedAmount'] === undefined) {
+    throw AppError.validation('collectedAmount is required.', { field: 'collectedAmount' });
+  }
+  let amountMinor: number;
+  try {
+    amountMinor = clickPesaMajorToMinor(
+      data['collectedAmount'] as string | number,
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Invalid collectedAmount.';
+    throw AppError.validation(message, { field: 'collectedAmount' });
+  }
+  return {
+    providerEventId: id,
+    orderReference,
+    amountMinor,
+    outcome: 'succeeded',
+  };
+}
+
+function stripForHash(payload: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(payload)) {
+    if (k === 'checksum' || k === 'checksumMethod') continue;
+    next[k] = v;
+  }
+  return next;
 }
 
 type ParsedFakeWebhook = {

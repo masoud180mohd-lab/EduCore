@@ -98,16 +98,13 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**PAY-004 — ClickPesa webhook + mobile-money initiate HTTP** (then PAY-005 reconcile).
+**PAY-005 — ClickPesa reconciliation query job** (bible: reconcile independent of webhook).
 
 Required outputs:
 
-1. ~~PAY-001 provider selection~~ — **Done** (ClickPesa / Zanzibar; Selcom fallback).
-2. ~~PAY-002 adapter contract~~ — **Done**.
-3. ~~PAY-003 ClickPesa HTTP client + port~~ — **Done** (Fake default).
-4. PAY-004 signed webhook + attempt completion + ACF-012 HTTP freeze amend.
-5. PAY-005 reconciliation via query API.
-6. Operator: obtain ClickPesa sandbox / merchant credentials (never commit to git).
+1. ~~PAY-001~~ … ~~PAY-004~~ — **Done** (ClickPesa client + mobile-money HTTP + signed webhook).
+2. PAY-005 reconciliation via query API for pending attempts.
+3. Operator: obtain ClickPesa sandbox / merchant credentials (never commit to git); run migration `20260802150000_finance_clickpesa_momo`.
 
 **Parallel / immediately after:** SMS notification epic (EPIC-COMMS) remains High priority; MFA for privileged/finance admins remains constitution-required before production finance trust.
 
@@ -118,7 +115,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: ClickPesa HTTP webhook path (PAY-004+) for Zanzibar MoMo — Fake remains CI default.
+- **Next epic focus**: ClickPesa reconcile (PAY-005) for Zanzibar MoMo — Fake remains CI default.
 
 ## Status Update Rules
 

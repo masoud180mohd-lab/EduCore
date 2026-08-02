@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-02 - PAY-004 ClickPesa webhook + mobile-money HTTP
+
+- Added pending MoMo attempt helpers + ClickPesa webhook ingest migration.
+- Shipped `POST /payments/mobile-money` and public checksum webhook.
+- ACF-012 rev 1.6; next = PAY-005 reconcile job.
+
 ## 2026-07-31 - PAY-003 ClickPesa provider client
 
 - Implemented ClickPesa Order BillPay client + `PAYMENT_PROVIDER_PORT` binding (Fake default).
