@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-07-31 - PAY-003 ClickPesa provider client
+
+- Implemented ClickPesa Order BillPay client + `PAYMENT_PROVIDER_PORT` binding (Fake default).
+- Unit tests with mocked HTTP; `.env.example` placeholders.
+- Next: PAY-004 webhook + mobile-money initiate routes.
+
 ## 2026-07-31 - PAY-002 ClickPesa adapter contract
 
 - Accepted PAY-002: Order BillPay initiate, HMAC-SHA256 webhook checksum, status/amount maps, env allowlist.

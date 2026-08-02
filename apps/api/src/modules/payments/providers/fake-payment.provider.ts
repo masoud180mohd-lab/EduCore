@@ -1,9 +1,7 @@
 /**
  * Fake payment provider (IMP-009 Wave G / PAY-PROVIDER-001 / ADR-011).
- * The only provider wired until a superseding brief supplies a real sandbox
- * contract + signature verification spec. Never calls a real network.
- *
- * Deterministic-by-amount so tests can exercise both outcomes without mocks:
+ * Default CI/local provider. Deterministic-by-amount so tests can exercise
+ * both outcomes without mocks:
  *  - amountMinor divisible by 100 -> succeeded immediately
  *  - otherwise                    -> pending (awaiting a later Fake webhook)
  */
@@ -30,6 +28,16 @@ export class FakePaymentProvider implements PaymentProviderPort {
       providerCode: this.providerCode,
       providerRef,
       status,
+      orderReference: input.reference,
+    });
+  }
+
+  queryStatus(orderReference: string): Promise<PaymentProviderResult> {
+    return Promise.resolve({
+      providerCode: this.providerCode,
+      providerRef: `fake_query_${orderReference}`,
+      status: 'pending',
+      orderReference,
     });
   }
 }

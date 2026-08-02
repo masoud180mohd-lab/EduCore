@@ -9,6 +9,11 @@ import { PaymentsProductController } from './controllers/payments.product.contro
 import { PaymentsWebhooksController } from './controllers/payments.webhooks.controller.js';
 import { PaymentsDomainService } from './domain/payments.domain-service.js';
 import { PaymentsPolicy } from './policies/payments.policy.js';
+import {
+  loadClickPesaConfig,
+  resolvePaymentProviderName,
+} from './providers/clickpesa-config.js';
+import { ClickPesaPaymentProvider } from './providers/clickpesa-payment.provider.js';
 import { FakePaymentProvider } from './providers/fake-payment.provider.js';
 import { PAYMENT_PROVIDER_PORT } from './providers/payment-provider.port.js';
 import { PaymentAttemptsRepository } from './repositories/payment-attempts.repository.js';
@@ -18,12 +23,8 @@ import { PaymentsRepositoryPlaceholder } from './repositories/payments.repositor
 /**
  * Bounded context: Payments.
  * Manual payments + receipts product surfaces (IMP-009 / ACF-012 / DBF-012).
- * The PLAT-003 skeleton (PaymentsController + PAYMENTS_REPOSITORY) is kept
- * intact for future gateway/webhook slices beyond manual payments.
- *
- * PAYMENT_PROVIDER_PORT resolves to FakePaymentProvider only (PAY-PROVIDER-001);
- * no real MoMo vendor is wired until a superseding brief supplies a sandbox
- * contract + signature verification spec.
+ * PAYMENT_PROVIDER_PORT → Fake by default; ClickPesa when PAYMENT_PROVIDER=clickpesa
+ * and ClickPesa secrets are present (PAY-001 / PAY-002 / PAY-003).
  */
 @Module({
   imports: [DatabaseModule, PlatformOperationsModule],
@@ -40,8 +41,22 @@ import { PaymentsRepositoryPlaceholder } from './repositories/payments.repositor
     PaymentsService,
     FakePaymentProvider,
     {
+      provide: ClickPesaPaymentProvider,
+      useFactory: (): ClickPesaPaymentProvider =>
+        new ClickPesaPaymentProvider(loadClickPesaConfig()),
+    },
+    {
       provide: PAYMENT_PROVIDER_PORT,
-      useExisting: FakePaymentProvider,
+      useFactory: (
+        fake: FakePaymentProvider,
+        clickpesa: ClickPesaPaymentProvider,
+      ): FakePaymentProvider | ClickPesaPaymentProvider => {
+        if (resolvePaymentProviderName() === 'clickpesa' && clickpesa.isConfigured()) {
+          return clickpesa;
+        }
+        return fake;
+      },
+      inject: [FakePaymentProvider, ClickPesaPaymentProvider],
     },
   ],
   exports: [PaymentsApplicationService, PAYMENTS_REPOSITORY, PaymentsService],

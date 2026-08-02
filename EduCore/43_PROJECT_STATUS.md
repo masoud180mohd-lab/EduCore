@@ -98,13 +98,13 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**PAY-003 — ClickPesa provider client + port** (Fake remains default; then PAY-004 webhook + ACF-012.x).
+**PAY-004 — ClickPesa webhook + mobile-money initiate HTTP** (then PAY-005 reconcile).
 
 Required outputs:
 
 1. ~~PAY-001 provider selection~~ — **Done** (ClickPesa / Zanzibar; Selcom fallback).
-2. ~~PAY-002 adapter contract~~ — **Done** (`PAY-002-clickpesa-adapter-contract.md`).
-3. PAY-003 ClickPesa HTTP client + port binding behind env flag.
+2. ~~PAY-002 adapter contract~~ — **Done**.
+3. ~~PAY-003 ClickPesa HTTP client + port~~ — **Done** (Fake default).
 4. PAY-004 signed webhook + attempt completion + ACF-012 HTTP freeze amend.
 5. PAY-005 reconciliation via query API.
 6. Operator: obtain ClickPesa sandbox / merchant credentials (never commit to git).
@@ -118,7 +118,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: ClickPesa implementation (PAY-003+) for Zanzibar MoMo — not another Admin UI polish wave.
+- **Next epic focus**: ClickPesa HTTP webhook path (PAY-004+) for Zanzibar MoMo — Fake remains CI default.
 
 ## Status Update Rules
 
