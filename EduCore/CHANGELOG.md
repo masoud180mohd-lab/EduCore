@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-03 - COMMS-001 Accepted + COMMS-002 templates
+
+- Owner accepted Beem Africa as MVP SMS provider (Fake CI default).
+- Added SMS template catalog v0.1 (en/sw); next = DBF-013 / ACF-014.
+
 ## 2026-08-03 - COMMS-001 SMS provider Proposed (Beem)
 
 - Decision brief: Beem Africa for TZ/Zanzibar SMS MVP; Fake CI default; Africa’s Talking fallback.

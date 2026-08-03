@@ -98,15 +98,15 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**EPIC-COMMS-01 — SMS notification engine** — **COMMS-001 Proposed** (Beem); awaiting Owner accept before vendor adapter.
+**EPIC-COMMS-01** — COMMS-001 **Accepted** (Beem); COMMS-002 catalog Done; next **DBF-013 / ACF-014** freezes then Nest Fake SMS path.
 
 Required outputs:
 
-1. ~~PAY-001~~ … ~~PAY-006~~ — **Done**; PAY-OPS-001 sandbox **deferred**.
-2. **COMMS-001** Accept (or amend) — decision brief at `docs/engineering/decisions/COMMS-001-mvp-sms-provider.md`.
-3. Then COMMS-002 templates → DBF-013/ACF-014 → request service → Fake SMS → Beem adapter → delivery ledger.
+1. ~~COMMS-001~~ Accepted (Beem; Fake default).
+2. ~~COMMS-002~~ template catalog v0.1.
+3. DBF-013 + ACF-014 → COMMS-003 request service (Fake) → COMMS-004 Beem → COMMS-005 ledger/meter.
 
-**Parallel:** MFA for privileged/finance admins remains constitution-required before production trust; resume PAY-OPS-001 when ClickPesa keys arrive.
+**Parallel:** MFA before production trust; PAY-OPS-001 deferred until ClickPesa keys.
 
 **Governance:** Request Engineering Readiness Re-Review against `42_ENGINEERING_READINESS_REVIEW.md` before claiming production readiness.
 
@@ -115,7 +115,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **EPIC-COMMS** — COMMS-001 Proposed (Beem); Fake SMS default; PAY-OPS deferred.
+- **Next epic focus**: **EPIC-COMMS** — Beem Accepted; next DBF-013/ACF-014; Fake SMS default; PAY-OPS deferred.
 
 ## Status Update Rules
 

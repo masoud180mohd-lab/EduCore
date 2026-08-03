@@ -16,7 +16,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 | Identity | Lab opaque-session AuthN exists; production OIDC/IdP and **MFA** for privileged/finance admins not done | Constitution still requires MFA before production privileged finance trust |
 | Infrastructure | Hosting, region, IaC, secrets provider, RPO/RTO, and DR operations not chosen | Record deployment/DR decision before production deployment |
 | Payments | **ClickPesa PAY-006 UI shipped**; sandbox pilot **deferred** (no keys yet); runtime **Fake** | No secrets in git; resume PAY-OPS-001 when vendor sandbox available; parent pay still out |
-| SMS / notifications | **COMMS-001 Proposed (Beem)**; no Nest product SMS yet; Fake planned as CI default | Accept COMMS-001 before vendor client; WhatsApp later; no secrets in git |
+| SMS / notifications | **COMMS-001 Accepted (Beem)**; COMMS-002 catalog Done; Nest product SMS not yet | Freezes DBF-013/ACF-014 next; Fake CI default; WhatsApp later; no secrets in git |
 
 | Offline | Attendance offline foundation/docs path; 72h offline teacher cutover not production-proven | Do not claim offline MVP complete without worker + conflict UX evidence |
 | AI | Provider/model, evaluation thresholds, and fallback UX not chosen | No AI feature until AI release gate exists; route via AI Gateway rules |

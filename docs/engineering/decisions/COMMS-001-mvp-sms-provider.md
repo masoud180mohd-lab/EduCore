@@ -3,8 +3,8 @@
 | Field       | Value                                                                                          |
 | ----------- | ---------------------------------------------------------------------------------------------- |
 | Decision ID | `COMMS-001`                                                                                    |
-| Status      | **Proposed** — awaiting Project Owner “sawa” (solo-operator)                                   |
-| Date        | 2026-08-03                                                                                     |
+| Status      | **Accepted (solo-operator)** — 2026-08-03                                              |
+| Date        | 2026-08-03 (Proposed same day; Accepted on Owner “sawa”)                               |
 | Program     | EPIC-COMMS-01 / `EduCore/39_ENGINEERING_EXECUTION_ROADMAP.md` COMMS-001                        |
 | Authority   | Solo-operator provisional (SOLO-GOV-001) until countersigned                                   |
 | Governing   | ADR-008 (outbox) · SRS SMS-first · Constitution async rules · Architecture Communication BC    |
@@ -52,7 +52,7 @@ Success for this decision (not full EPIC-COMMS):
 | **C** | **Twilio** | Best global DX; mature DLR/webhooks | Higher TZ cost via aggregated routes; overkill for SMS-only TZ MVP; FX/billing friction for TZS schools |
 | **D** | **Defer real SMS** (Fake only) | Zero vendor risk | Does **not** satisfy EPIC-COMMS MVP; only OK as explicit pause |
 
-### Engineering recommendation (Proposed)
+### Engineering recommendation (Accepted)
 
 **Option A — Beem Africa** for Zanzibar / Tanzania school SMS MVP.
 
@@ -65,18 +65,18 @@ Success for this decision (not full EPIC-COMMS):
 
 **Reject for MVP:** Twilio (cost/complexity); multi-vendor UI; WhatsApp “quickly.”
 
-## Decision record (fill on Accept)
+## Decision record (Accepted 2026-08-03)
 
-| Field | Proposed value |
-| ----- | -------------- |
+| Field | Value |
+| ----- | ----- |
 | Chosen option | **A — Beem Africa** |
 | Opaque `provider_code` | `beem` (fallback `africas_talking`) |
 | Fake in CI | **Retained** — `SMS_PROVIDER=fake` (default) |
 | Launch geography | Tanzania (Zanzibar schools first; mainland SIMs OK) |
 | Sandbox / account owner | Project Owner / operator — registration pending |
 | Credential storage | env / secrets manager only — **never git** |
-| Env allowlist (proposed) | `SMS_PROVIDER`=`fake`\|`beem` (later `africas_talking`); `BEEM_API_KEY`; `BEEM_SECRET_KEY`; `BEEM_SOURCE_ADDR` (Sender ID); optional `BEEM_BASE_URL` default `https://apisms.beem.africa`; optional `SMS_DAILY_CAP_PER_TENANT` |
-| DLR / webhook (MVP) | Prefer Beem delivery reports → EduCore public callback with shared-secret or signed check — **exact scheme locked in COMMS-004 contract** after Accept; interim may complete on HTTP 2xx send ack + async DLR |
+| Env allowlist | `SMS_PROVIDER`=`fake`\|`beem` (later `africas_talking`); `BEEM_API_KEY`; `BEEM_SECRET_KEY`; `BEEM_SOURCE_ADDR` (Sender ID); optional `BEEM_BASE_URL` default `https://apisms.beem.africa`; optional `SMS_DAILY_CAP_PER_TENANT` |
+| DLR / webhook (MVP) | Prefer Beem delivery reports → EduCore public callback with shared-secret or signed check — **exact scheme locked in COMMS-004 contract**; interim may complete on HTTP 2xx send ack + async DLR |
 | Phone format to vendor | E.164 digits without `+` (e.g. `2557…`) — normalize in adapter; reject unparseable guardian phones |
 | Metering | Increment tenant usage on **accepted send** (and optionally on DLR delivered); Fake still increments for lab honesty |
 | Daily cap | Configured per tenant (default lab high); Fake bypasses **cost** but not delivery rows |
@@ -110,8 +110,8 @@ Success for this decision (not full EPIC-COMMS):
 
 ## Project Owner acceptance
 
-- **Pending:** Reply **“sawa”** (or amend: Africa’s Talking first / defer) before COMMS-003 real-vendor coding.
-- Registration for Beem account + Sender ID remains operator work (like ClickPesa keys) — does **not** reopen choice once Accepted unless onboarding fails → fallback AT.
+- **2026-08-03:** Owner confirmed (“sawa”) → Option **A + Beem Africa**.
+- Beem account + Sender ID registration remain **operator follow-ups** before live SMS — they do **not** reopen the vendor choice (fallback AT if onboarding blocked).
 
 ## Solo-operator honesty
 
