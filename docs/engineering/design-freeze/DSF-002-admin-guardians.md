@@ -3,11 +3,11 @@
 | Field     | Value                                                       |
 | --------- | ----------------------------------------------------------- |
 | Freeze ID | `DSF-002`                                                   |
-| Version   | `1.26`                                                      |
-| Date      | 2026-07-31                                                  |
+| Version   | `1.27`                                                      |
+| Date      | 2026-08-03                                                  |
 | Audience  | School admin / headmaster (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                    |
-| Program   | IMP-007 · … · IMP-031 · **IMP-032**                         |
+| Program   | IMP-007 · … · IMP-032 · **COMMS-006**                       |
 
 **Honesty:** Provisional design-system slice. Does **not** accept kit-wide Design System Freeze. Reuses DSF-001 tokens; defines admin chrome, guardians registry, and Academic Structure screens.
 
@@ -31,7 +31,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 ## Screens in scope
 
 1. **Login routing** — after bind, `/auth/me` decides admin vs teacher home
-2. **Admin home** — school name + **grouped** short links (Registry / Access / Academic / Fees / Settings) mirroring shell IA (IMP-029)
+2. **Admin home** — school name + **grouped** short links (Registry / Access / Academic / Fees / Notifications / Settings) mirroring shell IA (IMP-029 + COMMS-006)
 3. **Users list + invite + edit detail** — `GET /users` (search optional); invite via `POST /memberships`; detail `PATCH` displayName + `POST …/disable` + **`POST …/enable`** + **membership suspend / reactivate / remove** via `POST /memberships/{id}/…` (ACF-001; resolve membership with `GET /memberships?userId=`). **User-role assign/unassign** on detail (`GET/POST /user-roles`, `DELETE /user-roles/{id}`) with optional **organization scope** (IMP-026).
 4. **Memberships list** — `GET /memberships` with optional status filter; row links to user detail for lifecycle actions (IMP-023).
 5. **Roles list + create + edit detail** — `GET/POST /roles`; detail rename (`PATCH`) + permission replace for **custom** roles (`PUT …/permissions`); system roles read-only grants (ACF-001 §4.7). No role DELETE.
@@ -72,8 +72,8 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - Unbound tenant → `/login`
 - 401 → Sign in again
 - **403 (admin pages):** use central **`adminFriendlyMessage(err, domain)`** (`apps/web/src/lib/admin/admin-friendly-message.ts`) — see Error copy table below. API remains AuthZ truth.
-- **AdminShell gate (IMP-033):** after session↔tenant bind, `GET /auth/me` must show an admin-domain capability (owner/admin role **or** any of tenant/user/org/student/guardian/role/academic/finance read|manage). Otherwise show “Admin unavailable” with link to teacher/parent — do **not** render privileged nav or page children.
-- **Nav filter (IMP-033):** top-nav (and home hub cards) only list domains the actor’s permissions can reach; API remains AuthZ truth for mutations. **IMP-029 does not redesign permissions** — it only groups already-visible ids.
+- **AdminShell gate (IMP-033):** after session↔tenant bind, `GET /auth/me` must show an admin-domain capability (owner/admin role **or** any of tenant/user/org/student/guardian/role/academic/finance/notification read|manage). Otherwise show “Admin unavailable” with link to teacher/parent — do **not** render privileged nav or page children.
+- **Nav filter (IMP-033):** top-nav (and home hub cards) only list domains the actor’s permissions can reach; API remains AuthZ truth for mutations. **IMP-029 does not redesign permissions** — it only groups already-visible ids. **COMMS-006:** nav id `notifications` (label SMS) when `notification.read` \| `notification.manage`.
 - Attendance-only staff / parent-only → no AdminShell (teacher or parent workspace)
 - Post-login home preference (`prefersAdminHome`) unchanged — still prefers owner/admin/user-invite surfaces; bursars may open Admin Fees via URL when `finance.*` is present
 
@@ -198,6 +198,7 @@ All routes under `apps/web/src/app/t/[tenantId]/admin/**` MUST map `ApiClientErr
 | `generic`, `users`, `memberships`, `organizations`, `students`, `guardians`, `roles`, `academic`, `settings` | “You do not have access for this action.”             |
 | `finance`                                                                                                    | “You do not have finance access.”                     |
 | `finance` + `action: 'reconcile'`                                                                            | “You do not have finance reconcile access.” (DSF-004) |
+| `notifications`                                                                                              | “You do not have notification access.” (COMMS-006)    |
 | `tenant` (admin home / shell fetch)                                                                          | “You do not have access for this school.”             |
 
 | Status                | Behavior                                                    |
@@ -248,33 +249,34 @@ Accepted under acting seats only; revise when a second review seat exists.
 
 ## Increment traceability
 
-| IMP      | Topic (summary)                                                |
-| -------- | -------------------------------------------------------------- |
-| IMP-012  | Academic hub + entity list/create flows                        |
-| IMP-013  | Academic structure PATCH on detail edit forms                  |
-| IMP-014  | Academic delete + reparent controls on detail                  |
-| IMP-015  | Students list + create + edit detail                           |
-| IMP-016  | Users invite/edit + organizations create/edit/deactivate       |
-| IMP-017  | AdminShell school name brand from `GET /tenants/current`       |
-| IMP-019  | Tenant settings edit + guardian profile edit on detail         |
-| IMP-020  | Membership suspend / reactivate / remove on user detail        |
-| IMP-021  | User enable action on detail                                   |
-| IMP-022  | Roles list + create + custom permission replace                |
-| IMP-023  | Memberships list with status filter                            |
-| IMP-025  | Academic delete 409 dependents listing                         |
-| IMP-026  | Org-scoped user-role assign                                    |
-| IMP-027  | Shared admin primitives (Banner, ResourceList, ConfirmDialog)  |
-| IMP-028  | AdminTable for admin ops registries (Users → Academic)         |
-| IMP-029  | Grouped AdminShell nav IA for tablet                           |
-| IMP-030  | Load more cursor pagination on admin registries                |
-| IMP-033  | AdminShell /auth/me gate + permission-filtered nav             |
-| IMP-034  | ConfirmDialog replaces window.confirm (destructive admin)      |
-| IMP-035  | Central adminFriendlyMessage error mapper                      |
-| IMP-031  | Admin cross-links (student ↔ enrollment/fees/guardian)         |
-| IMP-032  | Operator-safe tenant settings (Advanced JSON + preserve-merge) |
-| IMP-030x | Wave X: Load more on P0 form pickers                           |
-| IMP-034x | Wave X: teacher marks submit + attendance close ConfirmDialog  |
-| IMP-031x | Wave X: create enrollment/invoice `?studentId=` prefill        |
+| IMP       | Topic (summary)                                                |
+| --------- | -------------------------------------------------------------- |
+| IMP-012   | Academic hub + entity list/create flows                        |
+| IMP-013   | Academic structure PATCH on detail edit forms                  |
+| IMP-014   | Academic delete + reparent controls on detail                  |
+| IMP-015   | Students list + create + edit detail                           |
+| IMP-016   | Users invite/edit + organizations create/edit/deactivate       |
+| IMP-017   | AdminShell school name brand from `GET /tenants/current`       |
+| IMP-019   | Tenant settings edit + guardian profile edit on detail         |
+| IMP-020   | Membership suspend / reactivate / remove on user detail        |
+| IMP-021   | User enable action on detail                                   |
+| IMP-022   | Roles list + create + custom permission replace                |
+| IMP-023   | Memberships list with status filter                            |
+| IMP-025   | Academic delete 409 dependents listing                         |
+| IMP-026   | Org-scoped user-role assign                                    |
+| IMP-027   | Shared admin primitives (Banner, ResourceList, ConfirmDialog)  |
+| IMP-028   | AdminTable for admin ops registries (Users → Academic)         |
+| IMP-029   | Grouped AdminShell nav IA for tablet                           |
+| IMP-030   | Load more cursor pagination on admin registries                |
+| IMP-033   | AdminShell /auth/me gate + permission-filtered nav             |
+| IMP-034   | ConfirmDialog replaces window.confirm (destructive admin)      |
+| IMP-035   | Central adminFriendlyMessage error mapper                      |
+| IMP-031   | Admin cross-links (student ↔ enrollment/fees/guardian)         |
+| IMP-032   | Operator-safe tenant settings (Advanced JSON + preserve-merge) |
+| IMP-030x  | Wave X: Load more on P0 form pickers                           |
+| IMP-034x  | Wave X: teacher marks submit + attendance close ConfirmDialog  |
+| IMP-031x  | Wave X: create enrollment/invoice `?studentId=` prefill        |
+| COMMS-006 | Notifications admin UI (deliveries / usage / test SMS)         |
 
 ## Revisions
 
@@ -294,3 +296,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.24 | 2026-07-30 | Wave X: P0 picker Load more + teacher ConfirmDialog                 |
 | 1.25 | 2026-07-31 | Wave X closeout: detail pickers + `?studentId=` prefill             |
 | 1.26 | 2026-07-31 | IMP-028 residual: Guardians/Orgs/Memberships/Roles/Academic tables  |
+| 1.27 | 2026-08-03 | COMMS-006 SMS notifications admin (deliveries / test send / usage)  |

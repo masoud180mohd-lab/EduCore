@@ -51,6 +51,7 @@ const NAV_LINKS: ReadonlyArray<NavLink> = [
   { id: 'roles', href: (base) => `${base}/roles`, label: 'Roles' },
   { id: 'academic', href: (base) => `${base}/academic`, label: 'Academic' },
   { id: 'fees', href: (base) => `${base}/fees`, label: 'Fees' },
+  { id: 'notifications', href: (base) => `${base}/notifications`, label: 'SMS' },
   { id: 'settings', href: (base) => `${base}/settings`, label: 'Settings' },
 ];
 

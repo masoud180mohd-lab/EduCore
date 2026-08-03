@@ -14,6 +14,7 @@ export type AdminNavId =
   | 'roles'
   | 'academic'
   | 'fees'
+  | 'notifications'
   | 'settings';
 
 const ADMIN_SHELL_PERMS = [
@@ -35,6 +36,8 @@ const ADMIN_SHELL_PERMS = [
   'finance.manage',
   'finance.read',
   'finance.reconcile',
+  'notification.read',
+  'notification.manage',
 ] as const;
 
 /** True when the actor may open AdminShell at all (any admin-domain capability). */
@@ -63,6 +66,7 @@ export function visibleAdminNavIds(me: MeLike): ReadonlySet<AdminNavId> {
       'roles',
       'academic',
       'fees',
+      'notifications',
       'settings',
     ]);
   }
@@ -92,6 +96,9 @@ export function visibleAdminNavIds(me: MeLike): ReadonlySet<AdminNavId> {
   if (hasAny(perms, ['finance.read', 'finance.manage', 'finance.reconcile'])) {
     visible.add('fees');
   }
+  if (hasAny(perms, ['notification.read', 'notification.manage'])) {
+    visible.add('notifications');
+  }
   if (hasAny(perms, ['tenant.manage', 'tenant.read'])) {
     visible.add('settings');
   }
@@ -120,6 +127,13 @@ export function canFinanceReconcile(me: MeLike): boolean {
   return new Set(me.permissions ?? []).has('finance.reconcile');
 }
 
+/** UX gate for SMS send form (API enforces notification.manage). */
+export function canNotificationManage(me: MeLike): boolean {
+  const roles = me.roles ?? [];
+  if (roles.some((r) => r.code === 'owner' || r.code === 'admin')) return true;
+  return new Set(me.permissions ?? []).has('notification.manage');
+}
+
 export type AdminFallbackHome = 'teacher' | 'parent';
 
 /** Where to send actors who opened /admin without shell access. */
@@ -133,7 +147,8 @@ export function adminDeniedFallback(me: MeLike): AdminFallbackHome {
   return 'teacher';
 }
 
-export type AdminNavGroupId = 'home' | 'registry' | 'access' | 'academic' | 'fees' | 'settings';
+export type AdminNavGroupId =
+  'home' | 'registry' | 'access' | 'academic' | 'fees' | 'notifications' | 'settings';
 
 export type AdminNavGroup = {
   readonly id: AdminNavGroupId;
@@ -152,6 +167,7 @@ const ADMIN_NAV_GROUP_DEFS: ReadonlyArray<{
   { id: 'access', label: 'Access', members: ['users', 'memberships', 'roles'] },
   { id: 'academic', label: 'Academic', members: ['academic'] },
   { id: 'fees', label: 'Fees', members: ['fees'] },
+  { id: 'notifications', label: 'Notifications', members: ['notifications'] },
   { id: 'settings', label: 'Settings', members: ['settings'] },
 ];
 

@@ -22,6 +22,9 @@ describe('adminFriendlyMessage', () => {
     expect(adminFriendlyMessage(err(403), 'tenant')).toBe(
       'You do not have access for this school.',
     );
+    expect(adminFriendlyMessage(err(403), 'notifications')).toBe(
+      'You do not have notification access.',
+    );
   });
 
   it('prefers API 409 message; domain fallback when empty', () => {

@@ -11,6 +11,7 @@ export type AdminErrorDomain =
   | 'roles'
   | 'academic'
   | 'finance'
+  | 'notifications'
   | 'settings'
   | 'tenant';
 
@@ -24,6 +25,7 @@ export type AdminFriendlyMessageOptions = {
 const ACTION_403 = 'You do not have access for this action.';
 const FINANCE_403 = 'You do not have finance access.';
 const FINANCE_RECONCILE_403 = 'You do not have finance reconcile access.';
+const NOTIFICATIONS_403 = 'You do not have notification access.';
 const TENANT_403 = 'You do not have access for this school.';
 
 function domain403(
@@ -34,6 +36,7 @@ function domain403(
   if (domain === 'finance') {
     return action === 'reconcile' ? FINANCE_RECONCILE_403 : FINANCE_403;
   }
+  if (domain === 'notifications') return NOTIFICATIONS_403;
   return ACTION_403;
 }
 
@@ -53,6 +56,8 @@ function domain409Fallback(domain: AdminErrorDomain): string | undefined {
       return 'Conflict — duplicate code or state.';
     case 'finance':
       return 'Fee structure items are in use by invoices.';
+    case 'notifications':
+      return 'Conflict — daily SMS cap exceeded or idempotency mismatch.';
     default:
       return undefined;
   }

@@ -6,6 +6,7 @@ import {
   canFinanceManage,
   canFinanceReconcile,
   canManageTenantSettings,
+  canNotificationManage,
   groupAdminNav,
   visibleAdminNavIds,
   type AdminNavId,
@@ -28,6 +29,12 @@ describe('canAccessAdminShell', () => {
       canAccessAdminShell({
         roles: [{ code: 'staff' }],
         permissions: ['student.read', 'attendance.manage'],
+      }),
+    ).toBe(true);
+    expect(
+      canAccessAdminShell({
+        roles: [{ code: 'staff' }],
+        permissions: ['notification.read'],
       }),
     ).toBe(true);
   });
@@ -65,9 +72,19 @@ describe('visibleAdminNavIds', () => {
     expect(ids.has('home')).toBe(true);
     expect(ids.has('fees')).toBe(true);
     expect(ids.has('academic')).toBe(true);
+    expect(ids.has('notifications')).toBe(false);
     expect(ids.has('users')).toBe(false);
     expect(ids.has('settings')).toBe(false);
     expect(ids.has('roles')).toBe(false);
+  });
+
+  it('shows SMS nav for notification.read staff', () => {
+    const ids = visibleAdminNavIds({
+      roles: [{ code: 'staff' }],
+      permissions: ['notification.read'],
+    });
+    expect(ids.has('notifications')).toBe(true);
+    expect(ids.has('fees')).toBe(false);
   });
 });
 
@@ -108,6 +125,21 @@ describe('canFinanceManage / canFinanceReconcile (PAY-006)', () => {
   });
 });
 
+describe('canNotificationManage (COMMS-006)', () => {
+  it('allows owner/admin and notification.manage', () => {
+    expect(canNotificationManage({ roles: [{ code: 'owner' }], permissions: [] })).toBe(true);
+    expect(
+      canNotificationManage({ roles: [{ code: 'staff' }], permissions: ['notification.manage'] }),
+    ).toBe(true);
+  });
+
+  it('denies notification.read only', () => {
+    expect(
+      canNotificationManage({ roles: [{ code: 'staff' }], permissions: ['notification.read'] }),
+    ).toBe(false);
+  });
+});
+
 describe('adminDeniedFallback', () => {
   it('sends parents to parent home and others to teacher', () => {
     expect(
@@ -135,6 +167,7 @@ describe('groupAdminNav (IMP-029)', () => {
       'access',
       'academic',
       'fees',
+      'notifications',
       'settings',
     ]);
     expect(groups.find((g) => g.id === 'registry')?.items).toEqual([

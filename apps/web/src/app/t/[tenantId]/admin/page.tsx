@@ -55,6 +55,12 @@ const HUB_CARDS: ReadonlyArray<HubCard> = [
     title: 'Fees',
     blurb: 'Structures, invoices, office payments',
   },
+  {
+    id: 'notifications',
+    hrefSuffix: '/notifications',
+    title: 'SMS',
+    blurb: 'Deliveries, usage, and test SMS',
+  },
   { id: 'settings', hrefSuffix: '/settings', title: 'Settings', blurb: 'Tenant settings document' },
 ];
 
