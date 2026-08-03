@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-03 - COMMS-001 SMS provider Proposed (Beem)
+
+- Decision brief: Beem Africa for TZ/Zanzibar SMS MVP; Fake CI default; Africa’s Talking fallback.
+- Awaiting Owner accept before COMMS-003/004 vendor coding.
+- PAY-OPS-001 remains deferred.
+
 ## 2026-08-03 - PAY-OPS-001 sandbox deferred
 
 - Operator skipped ClickPesa sandbox until vendor keys exist; next epic = EPIC-COMMS.

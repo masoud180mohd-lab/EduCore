@@ -98,15 +98,15 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**EPIC-COMMS-01 — SMS notification engine** (PAY-OPS-001 ClickPesa sandbox **deferred** until operator has vendor keys).
+**EPIC-COMMS-01 — SMS notification engine** — **COMMS-001 Proposed** (Beem); awaiting Owner accept before vendor adapter.
 
 Required outputs:
 
-1. ~~PAY-001~~ … ~~PAY-006~~ — **Done**.
-2. ~~Path A sandbox~~ — **Deferred** (`PAY-OPS-001`); Fake remains CI/runtime default.
-3. Start EPIC-COMMS under governing freeze / task brief when opened.
+1. ~~PAY-001~~ … ~~PAY-006~~ — **Done**; PAY-OPS-001 sandbox **deferred**.
+2. **COMMS-001** Accept (or amend) — decision brief at `docs/engineering/decisions/COMMS-001-mvp-sms-provider.md`.
+3. Then COMMS-002 templates → DBF-013/ACF-014 → request service → Fake SMS → Beem adapter → delivery ledger.
 
-**Parallel:** MFA for privileged/finance admins remains constitution-required before production finance trust; resume PAY-OPS-001 when sandbox keys arrive.
+**Parallel:** MFA for privileged/finance admins remains constitution-required before production trust; resume PAY-OPS-001 when ClickPesa keys arrive.
 
 **Governance:** Request Engineering Readiness Re-Review against `42_ENGINEERING_READINESS_REVIEW.md` before claiming production readiness.
 
@@ -115,7 +115,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **EPIC-COMMS** (SMS) — ClickPesa sandbox (PAY-OPS-001) deferred; Fake remains CI default.
+- **Next epic focus**: **EPIC-COMMS** — COMMS-001 Proposed (Beem); Fake SMS default; PAY-OPS deferred.
 
 ## Status Update Rules
 
