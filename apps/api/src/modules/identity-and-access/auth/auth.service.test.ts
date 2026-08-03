@@ -6,18 +6,40 @@ import { InMemoryLoginRateLimiter } from './login-rate-limiter.js';
 import { hashPassword } from './password-hasher.js';
 
 const stubRbac = { listRolesForUser: vi.fn().mockResolvedValue([]) };
+const stubMfa = {
+  createLoginChallenge: vi.fn().mockResolvedValue('ecm_challenge'),
+  verifyLoginChallenge: vi.fn(),
+  enforceMode: () => 'soft' as const,
+};
+const stubMfaRepo = {
+  isAvailable: () => false,
+  hasActiveTotp: vi.fn().mockResolvedValue(false),
+  isPrivileged: vi.fn().mockResolvedValue(false),
+};
+
+function createAuth(
+  sessions: unknown,
+  audit: unknown = null,
+  rbac: unknown = stubRbac,
+  permissionSource: unknown = null,
+  mfa: unknown = stubMfa,
+  mfaRepo: unknown = stubMfaRepo,
+): AuthService {
+  return new AuthService(
+    sessions as never,
+    new InMemoryLoginRateLimiter(),
+    audit as never,
+    rbac as never,
+    permissionSource as never,
+    mfa as never,
+    mfaRepo as never,
+  );
+}
 
 describe('AuthService login', () => {
   it('rejects when session store is unavailable', async () => {
-    const sessions = {
-      isAvailable: () => false,
-    };
-    const service = new AuthService(
-      sessions as never,
-      new InMemoryLoginRateLimiter(),
-      null,
-      stubRbac as never,
-    );
+    const sessions = { isAvailable: () => false };
+    const service = createAuth(sessions);
     await expect(
       service.login({
         email: 'a@example.com',
@@ -32,12 +54,7 @@ describe('AuthService login', () => {
       isAvailable: () => true,
       lookupUserByEmail: vi.fn().mockResolvedValue(null),
     };
-    const service = new AuthService(
-      sessions as never,
-      new InMemoryLoginRateLimiter(),
-      null,
-      stubRbac as never,
-    );
+    const service = createAuth(sessions);
     await expect(
       service.login({
         email: 'missing@example.com',
@@ -63,12 +80,7 @@ describe('AuthService login', () => {
       createSession: vi.fn().mockResolvedValue('sess-id'),
     };
     const audit = { publish: vi.fn().mockResolvedValue(undefined) };
-    const service = new AuthService(
-      sessions as never,
-      new InMemoryLoginRateLimiter(),
-      audit,
-      stubRbac as never,
-    );
+    const service = createAuth(sessions, audit);
 
     const result = await service.login({
       email: 'user@example.com',
@@ -77,8 +89,8 @@ describe('AuthService login', () => {
       correlationId: 'c1',
     });
 
-    expect(result.accessToken.startsWith('ecs_')).toBe(true);
-    expect(result.refreshToken.startsWith('ecr_')).toBe(true);
+    expect(result.accessToken?.startsWith('ecs_')).toBe(true);
+    expect(result.refreshToken?.startsWith('ecr_')).toBe(true);
     expect(result.requiresMfa).toBe(false);
     expect(result.user.email).toBe('user@example.com');
     expect(sessions.createSession).toHaveBeenCalledOnce();
@@ -87,13 +99,56 @@ describe('AuthService login', () => {
     );
   });
 
+  it('returns MFA challenge when active TOTP exists', async () => {
+    const passwordHash = await hashPassword('password12');
+    const sessions = {
+      isAvailable: () => true,
+      lookupUserByEmail: vi.fn().mockResolvedValue({
+        id: '01900000-0000-7000-8000-000000000001',
+        email: 'user@example.com',
+        displayName: 'User',
+        status: 'active',
+        passwordHash,
+      }),
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
+      createSession: vi.fn(),
+    };
+    const mfa = {
+      createLoginChallenge: vi.fn().mockResolvedValue('ecm_tok'),
+    };
+    const mfaRepo = {
+      isAvailable: () => true,
+      hasActiveTotp: vi.fn().mockResolvedValue(true),
+      isPrivileged: vi.fn().mockResolvedValue(true),
+    };
+    const service = createAuth(sessions, null, stubRbac, null, mfa, mfaRepo);
+    const result = await service.login({
+      email: 'user@example.com',
+      password: 'password12',
+      tenantId: '01900000-0000-7000-8000-0000000000aa',
+      correlationId: 'c1',
+    });
+    expect(result.requiresMfa).toBe(true);
+    expect(result.mfaChallengeToken).toBe('ecm_tok');
+    expect(result.accessToken).toBeNull();
+    expect(sessions.createSession).not.toHaveBeenCalled();
+  });
+
   it('rate-limits repeated failures', async () => {
     const limiter = new InMemoryLoginRateLimiter(2, 60_000);
     const sessions = {
       isAvailable: () => true,
       lookupUserByEmail: vi.fn().mockResolvedValue(null),
     };
-    const service = new AuthService(sessions as never, limiter, null, stubRbac as never);
+    const service = new AuthService(
+      sessions as never,
+      limiter,
+      null,
+      stubRbac as never,
+      null,
+      stubMfa as never,
+      stubMfaRepo as never,
+    );
     const cmd = {
       email: 'a@example.com',
       password: 'password12',
@@ -125,18 +180,16 @@ describe('AuthService me + select-tenant', () => {
         .mockResolvedValue([{ tenantId, status: 'active', joinedAt: '2026-01-01T00:00:00.000Z' }]),
       hasActiveMembership: vi.fn().mockResolvedValue(true),
     };
-    const service = new AuthService(
-      sessions as never,
-      new InMemoryLoginRateLimiter(),
-      null,
-      stubRbac as never,
-    );
+    const service = createAuth(sessions);
     const me = await service.me({ userId, sessionId, tenantId });
     expect(me.user.email).toBe('a@b.co');
     expect(me.activeTenantId).toBe(tenantId);
     expect(me.memberships).toHaveLength(1);
     expect(me.roles).toEqual([]);
     expect(me.permissions).toEqual([]);
+    expect(me.mfaEnrollmentRequired).toBe(false);
+    expect(me.mfaEnforced).toBe('soft');
+    expect(me.mfaActive).toBe(false);
   });
 
   it('me returns roles and permissions only when membership is active', async () => {
@@ -161,13 +214,7 @@ describe('AuthService me + select-tenant', () => {
     const permissionSource = {
       getPermissions: vi.fn().mockResolvedValue(new Set(['tenant.read', 'role.read'])),
     };
-    const service = new AuthService(
-      sessions as never,
-      new InMemoryLoginRateLimiter(),
-      null,
-      rbacRead as never,
-      permissionSource,
-    );
+    const service = createAuth(sessions, null, rbacRead, permissionSource);
 
     const me = await service.me({ userId, sessionId, tenantId });
 
@@ -200,13 +247,7 @@ describe('AuthService me + select-tenant', () => {
     const permissionSource = {
       getPermissions: vi.fn().mockResolvedValue(new Set(['tenant.read'])),
     };
-    const service = new AuthService(
-      sessions as never,
-      new InMemoryLoginRateLimiter(),
-      null,
-      rbacRead as never,
-      permissionSource,
-    );
+    const service = createAuth(sessions, null, rbacRead, permissionSource);
 
     const me = await service.me({ userId, sessionId, tenantId });
 
@@ -230,13 +271,7 @@ describe('AuthService me + select-tenant', () => {
     };
     const rbacRead = { listRolesForUser: vi.fn() };
     const permissionSource = { getPermissions: vi.fn() };
-    const service = new AuthService(
-      sessions as never,
-      new InMemoryLoginRateLimiter(),
-      null,
-      rbacRead as never,
-      permissionSource,
-    );
+    const service = createAuth(sessions, null, rbacRead, permissionSource);
 
     const me = await service.me({ userId, sessionId });
 
@@ -248,6 +283,29 @@ describe('AuthService me + select-tenant', () => {
     expect(permissionSource.getPermissions).not.toHaveBeenCalled();
   });
 
+  it('me flags mfaEnrollmentRequired when privileged without TOTP', async () => {
+    const sessions = {
+      isAvailable: () => true,
+      getUserProfile: vi.fn().mockResolvedValue({
+        id: userId,
+        email: 'a@b.co',
+        displayName: 'A',
+        status: 'active',
+      }),
+      listMembershipSummaries: vi.fn().mockResolvedValue([]),
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
+    };
+    const mfaRepo = {
+      isAvailable: () => true,
+      hasActiveTotp: vi.fn().mockResolvedValue(false),
+      isPrivileged: vi.fn().mockResolvedValue(true),
+    };
+    const service = createAuth(sessions, null, stubRbac, null, stubMfa, mfaRepo);
+    const me = await service.me({ userId, sessionId, tenantId });
+    expect(me.mfaEnrollmentRequired).toBe(true);
+    expect(me.mfaActive).toBe(false);
+  });
+
   it('selectTenant rebinds when membership is active', async () => {
     const sessions = {
       isAvailable: () => true,
@@ -255,12 +313,7 @@ describe('AuthService me + select-tenant', () => {
       rebindSessionTenant: vi.fn().mockResolvedValue(true),
     };
     const audit = { publish: vi.fn().mockResolvedValue(undefined) };
-    const service = new AuthService(
-      sessions as never,
-      new InMemoryLoginRateLimiter(),
-      audit,
-      stubRbac as never,
-    );
+    const service = createAuth(sessions, audit);
     await expect(
       service.selectTenant({
         userId: '01900000-0000-7000-8000-000000000001',
@@ -277,12 +330,7 @@ describe('AuthService me + select-tenant', () => {
       isAvailable: () => true,
       hasActiveMembership: vi.fn().mockResolvedValue(false),
     };
-    const service = new AuthService(
-      sessions as never,
-      new InMemoryLoginRateLimiter(),
-      null,
-      stubRbac as never,
-    );
+    const service = createAuth(sessions);
     await expect(
       service.selectTenant({
         userId: '01900000-0000-7000-8000-000000000001',

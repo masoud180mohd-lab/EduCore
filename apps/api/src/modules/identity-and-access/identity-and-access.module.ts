@@ -25,15 +25,18 @@ import {
 import { AuthController } from './controllers/auth.controller.js';
 import { IdentityAndAccessController } from './controllers/identity-and-access.controller.js';
 import { MembershipsController } from './controllers/memberships.controller.js';
+import { MfaFactorsController } from './controllers/mfa-factors.controller.js';
 import { PermissionsController } from './controllers/permissions.controller.js';
 import { RolesController } from './controllers/roles.controller.js';
 import { UserRolesController } from './controllers/user-roles.controller.js';
 import { UsersController } from './controllers/users.controller.js';
 import { IdentityAndAccessDomainService } from './domain/identity-and-access.domain-service.js';
 import { IdentityAndAccessPolicy } from './policies/identity-and-access.policy.js';
+import { MfaService } from './application/mfa.service.js';
 import { IDENTITY_AND_ACCESS_REPOSITORY } from './repositories/identity-and-access.repository.js';
 import { IdentityAndAccessRepositoryPlaceholder } from './repositories/identity-and-access.repository.placeholder.js';
 import { MembershipsRepository } from './repositories/memberships.repository.js';
+import { MfaRepository } from './repositories/mfa.repository.js';
 import { PermissionsRepository } from './repositories/permissions.repository.js';
 import { RolesRepository } from './repositories/roles.repository.js';
 import { UserRolesRepository } from './repositories/user-roles.repository.js';
@@ -53,6 +56,7 @@ import { SessionRepository } from './repositories/session.repository.js';
   controllers: [
     IdentityAndAccessController,
     AuthController,
+    MfaFactorsController,
     MembershipsController,
     PermissionsController,
     RolesController,
@@ -68,6 +72,8 @@ import { SessionRepository } from './repositories/session.repository.js';
       useClass: IdentityAndAccessRepositoryPlaceholder,
     },
     SessionRepository,
+    MfaRepository,
+    MfaService,
     RbacReadRepository,
     MembershipsRepository,
     MembershipsService,

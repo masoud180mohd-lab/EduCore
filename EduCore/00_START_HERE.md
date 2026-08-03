@@ -93,8 +93,8 @@ For a task affecting a specific domain, read its related bible before proposing 
 
 1. Read `43_PROJECT_STATUS.md` before planning or coding — it is the canonical phase page.
 2. Use the Master Engineering Execution Prompt and AI-EOS for every task; confirm the governing DBF/ACF/DSF slice exists before changing contracts or UI.
-3. **Next MVP milestone:** EPIC-COMMS lab complete (COMMS-001…005); next epic TBD / operator Beem keys optional.
-4. Do not open another Admin UI polish wave as the default next epic; SMS (EPIC-COMMS) and privileged MFA remain high follow-ons.
+3. **Next MVP milestone:** Privileged MFA lab Done (TOTP soft); optional hard-enforce + IdP later.
+4. Do not open another Admin UI polish wave as the default next epic; readiness re-review before production trust.
 5. Close applicable readiness blockers and request an Engineering Readiness Re-Review before any production/pilot claim.
 
 ## Task Start Checklist

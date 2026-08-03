@@ -9,6 +9,7 @@ import { isUuid } from '../../../common/tenant/tenant-context.js';
 import type { AuditPublisher } from '../../platform-operations/index.js';
 import { AUDIT_PUBLISHER } from '../../platform-operations/index.js';
 import { RbacReadRepository } from '../rbac/rbac-read.repository.js';
+import { MfaService } from '../application/mfa.service.js';
 import { SessionRepository } from '../repositories/session.repository.js';
 import type { LoginRateLimiter } from './login-rate-limiter.js';
 import { LOGIN_RATE_LIMITER } from './login-rate-limiter.js';
@@ -22,6 +23,8 @@ import {
   REFRESH_TOKEN_PREFIX,
   refreshExpiresAt,
 } from './session-tokens.js';
+import { resolveMfaEnforceMode } from './mfa-crypto.js';
+import { MfaRepository } from '../repositories/mfa.repository.js';
 
 export type LoginCommand = {
   readonly email?: unknown;
@@ -35,19 +38,19 @@ export type LoginCommand = {
 };
 
 export type LoginResult = {
-  readonly accessToken: string;
+  readonly accessToken: string | null;
   readonly tokenType: 'Bearer';
   readonly expiresIn: number;
-  readonly refreshToken: string;
-  readonly requiresMfa: false;
-  readonly mfaChallengeToken: null;
+  readonly refreshToken: string | null;
+  readonly requiresMfa: boolean;
+  readonly mfaChallengeToken: string | null;
   readonly user: {
     readonly id: string;
     readonly email: string;
     readonly displayName: string;
   };
   readonly tenantId: string;
-  readonly sessionId: string;
+  readonly sessionId: string | null;
 };
 
 export type RefreshResult = {
@@ -85,6 +88,11 @@ export type MeResult = {
    * (via MembershipAwarePermissionSource; empty when unbound / inactive / revoked).
    */
   readonly permissions: ReadonlyArray<string>;
+  /** MFA-005: privileged role without active TOTP. */
+  readonly mfaEnrollmentRequired: boolean;
+  /** MFA-005: soft | hard from MFA_ENFORCE. */
+  readonly mfaEnforced: 'soft' | 'hard';
+  readonly mfaActive: boolean;
 };
 
 @Injectable()
@@ -98,6 +106,8 @@ export class AuthService {
     @Optional()
     @Inject(PERMISSION_SOURCE)
     private readonly permissionSource: PermissionSource | null = null,
+    private readonly mfa: MfaService,
+    private readonly mfaRepo: MfaRepository,
   ) {}
 
   /**
@@ -166,6 +176,60 @@ export class AuthService {
       throw AppError.invalidCredentials();
     }
 
+    const hasTotp = this.mfaRepo.isAvailable() ? await this.mfaRepo.hasActiveTotp(user.id) : false;
+    const privileged = this.mfaRepo.isAvailable()
+      ? await this.mfaRepo.isPrivileged(user.id, tenantId)
+      : false;
+    const enforce = resolveMfaEnforceMode();
+
+    if (privileged && !hasTotp && enforce === 'hard') {
+      await this.safeAudit({
+        action: 'auth.login',
+        outcome: 'failure',
+        correlationId: command.correlationId,
+        actorUserId: user.id,
+        tenantId,
+        metadata: { reason: 'mfa_enrollment_required' },
+      });
+      throw new AppError(
+        'MFA_REQUIRED',
+        'Privileged accounts must enroll TOTP before login (MFA_ENFORCE=hard).',
+      );
+    }
+
+    if (hasTotp) {
+      const mfaChallengeToken = await this.mfa.createLoginChallenge({
+        userId: user.id,
+        tenantId,
+        ...(command.ip !== undefined ? { ip: command.ip } : {}),
+        ...(command.userAgent !== undefined ? { userAgent: command.userAgent } : {}),
+      });
+      await this.rateLimiter.reset(rateKey);
+      await this.safeAudit({
+        action: 'auth.login',
+        outcome: 'success',
+        correlationId: command.correlationId,
+        actorUserId: user.id,
+        tenantId,
+        metadata: { requiresMfa: true },
+      });
+      return {
+        accessToken: null,
+        tokenType: 'Bearer',
+        expiresIn: ACCESS_TOKEN_TTL_SECONDS,
+        refreshToken: null,
+        requiresMfa: true,
+        mfaChallengeToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+        },
+        tenantId,
+        sessionId: null,
+      };
+    }
+
     const accessToken = generateOpaqueToken(ACCESS_TOKEN_PREFIX);
     const refreshToken = generateOpaqueToken(REFRESH_TOKEN_PREFIX);
     const sessionId = randomUUID();
@@ -219,6 +283,78 @@ export class AuthService {
         displayName: user.displayName,
       },
       tenantId,
+      sessionId,
+    };
+  }
+
+  /**
+   * POST /auth/mfa/verify — complete login after TOTP challenge (MFA-004).
+   */
+  async verifyMfa(command: {
+    readonly mfaChallengeToken: unknown;
+    readonly code: unknown;
+    readonly correlationId: string;
+    readonly ip?: string;
+    readonly userAgent?: string;
+  }): Promise<LoginResult> {
+    if (!this.sessions.isAvailable()) {
+      throw new AppError('INTERNAL_ERROR', 'Authentication service is unavailable.', 503);
+    }
+
+    const verified = await this.mfa.verifyLoginChallenge({
+      mfaChallengeToken: command.mfaChallengeToken,
+      code: command.code,
+    });
+
+    const profile = await this.sessions.getUserProfile(verified.userId);
+    if (profile === null || profile.status !== 'active') {
+      throw new AppError('MFA_INVALID', 'Invalid MFA challenge.');
+    }
+
+    const accessToken = generateOpaqueToken(ACCESS_TOKEN_PREFIX);
+    const refreshToken = generateOpaqueToken(REFRESH_TOKEN_PREFIX);
+    const sessionId = randomUUID();
+    const now = new Date();
+
+    try {
+      await this.sessions.createSession({
+        id: sessionId,
+        userId: verified.userId,
+        tenantId: verified.tenantId,
+        sessionTokenHash: hashToken(accessToken),
+        refreshTokenHash: hashToken(refreshToken),
+        expiresAt: accessExpiresAt(now),
+        refreshExpiresAt: refreshExpiresAt(now),
+        ...(command.ip !== undefined ? { ip: command.ip } : {}),
+        ...(command.userAgent !== undefined ? { userAgent: command.userAgent } : {}),
+      });
+    } catch {
+      throw new AppError('INTERNAL_ERROR', 'Failed to create session after MFA.');
+    }
+
+    await this.safeAudit({
+      action: 'auth.mfa.verify',
+      outcome: 'success',
+      correlationId: command.correlationId,
+      actorUserId: verified.userId,
+      tenantId: verified.tenantId,
+      resourceType: 'session',
+      resourceId: sessionId,
+    });
+
+    return {
+      accessToken,
+      tokenType: 'Bearer',
+      expiresIn: ACCESS_TOKEN_TTL_SECONDS,
+      refreshToken,
+      requiresMfa: false,
+      mfaChallengeToken: null,
+      user: {
+        id: profile.id,
+        email: profile.email,
+        displayName: profile.displayName,
+      },
+      tenantId: verified.tenantId,
       sessionId,
     };
   }
@@ -362,6 +498,15 @@ export class AuthService {
       }
     }
 
+    const mfaActive = this.mfaRepo.isAvailable()
+      ? await this.mfaRepo.hasActiveTotp(input.userId)
+      : false;
+    let privileged = false;
+    if (activeTenantId !== null && isUuid(activeTenantId) && this.mfaRepo.isAvailable()) {
+      privileged = await this.mfaRepo.isPrivileged(input.userId, activeTenantId);
+    }
+    const mfaEnrollmentRequired = privileged && !mfaActive;
+
     return {
       user: {
         id: profile.id,
@@ -374,6 +519,9 @@ export class AuthService {
       sessionId: input.sessionId ?? null,
       roles,
       permissions,
+      mfaEnrollmentRequired,
+      mfaEnforced: resolveMfaEnforceMode(),
+      mfaActive,
     };
   }
 

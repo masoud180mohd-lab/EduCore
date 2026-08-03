@@ -15,7 +15,9 @@ export type AppErrorCode =
   | 'IDEMPOTENCY_KEY_REQUIRED'
   | 'IDEMPOTENCY_KEY_REUSE_MISMATCH'
   | 'INVALID_CREDENTIALS'
-  | 'RATE_LIMITED';
+  | 'RATE_LIMITED'
+  | 'MFA_REQUIRED'
+  | 'MFA_INVALID';
 
 const DEFAULT_STATUS: Readonly<Record<AppErrorCode, number>> = {
   INTERNAL_ERROR: 500,
@@ -31,6 +33,8 @@ const DEFAULT_STATUS: Readonly<Record<AppErrorCode, number>> = {
   IDEMPOTENCY_KEY_REUSE_MISMATCH: 409,
   INVALID_CREDENTIALS: 401,
   RATE_LIMITED: 429,
+  MFA_REQUIRED: 403,
+  MFA_INVALID: 401,
 };
 
 export class AppError extends Error {

@@ -232,7 +232,7 @@ IdP product is **not** frozen. These routes define the platform session boundary
 | `POST` | `/api/v1/auth/login`                  | Public             | —                        | No          | Password or IdP exchange → session tokens (design allows either) |
 | `POST` | `/api/v1/auth/refresh`                | Refresh credential | —                        | No          | Rotate access token                                              |
 | `POST` | `/api/v1/auth/logout`                 | Bearer             | —                        | No          | Revoke current session                                           |
-| `GET`  | `/api/v1/auth/me`                     | Bearer             | —                        | —           | Current user + memberships summary                               |
+| `GET`  | `/api/v1/auth/me`                     | Bearer             | —                        | —           | Current user + memberships + MFA honesty flags (`mfaEnrollmentRequired`, `mfaEnforced`, `mfaActive`) |
 | `POST` | `/api/v1/auth/select-tenant`          | Bearer             | membership               | Recommended | Bind session to active tenant                                    |
 | `GET`  | `/api/v1/sessions`                    | Bearer + tenant    | `session.revoke` or self | —           | List sessions (self by default; admin with permission)           |
 | `POST` | `/api/v1/sessions/{sessionId}/revoke` | Bearer + tenant    | self or `session.revoke` | Recommended | Revoke session                                                   |
@@ -577,3 +577,4 @@ Module ownership follows ADR-001: Tenant module owns tenant routes; Identity own
 | 1.4     | 2026-07-20 | Tenants picker list policy (unpaginated + soft cap); shared ILIKE helper (P13)                  |
 | 1.5     | 2026-07-25 | Add `POST /users/{userId}/enable` (IMP-021)                                                     |
 | 1.6     | 2026-07-27 | Implement optional `organizationId` on `POST /user-roles` (IMP-026; AuthZ union unchanged)      |
+| 1.7     | 2026-08-03 | MFA lab: `/auth/mfa/verify`; `/me/mfa-factors`; me MFA honesty fields (MFA-001…005)              |

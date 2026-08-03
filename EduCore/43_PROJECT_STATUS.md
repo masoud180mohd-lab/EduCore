@@ -98,15 +98,15 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**EPIC-COMMS-01** — COMMS-005 ledger/meter **Done**; epic lab path **complete** (live Beem optional).
+**Privileged MFA** — MFA-001…005 lab path **Done** (TOTP soft default).
 
 Required outputs:
 
-1. ~~COMMS-001~~ … ~~COMMS-005~~ / freezes — Fake default; Beem when secrets present; usage + deliveries evidence.
-2. Operator follow-up: Beem Sender ID + keys for live SMS; PAY-OPS when ClickPesa keys exist.
-3. Next product epic TBD (not silent dual scope).
+1. ~~MFA-001~~ … ~~MFA-005~~ — TOTP enroll/verify + me honesty + manual QA.
+2. Operator: set `MFA_TOTP_ENCRYPTION_KEY`; optional `MFA_ENFORCE=hard` before production trust.
+3. IdP/OIDC (roadmap ID-001) still deferred; PAY-OPS deferred until ClickPesa keys.
 
-**Parallel:** MFA before production trust; PAY-OPS-001 deferred until ClickPesa keys.
+**Parallel:** Readiness re-review before production finance/SMS claims.
 
 **Governance:** Request Engineering Readiness Re-Review against `42_ENGINEERING_READINESS_REVIEW.md` before claiming production readiness.
 
@@ -115,7 +115,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **EPIC-COMMS lab complete** — next TBD; PAY-OPS deferred; MFA before production trust.
+- **Next epic focus**: **Privileged MFA lab Done** (TOTP); next TBD / hard-enforce + IdP later; PAY-OPS deferred.
 
 ## Status Update Rules
 

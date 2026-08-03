@@ -2,6 +2,16 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-03 - MFA-002…005 TOTP lab path
+
+- `mfa_factors` / challenges migration; enroll HTTP; login MFA challenge + verify; `/auth/me` honesty flags.
+- Soft `MFA_ENFORCE` default; encryption key required for enroll/verify.
+
+## 2026-08-03 - MFA-001 privileged TOTP Accepted
+
+- Decision: TOTP-only MFA lab path; soft enforce default; IdP/OIDC still deferred.
+- Next: MFA-002…005 schema, enroll, login challenge, me honesty.
+
 ## 2026-08-03 - COMMS-005 delivery ledger + meter
 
 - Cursor/filter deliveries; usage meter API; segment estimate; lab daily-cap bypass; ACF-014 v1.1.
