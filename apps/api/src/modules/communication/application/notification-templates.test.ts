@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   assertPayloadAllowlist,
+  estimateSmsSegments,
   normalizeTzMsisdn,
   phoneLast4,
   renderTemplateBody,
@@ -25,5 +26,12 @@ describe('notification template helpers', () => {
     expect(normalizeTzMsisdn('+255 712 345 678')).toBe('255712345678');
     expect(normalizeTzMsisdn('12')).toBeNull();
     expect(phoneLast4('255712345678')).toBe('5678');
+  });
+
+  it('estimates SMS segments for GSM and unicode', () => {
+    expect(estimateSmsSegments('a'.repeat(160))).toBe(1);
+    expect(estimateSmsSegments('a'.repeat(161))).toBe(2);
+    expect(estimateSmsSegments('š'.repeat(70))).toBe(1);
+    expect(estimateSmsSegments('š'.repeat(71))).toBe(2);
   });
 });

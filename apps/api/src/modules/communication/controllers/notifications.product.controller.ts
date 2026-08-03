@@ -33,7 +33,7 @@ type AuthedRequest = Request & {
 };
 
 /**
- * Notifications / SMS product surface (COMMS-003 / ACF-014).
+ * Notifications / SMS product surface (COMMS-003…005 / ACF-014).
  */
 @Controller()
 export class NotificationsProductController {
@@ -79,14 +79,24 @@ export class NotificationsProductController {
   async listDeliveries(
     @Req() request: AuthedRequest,
     @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
+    @Query('requestId') requestId?: string,
+    @Query('status') status?: string,
   ): Promise<unknown> {
     const { auth, tenant } = requireAuthTenant(request);
-    const parsed = limit === undefined || limit === '' ? undefined : Number.parseInt(limit, 10);
-    return this.notificationsService.listDeliveriesForTenant(
-      auth.userId,
-      tenant.tenantId,
-      Number.isFinite(parsed) ? parsed : undefined,
-    );
+    return this.notificationsService.listDeliveriesForTenant(auth.userId, tenant.tenantId, {
+      limit,
+      cursor,
+      requestId,
+      status,
+    });
+  }
+
+  @Get('api/v1/notifications/usage')
+  @UseGuards(RequirePermission('notification.read'))
+  async getUsage(@Req() request: AuthedRequest, @Query('date') date?: string): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.notificationsService.getUsageForTenant(auth.userId, tenant.tenantId, date);
   }
 }
 

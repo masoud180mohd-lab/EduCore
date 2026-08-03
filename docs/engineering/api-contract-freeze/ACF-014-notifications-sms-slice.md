@@ -3,7 +3,7 @@
 | Field     | Value                                                    |
 | --------- | -------------------------------------------------------- |
 | Freeze ID | `ACF-014`                                                |
-| Version   | `1.0`                                                    |
+| Version   | `1.1`                                                    |
 | Date      | 2026-08-03                                               |
 | Companion | DBF-013                                                  |
 | Program   | **EPIC-COMMS-01** (COMMS-F1)                             |
@@ -19,9 +19,10 @@
 | ------------------------------------------ | ----------------------------------------- |
 | List active templates                      | Template editor UI                        |
 | Create notification request (manual/admin) | Bulk blast campaigns                      |
-| List deliveries (cursor)                   | Parent-facing SMS history                 |
-| Get request by id                          | Automatic domain event wiring (follow-on) |
-| Optional Beem DLR webhook (COMMS-004)      | Email / push                              |
+| Get request by id                          | Parent-facing SMS history                 |
+| List deliveries (cursor + filters)         | Automatic domain event wiring (follow-on) |
+| Get daily SMS usage meter                  | Email / push                              |
+| Optional Beem DLR webhook (COMMS-004)      | WhatsApp                                  |
 
 ## Auth stack
 
@@ -29,10 +30,10 @@ Authenticated → Tenant header → Session tenant bind → Permission → RLS.
 
 ## Permissions
 
-| Code                  | Use                                      |
-| --------------------- | ---------------------------------------- |
-| `notification.read`   | GET templates, requests, deliveries      |
-| `notification.manage` | POST notification request (send/enqueue) |
+| Code                  | Use                                        |
+| --------------------- | ------------------------------------------ |
+| `notification.read`   | GET templates, requests, deliveries, usage |
+| `notification.manage` | POST notification request (send/enqueue)   |
 
 ## Endpoints
 
@@ -41,7 +42,8 @@ Authenticated → Tenant header → Session tenant bind → Permission → RLS.
 | GET    | `/api/v1/notification-templates`             | notification.read                                                                     |
 | GET    | `/api/v1/notifications/requests/{requestId}` | notification.read                                                                     |
 | POST   | `/api/v1/notifications/requests`             | notification.manage + **Idempotency-Key**                                             |
-| GET    | `/api/v1/notifications/deliveries`           | notification.read — cursor pagination                                                 |
+| GET    | `/api/v1/notifications/deliveries`           | notification.read — cursor pagination; optional `requestId`, `status`                 |
+| GET    | `/api/v1/notifications/usage`                | notification.read — optional `date=YYYY-MM-DD` (UTC; default today)                   |
 | POST   | `/api/v1/notifications/webhooks/beem`        | **No session**; header `X-Beem-Webhook-Secret` = `BEEM_WEBHOOK_SECRET` (501 if unset) |
 
 ### POST `/api/v1/notifications/requests`
@@ -68,9 +70,15 @@ Fake/Beem: worker or inline lab path submits via `SMS_PROVIDER_PORT`; delivery r
 
 ### GET `/api/v1/notifications/deliveries`
 
-Query: `limit`, `cursor`, optional `requestId`, optional `status`.
+Query: `limit`, `cursor` (delivery id), optional `requestId`, optional `status`.
 
-Response items expose **phoneLast4** only (never full MSISDN).
+Response: `{ data, page: { nextCursor, limit } }`. Items expose **phoneLast4** only (never full MSISDN).
+
+### GET `/api/v1/notifications/usage`
+
+Query: optional `date` (`YYYY-MM-DD`, UTC). Default = today UTC.
+
+Response `data`: `usageDate`, `channel`, `sentCount`, `segmentCount`, `dailyCap` (null when bypassed), `bypassDailyCap`.
 
 ### GET `/api/v1/notification-templates`
 
@@ -99,7 +107,7 @@ Returns active system (+ tenant) templates: `code`, `channel`, `locale`, `versio
 
 - Create request: Idempotency-Key **required**.
 - Same key must **not** double-increment usage or double-submit provider.
-- Daily cap: config `SMS_DAILY_CAP_PER_TENANT` (Fake still records deliveries; may bypass cap in lab via config flag documented in COMMS-005).
+- Daily cap: config `SMS_DAILY_CAP_PER_TENANT` (default 500). Lab bypass: `SMS_BYPASS_DAILY_CAP=true` (usage still increments; cap not enforced).
 
 ## Non-goals
 

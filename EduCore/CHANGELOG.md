@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-03 - COMMS-005 delivery ledger + meter
+
+- Cursor/filter deliveries; usage meter API; segment estimate; lab daily-cap bypass; ACF-014 v1.1.
+- EPIC-COMMS-01 lab path COMMS-001…005 complete (live Beem still optional/operator).
+
 ## 2026-08-03 - COMMS-004 Beem SMS adapter
 
 - Env-gated Beem client (Fake default); DLR webhook via shared secret; `sms:check-config`.

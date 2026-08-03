@@ -1,5 +1,5 @@
 /**
- * Notification requests + SMS send path (COMMS-003 / COMMS-004 / ACF-014).
+ * Notification requests + SMS send path (COMMS-003…005 / ACF-014).
  */
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 
@@ -14,14 +14,12 @@ import {
   resolveIdempotentReplay,
   type IdempotencyStore,
 } from '../../../common/idempotency/index.js';
-import { isUuid } from '../../../common/tenant/tenant-context.js';
 import {
-  assertPayloadAllowlist,
-  normalizeTzMsisdn,
-  phoneLast4,
-  renderTemplateBody,
-  TEMPLATE_ALLOWLISTS,
-} from './notification-templates.js';
+  buildPaginatedResponse,
+  parsePaginationQuery,
+  type PaginatedResponse,
+} from '../../../common/pagination/index.js';
+import { isUuid } from '../../../common/tenant/tenant-context.js';
 import { loadBeemWebhookSecret } from '../providers/beem-config.js';
 import { FakeSmsProvider } from '../providers/fake-sms.provider.js';
 import { SMS_PROVIDER_PORT, type SmsProviderPort } from '../providers/sms-provider.port.js';
@@ -31,14 +29,30 @@ import {
   type NotificationRequestRow,
   type NotificationTemplateRow,
 } from '../repositories/notifications.repository.js';
+import {
+  assertPayloadAllowlist,
+  estimateSmsSegments,
+  normalizeTzMsisdn,
+  phoneLast4,
+  renderTemplateBody,
+  TEMPLATE_ALLOWLISTS,
+} from './notification-templates.js';
 
 const CREATE_ROUTE = '/api/v1/notifications/requests';
+const DELIVERY_STATUSES = new Set(['queued', 'submitted', 'sent', 'delivered', 'failed']);
 
+/** Daily cap; -1 means bypass (SMS_BYPASS_DAILY_CAP=true). */
 function dailyCapFromEnv(): number {
+  const bypass = (process.env['SMS_BYPASS_DAILY_CAP'] ?? '').trim().toLowerCase();
+  if (bypass === '1' || bypass === 'true' || bypass === 'yes') return -1;
   const raw = process.env['SMS_DAILY_CAP_PER_TENANT']?.trim();
   if (raw === undefined || raw === '') return 500;
   const n = Number(raw);
   return Number.isInteger(n) && n >= 0 ? n : 500;
+}
+
+function utcTodayDateString(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 @Injectable()
@@ -80,13 +94,71 @@ export class NotificationsService {
   async listDeliveriesForTenant(
     actorUserId: string,
     tenantId: string,
-    limit?: number,
-  ): Promise<{ readonly data: ReadonlyArray<NotificationDeliveryRow> }> {
+    rawQuery: {
+      readonly limit?: unknown;
+      readonly cursor?: unknown;
+      readonly requestId?: unknown;
+      readonly status?: unknown;
+    },
+  ): Promise<PaginatedResponse<NotificationDeliveryRow>> {
     if (!isUuid(actorUserId)) throw AppError.unauthorized();
     if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
-    if (!this.notifications.isAvailable()) return { data: [] };
+    const pagination = parsePaginationQuery(rawQuery);
+    const requestId = parseOptionalUuid(rawQuery.requestId, 'requestId');
+    const status = parseOptionalDeliveryStatus(rawQuery.status);
+    if (!this.notifications.isAvailable()) {
+      return buildPaginatedResponse([], pagination.limit, null);
+    }
+    const page = await this.notifications.listDeliveries(actorUserId, tenantId, {
+      limit: pagination.limit,
+      cursor: pagination.cursor,
+      requestId,
+      status,
+    });
+    return buildPaginatedResponse(page.rows, pagination.limit, page.nextCursor);
+  }
+
+  async getUsageForTenant(
+    actorUserId: string,
+    tenantId: string,
+    dateQuery: unknown,
+  ): Promise<{
+    readonly data: {
+      readonly usageDate: string;
+      readonly channel: string;
+      readonly sentCount: number;
+      readonly segmentCount: number;
+      readonly dailyCap: number | null;
+      readonly bypassDailyCap: boolean;
+    };
+  }> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    const usageDate = parseUsageDate(dateQuery);
+    const cap = dailyCapFromEnv();
+    const bypassDailyCap = cap < 0;
+    if (!this.notifications.isAvailable()) {
+      return {
+        data: {
+          usageDate,
+          channel: 'sms',
+          sentCount: 0,
+          segmentCount: 0,
+          dailyCap: bypassDailyCap ? null : cap,
+          bypassDailyCap,
+        },
+      };
+    }
+    const row = await this.notifications.getUsageDaily(actorUserId, tenantId, usageDate);
     return {
-      data: await this.notifications.listDeliveries(actorUserId, tenantId, limit ?? 25),
+      data: {
+        usageDate: row?.usageDate ?? usageDate,
+        channel: 'sms',
+        sentCount: row?.sentCount ?? 0,
+        segmentCount: row?.segmentCount ?? 0,
+        dailyCap: bypassDailyCap ? null : cap,
+        bypassDailyCap,
+      },
     };
   }
 
@@ -206,6 +278,7 @@ export class NotificationsService {
       throw new AppError('INTERNAL_ERROR', 'Template body missing after create.');
     }
     const body = renderTemplateBody(bodyTemplate, parsed.payload);
+    const segments = estimateSmsSegments(body);
 
     const sendResult = await this.sms.send({
       tenantId,
@@ -226,7 +299,7 @@ export class NotificationsService {
         destE164: normalized,
         phoneLast4: phoneLast4(normalized),
         deliveryStatus: sendResult.status === 'sent' ? 'sent' : 'failed',
-        segmentCount: 1,
+        segmentCount: segments,
         errorCode: sendResult.errorCode ?? null,
         errorMessage: sendResult.errorMessage ?? null,
       });
@@ -327,6 +400,42 @@ function secureSecretEqual(provided: string | undefined, expected: string): bool
   const b = Buffer.from(expected, 'utf8');
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
+}
+
+function parseOptionalUuid(raw: unknown, field: string): string | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  if (typeof raw !== 'string' || !isUuid(raw.trim())) {
+    throw AppError.validation(`${field} must be a UUID.`, { field });
+  }
+  return raw.trim().toLowerCase();
+}
+
+function parseOptionalDeliveryStatus(raw: unknown): string | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  if (typeof raw !== 'string') {
+    throw AppError.validation('status must be a string.', { field: 'status' });
+  }
+  const status = raw.trim().toLowerCase();
+  if (!DELIVERY_STATUSES.has(status)) {
+    throw AppError.validation('status is not a valid delivery status.', { field: 'status' });
+  }
+  return status;
+}
+
+function parseUsageDate(raw: unknown): string {
+  if (raw === undefined || raw === null || raw === '') return utcTodayDateString();
+  if (typeof raw !== 'string') {
+    throw AppError.validation('date must be YYYY-MM-DD.', { field: 'date' });
+  }
+  const trimmed = raw.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    throw AppError.validation('date must be YYYY-MM-DD.', { field: 'date' });
+  }
+  const parsed = Date.parse(`${trimmed}T00:00:00.000Z`);
+  if (!Number.isFinite(parsed)) {
+    throw AppError.validation('date must be a valid calendar day.', { field: 'date' });
+  }
+  return trimmed;
 }
 
 type ParsedCreateRequest = {

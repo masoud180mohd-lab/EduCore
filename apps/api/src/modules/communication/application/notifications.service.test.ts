@@ -199,3 +199,113 @@ describe('NotificationsService.handleBeemWebhook', () => {
     }
   });
 });
+
+describe('NotificationsService.listDeliveriesForTenant / usage', () => {
+  it('returns paginated deliveries with filters', async () => {
+    const listDeliveries = vi.fn().mockResolvedValue({
+      rows: [
+        {
+          id: '01900000-0000-7000-8000-0000000000d1',
+          tenantId,
+          requestId: guardianId,
+          providerCode: 'fake',
+          providerMessageId: 'm1',
+          phoneLast4: '5678',
+          status: 'sent',
+          segmentCount: 1,
+          errorCode: null,
+          createdAt: '2026-08-03T00:00:00.000Z',
+          updatedAt: '2026-08-03T00:00:00.000Z',
+        },
+      ],
+      nextCursor: null,
+    });
+    const service = createNotificationsServiceForTest({
+      isAvailable: () => true,
+      listDeliveries,
+    } as never);
+
+    const result = await service.listDeliveriesForTenant(actorUserId, tenantId, {
+      limit: '10',
+      status: 'sent',
+      requestId: guardianId,
+    });
+
+    expect(result.page).toEqual({ nextCursor: null, limit: 10 });
+    expect(result.data).toHaveLength(1);
+    expect(listDeliveries).toHaveBeenCalledWith(
+      actorUserId,
+      tenantId,
+      expect.objectContaining({
+        limit: 10,
+        status: 'sent',
+        requestId: guardianId,
+      }),
+    );
+  });
+
+  it('rejects invalid delivery status filter', async () => {
+    const service = createNotificationsServiceForTest({
+      isAvailable: () => true,
+      listDeliveries: vi.fn(),
+    } as never);
+    await expect(
+      service.listDeliveriesForTenant(actorUserId, tenantId, { status: 'bogus' }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+
+  it('returns usage meter with dailyCap', async () => {
+    const prevCap = process.env['SMS_DAILY_CAP_PER_TENANT'];
+    const prevBypass = process.env['SMS_BYPASS_DAILY_CAP'];
+    process.env['SMS_DAILY_CAP_PER_TENANT'] = '42';
+    delete process.env['SMS_BYPASS_DAILY_CAP'];
+    try {
+      const getUsageDaily = vi.fn().mockResolvedValue({
+        usageDate: '2026-08-03',
+        channel: 'sms',
+        sentCount: 3,
+        segmentCount: 4,
+      });
+      const service = createNotificationsServiceForTest({
+        isAvailable: () => true,
+        getUsageDaily,
+      } as never);
+      const result = await service.getUsageForTenant(actorUserId, tenantId, '2026-08-03');
+      expect(result.data).toEqual({
+        usageDate: '2026-08-03',
+        channel: 'sms',
+        sentCount: 3,
+        segmentCount: 4,
+        dailyCap: 42,
+        bypassDailyCap: false,
+      });
+    } finally {
+      if (prevCap === undefined) delete process.env['SMS_DAILY_CAP_PER_TENANT'];
+      else process.env['SMS_DAILY_CAP_PER_TENANT'] = prevCap;
+      if (prevBypass === undefined) delete process.env['SMS_BYPASS_DAILY_CAP'];
+      else process.env['SMS_BYPASS_DAILY_CAP'] = prevBypass;
+    }
+  });
+
+  it('reports bypassDailyCap when SMS_BYPASS_DAILY_CAP=true', async () => {
+    const prev = process.env['SMS_BYPASS_DAILY_CAP'];
+    process.env['SMS_BYPASS_DAILY_CAP'] = 'true';
+    try {
+      const service = createNotificationsServiceForTest({
+        isAvailable: () => true,
+        getUsageDaily: vi.fn().mockResolvedValue({
+          usageDate: '2026-08-03',
+          channel: 'sms',
+          sentCount: 0,
+          segmentCount: 0,
+        }),
+      } as never);
+      const result = await service.getUsageForTenant(actorUserId, tenantId, '2026-08-03');
+      expect(result.data.bypassDailyCap).toBe(true);
+      expect(result.data.dailyCap).toBeNull();
+    } finally {
+      if (prev === undefined) delete process.env['SMS_BYPASS_DAILY_CAP'];
+      else process.env['SMS_BYPASS_DAILY_CAP'] = prev;
+    }
+  });
+});

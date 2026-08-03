@@ -69,3 +69,20 @@ export function phoneLast4(e164Digits: string): string {
   const digits = e164Digits.replace(/\D/g, '');
   return digits.slice(-4);
 }
+
+/**
+ * Rough SMS segment estimate (COMMS-005).
+ * GSM-ish (ASCII-only) → 160 / 153; otherwise UCS-2-ish → 70 / 67.
+ */
+export function estimateSmsSegments(body: string): number {
+  const chars = [...body];
+  const len = chars.length;
+  if (len === 0) return 1;
+  const unicode = chars.some((c) => (c.codePointAt(0) ?? 0) > 127);
+  if (!unicode) {
+    if (len <= 160) return 1;
+    return Math.ceil(len / 153);
+  }
+  if (len <= 70) return 1;
+  return Math.ceil(len / 67);
+}

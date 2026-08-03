@@ -281,32 +281,122 @@ export class NotificationsRepository {
   async listDeliveries(
     actorUserId: string,
     tenantId: string,
-    limit: number,
-  ): Promise<ReadonlyArray<NotificationDeliveryRow>> {
-    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) return [];
-    const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 100) : 25;
+    query: {
+      readonly limit: number;
+      readonly cursor: string | undefined;
+      readonly requestId: string | undefined;
+      readonly status: string | undefined;
+    },
+  ): Promise<{
+    readonly rows: ReadonlyArray<NotificationDeliveryRow>;
+    readonly nextCursor: string | null;
+  }> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) {
+      return { rows: [], nextCursor: null };
+    }
     try {
       return await withTenantTransaction(
         this.pool,
         { userId: actorUserId, tenantId },
         async (client) => {
-          const result = await client.query<DeliveryDbRow>(
-            `SELECT id, tenant_id, request_id, provider_code, provider_message_id,
-                  phone_last4, status, segment_count, error_code, created_at, updated_at
-           FROM notification_deliveries
-           WHERE tenant_id = $1::uuid
-           ORDER BY created_at DESC, id DESC
-           LIMIT $2`,
-            [tenantId, safeLimit],
-          );
-          return result.rows.map(mapDelivery);
+          const params: unknown[] = [tenantId, query.limit + 1];
+          let sql = `
+            SELECT d.id, d.tenant_id, d.request_id, d.provider_code, d.provider_message_id,
+                   d.phone_last4, d.status, d.segment_count, d.error_code, d.created_at, d.updated_at
+            FROM notification_deliveries d
+            WHERE d.tenant_id = $1::uuid`;
+          if (query.requestId !== undefined) {
+            params.push(query.requestId);
+            sql += ` AND d.request_id = $${String(params.length)}::uuid`;
+          }
+          if (query.status !== undefined) {
+            params.push(query.status);
+            sql += ` AND d.status = $${String(params.length)}`;
+          }
+          if (query.cursor !== undefined) {
+            params.push(query.cursor);
+            sql += ` AND (d.created_at, d.id) < (
+              SELECT c.created_at, c.id
+              FROM notification_deliveries c
+              WHERE c.id = $${String(params.length)}::uuid AND c.tenant_id = $1::uuid
+            )`;
+          }
+          sql += ` ORDER BY d.created_at DESC, d.id DESC LIMIT $2`;
+
+          const result = await client.query<DeliveryDbRow>(sql, params);
+          const hasMore = result.rows.length > query.limit;
+          const pageRows = hasMore ? result.rows.slice(0, query.limit) : result.rows;
+          const mapped = pageRows.map(mapDelivery);
+          const last = mapped[mapped.length - 1];
+          return {
+            rows: mapped,
+            nextCursor: hasMore && last !== undefined ? last.id : null,
+          };
         },
       );
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'NotificationsRepository', error, {
         operation: 'listDeliveries',
       });
-      return [];
+      return { rows: [], nextCursor: null };
+    }
+  }
+
+  async getUsageDaily(
+    actorUserId: string,
+    tenantId: string,
+    usageDate: string,
+  ): Promise<{
+    readonly usageDate: string;
+    readonly channel: string;
+    readonly sentCount: number;
+    readonly segmentCount: number;
+  } | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) return null;
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            usage_date: Date | string;
+            channel: string;
+            sent_count: number;
+            segment_count: number;
+          }>(
+            `SELECT usage_date, channel, sent_count, segment_count
+             FROM notification_usage_daily
+             WHERE tenant_id = $1::uuid
+               AND usage_date = $2::date
+               AND channel = 'sms'`,
+            [tenantId, usageDate],
+          );
+          const row = result.rows[0];
+          if (row === undefined) {
+            return {
+              usageDate,
+              channel: 'sms',
+              sentCount: 0,
+              segmentCount: 0,
+            };
+          }
+          const dateStr =
+            typeof row.usage_date === 'string'
+              ? row.usage_date.slice(0, 10)
+              : row.usage_date.toISOString().slice(0, 10);
+          return {
+            usageDate: dateStr,
+            channel: row.channel,
+            sentCount: Number(row.sent_count),
+            segmentCount: Number(row.segment_count),
+          };
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'NotificationsRepository', error, {
+        operation: 'getUsageDaily',
+      });
+      return null;
     }
   }
 
