@@ -2,6 +2,10 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-03 - COMMS DBF-013 / ACF-014 freezes
+
+- Provisional notifications/SMS schema + API freeze; minimal outbox; next COMMS-003 Fake path.
+
 ## 2026-08-03 - COMMS-001 Accepted + COMMS-002 templates
 
 - Owner accepted Beem Africa as MVP SMS provider (Fake CI default).
