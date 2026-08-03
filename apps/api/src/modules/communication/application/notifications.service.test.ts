@@ -128,3 +128,74 @@ describe('NotificationsService.createRequestForTenant', () => {
     );
   });
 });
+
+describe('NotificationsService.handleBeemWebhook', () => {
+  it('returns 501 when webhook secret unset', async () => {
+    const prev = process.env['BEEM_WEBHOOK_SECRET'];
+    delete process.env['BEEM_WEBHOOK_SECRET'];
+    try {
+      const service = createNotificationsServiceForTest({
+        isAvailable: () => true,
+      } as never);
+      await expect(
+        service.handleBeemWebhook({ request_id: '67', status: 'DELIVERED' }, 'x'),
+      ).rejects.toMatchObject({ code: 'NOT_IMPLEMENTED' });
+    } finally {
+      if (prev === undefined) delete process.env['BEEM_WEBHOOK_SECRET'];
+      else process.env['BEEM_WEBHOOK_SECRET'] = prev;
+    }
+  });
+
+  it('rejects bad secret', async () => {
+    const prev = process.env['BEEM_WEBHOOK_SECRET'];
+    process.env['BEEM_WEBHOOK_SECRET'] = 'expected-secret';
+    try {
+      const service = createNotificationsServiceForTest({
+        isAvailable: () => true,
+      } as never);
+      await expect(
+        service.handleBeemWebhook({ request_id: '67', status: 'DELIVERED' }, 'wrong'),
+      ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    } finally {
+      if (prev === undefined) delete process.env['BEEM_WEBHOOK_SECRET'];
+      else process.env['BEEM_WEBHOOK_SECRET'] = prev;
+    }
+  });
+
+  it('applies delivery report when secret matches', async () => {
+    const prev = process.env['BEEM_WEBHOOK_SECRET'];
+    process.env['BEEM_WEBHOOK_SECRET'] = 'expected-secret';
+    try {
+      const applyBeemDeliveryReport = vi.fn().mockResolvedValue({
+        deliveryId: 'd1',
+        tenantId,
+        requestId: 'r1',
+        updated: true,
+        detail: 'updated',
+      });
+      const service = createNotificationsServiceForTest({
+        isAvailable: () => true,
+        applyBeemDeliveryReport,
+      } as never);
+      const result = await service.handleBeemWebhook(
+        { request_id: 67, status: 'DELIVERED' },
+        'expected-secret',
+      );
+      expect(result.data).toEqual({
+        accepted: true,
+        updated: true,
+        detail: 'updated',
+        deliveryId: 'd1',
+      });
+      expect(applyBeemDeliveryReport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          providerMessageId: '67',
+          deliveryStatus: 'DELIVERED',
+        }),
+      );
+    } finally {
+      if (prev === undefined) delete process.env['BEEM_WEBHOOK_SECRET'];
+      else process.env['BEEM_WEBHOOK_SECRET'] = prev;
+    }
+  });
+});

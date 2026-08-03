@@ -1,7 +1,7 @@
 /**
- * Notification requests + Fake SMS send path (COMMS-003 / ACF-014).
+ * Notification requests + SMS send path (COMMS-003 / COMMS-004 / ACF-014).
  */
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 
 import { Inject, Injectable, Optional } from '@nestjs/common';
 
@@ -22,6 +22,7 @@ import {
   renderTemplateBody,
   TEMPLATE_ALLOWLISTS,
 } from './notification-templates.js';
+import { loadBeemWebhookSecret } from '../providers/beem-config.js';
 import { FakeSmsProvider } from '../providers/fake-sms.provider.js';
 import { SMS_PROVIDER_PORT, type SmsProviderPort } from '../providers/sms-provider.port.js';
 import {
@@ -238,6 +239,94 @@ export class NotificationsService {
       throw new AppError('INTERNAL_ERROR', 'Failed to load notification request.');
     return { data: finalRow };
   }
+
+  /**
+   * COMMS-004: public Beem DLR webhook — shared secret header, no session.
+   * Header: X-Beem-Webhook-Secret must match BEEM_WEBHOOK_SECRET.
+   * Body allowlist: request_id (Beem), status (DELIVERED|UNDELIVERED|FAILED|PENDING|sent|…).
+   */
+  async handleBeemWebhook(
+    rawBody: unknown,
+    webhookSecretHeader: string | undefined,
+  ): Promise<{
+    readonly data: {
+      readonly accepted: boolean;
+      readonly updated: boolean;
+      readonly detail: string;
+      readonly deliveryId: string | null;
+    };
+  }> {
+    const expected = loadBeemWebhookSecret();
+    if (expected === null) {
+      throw new AppError(
+        'NOT_IMPLEMENTED',
+        'Beem webhook is not configured (set BEEM_WEBHOOK_SECRET).',
+      );
+    }
+    if (!secureSecretEqual(webhookSecretHeader, expected)) {
+      throw AppError.unauthorized('Invalid Beem webhook secret.');
+    }
+    if (!this.notifications.isAvailable()) {
+      throw new AppError('INTERNAL_ERROR', 'Notifications store unavailable.');
+    }
+    if (rawBody === null || typeof rawBody !== 'object' || Array.isArray(rawBody)) {
+      throw AppError.validation('Body must be a JSON object.');
+    }
+    const payload = rawBody as Record<string, unknown>;
+    const providerMessageId = readStringField(payload, ['request_id', 'providerMessageId']);
+    if (providerMessageId === null) {
+      throw AppError.validation('request_id is required.', { field: 'request_id' });
+    }
+    const statusRaw = readStringField(payload, ['status', 'delivery_status']);
+    if (statusRaw === null) {
+      throw AppError.validation('status is required.', { field: 'status' });
+    }
+    const errorCode = readStringField(payload, ['error_code', 'errorCode']);
+    const errorMessage = readStringField(payload, ['error_message', 'errorMessage', 'message']);
+
+    try {
+      const result = await this.notifications.applyBeemDeliveryReport({
+        providerMessageId,
+        deliveryStatus: statusRaw,
+        errorCode,
+        errorMessage,
+      });
+      if (result.detail === 'delivery_not_found') {
+        throw AppError.notFound('Notification delivery not found for Beem request_id.');
+      }
+      return {
+        data: {
+          accepted: true,
+          updated: result.updated,
+          detail: result.detail,
+          deliveryId: result.deliveryId,
+        },
+      };
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('INTERNAL_ERROR', 'Failed to apply Beem delivery report.');
+    }
+  }
+}
+
+function readStringField(
+  payload: Record<string, unknown>,
+  keys: ReadonlyArray<string>,
+): string | null {
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === 'string' && value.trim() !== '') return value.trim();
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  }
+  return null;
+}
+
+function secureSecretEqual(provided: string | undefined, expected: string): boolean {
+  if (provided === undefined) return false;
+  const a = Buffer.from(provided, 'utf8');
+  const b = Buffer.from(expected, 'utf8');
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }
 
 type ParsedCreateRequest = {

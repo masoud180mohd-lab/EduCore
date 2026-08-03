@@ -15,13 +15,13 @@
 
 ## Scope (v1)
 
-| In scope                                    | Out of scope                              |
-| ------------------------------------------- | ----------------------------------------- |
-| List active templates                       | Template editor UI                        |
-| Create notification request (manual/admin)  | Bulk blast campaigns                      |
-| List deliveries (cursor)                    | Parent-facing SMS history                 |
-| Get request by id                           | Automatic domain event wiring (follow-on) |
-| Optional Beem DLR webhook (later COMMS-004) | Email / push                              |
+| In scope                                   | Out of scope                              |
+| ------------------------------------------ | ----------------------------------------- |
+| List active templates                      | Template editor UI                        |
+| Create notification request (manual/admin) | Bulk blast campaigns                      |
+| List deliveries (cursor)                   | Parent-facing SMS history                 |
+| Get request by id                          | Automatic domain event wiring (follow-on) |
+| Optional Beem DLR webhook (COMMS-004)      | Email / push                              |
 
 ## Auth stack
 
@@ -42,7 +42,7 @@ Authenticated → Tenant header → Session tenant bind → Permission → RLS.
 | GET    | `/api/v1/notifications/requests/{requestId}` | notification.read                                                                     |
 | POST   | `/api/v1/notifications/requests`             | notification.manage + **Idempotency-Key**                                             |
 | GET    | `/api/v1/notifications/deliveries`           | notification.read — cursor pagination                                                 |
-| POST   | `/api/v1/notifications/webhooks/beem`        | **No session**; shared-secret / signed check (COMMS-004) — stub may 501 until adapter |
+| POST   | `/api/v1/notifications/webhooks/beem`        | **No session**; header `X-Beem-Webhook-Secret` = `BEEM_WEBHOOK_SECRET` (501 if unset) |
 
 ### POST `/api/v1/notifications/requests`
 

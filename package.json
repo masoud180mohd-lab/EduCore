@@ -27,6 +27,7 @@
     "docker:up": "docker compose --env-file .env.docker.example up -d --wait",
     "env:check": "tsx scripts/validate-environment.ts",
     "payments:check-config": "tsx scripts/check-clickpesa-config.ts",
+    "sms:check-config": "tsx scripts/check-beem-config.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint --max-warnings 0 .",

@@ -309,6 +309,47 @@ export class NotificationsRepository {
       return [];
     }
   }
+
+  /** COMMS-004: Beem DLR ingest (no membership; SECURITY DEFINER). */
+  async applyBeemDeliveryReport(input: {
+    readonly providerMessageId: string;
+    readonly deliveryStatus: string;
+    readonly errorCode: string | null;
+    readonly errorMessage: string | null;
+  }): Promise<{
+    readonly deliveryId: string | null;
+    readonly tenantId: string | null;
+    readonly requestId: string | null;
+    readonly updated: boolean;
+    readonly detail: string;
+  }> {
+    if (this.pool === null) throw new Error('database unavailable');
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query<{
+        delivery_id: string | null;
+        tenant_id: string | null;
+        request_id: string | null;
+        updated: boolean;
+        detail: string;
+      }>(
+        `SELECT delivery_id, tenant_id, request_id, updated, detail
+         FROM app.apply_beem_delivery_report($1::text, $2::text, $3::text, $4::text)`,
+        [input.providerMessageId, input.deliveryStatus, input.errorCode, input.errorMessage],
+      );
+      const row = result.rows[0];
+      if (row === undefined) throw new Error('apply_beem_delivery_report returned no row');
+      return {
+        deliveryId: row.delivery_id,
+        tenantId: row.tenant_id,
+        requestId: row.request_id,
+        updated: row.updated,
+        detail: row.detail,
+      };
+    } finally {
+      client.release();
+    }
+  }
 }
 
 type CreateRequestDbRow = QueryResultRow & {
