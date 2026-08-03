@@ -2,6 +2,16 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-03 - PAY-OPS-001 sandbox deferred
+
+- Operator skipped ClickPesa sandbox until vendor keys exist; next epic = EPIC-COMMS.
+- `payments:check-config` remains available for when keys arrive.
+
+## 2026-08-02 - PAY-OPS-001 sandbox config check
+
+- Added `npm run payments:check-config` (redacted ClickPesa readiness report).
+- Kit path A locked; operator runbook updated with webhook optional path.
+
 ## 2026-08-02 - PAY-006 payment status UI
 
 - Bursar invoice detail: pending MoMo + BillPay + Refresh from provider; Request mobile money with Fake honesty.
