@@ -1,13 +1,13 @@
 # SMS template catalog (COMMS-002)
 
-| Field     | Value                                      |
-| --------- | ------------------------------------------ |
-| Program   | **COMMS-002** / EPIC-COMMS-01              |
-| Date      | 2026-08-03                                 |
-| Status    | **Accepted catalog v0.1** (solo-operator)  |
-| Depends   | COMMS-001 Accepted (Beem)                  |
-| Channel   | SMS only                                   |
-| Authority | Solo-operator provisional (SOLO-GOV-001)   |
+| Field     | Value                                     |
+| --------- | ----------------------------------------- |
+| Program   | **COMMS-002** / EPIC-COMMS-01             |
+| Date      | 2026-08-03                                |
+| Status    | **Accepted catalog v0.1** (solo-operator) |
+| Depends   | COMMS-001 Accepted (Beem)                 |
+| Channel   | SMS only                                  |
+| Authority | Solo-operator provisional (SOLO-GOV-001)  |
 
 ## Rules
 
@@ -20,28 +20,28 @@
 
 ## Global placeholder types
 
-| Token | Meaning | Source |
-| ----- | ------- | ------ |
-| `{{school_name}}` | Tenant display name | tenant settings / org |
-| `{{student_name}}` | Student display name | student registry |
-| `{{guardian_name}}` | Guardian display name | guardians |
-| `{{amount_tzs}}` | Major TZS string (e.g. `150000.00`) | derived from `amountMinor` |
-| `{{invoice_ref}}` | Short invoice id or receipt-friendly ref | invoice / payment |
-| `{{bill_pay}}` | MoMo BillPay / control number | payment `providerRef` when MoMo |
-| `{{date}}` | Local date `YYYY-MM-DD` | event / attendance day |
-| `{{balance_tzs}}` | Invoice balance major | `balanceMinor` |
+| Token               | Meaning                                  | Source                          |
+| ------------------- | ---------------------------------------- | ------------------------------- |
+| `{{school_name}}`   | Tenant display name                      | tenant settings / org           |
+| `{{student_name}}`  | Student display name                     | student registry                |
+| `{{guardian_name}}` | Guardian display name                    | guardians                       |
+| `{{amount_tzs}}`    | Major TZS string (e.g. `150000.00`)      | derived from `amountMinor`      |
+| `{{invoice_ref}}`   | Short invoice id or receipt-friendly ref | invoice / payment               |
+| `{{bill_pay}}`      | MoMo BillPay / control number            | payment `providerRef` when MoMo |
+| `{{date}}`          | Local date `YYYY-MM-DD`                  | event / attendance day          |
+| `{{balance_tzs}}`   | Invoice balance major                    | `balanceMinor`                  |
 
 ## Catalog
 
 ### 1. `fee_invoice_issued`
 
-| Field | Value |
-| ----- | ----- |
-| Code | `fee_invoice_issued` |
-| When | After invoice **issue** (revenue recognized) — v1 may be **manual admin notify** or domain event |
-| Audience | Linked guardians with phone |
-| Allowlist | `school_name`, `student_name`, `amount_tzs`, `balance_tzs`, `invoice_ref` |
-| Max guidance | Prefer 1 segment |
+| Field        | Value                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------ |
+| Code         | `fee_invoice_issued`                                                                             |
+| When         | After invoice **issue** (revenue recognized) — v1 may be **manual admin notify** or domain event |
+| Audience     | Linked guardians with phone                                                                      |
+| Allowlist    | `school_name`, `student_name`, `amount_tzs`, `balance_tzs`, `invoice_ref`                        |
+| Max guidance | Prefer 1 segment                                                                                 |
 
 **en**
 
@@ -57,13 +57,13 @@
 
 ### 2. `payment_received`
 
-| Field | Value |
-| ----- | ----- |
-| Code | `payment_received` |
-| When | Payment attempt **succeeded** (office or MoMo complete) |
-| Audience | Linked guardians with phone |
-| Allowlist | `school_name`, `student_name`, `amount_tzs`, `balance_tzs`, `invoice_ref` |
-| Max guidance | Prefer 1 segment |
+| Field        | Value                                                                     |
+| ------------ | ------------------------------------------------------------------------- |
+| Code         | `payment_received`                                                        |
+| When         | Payment attempt **succeeded** (office or MoMo complete)                   |
+| Audience     | Linked guardians with phone                                               |
+| Allowlist    | `school_name`, `student_name`, `amount_tzs`, `balance_tzs`, `invoice_ref` |
+| Max guidance | Prefer 1 segment                                                          |
 
 **en**
 
@@ -79,13 +79,13 @@
 
 ### 3. `payment_momo_pending`
 
-| Field | Value |
-| ----- | ----- |
-| Code | `payment_momo_pending` |
-| When | MoMo BillPay created (pending) — bursar-assisted or system |
-| Audience | Guardian(s) for that student |
-| Allowlist | `school_name`, `student_name`, `amount_tzs`, `bill_pay`, `invoice_ref` |
-| Max guidance | May be 1–2 segments if BillPay long |
+| Field        | Value                                                                  |
+| ------------ | ---------------------------------------------------------------------- |
+| Code         | `payment_momo_pending`                                                 |
+| When         | MoMo BillPay created (pending) — bursar-assisted or system             |
+| Audience     | Guardian(s) for that student                                           |
+| Allowlist    | `school_name`, `student_name`, `amount_tzs`, `bill_pay`, `invoice_ref` |
+| Max guidance | May be 1–2 segments if BillPay long                                    |
 
 **en**
 
@@ -101,13 +101,13 @@
 
 ### 4. `attendance_absent_digest`
 
-| Field | Value |
-| ----- | ----- |
-| Code | `attendance_absent_digest` |
-| When | End-of-day / session digest when student marked **absent** (v1: optional trigger; catalog reserved) |
-| Audience | Primary guardian with phone |
-| Allowlist | `school_name`, `student_name`, `date` |
-| Max guidance | 1 segment |
+| Field        | Value                                                                                               |
+| ------------ | --------------------------------------------------------------------------------------------------- |
+| Code         | `attendance_absent_digest`                                                                          |
+| When         | End-of-day / session digest when student marked **absent** (v1: optional trigger; catalog reserved) |
+| Audience     | Primary guardian with phone                                                                         |
+| Allowlist    | `school_name`, `student_name`, `date`                                                               |
+| Max guidance | 1 segment                                                                                           |
 
 **en**
 
@@ -123,13 +123,13 @@
 
 ### 5. `comms_test_sms`
 
-| Field | Value |
-| ----- | ----- |
-| Code | `comms_test_sms` |
-| When | Admin **Send test SMS** only |
-| Audience | Explicit guardian or validated test phone |
-| Allowlist | `school_name` |
-| Max guidance | 1 segment |
+| Field        | Value                                     |
+| ------------ | ----------------------------------------- |
+| Code         | `comms_test_sms`                          |
+| When         | Admin **Send test SMS** only              |
+| Audience     | Explicit guardian or validated test phone |
+| Allowlist    | `school_name`                             |
+| Max guidance | 1 segment                                 |
 
 **en**
 

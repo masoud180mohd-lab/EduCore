@@ -1,13 +1,13 @@
 # COMMS-002 — SMS template catalog
 
-| Field     | Value                                      |
-| --------- | ------------------------------------------ |
-| Program   | **COMMS-002** / EPIC-COMMS-01              |
-| Date      | 2026-08-03                                 |
-| Status    | **Done** (solo-operator)                   |
-| Depends   | COMMS-001 Accepted                         |
+| Field     | Value                                                    |
+| --------- | -------------------------------------------------------- |
+| Program   | **COMMS-002** / EPIC-COMMS-01                            |
+| Date      | 2026-08-03                                               |
+| Status    | **Done** (solo-operator)                                 |
+| Depends   | COMMS-001 Accepted                                       |
 | Catalog   | `docs/engineering/communication/SMS_TEMPLATE_CATALOG.md` |
-| Authority | Solo-operator provisional (SOLO-GOV-001)   |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                 |
 
 ## Delivered
 

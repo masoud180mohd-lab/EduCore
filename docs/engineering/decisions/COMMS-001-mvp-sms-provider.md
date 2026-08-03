@@ -1,13 +1,13 @@
 # COMMS-001 — MVP SMS provider selection (decision brief)
 
-| Field       | Value                                                                                          |
-| ----------- | ---------------------------------------------------------------------------------------------- |
-| Decision ID | `COMMS-001`                                                                                    |
-| Status      | **Accepted (solo-operator)** — 2026-08-03                                              |
-| Date        | 2026-08-03 (Proposed same day; Accepted on Owner “sawa”)                               |
-| Program     | EPIC-COMMS-01 / `EduCore/39_ENGINEERING_EXECUTION_ROADMAP.md` COMMS-001                        |
-| Authority   | Solo-operator provisional (SOLO-GOV-001) until countersigned                                   |
-| Governing   | ADR-008 (outbox) · SRS SMS-first · Constitution async rules · Architecture Communication BC    |
+| Field       | Value                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| Decision ID | `COMMS-001`                                                                                 |
+| Status      | **Accepted (solo-operator)** — 2026-08-03                                                   |
+| Date        | 2026-08-03 (Proposed same day; Accepted on Owner “sawa”)                                    |
+| Program     | EPIC-COMMS-01 / `EduCore/39_ENGINEERING_EXECUTION_ROADMAP.md` COMMS-001                     |
+| Authority   | Solo-operator provisional (SOLO-GOV-001) until countersigned                                |
+| Governing   | ADR-008 (outbox) · SRS SMS-first · Constitution async rules · Architecture Communication BC |
 
 ## Objective
 
@@ -35,51 +35,51 @@ Success for this decision (not full EPIC-COMMS):
 
 ## Current baseline (repo)
 
-| Piece | State |
-| ----- | ----- |
-| `apps/api/src/modules/communication/**` | PLAT-003 skeleton only (`ready: false`) |
-| Outbox runtime | **Not implemented** — ADR-008 accepted; tables conceptual in kit DB design |
-| Guardian `phone` | Exists (ACF-010 / DBF-010); optional ≤32; no E.164 yet |
-| `SmsProviderPort` | **Does not exist** |
-| Next freezes (planned) | **DBF-013** · **ACF-014** after COMMS-001 Accept |
+| Piece                                   | State                                                                      |
+| --------------------------------------- | -------------------------------------------------------------------------- |
+| `apps/api/src/modules/communication/**` | PLAT-003 skeleton only (`ready: false`)                                    |
+| Outbox runtime                          | **Not implemented** — ADR-008 accepted; tables conceptual in kit DB design |
+| Guardian `phone`                        | Exists (ACF-010 / DBF-010); optional ≤32; no E.164 yet                     |
+| `SmsProviderPort`                       | **Does not exist**                                                         |
+| Next freezes (planned)                  | **DBF-013** · **ACF-014** after COMMS-001 Accept                           |
 
 ## Options compared (≥2 TZ-capable)
 
-| ID | Vendor | Pros | Cons |
-| -- | ------ | ---- | ---- |
-| **A** | **Beem Africa** | Strong TZ footprint; published **TZS** tier pricing; REST send (`apisms.beem.africa`); Basic auth; DLR/API docs; Sender ID path familiar to TZ schools | Lab “sandbox” less famous than AT; Sender ID / TCRA registration needed before production alphanumeric ID |
-| **B** | **Africa’s Talking** | Excellent developer sandbox; pan-African APIs; good docs/SDKs; future USSD/voice optionality | TZ pricing/routing often less “local-first” than Beem for pure TZ schools; wallet/currency ops may be KE-centric for some accounts |
-| **C** | **Twilio** | Best global DX; mature DLR/webhooks | Higher TZ cost via aggregated routes; overkill for SMS-only TZ MVP; FX/billing friction for TZS schools |
-| **D** | **Defer real SMS** (Fake only) | Zero vendor risk | Does **not** satisfy EPIC-COMMS MVP; only OK as explicit pause |
+| ID    | Vendor                         | Pros                                                                                                                                                   | Cons                                                                                                                               |
+| ----- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **A** | **Beem Africa**                | Strong TZ footprint; published **TZS** tier pricing; REST send (`apisms.beem.africa`); Basic auth; DLR/API docs; Sender ID path familiar to TZ schools | Lab “sandbox” less famous than AT; Sender ID / TCRA registration needed before production alphanumeric ID                          |
+| **B** | **Africa’s Talking**           | Excellent developer sandbox; pan-African APIs; good docs/SDKs; future USSD/voice optionality                                                           | TZ pricing/routing often less “local-first” than Beem for pure TZ schools; wallet/currency ops may be KE-centric for some accounts |
+| **C** | **Twilio**                     | Best global DX; mature DLR/webhooks                                                                                                                    | Higher TZ cost via aggregated routes; overkill for SMS-only TZ MVP; FX/billing friction for TZS schools                            |
+| **D** | **Defer real SMS** (Fake only) | Zero vendor risk                                                                                                                                       | Does **not** satisfy EPIC-COMMS MVP; only OK as explicit pause                                                                     |
 
 ### Engineering recommendation (Accepted)
 
 **Option A — Beem Africa** for Zanzibar / Tanzania school SMS MVP.
 
-| Why Beem | Detail |
-| -------- | ------ |
-| Fit | Transactional school alerts (fees, attendance) to guardian MSISDNs on national MNOs |
-| Cost honesty | Public TZ per-SMS tiers (order ~TZS 10–20/msg by volume — **verify at signup**; meter in EduCore regardless) |
-| Adapter shape | Single HTTP send + optional DLR callback — mirrors payments Fake→vendor env gate |
-| Fallback | **Africa’s Talking** if Beem account/Sender ID blocked for the operator entity — same port, different `provider_code` |
+| Why Beem      | Detail                                                                                                                |
+| ------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Fit           | Transactional school alerts (fees, attendance) to guardian MSISDNs on national MNOs                                   |
+| Cost honesty  | Public TZ per-SMS tiers (order ~TZS 10–20/msg by volume — **verify at signup**; meter in EduCore regardless)          |
+| Adapter shape | Single HTTP send + optional DLR callback — mirrors payments Fake→vendor env gate                                      |
+| Fallback      | **Africa’s Talking** if Beem account/Sender ID blocked for the operator entity — same port, different `provider_code` |
 
 **Reject for MVP:** Twilio (cost/complexity); multi-vendor UI; WhatsApp “quickly.”
 
 ## Decision record (Accepted 2026-08-03)
 
-| Field | Value |
-| ----- | ----- |
-| Chosen option | **A — Beem Africa** |
-| Opaque `provider_code` | `beem` (fallback `africas_talking`) |
-| Fake in CI | **Retained** — `SMS_PROVIDER=fake` (default) |
-| Launch geography | Tanzania (Zanzibar schools first; mainland SIMs OK) |
-| Sandbox / account owner | Project Owner / operator — registration pending |
-| Credential storage | env / secrets manager only — **never git** |
-| Env allowlist | `SMS_PROVIDER`=`fake`\|`beem` (later `africas_talking`); `BEEM_API_KEY`; `BEEM_SECRET_KEY`; `BEEM_SOURCE_ADDR` (Sender ID); optional `BEEM_BASE_URL` default `https://apisms.beem.africa`; optional `SMS_DAILY_CAP_PER_TENANT` |
-| DLR / webhook (MVP) | Prefer Beem delivery reports → EduCore public callback with shared-secret or signed check — **exact scheme locked in COMMS-004 contract**; interim may complete on HTTP 2xx send ack + async DLR |
-| Phone format to vendor | E.164 digits without `+` (e.g. `2557…`) — normalize in adapter; reject unparseable guardian phones |
-| Metering | Increment tenant usage on **accepted send** (and optionally on DLR delivered); Fake still increments for lab honesty |
-| Daily cap | Configured per tenant (default lab high); Fake bypasses **cost** but not delivery rows |
+| Field                   | Value                                                                                                                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Chosen option           | **A — Beem Africa**                                                                                                                                                                                                            |
+| Opaque `provider_code`  | `beem` (fallback `africas_talking`)                                                                                                                                                                                            |
+| Fake in CI              | **Retained** — `SMS_PROVIDER=fake` (default)                                                                                                                                                                                   |
+| Launch geography        | Tanzania (Zanzibar schools first; mainland SIMs OK)                                                                                                                                                                            |
+| Sandbox / account owner | Project Owner / operator — registration pending                                                                                                                                                                                |
+| Credential storage      | env / secrets manager only — **never git**                                                                                                                                                                                     |
+| Env allowlist           | `SMS_PROVIDER`=`fake`\|`beem` (later `africas_talking`); `BEEM_API_KEY`; `BEEM_SECRET_KEY`; `BEEM_SOURCE_ADDR` (Sender ID); optional `BEEM_BASE_URL` default `https://apisms.beem.africa`; optional `SMS_DAILY_CAP_PER_TENANT` |
+| DLR / webhook (MVP)     | Prefer Beem delivery reports → EduCore public callback with shared-secret or signed check — **exact scheme locked in COMMS-004 contract**; interim may complete on HTTP 2xx send ack + async DLR                               |
+| Phone format to vendor  | E.164 digits without `+` (e.g. `2557…`) — normalize in adapter; reject unparseable guardian phones                                                                                                                             |
+| Metering                | Increment tenant usage on **accepted send** (and optionally on DLR delivered); Fake still increments for lab honesty                                                                                                           |
+| Daily cap               | Configured per tenant (default lab high); Fake bypasses **cost** but not delivery rows                                                                                                                                         |
 
 ## Binding rules (after Accept)
 
@@ -91,14 +91,14 @@ Success for this decision (not full EPIC-COMMS):
 
 ## Mandatory follow-on (do not skip)
 
-| ID | Output | Blocks |
-| -- | ------ | ------ |
-| COMMS-001 Accept | This doc Status → Accepted | Real vendor client |
-| COMMS-002 | Template catalog (en/sw stubs) | Seeded templates |
-| DBF-013 / ACF-014 | Schema + HTTP freeze | Product Nest routes |
-| COMMS-003 | Notification request + outbox enqueue | End-to-end Fake |
-| COMMS-004 | Beem adapter behind env | Live SMS |
-| COMMS-005 | Delivery ledger + meter | Support / cost honesty |
+| ID                | Output                                | Blocks                 |
+| ----------------- | ------------------------------------- | ---------------------- |
+| COMMS-001 Accept  | This doc Status → Accepted            | Real vendor client     |
+| COMMS-002         | Template catalog (en/sw stubs)        | Seeded templates       |
+| DBF-013 / ACF-014 | Schema + HTTP freeze                  | Product Nest routes    |
+| COMMS-003         | Notification request + outbox enqueue | End-to-end Fake        |
+| COMMS-004         | Beem adapter behind env               | Live SMS               |
+| COMMS-005         | Delivery ledger + meter               | Support / cost honesty |
 
 ## Non-goals
 

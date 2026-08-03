@@ -98,14 +98,13 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**EPIC-COMMS-01** — freezes **DBF-013 / ACF-014 Done**; next **COMMS-003** Nest Fake SMS request path.
+**EPIC-COMMS-01** — COMMS-003 Fake SMS path **Done**; next **COMMS-004** Beem adapter (env-gated).
 
 Required outputs:
 
-1. ~~COMMS-001~~ Accepted (Beem).
-2. ~~COMMS-002~~ template catalog.
-3. ~~DBF-013 / ACF-014~~ provisional freezes.
-4. COMMS-003 request + outbox + Fake send → COMMS-004 Beem → COMMS-005 ledger/meter.
+1. ~~COMMS-001~~ … ~~COMMS-003~~ / freezes — Fake notify works in lab after migrate.
+2. COMMS-004 Beem client + optional DLR webhook.
+3. COMMS-005 harden meter/list evidence + manual QA.
 
 **Parallel:** MFA before production trust; PAY-OPS-001 deferred until ClickPesa keys.
 
@@ -116,7 +115,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **EPIC-COMMS** — DBF-013/ACF-014 Done; next COMMS-003 Fake SMS; PAY-OPS deferred.
+- **Next epic focus**: **EPIC-COMMS** — Fake SMS path shipped; next Beem adapter; PAY-OPS deferred.
 
 ## Status Update Rules
 

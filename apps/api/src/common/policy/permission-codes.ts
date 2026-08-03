@@ -30,6 +30,8 @@ export const PERMISSION_CODES = [
   'finance.read',
   'finance.manage',
   'finance.reconcile',
+  'notification.read',
+  'notification.manage',
   'parent.guardian.read',
   'parent.finance.read',
 ] as const;

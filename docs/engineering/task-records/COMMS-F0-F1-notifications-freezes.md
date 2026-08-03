@@ -1,13 +1,13 @@
 # COMMS-F0 / F1 — Notifications freezes (DBF-013 + ACF-014)
 
-| Field     | Value                                      |
-| --------- | ------------------------------------------ |
-| Program   | **COMMS-F0/F1** / EPIC-COMMS-01            |
-| Date      | 2026-08-03                                 |
-| Status    | **Done** (solo-operator provisional)       |
-| Depends   | COMMS-001 Accepted · COMMS-002 catalog     |
+| Field     | Value                                                                       |
+| --------- | --------------------------------------------------------------------------- |
+| Program   | **COMMS-F0/F1** / EPIC-COMMS-01                                             |
+| Date      | 2026-08-03                                                                  |
+| Status    | **Done** (solo-operator provisional)                                        |
+| Depends   | COMMS-001 Accepted · COMMS-002 catalog                                      |
 | Artifacts | `DBF-013-notifications-sms-slice.md` · `ACF-014-notifications-sms-slice.md` |
-| Authority | Solo-operator provisional (SOLO-GOV-001)   |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                    |
 
 ## Delivered
 

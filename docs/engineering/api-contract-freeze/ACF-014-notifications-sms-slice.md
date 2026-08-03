@@ -1,27 +1,27 @@
 # API Contract Freeze — Notifications / SMS (ACF-014)
 
-| Field     | Value                                      |
-| --------- | ------------------------------------------ |
-| Freeze ID | `ACF-014`                                  |
-| Version   | `1.0`                                      |
-| Date      | 2026-08-03                                 |
-| Companion | DBF-013                                    |
-| Program   | **EPIC-COMMS-01** (COMMS-F1)               |
+| Field     | Value                                                    |
+| --------- | -------------------------------------------------------- |
+| Freeze ID | `ACF-014`                                                |
+| Version   | `1.0`                                                    |
+| Date      | 2026-08-03                                               |
+| Companion | DBF-013                                                  |
+| Program   | **EPIC-COMMS-01** (COMMS-F1)                             |
 | Catalog   | `docs/engineering/communication/SMS_TEMPLATE_CATALOG.md` |
-| Provider  | COMMS-001 — Beem; Fake CI default          |
-| Authority | Solo-operator provisional (SOLO-GOV-001)   |
+| Provider  | COMMS-001 — Beem; Fake CI default                        |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                 |
 
 **Honesty:** Provisional. Product HTTP for SMS notify MVP. No WhatsApp. No parent SMS inbox UI.
 
 ## Scope (v1)
 
-| In scope | Out of scope |
-| -------- | ------------ |
-| List active templates | Template editor UI |
-| Create notification request (manual/admin) | Bulk blast campaigns |
-| List deliveries (cursor) | Parent-facing SMS history |
-| Get request by id | Automatic domain event wiring (follow-on) |
-| Optional Beem DLR webhook (later COMMS-004) | Email / push |
+| In scope                                    | Out of scope                              |
+| ------------------------------------------- | ----------------------------------------- |
+| List active templates                       | Template editor UI                        |
+| Create notification request (manual/admin)  | Bulk blast campaigns                      |
+| List deliveries (cursor)                    | Parent-facing SMS history                 |
+| Get request by id                           | Automatic domain event wiring (follow-on) |
+| Optional Beem DLR webhook (later COMMS-004) | Email / push                              |
 
 ## Auth stack
 
@@ -29,32 +29,32 @@ Authenticated → Tenant header → Session tenant bind → Permission → RLS.
 
 ## Permissions
 
-| Code | Use |
-| ---- | --- |
-| `notification.read` | GET templates, requests, deliveries |
+| Code                  | Use                                      |
+| --------------------- | ---------------------------------------- |
+| `notification.read`   | GET templates, requests, deliveries      |
 | `notification.manage` | POST notification request (send/enqueue) |
 
 ## Endpoints
 
-| Method | Path | AuthZ |
-| ------ | ---- | ----- |
-| GET | `/api/v1/notification-templates` | notification.read |
-| GET | `/api/v1/notifications/requests/{requestId}` | notification.read |
-| POST | `/api/v1/notifications/requests` | notification.manage + **Idempotency-Key** |
-| GET | `/api/v1/notifications/deliveries` | notification.read — cursor pagination |
-| POST | `/api/v1/notifications/webhooks/beem` | **No session**; shared-secret / signed check (COMMS-004) — stub may 501 until adapter |
+| Method | Path                                         | AuthZ                                                                                 |
+| ------ | -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| GET    | `/api/v1/notification-templates`             | notification.read                                                                     |
+| GET    | `/api/v1/notifications/requests/{requestId}` | notification.read                                                                     |
+| POST   | `/api/v1/notifications/requests`             | notification.manage + **Idempotency-Key**                                             |
+| GET    | `/api/v1/notifications/deliveries`           | notification.read — cursor pagination                                                 |
+| POST   | `/api/v1/notifications/webhooks/beem`        | **No session**; shared-secret / signed check (COMMS-004) — stub may 501 until adapter |
 
 ### POST `/api/v1/notifications/requests`
 
 Body allowlist:
 
-| Field | Type | Notes |
-| ----- | ---- | ----- |
-| templateCode | string | catalog code |
-| locale | `en` \| `sw` | default `sw` or tenant locale later |
-| recipientType | `guardian` | v1 only |
-| recipientId | uuid | guardian in tenant |
-| payload | object | keys ⊆ template allowlist; string values |
+| Field         | Type         | Notes                                    |
+| ------------- | ------------ | ---------------------------------------- |
+| templateCode  | string       | catalog code                             |
+| locale        | `en` \| `sw` | default `sw` or tenant locale later      |
+| recipientType | `guardian`   | v1 only                                  |
+| recipientId   | uuid         | guardian in tenant                       |
+| payload       | object       | keys ⊆ template allowlist; string values |
 
 Behavior:
 
@@ -86,14 +86,14 @@ Returns active system (+ tenant) templates: `code`, `channel`, `locale`, `versio
 
 ## Errors
 
-| HTTP | When |
-| ---- | ---- |
-| 400 | validation / unknown placeholder / bad locale |
-| 401 | unauthenticated |
-| 403 | missing notification.* |
-| 404 | unknown request/guardian (no cross-tenant leak) |
-| 409 | idempotency body mismatch; daily cap exceeded (optional explicit) |
-| 501 | Beem path without secrets / webhook not configured |
+| HTTP | When                                                              |
+| ---- | ----------------------------------------------------------------- |
+| 400  | validation / unknown placeholder / bad locale                     |
+| 401  | unauthenticated                                                   |
+| 403  | missing notification.*                                            |
+| 404  | unknown request/guardian (no cross-tenant leak)                   |
+| 409  | idempotency body mismatch; daily cap exceeded (optional explicit) |
+| 501  | Beem path without secrets / webhook not configured                |
 
 ## Idempotency & cost
 
