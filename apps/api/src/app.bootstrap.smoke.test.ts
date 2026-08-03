@@ -80,9 +80,9 @@ describe('PLAT-003 NestJS modular monolith skeleton', () => {
     await app.close();
   });
 
-  it('registers all fourteen bounded-context modules', () => {
-    expect(BOUNDED_CONTEXT_MODULES).toHaveLength(14);
-    expect(BOUNDED_CONTEXT_NAMES).toHaveLength(14);
+  it('registers all fifteen bounded-context modules', () => {
+    expect(BOUNDED_CONTEXT_MODULES).toHaveLength(15);
+    expect(BOUNDED_CONTEXT_NAMES).toHaveLength(15);
   });
 
   it('resolves skeleton application services from the DI container', () => {

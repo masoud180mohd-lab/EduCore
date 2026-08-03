@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-03 - AI-002 AI Gateway skeleton (Fake)
+
+- Nest `ai-gateway/` with Fake provider, kill switch, feature gate (`lab.echo`), metering, lab HTTP.
+- Migration `20260803160000_ai_gateway_create`; permissions `ai.read` / `ai.manage`.
+- Updated `43_PROJECT_STATUS.md`, `46_KNOWN_LIMITATIONS.md`, `00_START_HERE.md`.
+
 ## 2026-08-03 - MFA-002…005 TOTP lab path
 
 - `mfa_factors` / challenges migration; enroll HTTP; login MFA challenge + verify; `/auth/me` honesty flags.

@@ -15,6 +15,7 @@ import { DatabaseModule } from './common/persistence/index.js';
 import { RequestPlatformModule } from './common/request-platform/request-platform.module.js';
 import { TenantContextMiddleware } from './common/tenant/tenant-context.middleware.js';
 import { AcademicStructureModule } from './modules/academic-structure/index.js';
+import { AiGatewayModule } from './modules/ai-gateway/index.js';
 import { AiInsightsModule } from './modules/ai-insights/index.js';
 import { AnalyticsModule } from './modules/analytics/index.js';
 import { AssessmentModule } from './modules/assessment/index.js';
@@ -52,6 +53,7 @@ import { TenantAndBillingModule } from './modules/tenant-and-billing/index.js';
     PaymentsModule,
     CommunicationModule,
     DocumentsAndFilesModule,
+    AiGatewayModule,
     AiInsightsModule,
     IntegrationsModule,
     AnalyticsModule,

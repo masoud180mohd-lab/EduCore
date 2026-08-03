@@ -1,4 +1,5 @@
 import { AcademicStructureModule } from './academic-structure/index.js';
+import { AiGatewayModule } from './ai-gateway/index.js';
 import { AiInsightsModule } from './ai-insights/index.js';
 import { AnalyticsModule } from './analytics/index.js';
 import { AssessmentModule } from './assessment/index.js';
@@ -28,6 +29,7 @@ export const BOUNDED_CONTEXT_MODULES = [
   PaymentsModule,
   CommunicationModule,
   DocumentsAndFilesModule,
+  AiGatewayModule,
   AiInsightsModule,
   IntegrationsModule,
   AnalyticsModule,
@@ -45,6 +47,7 @@ export const BOUNDED_CONTEXT_NAMES = [
   'Payments',
   'Communication',
   'Documents And Files',
+  'AI Gateway',
   'AI Insights',
   'Integrations',
   'Analytics',

@@ -98,15 +98,16 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**Privileged MFA** — MFA-001…005 lab path **Done** (TOTP soft default).
+**EPIC-AI-01** — AI Gateway skeleton (**AI-002 Done**); Fake / `lab.echo` only.
 
 Required outputs:
 
-1. ~~MFA-001~~ … ~~MFA-005~~ — TOTP enroll/verify + me honesty + manual QA.
-2. Operator: set `MFA_TOTP_ENCRYPTION_KEY`; optional `MFA_ENFORCE=hard` before production trust.
-3. IdP/OIDC (roadmap ID-001) still deferred; PAY-OPS deferred until ClickPesa keys.
+1. ~~AI-F0 / AI-001~~ freezes + feature gate.
+2. ~~AI-002~~ Nest `ai-gateway/` + Fake + lab HTTP + metering write.
+3. Optional: **AI-003** prompt polish → **AI-004** usage → **AI-005** eval harness.
+4. Operator: migrate; `AI_PROVIDER=fake` (default); kill switch `AI_PLATFORM_ENABLED` / `AI_PROVIDER=disabled`.
 
-**Parallel:** Readiness re-review before production finance/SMS claims.
+**Parallel:** Privileged MFA lab Done (TOTP soft); IdP/OIDC deferred; PAY-OPS deferred until ClickPesa keys.
 
 **Governance:** Request Engineering Readiness Re-Review against `42_ENGINEERING_READINESS_REVIEW.md` before claiming production readiness.
 
@@ -115,7 +116,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **Privileged MFA lab Done** (TOTP); next TBD / hard-enforce + IdP later; PAY-OPS deferred.
+- **Next epic focus**: **AI Gateway skeleton Done** (Fake); AI-003…005 optional; MFA hard-enforce + IdP later; PAY-OPS deferred.
 
 ## Status Update Rules
 

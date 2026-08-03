@@ -32,6 +32,8 @@ export const PERMISSION_CODES = [
   'finance.reconcile',
   'notification.read',
   'notification.manage',
+  'ai.read',
+  'ai.manage',
   'parent.guardian.read',
   'parent.finance.read',
 ] as const;
