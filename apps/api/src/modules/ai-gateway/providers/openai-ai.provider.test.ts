@@ -11,11 +11,11 @@ import { loadOpenAiConfig, reportOpenAiConfig } from './openai-config.js';
 
 describe('openai-config', () => {
   it('loads config only when API key present', () => {
-    expect(loadOpenAiConfig({} as NodeJS.ProcessEnv)).toBeNull();
+    expect(loadOpenAiConfig({})).toBeNull();
     const cfg = loadOpenAiConfig({
       OPENAI_API_KEY: 'sk-test',
       OPENAI_MODEL: 'gpt-test',
-    } as NodeJS.ProcessEnv);
+    });
     expect(cfg?.apiKey).toBe('sk-test');
     expect(cfg?.model).toBe('gpt-test');
   });
@@ -23,7 +23,7 @@ describe('openai-config', () => {
   it('reports openai_unconfigured without silent Fake', () => {
     const report = reportOpenAiConfig({
       AI_PROVIDER: 'openai',
-    } as NodeJS.ProcessEnv);
+    });
     expect(report.effectiveProvider).toBe('openai_unconfigured');
     expect(report.secretsPresent).toBe(false);
   });
