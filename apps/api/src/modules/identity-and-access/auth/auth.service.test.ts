@@ -134,6 +134,76 @@ describe('AuthService login', () => {
     expect(sessions.createSession).not.toHaveBeenCalled();
   });
 
+  it('hard enforce denies privileged login without TOTP', async () => {
+    const passwordHash = await hashPassword('password12');
+    const sessions = {
+      isAvailable: () => true,
+      lookupUserByEmail: vi.fn().mockResolvedValue({
+        id: '01900000-0000-7000-8000-000000000001',
+        email: 'user@example.com',
+        displayName: 'User',
+        status: 'active',
+        passwordHash,
+      }),
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
+      createSession: vi.fn(),
+    };
+    const mfaRepo = {
+      isAvailable: () => true,
+      hasActiveTotp: vi.fn().mockResolvedValue(false),
+      isPrivileged: vi.fn().mockResolvedValue(true),
+    };
+    const prev = process.env['MFA_ENFORCE'];
+    process.env['MFA_ENFORCE'] = 'hard';
+    const service = createAuth(sessions, null, stubRbac, null, stubMfa, mfaRepo);
+    await expect(
+      service.login({
+        email: 'user@example.com',
+        password: 'password12',
+        tenantId: '01900000-0000-7000-8000-0000000000aa',
+        correlationId: 'c1',
+      }),
+    ).rejects.toMatchObject({ code: 'MFA_REQUIRED', statusCode: 403 });
+    expect(sessions.createSession).not.toHaveBeenCalled();
+    if (prev === undefined) delete process.env['MFA_ENFORCE'];
+    else process.env['MFA_ENFORCE'] = prev;
+  });
+
+  it('hard enforce fails closed when MFA store unavailable', async () => {
+    const passwordHash = await hashPassword('password12');
+    const sessions = {
+      isAvailable: () => true,
+      lookupUserByEmail: vi.fn().mockResolvedValue({
+        id: '01900000-0000-7000-8000-000000000001',
+        email: 'user@example.com',
+        displayName: 'User',
+        status: 'active',
+        passwordHash,
+      }),
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
+      createSession: vi.fn(),
+    };
+    const mfaRepo = {
+      isAvailable: () => false,
+      hasActiveTotp: vi.fn(),
+      isPrivileged: vi.fn(),
+    };
+    const prev = process.env['MFA_ENFORCE'];
+    process.env['MFA_ENFORCE'] = 'hard';
+    const service = createAuth(sessions, null, stubRbac, null, stubMfa, mfaRepo);
+    await expect(
+      service.login({
+        email: 'user@example.com',
+        password: 'password12',
+        tenantId: '01900000-0000-7000-8000-0000000000aa',
+        correlationId: 'c1',
+      }),
+    ).rejects.toMatchObject({ code: 'MFA_REQUIRED', statusCode: 403 });
+    expect(sessions.createSession).not.toHaveBeenCalled();
+    if (prev === undefined) delete process.env['MFA_ENFORCE'];
+    else process.env['MFA_ENFORCE'] = prev;
+  });
+
   it('rate-limits repeated failures', async () => {
     const limiter = new InMemoryLoginRateLimiter(2, 60_000);
     const sessions = {

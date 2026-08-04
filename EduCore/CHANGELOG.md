@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-04 - MFA-HARD continuous privileged enforce
+
+- Login fail-closed when MFA store down under `MFA_ENFORCE=hard`.
+- Continuous TOTP gate on privileged `RequirePermission` routes (`finance.manage` / `tenant.manage` / `role.manage`).
+- Soft default unchanged; enroll under soft then flip to hard.
+
 ## 2026-08-04 - AI-006 OpenAI provider adapter (env-gated)
 
 - Decision Accepted: OpenAI Chat Completions behind `AiProviderPort`; Fake remains default.

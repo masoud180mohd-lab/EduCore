@@ -9,6 +9,7 @@ import {
 } from '../../common/auth/index.js';
 import type { TokenValidator } from '../../common/auth/token-validator.js';
 import { DatabaseModule, PG_POOL } from '../../common/persistence/index.js';
+import { PRIVILEGED_MFA_GATE } from '../../common/policy/index.js';
 import { PlatformOperationsModule } from '../platform-operations/index.js';
 import { IdentityAndAccessApplicationService } from './application/identity-and-access.application-service.js';
 import { MembershipsService } from './application/memberships.service.js';
@@ -17,6 +18,7 @@ import { RolesService } from './application/roles.service.js';
 import { UserRolesService } from './application/user-roles.service.js';
 import { UsersService } from './application/users.service.js';
 import { AuthService } from './auth/auth.service.js';
+import { HardPrivilegedMfaGate } from './auth/hard-privileged-mfa.gate.js';
 import {
   createLoginRateLimiter,
   LOGIN_RATE_LIMITER,
@@ -74,6 +76,10 @@ import { SessionRepository } from './repositories/session.repository.js';
     SessionRepository,
     MfaRepository,
     MfaService,
+    {
+      provide: PRIVILEGED_MFA_GATE,
+      useClass: HardPrivilegedMfaGate,
+    },
     RbacReadRepository,
     MembershipsRepository,
     MembershipsService,
@@ -108,6 +114,7 @@ import { SessionRepository } from './repositories/session.repository.js';
     IDENTITY_AND_ACCESS_REPOSITORY,
     AuthService,
     TOKEN_VALIDATOR,
+    PRIVILEGED_MFA_GATE,
     RbacReadRepository,
     MembershipsService,
     PermissionsService,

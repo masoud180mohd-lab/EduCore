@@ -74,7 +74,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 | Area | Status |
 | ---- | ------ |
 | Kit-wide Design System Freeze | Not accepted — provisional DSF slices only |
-| Production IdP / MFA | Not chosen / not implemented for privileged users |
+| Production IdP / MFA | IdP/OIDC not chosen; **TOTP MFA-HARD continuous gate Done** (soft lab default) |
 | Hosting, IaC, secrets provider, RPO/RTO | Not chosen |
 | First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until adapter + secrets |
 | AI provider / release gate | **Lab adapter chosen:** OpenAI (`openai`) env-gated; Fake CI default; product features still gate-blocked (`lab.echo` only) |
@@ -98,20 +98,17 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**EPIC-AI-01** — AI Gateway foundation (**AI-001…005 Done**); Fake / `lab.echo` only.
+**MFA-HARD** — continuous privileged enforce (**Done**). Soft default remains for lab.
 
 Required outputs:
 
-1. ~~AI-F0 / AI-001~~ freezes + feature gate.
-2. ~~AI-002~~ Nest `ai-gateway/` + Fake + lab HTTP + metering write.
-3. ~~AI-003~~ prompt registry immutability + admin list polish.
-4. ~~AI-004~~ usage metering harden.
-5. ~~AI-005~~ Fake eval harness (`AI_EVAL_HARNESS`).
-6. Operator: migrate through `20260803170000_ai_prompt_registry`; `AI_PROVIDER=fake` (default).
-7. ~~AI-006~~ OpenAI adapter (env-gated); Fake still CI default. Production DPA/residency still open.
-8. Operator: `AI_PROVIDER=fake` (default) or `openai` + `OPENAI_API_KEY`; `npm run ai:check-config`.
+1. ~~Login hard gate~~ privileged without TOTP → `MFA_REQUIRED`.
+2. ~~Store fail-closed~~ hard + MFA DB down → deny login.
+3. ~~Continuous gate~~ privileged permission routes require active TOTP under hard.
+4. Operator: enroll under `MFA_ENFORCE=soft`, then set `MFA_ENFORCE=hard` + `MFA_TOTP_ENCRYPTION_KEY`.
+5. Still deferred: IdP/OIDC; PAY-OPS until ClickPesa keys; product AI allowlist.
 
-**Parallel:** Privileged MFA lab Done (TOTP soft); IdP/OIDC deferred; PAY-OPS deferred until ClickPesa keys.
+**Parallel:** EPIC-AI-01 + AI-006 Done (Fake default; OpenAI optional).
 
 **Governance:** Request Engineering Readiness Re-Review against `42_ENGINEERING_READINESS_REVIEW.md` before claiming production readiness.
 
@@ -120,7 +117,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **EPIC-AI-01 + AI-006 Done** (Fake default; OpenAI optional); product AI still gated; MFA hard-enforce + IdP later; PAY-OPS deferred.
+- **Next epic focus**: **MFA-HARD Done** (soft lab default); IdP/OIDC later; PAY-OPS deferred; product AI still gated.
 
 ## Status Update Rules
 

@@ -176,11 +176,27 @@ export class AuthService {
       throw AppError.invalidCredentials();
     }
 
+    const enforce = resolveMfaEnforceMode();
+
+    if (enforce === 'hard' && !this.mfaRepo.isAvailable()) {
+      await this.safeAudit({
+        action: 'auth.login',
+        outcome: 'failure',
+        correlationId: command.correlationId,
+        actorUserId: user.id,
+        tenantId,
+        metadata: { reason: 'mfa_store_unavailable' },
+      });
+      throw new AppError(
+        'MFA_REQUIRED',
+        'MFA store unavailable; login denied under MFA_ENFORCE=hard.',
+      );
+    }
+
     const hasTotp = this.mfaRepo.isAvailable() ? await this.mfaRepo.hasActiveTotp(user.id) : false;
     const privileged = this.mfaRepo.isAvailable()
       ? await this.mfaRepo.isPrivileged(user.id, tenantId)
       : false;
-    const enforce = resolveMfaEnforceMode();
 
     if (privileged && !hasTotp && enforce === 'hard') {
       await this.safeAudit({
