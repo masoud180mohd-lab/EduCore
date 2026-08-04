@@ -1,13 +1,13 @@
 # AI-F0 / AI-001 — AI Gateway freezes + feature gate
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **AI-F0** + **AI-001** / EPIC-AI-01 |
-| Date      | 2026-08-03 |
-| Status    | **Done** (solo-operator provisional) — AI-002 implemented |
-| Depends   | ADR-003 · `10_AI_GUIDELINES.md` · roadmap EPIC-AI-01 |
+| Field     | Value                                                                                                                                                                         |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program   | **AI-F0** + **AI-001** / EPIC-AI-01                                                                                                                                           |
+| Date      | 2026-08-03                                                                                                                                                                    |
+| Status    | **Done** (solo-operator provisional) — AI-002 implemented                                                                                                                     |
+| Depends   | ADR-003 · `10_AI_GUIDELINES.md` · roadmap EPIC-AI-01                                                                                                                          |
 | Artifacts | `EPIC-AI-01-plan.md` · `DBF-AI-001-ai-gateway-skeleton.md` · `ACF-AI-001-ai-gateway-skeleton.md` · `docs/engineering/ai/AI_FEATURE_GATE.md` · `AI-002-ai-gateway-skeleton.md` |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                                                                                                      |
 
 ## Delivered
 

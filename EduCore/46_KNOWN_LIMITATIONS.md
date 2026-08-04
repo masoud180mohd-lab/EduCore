@@ -19,7 +19,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 | SMS / notifications | **COMMS-001…005 lab complete** (Fake default; Beem env-gated) | Migrate; optional Beem keys; WhatsApp later |
 
 | Offline | Attendance offline foundation/docs path; 72h offline teacher cutover not production-proven | Do not claim offline MVP complete without worker + conflict UX evidence |
-| AI | **AI Gateway skeleton Done** (Fake / `lab.echo` only); real provider & product AI deferred | Migrate `20260803160000_ai_gateway_create`; call via `AiGatewayPort` only (ADR-003); no direct LLM calls; set `AI_PLATFORM_ENABLED` / caps for lab |
+| AI | **AI Gateway + prompt registry + usage metering Done** (Fake / `lab.echo`); real provider & product AI deferred | Migrate through `20260803170000_ai_prompt_registry`; call via `AiGatewayPort` only (ADR-003); caps via `AI_DAILY_CAP_PER_TENANT` / `AI_BYPASS_DAILY_CAP`; no direct LLM calls |
 | Scale | Active-active multi-region and 10 million-user architecture are out of MVP | Do not design for them without a later ADR |
 | Product scope | HR/payroll, advanced inventory, transport GPS, advanced hostel, marketplace, white-label, and high-risk AI are deferred | Do not add them to MVP tasks |
 

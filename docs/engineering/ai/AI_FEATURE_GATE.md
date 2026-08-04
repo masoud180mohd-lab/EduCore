@@ -1,15 +1,15 @@
 # AI Feature Gate (AI-001)
 
-| Field     | Value                                      |
-| --------- | ------------------------------------------ |
-| Doc ID    | `AI_FEATURE_GATE`                          |
-| Version   | `1.0`                                      |
-| Date      | 2026-08-03                                 |
-| Epic      | EPIC-AI-01                                 |
-| Slice     | **AI-001**                                 |
-| Sources   | `EduCore/10_AI_GUIDELINES.md`, ADR-003     |
-| Freezes   | DBF-AI-001 · ACF-AI-001                    |
-| Authority | Solo-operator provisional (SOLO-GOV-001)   |
+| Field     | Value                                    |
+| --------- | ---------------------------------------- |
+| Doc ID    | `AI_FEATURE_GATE`                        |
+| Version   | `1.0`                                    |
+| Date      | 2026-08-03                               |
+| Epic      | EPIC-AI-01                               |
+| Slice     | **AI-001**                               |
+| Sources   | `EduCore/10_AI_GUIDELINES.md`, ADR-003   |
+| Freezes   | DBF-AI-001 · ACF-AI-001                  |
+| Authority | Solo-operator provisional (SOLO-GOV-001) |
 
 **Purpose:** Define which `featureCode` values may invoke the AI Gateway, which stay blocked, and the release checklist before any product AI ships. The skeleton **enforces an allowlist even if the product list is empty** — only explicitly listed codes may invoke.
 
@@ -26,9 +26,9 @@
 
 ### Runtime allowlist (skeleton / EPIC-AI-01)
 
-| featureCode | Purpose                         | Prompt(s)     | Human review | Status        |
-| ----------- | ------------------------------- | ------------- | ------------ | ------------- |
-| `lab.echo`  | CI/local Fake gateway smoke     | `lab.echo`    | N/A (lab)    | **Allowed**   |
+| featureCode | Purpose                     | Prompt(s)  | Human review | Status      |
+| ----------- | --------------------------- | ---------- | ------------ | ----------- |
+| `lab.echo`  | CI/local Fake gateway smoke | `lab.echo` | N/A (lab)    | **Allowed** |
 
 Only `lab.echo` is allowed to invoke in AI-002…AI-005 unless this document is amended.
 
@@ -36,27 +36,27 @@ Only `lab.echo` is allowed to invoke in AI-002…AI-005 unless this document is 
 
 These may become allowlisted only after privacy, budget, eval, and human-review criteria pass:
 
-| featureCode (provisional)     | Maps to guidelines              | Notes                                      |
-| ----------------------------- | ------------------------------- | ------------------------------------------ |
-| `report.comment_draft`        | Report comment drafts           | Human review required before publish       |
-| `comms.parent_message_draft`  | Parent message drafts           | No auto-send; human confirm                |
-| `admin.summary`               | Admin summaries                 | Tenant-scoped; redact PII                  |
-| `dashboard.explain`           | Dashboard explanation           | Low-stakes narrative                       |
-| `help.nl`                     | Natural language help           | No child PII in default prompts            |
-| `i18n.translate_assist`       | Translation support with review | Human accept before official use           |
+| featureCode (provisional)    | Maps to guidelines              | Notes                                |
+| ---------------------------- | ------------------------------- | ------------------------------------ |
+| `report.comment_draft`       | Report comment drafts           | Human review required before publish |
+| `comms.parent_message_draft` | Parent message drafts           | No auto-send; human confirm          |
+| `admin.summary`              | Admin summaries                 | Tenant-scoped; redact PII            |
+| `dashboard.explain`          | Dashboard explanation           | Low-stakes narrative                 |
+| `help.nl`                    | Natural language help           | No child PII in default prompts      |
+| `i18n.translate_assist`      | Translation support with review | Human accept before official use     |
 
 ### High-risk — **blocked** (do not allowlist without dedicated review epic)
 
-| featureCode (provisional)        | Why blocked                                              |
-| -------------------------------- | -------------------------------------------------------- |
-| `predict.student_poor_performance` | Child labeling / academic stakes                       |
-| `predict.fee_default`              | Finance high-stakes                                    |
-| `recommend.intervention`           | Academic intervention without review                   |
-| `analytics.teacher_performance`    | Teacher ranking / narrative risk                       |
-| `tutor.memory`                     | Persistent child memory — default off                  |
-| `voice.finance_or_child`           | Voice + sensitive data                                 |
-| `label.child_failing`              | Explicitly forbidden auto-label                        |
-| `rank.teachers_poor`               | Explicitly forbidden auto-rank                         |
+| featureCode (provisional)          | Why blocked                           |
+| ---------------------------------- | ------------------------------------- |
+| `predict.student_poor_performance` | Child labeling / academic stakes      |
+| `predict.fee_default`              | Finance high-stakes                   |
+| `recommend.intervention`           | Academic intervention without review  |
+| `analytics.teacher_performance`    | Teacher ranking / narrative risk      |
+| `tutor.memory`                     | Persistent child memory — default off |
+| `voice.finance_or_child`           | Voice + sensitive data                |
+| `label.child_failing`              | Explicitly forbidden auto-label       |
+| `rank.teachers_poor`               | Explicitly forbidden auto-rank        |
 
 Any code not listed in **Runtime allowlist** is treated as **blocked** (fail closed).
 
@@ -64,19 +64,19 @@ Any code not listed in **Runtime allowlist** is treated as **blocked** (fail clo
 
 Copy this checklist into the feature’s task record; all items must be **Yes** or **N/A with reason**:
 
-| # | Check | Evidence |
-|---|-------|----------|
-| 1 | Calls only `AiGatewayPort` (no provider SDK in domain module) | Code review / import lint |
-| 2 | `featureCode` added to this doc + runtime allowlist amend | PR + gate version bump |
-| 3 | Prompt in registry with allowlisted placeholders only | Migration / seed |
-| 4 | Privacy: `redactForAi` path exercised; no unredacted child PII in default logs | Tests / fixtures |
-| 5 | Tenant + actor required; AuthZ on product permission | ACF / tests |
-| 6 | Budget: daily cap / metering defined; fail closed | Config + tests |
-| 7 | Eval fixtures exist (AI_EVAL_HARNESS) for happy + failure + redaction | AI-005 pattern |
-| 8 | Human-review flag documented if guidelines require review | Product UX / API |
-| 9 | Kill switch / per-feature flag can disable without deploy | Config |
-| 10 | No auto-send of AI text to parents/students | Product rule |
-| 11 | Known Limitations / ADR conflicts checked | Docs |
+| #   | Check                                                                          | Evidence                  |
+| --- | ------------------------------------------------------------------------------ | ------------------------- |
+| 1   | Calls only `AiGatewayPort` (no provider SDK in domain module)                  | Code review / import lint |
+| 2   | `featureCode` added to this doc + runtime allowlist amend                      | PR + gate version bump    |
+| 3   | Prompt in registry with allowlisted placeholders only                          | Migration / seed          |
+| 4   | Privacy: `redactForAi` path exercised; no unredacted child PII in default logs | Tests / fixtures          |
+| 5   | Tenant + actor required; AuthZ on product permission                           | ACF / tests               |
+| 6   | Budget: daily cap / metering defined; fail closed                              | Config + tests            |
+| 7   | Eval fixtures exist (AI_EVAL_HARNESS) for happy + failure + redaction          | AI-005 pattern            |
+| 8   | Human-review flag documented if guidelines require review                      | Product UX / API          |
+| 9   | Kill switch / per-feature flag can disable without deploy                      | Config                    |
+| 10  | No auto-send of AI text to parents/students                                    | Product rule              |
+| 11  | Known Limitations / ADR conflicts checked                                      | Docs                      |
 
 ## Relationship to pipeline
 

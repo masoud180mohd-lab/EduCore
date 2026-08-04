@@ -1,27 +1,27 @@
 # API Contract Freeze — AI Gateway Skeleton (ACF-AI-001)
 
-| Field     | Value                                                    |
-| --------- | -------------------------------------------------------- |
-| Freeze ID | `ACF-AI-001`                                             |
-| Version   | `1.0`                                                    |
-| Date      | 2026-08-03                                               |
-| Companion | DBF-AI-001                                               |
-| Program   | **EPIC-AI-01** (AI-F0)                                   |
-| Gate      | `docs/engineering/ai/AI_FEATURE_GATE.md`                 |
-| ADR       | ADR-003                                                  |
-| Mirror    | ACF-014 (notifications) — Fake default, usage, lab HTTP  |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                 |
+| Field     | Value                                                   |
+| --------- | ------------------------------------------------------- |
+| Freeze ID | `ACF-AI-001`                                            |
+| Version   | `1.1`                                                   |
+| Date      | 2026-08-03                                              |
+| Companion | DBF-AI-001                                              |
+| Program   | **EPIC-AI-01** (AI-F0; AI-004 usage harden)             |
+| Gate      | `docs/engineering/ai/AI_FEATURE_GATE.md`                |
+| ADR       | ADR-003                                                 |
+| Mirror    | ACF-014 (notifications) — Fake default, usage, lab HTTP |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                |
 
 **Honesty:** Provisional. Internal port is the **primary** contract. Admin/lab HTTP is optional for operators — **not** school-facing AI product UI.
 
 ## Scope (v1)
 
-| In scope                                              | Out of scope                                      |
-| ----------------------------------------------------- | ------------------------------------------------- |
-| Internal `AiGatewayPort.invoke(command) → result`     | Report-comment / parent-draft product APIs        |
-| Optional admin lab: list prompts, usage, lab invoke   | RAG / embeddings APIs                             |
-| Permissions `ai.read` / `ai.manage`                   | Real provider webhook callbacks                   |
-| Kill switch + feature allowlist enforcement           | Public unauthenticated AI endpoints               |
+| In scope                                            | Out of scope                               |
+| --------------------------------------------------- | ------------------------------------------ |
+| Internal `AiGatewayPort.invoke(command) → result`   | Report-comment / parent-draft product APIs |
+| Optional admin lab: list prompts, usage, lab invoke | RAG / embeddings APIs                      |
+| Permissions `ai.read` / `ai.manage`                 | Real provider webhook callbacks            |
+| Kill switch + feature allowlist enforcement         | Public unauthenticated AI endpoints        |
 
 ## Placement
 
@@ -35,10 +35,10 @@ Authenticated → Tenant header → Session tenant bind → Permission → RLS.
 
 ## Permissions
 
-| Code         | Use                                                              |
-| ------------ | ---------------------------------------------------------------- |
-| `ai.read`    | GET prompts, GET usage, GET invoke request (if exposed)          |
-| `ai.manage`  | POST lab invoke (Fake path); future manage ops                   |
+| Code        | Use                                                     |
+| ----------- | ------------------------------------------------------- |
+| `ai.read`   | GET prompts, GET usage, GET invoke request (if exposed) |
+| `ai.manage` | POST lab invoke (Fake path); future manage ops          |
 
 Product features later use **their own** permission codes (e.g. `report.manage`); they still invoke only via `AiGatewayPort` after their AuthZ.
 
@@ -51,26 +51,26 @@ AiGatewayPort.invoke(command: AiInvokeCommand): Promise<AiInvokeResult>
 
 ### `AiInvokeCommand` (required fields)
 
-| Field          | Type   | Notes                                      |
-| -------------- | ------ | ------------------------------------------ |
-| tenantId       | uuid   | required                                   |
-| actorUserId    | uuid   | required                                   |
-| featureCode    | string | gate catalog; required                     |
-| promptCode     | string | registry code; required                    |
-| locale         | string | `en` \| `sw`                               |
-| variables      | object | keys ⊆ prompt allowlist                    |
-| correlationId  | string | required (caller or gateway-generated OK)  |
+| Field         | Type   | Notes                                     |
+| ------------- | ------ | ----------------------------------------- |
+| tenantId      | uuid   | required                                  |
+| actorUserId   | uuid   | required                                  |
+| featureCode   | string | gate catalog; required                    |
+| promptCode    | string | registry code; required                   |
+| locale        | string | `en` \| `sw`                              |
+| variables     | object | keys ⊆ prompt allowlist                   |
+| correlationId | string | required (caller or gateway-generated OK) |
 
 ### `AiInvokeResult`
 
-| Field       | Type   | Notes                                              |
-| ----------- | ------ | -------------------------------------------------- |
-| requestId   | uuid   | persisted invoke id                                |
-| status      | string | `succeeded` \| `failed` \| `rejected` \| `disabled`|
-| outputText  | string \| null | null when rejected/disabled                  |
-| modelCode   | string \| null | e.g. `fake-echo-v1`                          |
-| usage       | object \| null | `{ inputTokens, outputTokens, estimatedCostMinor }` |
-| rejectReason| string \| null | when rejected/disabled                       |
+| Field        | Type           | Notes                                               |
+| ------------ | -------------- | --------------------------------------------------- |
+| requestId    | uuid           | persisted invoke id                                 |
+| status       | string         | `succeeded` \| `failed` \| `rejected` \| `disabled` |
+| outputText   | string \| null | null when rejected/disabled                         |
+| modelCode    | string \| null | e.g. `fake-echo-v1`                                 |
+| usage        | object \| null | `{ inputTokens, outputTokens, estimatedCostMinor }` |
+| rejectReason | string \| null | when rejected/disabled                              |
 
 ### AuthZ responsibility (document)
 
@@ -94,24 +94,24 @@ Never expose provider API keys in results or HTTP bodies.
 
 ## Optional admin / lab HTTP
 
-| Method | Path                              | AuthZ       | Notes                                              |
-| ------ | --------------------------------- | ----------- | -------------------------------------------------- |
-| GET    | `/api/v1/ai/prompts`              | `ai.read`   | Active system (+ later tenant) prompts             |
-| GET    | `/api/v1/ai/usage`                | `ai.read`   | Daily meter; optional `date`, optional `featureCode`|
-| POST   | `/api/v1/ai/lab/invoke`           | `ai.manage` | **Lab-only**; Fake provider; allowlisted features only |
-| GET    | `/api/v1/ai/invokes/{requestId}`  | `ai.read`   | Optional; sanitized fields only                    |
+| Method | Path                             | AuthZ       | Notes                                                  |
+| ------ | -------------------------------- | ----------- | ------------------------------------------------------ |
+| GET    | `/api/v1/ai/prompts`             | `ai.read`   | Active system (+ later tenant) prompts                 |
+| GET    | `/api/v1/ai/usage`               | `ai.read`   | Daily meter; optional `date`, optional `featureCode`   |
+| POST   | `/api/v1/ai/lab/invoke`          | `ai.manage` | **Lab-only**; Fake provider; allowlisted features only |
+| GET    | `/api/v1/ai/invokes/{requestId}` | `ai.read`   | Optional; sanitized fields only                        |
 
 ### POST `/api/v1/ai/lab/invoke`
 
 Body allowlist:
 
-| Field         | Type         | Notes                         |
-| ------------- | ------------ | ----------------------------- |
+| Field         | Type         | Notes                                 |
+| ------------- | ------------ | ------------------------------------- |
 | featureCode   | string       | must be lab-allowed (e.g. `lab.echo`) |
-| promptCode    | string       |                               |
-| locale        | `en` \| `sw` | default `en`                  |
-| variables     | object       | ⊆ prompt allowlist            |
-| correlationId | string       | optional; server may generate |
+| promptCode    | string       |                                       |
+| locale        | `en` \| `sw` | default `en`                          |
+| variables     | object       | ⊆ prompt allowlist                    |
+| correlationId | string       | optional; server may generate         |
 
 Behavior:
 
@@ -124,7 +124,23 @@ Behavior:
 
 Query: optional `date` (`YYYY-MM-DD`, UTC, default today); optional `featureCode`.
 
-Response `data`: rows or aggregate with `usageDate`, `featureCode`, `requestCount`, `inputTokens`, `outputTokens`, `estimatedCostMinor`, `dailyCap`, `bypassDailyCap`, `platformEnabled`.
+Response `data` (AI-004 / v1.1):
+
+| Field                   | Type           | Notes                                                                   |
+| ----------------------- | -------------- | ----------------------------------------------------------------------- |
+| usageDate               | string         | UTC `YYYY-MM-DD`                                                        |
+| rows                    | array          | `AiUsageDaily` allowlist rows for tenant/date (optional feature filter) |
+| requestCountTotal       | number         | sum of row `requestCount`                                               |
+| inputTokensTotal        | number         | sum of row `inputTokens`                                                |
+| outputTokensTotal       | number         | sum of row `outputTokens`                                               |
+| estimatedCostMinorTotal | number         | sum of row `estimatedCostMinor`                                         |
+| dailyCap                | number \| null | `AI_DAILY_CAP_PER_TENANT`; **null** when bypass                         |
+| bypassDailyCap          | boolean        | `AI_BYPASS_DAILY_CAP`                                                   |
+| platformEnabled         | boolean        | `AI_PLATFORM_ENABLED`                                                   |
+
+**Metering policy:** success meters increment only for `status=succeeded` with `countUsage=true` (SQL double-checks). Rejected / disabled / failed / cap / gate paths persist invoke rows when possible but **do not** bump `ai_usage_daily`. Cap is **tenant-wide** sum of `request_count` for the UTC date (all featureCodes). Cap enforcement is fail-closed if the meter cannot be read (`meter_unavailable`). Concurrent success upserts are atomic; check-then-act may modestly overshoot under parallel lab load.
+
+Never return provider secrets or raw unredacted prompts.
 
 ### GET `/api/v1/ai/prompts`
 
@@ -152,12 +168,12 @@ Returns: `code`, `version`, `locale`, `body`, `status`, `allowlistPlaceholders`.
 
 ## Config (runtime)
 
-| Env                         | Role                                      |
-| --------------------------- | ----------------------------------------- |
-| `AI_PLATFORM_ENABLED`       | Kill switch (default true in lab; false disables) |
-| `AI_PROVIDER`               | `fake` \| `disabled`                      |
-| `AI_DAILY_CAP_PER_TENANT`   | Cap                                       |
-| `AI_BYPASS_DAILY_CAP`       | Lab bypass                                |
+| Env                       | Role                                              |
+| ------------------------- | ------------------------------------------------- |
+| `AI_PLATFORM_ENABLED`     | Kill switch (default true in lab; false disables) |
+| `AI_PROVIDER`             | `fake` \| `disabled`                              |
+| `AI_DAILY_CAP_PER_TENANT` | Cap                                               |
+| `AI_BYPASS_DAILY_CAP`     | Lab bypass                                        |
 
 ## Non-goals
 

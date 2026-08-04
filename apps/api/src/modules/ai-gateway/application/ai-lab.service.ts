@@ -10,7 +10,9 @@ import {
   isAiPlatformEnabled,
   isRuntimeAiFeatureAllowed,
 } from './ai-feature-gate.js';
+import { AI_LAB_PROMPT_CATALOG } from './ai-prompt-catalog.js';
 import { AiGatewayService } from './ai-gateway.service.js';
+import { parseAiUsageDate, sumAiUsageRows } from './ai-usage.js';
 import type { AiInvokeResult } from '../providers/ai-gateway.port.js';
 import { AiGatewayRepository } from '../repositories/ai-gateway.repository.js';
 import type {
@@ -29,11 +31,36 @@ export class AiLabService {
   async listPromptsForTenant(
     actorUserId: string,
     tenantId: string,
-  ): Promise<{ readonly data: ReadonlyArray<AiPromptTemplateRow> }> {
+    rawQuery: {
+      readonly code?: unknown;
+      readonly locale?: unknown;
+      readonly includeRetired?: unknown;
+    } = {},
+  ): Promise<{
+    readonly data: ReadonlyArray<AiPromptTemplateRow>;
+    readonly meta: {
+      readonly catalog: ReadonlyArray<{
+        readonly code: string;
+        readonly locales: ReadonlyArray<string>;
+        readonly allowlistPlaceholders: ReadonlyArray<string>;
+        readonly description: string;
+      }>;
+    };
+  }> {
     if (!isUuid(actorUserId)) throw AppError.unauthorized();
     if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
-    if (!this.repo.isAvailable()) return { data: [] };
-    return { data: await this.repo.listActivePrompts(actorUserId, tenantId) };
+    const filters = parsePromptListQuery(rawQuery);
+    const catalog = AI_LAB_PROMPT_CATALOG.map((entry) => ({
+      code: entry.code,
+      locales: [...entry.locales],
+      allowlistPlaceholders: [...entry.allowlistPlaceholders],
+      description: entry.description,
+    }));
+    if (!this.repo.isAvailable()) return { data: [], meta: { catalog } };
+    return {
+      data: await this.repo.listPrompts(actorUserId, tenantId, filters),
+      meta: { catalog },
+    };
   }
 
   async getUsageForTenant(
@@ -46,6 +73,9 @@ export class AiLabService {
       readonly usageDate: string;
       readonly rows: ReadonlyArray<AiUsageDailyRow>;
       readonly requestCountTotal: number;
+      readonly inputTokensTotal: number;
+      readonly outputTokensTotal: number;
+      readonly estimatedCostMinorTotal: number;
       readonly dailyCap: number | null;
       readonly bypassDailyCap: boolean;
       readonly platformEnabled: boolean;
@@ -53,7 +83,7 @@ export class AiLabService {
   }> {
     if (!isUuid(actorUserId)) throw AppError.unauthorized();
     if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
-    const usageDate = parseUsageDate(dateQuery);
+    const usageDate = parseAiUsageDate(dateQuery);
     const featureCode = parseOptionalFeatureCode(featureCodeQuery);
     const cap = aiDailyCapFromEnv();
     const bypassDailyCap = cap < 0;
@@ -64,6 +94,9 @@ export class AiLabService {
           usageDate,
           rows: [],
           requestCountTotal: 0,
+          inputTokensTotal: 0,
+          outputTokensTotal: 0,
+          estimatedCostMinorTotal: 0,
           dailyCap: bypassDailyCap ? null : cap,
           bypassDailyCap,
           platformEnabled,
@@ -71,12 +104,12 @@ export class AiLabService {
       };
     }
     const rows = await this.repo.listUsageDaily(actorUserId, tenantId, usageDate, featureCode);
-    const requestCountTotal = rows.reduce((sum, row) => sum + row.requestCount, 0);
+    const totals = sumAiUsageRows(rows);
     return {
       data: {
         usageDate,
         rows,
-        requestCountTotal,
+        ...totals,
         dailyCap: bypassDailyCap ? null : cap,
         bypassDailyCap,
         platformEnabled,
@@ -144,25 +177,73 @@ export class AiLabService {
     if (result.status === 'failed' && result.rejectReason === 'store_unavailable') {
       throw new AppError('INTERNAL_ERROR', 'AI gateway store unavailable.');
     }
+    if (result.status === 'failed' && result.rejectReason === 'meter_unavailable') {
+      throw new AppError('INTERNAL_ERROR', 'AI usage meter unavailable.');
+    }
 
     return { data: result };
   }
 }
 
-function parseUsageDate(raw: unknown): string {
-  if (raw === undefined || raw === null || raw === '') return new Date().toISOString().slice(0, 10);
-  if (typeof raw !== 'string') {
-    throw AppError.validation('date must be YYYY-MM-DD.', { field: 'date' });
+function parsePromptListQuery(raw: {
+  readonly code?: unknown;
+  readonly locale?: unknown;
+  readonly includeRetired?: unknown;
+}): {
+  readonly code?: string;
+  readonly locale?: string;
+  readonly includeRetired?: boolean;
+} {
+  let code: string | undefined;
+  if (raw.code !== undefined && raw.code !== null && raw.code !== '') {
+    if (typeof raw.code !== 'string' || raw.code.trim() === '') {
+      throw AppError.validation('code must be a non-empty string.', { field: 'code' });
+    }
+    code = raw.code.trim();
   }
-  const trimmed = raw.trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    throw AppError.validation('date must be YYYY-MM-DD.', { field: 'date' });
+
+  let locale: string | undefined;
+  if (raw.locale !== undefined && raw.locale !== null && raw.locale !== '') {
+    if (raw.locale !== 'en' && raw.locale !== 'sw') {
+      throw AppError.validation('locale must be en or sw.', { field: 'locale' });
+    }
+    locale = raw.locale;
   }
-  const parsed = Date.parse(`${trimmed}T00:00:00.000Z`);
-  if (!Number.isFinite(parsed)) {
-    throw AppError.validation('date must be a valid calendar day.', { field: 'date' });
+
+  let includeRetired: boolean | undefined;
+  if (
+    raw.includeRetired !== undefined &&
+    raw.includeRetired !== null &&
+    raw.includeRetired !== ''
+  ) {
+    if (
+      raw.includeRetired === true ||
+      raw.includeRetired === 'true' ||
+      raw.includeRetired === '1'
+    ) {
+      includeRetired = true;
+    } else if (
+      raw.includeRetired === false ||
+      raw.includeRetired === 'false' ||
+      raw.includeRetired === '0'
+    ) {
+      includeRetired = false;
+    } else {
+      throw AppError.validation('includeRetired must be true or false.', {
+        field: 'includeRetired',
+      });
+    }
   }
-  return trimmed;
+
+  const out: {
+    code?: string;
+    locale?: string;
+    includeRetired?: boolean;
+  } = {};
+  if (code !== undefined) out.code = code;
+  if (locale !== undefined) out.locale = locale;
+  if (includeRetired !== undefined) out.includeRetired = includeRetired;
+  return out;
 }
 
 function parseOptionalFeatureCode(raw: unknown): string | undefined {

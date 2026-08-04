@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-03 - AI-003 prompt registry polish
+
+- Immutability trigger + `ai_publish_system_prompt_version`; lab catalog + filtered `GET /api/v1/ai/prompts`.
+- Updated `43_PROJECT_STATUS.md`, `EPIC-AI-01-plan.md`.
+
 ## 2026-08-03 - AI-002 AI Gateway skeleton (Fake)
 
 - Nest `ai-gateway/` with Fake provider, kill switch, feature gate (`lab.echo`), metering, lab HTTP.

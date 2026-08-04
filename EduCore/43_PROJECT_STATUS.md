@@ -104,8 +104,9 @@ Required outputs:
 
 1. ~~AI-F0 / AI-001~~ freezes + feature gate.
 2. ~~AI-002~~ Nest `ai-gateway/` + Fake + lab HTTP + metering write.
-3. Optional: **AI-003** prompt polish → **AI-004** usage → **AI-005** eval harness.
-4. Operator: migrate; `AI_PROVIDER=fake` (default); kill switch `AI_PLATFORM_ENABLED` / `AI_PROVIDER=disabled`.
+3. ~~AI-003~~ prompt registry immutability + admin list polish.
+4. Optional: **AI-004** usage → **AI-005** eval harness.
+5. Operator: migrate through `20260803170000_ai_prompt_registry`; `AI_PROVIDER=fake` (default).
 
 **Parallel:** Privileged MFA lab Done (TOTP soft); IdP/OIDC deferred; PAY-OPS deferred until ClickPesa keys.
 
@@ -116,7 +117,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **AI Gateway skeleton Done** (Fake); AI-003…005 optional; MFA hard-enforce + IdP later; PAY-OPS deferred.
+- **Next epic focus**: **AI-003 prompt registry Done**; AI-004…005 optional; MFA hard-enforce + IdP later; PAY-OPS deferred.
 
 ## Status Update Rules
 

@@ -5,10 +5,7 @@
 export { AiGatewayModule } from './ai-gateway.module.js';
 export { AiGatewayService } from './application/ai-gateway.service.js';
 export { AiLabService } from './application/ai-lab.service.js';
-export {
-  AI_GATEWAY_PORT,
-  AI_PROVIDER_PORT,
-} from './providers/ai-gateway.port.js';
+export { AI_GATEWAY_PORT, AI_PROVIDER_PORT } from './providers/ai-gateway.port.js';
 export type {
   AiGatewayPort,
   AiInvokeCommand,
@@ -20,3 +17,5 @@ export {
   isRuntimeAiFeatureAllowed,
   isAiPlatformEnabled,
 } from './application/ai-feature-gate.js';
+export { AI_LAB_PROMPT_CATALOG, isKnownLabPromptCode } from './application/ai-prompt-catalog.js';
+export type { AiLabPromptCatalogEntry } from './application/ai-prompt-catalog.js';

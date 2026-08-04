@@ -82,16 +82,52 @@ export class AiGatewayRepository {
     return this.pool !== null;
   }
 
-  async listActivePrompts(
+  async listPrompts(
     actorUserId: string,
     tenantId: string,
+    options: {
+      readonly code?: string;
+      readonly locale?: string;
+      readonly includeRetired?: boolean;
+    } = {},
   ): Promise<ReadonlyArray<AiPromptTemplateRow>> {
     if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) return [];
+    const code = options.code?.trim();
+    const locale = options.locale?.trim();
+    const includeRetired = options.includeRetired === true;
     try {
       return await withTenantTransaction(
         this.pool,
         { userId: actorUserId, tenantId },
         async (client) => {
+          const params: unknown[] = [tenantId];
+          const filters: string[] = ['(tenant_id IS NULL OR tenant_id = $1::uuid)'];
+          if (!includeRetired) {
+            filters.push(`status = 'active'`);
+          }
+          if (code !== undefined && code !== '') {
+            params.push(code);
+            filters.push(`code = $${params.length}`);
+          }
+          if (locale !== undefined && locale !== '') {
+            params.push(locale);
+            filters.push(`locale = $${params.length}`);
+          }
+
+          const where = filters.join(' AND ');
+          const sql = includeRetired
+            ? `SELECT id, code, version, locale, body, status, allowlist_placeholders, created_at
+               FROM ai_prompt_templates
+               WHERE ${where}
+               ORDER BY code ASC, locale ASC, version DESC`
+            : `SELECT DISTINCT ON (code, locale)
+                    id, code, version, locale, body, status, allowlist_placeholders, created_at
+               FROM ai_prompt_templates
+               WHERE ${where}
+               ORDER BY code ASC, locale ASC,
+                        CASE WHEN tenant_id IS NOT NULL THEN 0 ELSE 1 END ASC,
+                        version DESC`;
+
           const result = await client.query<{
             id: string;
             code: string;
@@ -101,23 +137,24 @@ export class AiGatewayRepository {
             status: string;
             allowlist_placeholders: unknown;
             created_at: Date;
-          }>(
-            `SELECT id, code, version, locale, body, status, allowlist_placeholders, created_at
-             FROM ai_prompt_templates
-             WHERE status = 'active'
-               AND (tenant_id IS NULL OR tenant_id = $1::uuid)
-             ORDER BY code ASC, locale ASC, version DESC`,
-            [tenantId],
-          );
+          }>(sql, params);
           return result.rows.map(mapPromptRow);
         },
       );
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'AiGatewayRepository', error, {
-        operation: 'listActivePrompts',
+        operation: 'listPrompts',
       });
       return [];
     }
+  }
+
+  /** @deprecated Prefer listPrompts — kept for callers expecting active-only. */
+  async listActivePrompts(
+    actorUserId: string,
+    tenantId: string,
+  ): Promise<ReadonlyArray<AiPromptTemplateRow>> {
+    return this.listPrompts(actorUserId, tenantId, { includeRetired: false });
   }
 
   async getActivePrompt(
@@ -283,12 +320,18 @@ export class AiGatewayRepository {
     }
   }
 
+  /**
+   * Sum of request_count for tenant + UTC date (all featureCodes).
+   * Fail closed: throws when pool/membership/DB cannot load the meter (AI-004).
+   */
   async sumRequestCountForDate(
     actorUserId: string,
     tenantId: string,
     usageDate: string,
   ): Promise<number> {
-    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) return 0;
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) {
+      throw new Error('AI usage meter unavailable');
+    }
     try {
       return await withTenantTransaction(
         this.pool,
@@ -307,7 +350,7 @@ export class AiGatewayRepository {
       logFailClosedDbError(this.logger, 'AiGatewayRepository', error, {
         operation: 'sumRequestCountForDate',
       });
-      return 0;
+      throw error instanceof Error ? error : new Error('AI usage meter unavailable');
     }
   }
 

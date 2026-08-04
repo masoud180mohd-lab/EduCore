@@ -146,11 +146,32 @@ export class AiGatewayService implements AiGatewayPort {
 
     const dailyCap = aiDailyCapFromEnv();
     if (dailyCap >= 0) {
-      const used = await this.repo.sumRequestCountForDate(
-        command.actorUserId,
-        command.tenantId,
-        utcTodayDateString(),
-      );
+      let used: number;
+      try {
+        used = await this.repo.sumRequestCountForDate(
+          command.actorUserId,
+          command.tenantId,
+          utcTodayDateString(),
+        );
+      } catch {
+        return this.settle({
+          command,
+          requestId,
+          featureCode,
+          promptCode,
+          promptVersion: prompt.version,
+          locale,
+          correlationId,
+          status: 'failed',
+          rejectReason: 'meter_unavailable',
+          modelCode: null,
+          providerCode: this.provider.providerCode,
+          usage: null,
+          outputText: null,
+          variablesRedacted,
+          countUsage: false,
+        });
+      }
       if (used >= dailyCap) {
         return this.settle({
           command,

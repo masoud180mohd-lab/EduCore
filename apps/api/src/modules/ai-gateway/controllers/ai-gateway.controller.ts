@@ -1,7 +1,17 @@
 /**
  * AI gateway lab HTTP (ACF-AI-001).
  */
-import { Body, Controller, Get, HttpCode, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request } from 'express';
 
 import { AUTH_CONTEXT_REQUEST_KEY } from '../../../common/auth/index.js';
@@ -29,9 +39,18 @@ export class AiGatewayController {
 
   @Get('api/v1/ai/prompts')
   @UseGuards(RequirePermission('ai.read'))
-  async listPrompts(@Req() request: AuthedRequest): Promise<unknown> {
+  async listPrompts(
+    @Req() request: AuthedRequest,
+    @Query('code') code?: string,
+    @Query('locale') locale?: string,
+    @Query('includeRetired') includeRetired?: string,
+  ): Promise<unknown> {
     const { auth, tenant } = requireAuthTenant(request);
-    return this.lab.listPromptsForTenant(auth.userId, tenant.tenantId);
+    return this.lab.listPromptsForTenant(auth.userId, tenant.tenantId, {
+      code,
+      locale,
+      includeRetired,
+    });
   }
 
   @Get('api/v1/ai/usage')

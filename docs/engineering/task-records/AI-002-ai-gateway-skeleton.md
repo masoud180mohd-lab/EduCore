@@ -1,12 +1,12 @@
 # AI-002 — AI Gateway skeleton (Fake + pipeline)
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **AI-002** / EPIC-AI-01 / F-AI-01 |
-| Date      | 2026-08-03 |
-| Status    | **Done** (solo-operator provisional) |
+| Field     | Value                                                                     |
+| --------- | ------------------------------------------------------------------------- |
+| Program   | **AI-002** / EPIC-AI-01 / F-AI-01                                         |
+| Date      | 2026-08-03                                                                |
+| Status    | **Done** (solo-operator provisional)                                      |
 | Depends   | AI-F0 · AI-001 · DBF-AI-001 · ACF-AI-001 · `GO AI-002` (user B / EPIC-AI) |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                  |
 
 ## Delivered
 

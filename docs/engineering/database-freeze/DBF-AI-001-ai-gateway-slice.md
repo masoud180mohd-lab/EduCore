@@ -14,12 +14,12 @@
 
 ## Scope (v1)
 
-| In scope                                         | Out of scope                          |
-| ------------------------------------------------ | ------------------------------------- |
-| Prompt templates (versioned, allowlisted tokens) | Free-form school prompt editor UI     |
-| Invoke request ledger                            | Embedding / vector / RAG stores       |
-| Daily usage meter by tenant + featureCode        | Training datasets / model fine-tunes  |
-| Optional env-only model routing (no table req.)  | Conversation / tutor memory tables     |
+| In scope                                         | Out of scope                         |
+| ------------------------------------------------ | ------------------------------------ |
+| Prompt templates (versioned, allowlisted tokens) | Free-form school prompt editor UI    |
+| Invoke request ledger                            | Embedding / vector / RAG stores      |
+| Daily usage meter by tenant + featureCode        | Training datasets / model fine-tunes |
+| Optional env-only model routing (no table req.)  | Conversation / tutor memory tables   |
 
 ## RLS
 
@@ -31,16 +31,16 @@
 
 ### `ai_prompt_templates`
 
-| Column     | Type        | Notes                                                                 |
-| ---------- | ----------- | --------------------------------------------------------------------- |
-| id         | uuid PK     |                                                                       |
-| tenant_id  | uuid NULL   | NULL = **system** template                                            |
-| code       | text        | e.g. `lab.echo`                                                       |
-| locale     | text        | `en` \| `sw` (v1)                                                     |
-| version    | int         | ≥ 1; immutable once inserted — edits → **new version**                |
-| body       | text        | placeholders `{{token}}` only                                         |
-| status     | text        | `active` \| `retired`                                                 |
-| created_at | timestamptz |                                                                       |
+| Column     | Type        | Notes                                                  |
+| ---------- | ----------- | ------------------------------------------------------ |
+| id         | uuid PK     |                                                        |
+| tenant_id  | uuid NULL   | NULL = **system** template                             |
+| code       | text        | e.g. `lab.echo`                                        |
+| locale     | text        | `en` \| `sw` (v1)                                      |
+| version    | int         | ≥ 1; immutable once inserted — edits → **new version** |
+| body       | text        | placeholders `{{token}}` only                          |
+| status     | text        | `active` \| `retired`                                  |
+| created_at | timestamptz |                                                        |
 
 UNIQUE treating NULL tenant as system: `(tenant_id, code, locale, version)`.
 
@@ -50,28 +50,28 @@ CHECK: `locale IN ('en','sw')`; body length ≤ 8000 (skeleton).
 
 ### `ai_invoke_requests`
 
-| Column              | Type        | Notes                                                                |
-| ------------------- | ----------- | -------------------------------------------------------------------- |
-| id                  | uuid PK     |                                                                      |
-| tenant_id           | uuid FK     | RLS                                                                  |
-| actor_user_id       | uuid        | who invoked                                                          |
-| feature_code        | text        | must be in AI-001 allowlist                                          |
-| prompt_code         | text        |                                                                      |
-| prompt_version      | int         | resolved at invoke                                                   |
-| locale              | text        |                                                                      |
-| status              | text        | `accepted` \| `succeeded` \| `failed` \| `skipped` \| `disabled`     |
-| skip_reason         | text NULL   | e.g. `kill_switch`, `feature_blocked`, `daily_cap`, `provider_off`   |
-| correlation_id      | text NULL   | request/correlation trace                                            |
-| model_code          | text NULL   | e.g. `fake-echo-v1`                                                  |
-| provider_code       | text NULL   | `fake` \| `disabled` (real later)                                    |
-| input_tokens        | int NULL    | estimate; Fake may use 0 or char heuristic                           |
-| output_tokens       | int NULL    |                                                                      |
-| estimated_cost_minor| int NULL    | minor currency units; Fake often 0                                   |
-| output_text         | text NULL   | **lab only** — retention policy TBD; production may store hash only  |
-| variables_json      | jsonb       | allowlisted rendered inputs **after** redaction stub                 |
-| idempotency_key     | text NULL   | optional for lab; required if HTTP create exposes retries            |
-| created_at          | timestamptz |                                                                      |
-| updated_at          | timestamptz |                                                                      |
+| Column               | Type        | Notes                                                               |
+| -------------------- | ----------- | ------------------------------------------------------------------- |
+| id                   | uuid PK     |                                                                     |
+| tenant_id            | uuid FK     | RLS                                                                 |
+| actor_user_id        | uuid        | who invoked                                                         |
+| feature_code         | text        | must be in AI-001 allowlist                                         |
+| prompt_code          | text        |                                                                     |
+| prompt_version       | int         | resolved at invoke                                                  |
+| locale               | text        |                                                                     |
+| status               | text        | `accepted` \| `succeeded` \| `failed` \| `skipped` \| `disabled`    |
+| skip_reason          | text NULL   | e.g. `kill_switch`, `feature_blocked`, `daily_cap`, `provider_off`  |
+| correlation_id       | text NULL   | request/correlation trace                                           |
+| model_code           | text NULL   | e.g. `fake-echo-v1`                                                 |
+| provider_code        | text NULL   | `fake` \| `disabled` (real later)                                   |
+| input_tokens         | int NULL    | estimate; Fake may use 0 or char heuristic                          |
+| output_tokens        | int NULL    |                                                                     |
+| estimated_cost_minor | int NULL    | minor currency units; Fake often 0                                  |
+| output_text          | text NULL   | **lab only** — retention policy TBD; production may store hash only |
+| variables_json       | jsonb       | allowlisted rendered inputs **after** redaction stub                |
+| idempotency_key      | text NULL   | optional for lab; required if HTTP create exposes retries           |
+| created_at           | timestamptz |                                                                     |
+| updated_at           | timestamptz |                                                                     |
 
 UNIQUE optional `(tenant_id, idempotency_key)` when key present.
 
@@ -79,16 +79,16 @@ UNIQUE optional `(tenant_id, idempotency_key)` when key present.
 
 ### `ai_usage_daily`
 
-| Column              | Type    | Notes                                      |
-| ------------------- | ------- | ------------------------------------------ |
-| tenant_id           | uuid    | PK part                                    |
-| usage_date          | date    | UTC date; PK part                          |
-| feature_code        | text    | PK part                                    |
-| request_count       | int     | successful + failed attempts that count    |
-| input_tokens        | int     |                                            |
-| output_tokens       | int     |                                            |
-| estimated_cost_minor| int     |                                            |
-| updated_at          | timestamptz |                                         |
+| Column               | Type        | Notes                                   |
+| -------------------- | ----------- | --------------------------------------- |
+| tenant_id            | uuid        | PK part                                 |
+| usage_date           | date        | UTC date; PK part                       |
+| feature_code         | text        | PK part                                 |
+| request_count        | int         | successful + failed attempts that count |
+| input_tokens         | int         |                                         |
+| output_tokens        | int         |                                         |
+| estimated_cost_minor | int         |                                         |
+| updated_at           | timestamptz |                                         |
 
 PK `(tenant_id, usage_date, feature_code)`.
 
