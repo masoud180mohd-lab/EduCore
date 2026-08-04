@@ -98,26 +98,25 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**MFA-HARD** — continuous privileged enforce (**Done**). Soft default remains for lab.
+**Engineering Readiness re-review prep** — evidence pack Done; **production still NO GO**.
 
 Required outputs:
 
-1. ~~Login hard gate~~ privileged without TOTP → `MFA_REQUIRED`.
-2. ~~Store fail-closed~~ hard + MFA DB down → deny login.
-3. ~~Continuous gate~~ privileged permission routes require active TOTP under hard.
-4. Operator: enroll under `MFA_ENFORCE=soft`, then set `MFA_ENFORCE=hard` + `MFA_TOTP_ENCRYPTION_KEY`.
-5. Still deferred: IdP/OIDC; PAY-OPS until ClickPesa keys; product AI allowlist.
+1. ~~READY-REREVIEW-PREP-2026-08-04~~ blocker map B-01…B-07 vs lab evidence.
+2. Close next: **B-05** hosting/DR decision → **B-04** lite threat model → **B-07** pilot SLOs/restore schedule.
+3. Do **not** claim public pilot until B-05 + B-07 + threat/IdP residuals addressed (and preferably independent freeze countersign).
+4. Parallel lab: PAY-OPS only with ClickPesa keys; MFA enroll soft→hard for privileged trust.
 
-**Parallel:** EPIC-AI-01 + AI-006 Done (Fake default; OpenAI optional).
+**Parallel:** MFA-HARD Done; EPIC-AI-01 + AI-006 Done; COMMS lab Done.
 
-**Governance:** Request Engineering Readiness Re-Review against `42_ENGINEERING_READINESS_REVIEW.md` before claiming production readiness.
+**Governance:** Full Board re-review still required per `42_ENGINEERING_READINESS_REVIEW.md` — this prep is not that verdict.
 
 ## Naming Convention
 
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **MFA-HARD Done** (soft lab default); IdP/OIDC later; PAY-OPS deferred; product AI still gated.
+- **Next epic focus**: **Close B-05 / B-04-threat / B-07** before any production claim; PAY-OPS when keys; IdP later.
 
 ## Status Update Rules
 

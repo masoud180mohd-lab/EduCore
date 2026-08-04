@@ -8,7 +8,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 
 | Area | Current Limitation Or Deferral | Rule |
 |---|---|---|
-| Production readiness | Independent review remains **NO GO** for unrestricted production / public pilot | Follow `42_ENGINEERING_READINESS_REVIEW.md`; do not claim production readiness from lab IMP alone |
+| Production readiness | Independent review remains **NO GO** for unrestricted production / public pilot; **2026-08-04 re-review prep** maps B-01…B-07 progress | Follow `42_ENGINEERING_READINESS_REVIEW.md` + `docs/engineering/governance/ENGINEERING_READINESS_REREVIEW_PREP_2026-08-04.md`; do not claim production readiness from lab IMP alone |
 | Freeze authority | Slice freezes Accepted under **SOLO-GOV-001** (acting seats), not independent multi-person countersign | Always qualify freeze language; do not invent “three independent signers” |
 | Database | Slice DBF artifacts exist under `docs/engineering/database-freeze/`; **kit-wide** ERD/index/RLS pack is not a single Accepted Freeze v1.0 document | New tables require a DBF revision for that slice before persistence work |
 | API | Slice ACF / OpenAPI baselines exist; not every future product route is open | New endpoints require ACF revision + IMP gate |

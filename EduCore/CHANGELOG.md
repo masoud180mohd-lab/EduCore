@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-04 - Engineering Readiness re-review prep
+
+- Added `docs/engineering/governance/ENGINEERING_READINESS_REREVIEW_PREP_2026-08-04.md`.
+- Maps B-01…B-07 against lab progress; **production still NO GO**; next close-outs B-05 / threat model / B-07.
+
 ## 2026-08-04 - MFA-HARD continuous privileged enforce
 
 - Login fail-closed when MFA store down under `MFA_ENFORCE=hard`.
