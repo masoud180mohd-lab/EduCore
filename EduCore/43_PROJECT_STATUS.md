@@ -77,7 +77,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 | Production IdP / MFA | Not chosen / not implemented for privileged users |
 | Hosting, IaC, secrets provider, RPO/RTO | Not chosen |
 | First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until adapter + secrets |
-| AI provider / release gate | Open — no production AI feature |
+| AI provider / release gate | **Lab adapter chosen:** OpenAI (`openai`) env-gated; Fake CI default; product features still gate-blocked (`lab.echo` only) |
 | Offline attendance worker | Foundation/docs path; not production offline cutover |
 | Independent multi-person freeze re-sign | Open (SOLO-GOV-001 honesty residual) |
 
@@ -108,7 +108,8 @@ Required outputs:
 4. ~~AI-004~~ usage metering harden.
 5. ~~AI-005~~ Fake eval harness (`AI_EVAL_HARNESS`).
 6. Operator: migrate through `20260803170000_ai_prompt_registry`; `AI_PROVIDER=fake` (default).
-7. Optional later: **AI-006** real provider (separate freeze + secrets).
+7. ~~AI-006~~ OpenAI adapter (env-gated); Fake still CI default. Production DPA/residency still open.
+8. Operator: `AI_PROVIDER=fake` (default) or `openai` + `OPENAI_API_KEY`; `npm run ai:check-config`.
 
 **Parallel:** Privileged MFA lab Done (TOTP soft); IdP/OIDC deferred; PAY-OPS deferred until ClickPesa keys.
 
@@ -119,7 +120,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **EPIC-AI-01 Done** (Fake gateway); AI-006 / product AI later; MFA hard-enforce + IdP later; PAY-OPS deferred.
+- **Next epic focus**: **EPIC-AI-01 + AI-006 Done** (Fake default; OpenAI optional); product AI still gated; MFA hard-enforce + IdP later; PAY-OPS deferred.
 
 ## Status Update Rules
 

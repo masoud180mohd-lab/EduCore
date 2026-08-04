@@ -19,6 +19,8 @@ export {
 } from './application/ai-feature-gate.js';
 export { AI_LAB_PROMPT_CATALOG, isKnownLabPromptCode } from './application/ai-prompt-catalog.js';
 export type { AiLabPromptCatalogEntry } from './application/ai-prompt-catalog.js';
+export type { AiProviderName } from './application/ai-feature-gate.js';
+export { resolveAiProviderName } from './application/ai-feature-gate.js';
 export {
   LAB_ECHO_EVAL_FIXTURES,
   runAiEvalFixture,
@@ -30,3 +32,5 @@ export type {
   AiEvalFixture,
   AiEvalSuiteResult,
 } from './eval/index.js';
+export { reportOpenAiConfig, loadOpenAiConfig, OPENAI_PROVIDER_CODE } from './providers/openai-config.js';
+export type { OpenAiConfigReport } from './providers/openai-config.js';

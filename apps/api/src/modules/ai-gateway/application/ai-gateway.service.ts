@@ -22,6 +22,7 @@ import type {
   AiProviderPort,
 } from '../providers/ai-gateway.port.js';
 import { AI_PROVIDER_PORT } from '../providers/ai-gateway.port.js';
+import { AiProviderNotConfiguredError } from '../providers/not-configured-ai.provider.js';
 import { AiGatewayRepository } from '../repositories/ai-gateway.repository.js';
 
 const OUTPUT_PREVIEW_MAX = 240;
@@ -220,7 +221,26 @@ export class AiGatewayService implements AiGatewayPort {
         variablesRedacted,
         countUsage: true,
       });
-    } catch {
+    } catch (error: unknown) {
+      if (error instanceof AiProviderNotConfiguredError) {
+        return this.settle({
+          command,
+          requestId,
+          featureCode,
+          promptCode,
+          promptVersion: prompt.version,
+          locale,
+          correlationId,
+          status: 'failed',
+          rejectReason: 'provider_not_configured',
+          modelCode: null,
+          providerCode: error.providerCode,
+          usage: null,
+          outputText: null,
+          variablesRedacted,
+          countUsage: false,
+        });
+      }
       return this.settle({
         command,
         requestId,

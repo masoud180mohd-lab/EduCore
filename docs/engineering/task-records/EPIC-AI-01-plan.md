@@ -9,7 +9,7 @@
 | Constitution | `EduCore/03_DEVELOPMENT_CONSTITUTION.md` — no direct LLM calls                      |
 | Mode         | Solo-operator (SOLO-GOV-001)                                                        |
 | Freeze gate  | AI-F0 — this plan + DBF-AI-001 + ACF-AI-001 + AI-001 gate                           |
-| Status       | **AI-005 Done** — Fake eval harness shipped; EPIC-AI-01 default path complete       |
+| Status       | **AI-006 Done** — OpenAI adapter env-gated; Fake still CI default                   |
 
 ## Mission
 

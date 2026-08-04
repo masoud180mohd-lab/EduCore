@@ -180,6 +180,14 @@ export class AiLabService {
     if (result.status === 'failed' && result.rejectReason === 'meter_unavailable') {
       throw new AppError('INTERNAL_ERROR', 'AI usage meter unavailable.');
     }
+    if (result.status === 'failed' && result.rejectReason === 'provider_not_configured') {
+      throw new AppError(
+        'NOT_IMPLEMENTED',
+        'AI provider openai is selected but OPENAI_API_KEY is not configured.',
+        501,
+        { rejectReason: 'provider_not_configured', requestId: result.requestId },
+      );
+    }
 
     return { data: result };
   }

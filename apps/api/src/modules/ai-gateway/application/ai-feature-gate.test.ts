@@ -36,6 +36,8 @@ describe('ai-feature-gate', () => {
     expect(resolveAiProviderName()).toBe('disabled');
     process.env['AI_PROVIDER'] = 'fake';
     expect(resolveAiProviderName()).toBe('fake');
+    process.env['AI_PROVIDER'] = 'openai';
+    expect(resolveAiProviderName()).toBe('openai');
     if (prev === undefined) delete process.env['AI_PROVIDER'];
     else process.env['AI_PROVIDER'] = prev;
   });

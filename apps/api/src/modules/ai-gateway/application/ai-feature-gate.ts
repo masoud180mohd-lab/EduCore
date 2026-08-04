@@ -15,11 +15,14 @@ export function isAiPlatformEnabled(environment: NodeJS.ProcessEnv = process.env
 
 export function resolveAiProviderName(
   environment: NodeJS.ProcessEnv = process.env,
-): 'fake' | 'disabled' {
+): AiProviderName {
   const raw = (environment['AI_PROVIDER'] ?? 'fake').trim().toLowerCase();
   if (raw === 'disabled') return 'disabled';
+  if (raw === 'openai') return 'openai';
   return 'fake';
 }
+
+export type AiProviderName = 'fake' | 'disabled' | 'openai';
 
 export function aiDailyCapFromEnv(environment: NodeJS.ProcessEnv = process.env): number {
   const bypass = (environment['AI_BYPASS_DAILY_CAP'] ?? '').trim().toLowerCase();

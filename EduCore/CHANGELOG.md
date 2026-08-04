@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-04 - AI-006 OpenAI provider adapter (env-gated)
+
+- Decision Accepted: OpenAI Chat Completions behind `AiProviderPort`; Fake remains default.
+- Missing `OPENAI_API_KEY` when `AI_PROVIDER=openai` → 501 / `provider_not_configured` (no silent Fake).
+- Added `npm run ai:check-config`; updated Known Limitations / project status.
+
 ## 2026-08-04 - AI-005 Fake evaluation harness
 
 - Spec `AI_EVAL_HARNESS.md` + fixture runner for `lab.echo` (happy / failure / redaction / gate / cap).
