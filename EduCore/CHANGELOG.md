@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-04 - AI-005 Fake evaluation harness
+
+- Spec `AI_EVAL_HARNESS.md` + fixture runner for `lab.echo` (happy / failure / redaction / gate / cap).
+- EPIC-AI-01 default path complete (AI-001…005); real provider still deferred (AI-006).
+- Updated `43_PROJECT_STATUS.md`, `46_KNOWN_LIMITATIONS.md`, `00_START_HERE.md`.
+
 ## 2026-08-03 - AI-003 prompt registry polish
 
 - Immutability trigger + `ai_publish_system_prompt_version`; lab catalog + filtered `GET /api/v1/ai/prompts`.

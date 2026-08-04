@@ -19,3 +19,14 @@ export {
 } from './application/ai-feature-gate.js';
 export { AI_LAB_PROMPT_CATALOG, isKnownLabPromptCode } from './application/ai-prompt-catalog.js';
 export type { AiLabPromptCatalogEntry } from './application/ai-prompt-catalog.js';
+export {
+  LAB_ECHO_EVAL_FIXTURES,
+  runAiEvalFixture,
+  runAiEvalSuite,
+} from './eval/index.js';
+export type {
+  AiEvalCaseResult,
+  AiEvalCategory,
+  AiEvalFixture,
+  AiEvalSuiteResult,
+} from './eval/index.js';
