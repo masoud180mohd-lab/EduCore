@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-08 - B-03 Design System Freeze posture
+
+- Accepted Option B: provisional DSF-001…006 only; kit-wide Design System Freeze not accepted.
+- Decision `B-03-design-system-freeze-posture.md`; readiness B-03 Closed-provisional (posture locked).
+
 ## 2026-08-08 - B-04 lite threat model + B-07 pilot ops stub
 
 - Accepted lite threat model (session/MFA/RLS/support): `B-04-lite-threat-model-session-mfa-rls.md`.

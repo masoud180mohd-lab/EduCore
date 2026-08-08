@@ -73,7 +73,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 | Area | Status |
 | ---- | ------ |
-| Kit-wide Design System Freeze | Not accepted — provisional DSF slices only |
+| Kit-wide Design System Freeze | Not accepted — **B-03 posture**: provisional DSF-001…006 only (`B-03-design-system-freeze-posture.md`) |
 | Production IdP / MFA | IdP/OIDC not chosen; **TOTP MFA-HARD continuous gate Done** (soft lab default) |
 | Hosting, IaC, secrets provider, RPO/RTO | **Chosen (provisional):** Fly.io + Neon + Doppler; FRA; RPO≤24h; RTO≤8h — live provision deferred |
 | First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until adapter + secrets |
@@ -98,15 +98,16 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**B-04 + B-07** — **Done** (provisional stubs). Production still **NO GO**.
+**Readiness decision stubs B-03…B-07** — **Done** (provisional). Production still **NO GO**.
 
 Required outputs:
 
 1. ~~B-05~~ Fly.io + Neon + Doppler; RPO≤24h; RTO≤8h.
-2. ~~B-04~~ Lite threat model (`docs/engineering/decisions/B-04-lite-threat-model-session-mfa-rls.md`).
-3. ~~B-07~~ Pilot SLOs + restore-drill schedule (`docs/engineering/decisions/B-07-pilot-slos-restore-drill-schedule.md`).
-4. Operator: provision Fly/Neon/Doppler; run D1 restore smoke; no secrets in git.
-5. Do **not** claim public pilot until executed drills + IdP/support residuals addressed.
+2. ~~B-04~~ Lite threat model.
+3. ~~B-07~~ Pilot SLOs + restore-drill schedule.
+4. ~~B-03~~ Provisional DSF posture locked (`B-03-design-system-freeze-posture.md`); kit-wide DSF residual stands.
+5. Operator: provision Fly/Neon/Doppler; run D1 restore smoke; no secrets in git.
+6. Do **not** claim public pilot until executed drills + IdP/support residuals addressed.
 
 **Parallel:** Readiness prep pack updated; MFA-HARD / AI / COMMS lab Done.
 
@@ -117,7 +118,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **execute B-07 D1** after staging; **B-03 DSF residual**; PAY-OPS when keys; IdP later.
+- **Next epic focus**: **execute B-07 D1** after staging; PAY-OPS when keys; IdP later; optional `GO DSF-KIT`.
 
 ## Status Update Rules
 
