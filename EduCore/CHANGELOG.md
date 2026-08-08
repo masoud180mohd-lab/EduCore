@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-04 - B-05 MVP hosting / DR / secrets decision
+
+- Accepted provisional topology: Fly.io + Neon + Doppler (Frankfurt); RPO≤24h; RTO≤8h.
+- Updated readiness prep (B-05 Closed-provisional); production still NO GO until B-07 + threat/IdP.
+
 ## 2026-08-04 - Engineering Readiness re-review prep
 
 - Added `docs/engineering/governance/ENGINEERING_READINESS_REREVIEW_PREP_2026-08-04.md`.

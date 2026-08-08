@@ -75,7 +75,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 | ---- | ------ |
 | Kit-wide Design System Freeze | Not accepted — provisional DSF slices only |
 | Production IdP / MFA | IdP/OIDC not chosen; **TOTP MFA-HARD continuous gate Done** (soft lab default) |
-| Hosting, IaC, secrets provider, RPO/RTO | Not chosen |
+| Hosting, IaC, secrets provider, RPO/RTO | **Chosen (provisional):** Fly.io + Neon + Doppler; FRA; RPO≤24h; RTO≤8h — live provision deferred |
 | First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until adapter + secrets |
 | AI provider / release gate | **Lab adapter chosen:** OpenAI (`openai`) env-gated; Fake CI default; product features still gate-blocked (`lab.echo` only) |
 | Offline attendance worker | Foundation/docs path; not production offline cutover |
@@ -98,25 +98,25 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**Engineering Readiness re-review prep** — evidence pack Done; **production still NO GO**.
+**B-05 hosting/DR decision** — **Done** (provisional). Production still **NO GO**.
 
 Required outputs:
 
-1. ~~READY-REREVIEW-PREP-2026-08-04~~ blocker map B-01…B-07 vs lab evidence.
-2. Close next: **B-05** hosting/DR decision → **B-04** lite threat model → **B-07** pilot SLOs/restore schedule.
-3. Do **not** claim public pilot until B-05 + B-07 + threat/IdP residuals addressed (and preferably independent freeze countersign).
-4. Parallel lab: PAY-OPS only with ClickPesa keys; MFA enroll soft→hard for privileged trust.
+1. ~~B-05~~ Fly.io + Neon + Doppler; RPO≤24h; RTO≤8h (`docs/engineering/decisions/B-05-mvp-hosting-dr-secrets.md`).
+2. Next: **B-04** lite threat model → **B-07** pilot SLOs + restore-drill schedule.
+3. Operator: provision Fly/Neon/Doppler when ready (out of repo); no secrets in git.
+4. Do **not** claim public pilot until B-07 + threat/IdP residuals addressed.
 
-**Parallel:** MFA-HARD Done; EPIC-AI-01 + AI-006 Done; COMMS lab Done.
+**Parallel:** Readiness prep pack exists; MFA-HARD / AI / COMMS lab Done.
 
-**Governance:** Full Board re-review still required per `42_ENGINEERING_READINESS_REVIEW.md` — this prep is not that verdict.
+**Governance:** Full Board re-review still required per `42_ENGINEERING_READINESS_REVIEW.md`.
 
 ## Naming Convention
 
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **Close B-05 / B-04-threat / B-07** before any production claim; PAY-OPS when keys; IdP later.
+- **Next epic focus**: **B-04 threat model → B-07 ops**; PAY-OPS when keys; IdP later.
 
 ## Status Update Rules
 

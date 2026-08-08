@@ -14,7 +14,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 | API | Slice ACF / OpenAPI baselines exist; not every future product route is open | New endpoints require ACF revision + IMP gate |
 | Design | Provisional DSF-001…006 only; **kit-wide Design System Freeze not accepted** | Stay inside provisional DSF; no Tailwind/shadcn redesign without DSF amend |
 | Identity | Lab opaque-session AuthN + **TOTP MFA** (soft default; **hard continuous gate** available) | Set `MFA_TOTP_ENCRYPTION_KEY`; `MFA_ENFORCE=hard` for privileged production trust; enroll under soft first |
-| Infrastructure | Hosting, region, IaC, secrets provider, RPO/RTO, and DR operations not chosen | Record deployment/DR decision before production deployment |
+| Infrastructure | **B-05 provisional:** Fly.io + Neon + Doppler (Frankfurt); RPO≤24h; RTO≤8h; live accounts/drills not done | Provision operator accounts out of git; run restore drills under B-07; no secrets in repo |
 | Payments | **ClickPesa PAY-006 UI shipped**; sandbox pilot **deferred** (no keys yet); runtime **Fake** | No secrets in git; resume PAY-OPS-001 when vendor sandbox available; parent pay still out |
 | SMS / notifications | **COMMS-001…005 lab complete** (Fake default; Beem env-gated) | Migrate; optional Beem keys; WhatsApp later |
 
