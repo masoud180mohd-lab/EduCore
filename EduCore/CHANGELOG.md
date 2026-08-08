@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-08 - OPS-001 staging runbook + Sprint 0 exit note
+
+- Published operator runbook for Fly/Neon/Doppler staging + B-07 D1 (`OPS-001-staging-provision-and-d1.md`).
+- Recorded Engineering Sprint 0 exit evidence (`SPRINT0_ENGINEERING_EXIT_NOTE.md`); production still NO GO.
+
 ## 2026-08-08 - B-03 Design System Freeze posture
 
 - Accepted Option B: provisional DSF-001…006 only; kit-wide Design System Freeze not accepted.

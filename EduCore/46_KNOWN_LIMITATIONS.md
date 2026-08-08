@@ -15,7 +15,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 | Design | **B-03 posture:** provisional DSF-001…006 only; kit-wide Design System Freeze **not** accepted | Stay inside provisional DSF; new screens need new/amended DSF; kit-wide = future `GO DSF-KIT` |
 | Identity | Lab opaque-session AuthN + **TOTP MFA** (soft default; **hard continuous gate** available) | Set `MFA_TOTP_ENCRYPTION_KEY`; `MFA_ENFORCE=hard` for privileged production trust; enroll under soft first |
 | Infrastructure | **B-05 provisional:** Fly.io + Neon + Doppler (Frankfurt); RPO≤24h; RTO≤8h; live accounts not done | Provision operator accounts out of git; no secrets in repo |
-| Operations | **B-07 provisional:** 5 pilot SLOs + drill schedule (D1 due 2026-09-15 or 30d after staging Neon) | Execute restore drills; record evidence; multi-person on-call still open |
+| Operations | **B-07 provisional** + **OPS-001 runbook** published; drills not executed | Execute OPS-001 → D1 evidence; multi-person on-call still open |
 | Security / identity | **B-04 lite TM** Accepted; sessions + TOTP + MFA-HARD; IdP/OIDC deferred | `MFA_ENFORCE=hard` before pilot finance trust; IdP before unrestricted pilot |
 | Payments | **ClickPesa PAY-006 UI shipped**; sandbox pilot **deferred** (no keys yet); runtime **Fake** | No secrets in git; resume PAY-OPS-001 when vendor sandbox available; parent pay still out |
 | SMS / notifications | **COMMS-001…005 lab complete** (Fake default; Beem env-gated) | Migrate; optional Beem keys; WhatsApp later |

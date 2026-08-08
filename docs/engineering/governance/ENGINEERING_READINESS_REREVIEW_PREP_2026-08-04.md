@@ -61,7 +61,7 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 
 | Gate item | Met? | Notes |
 | --- | --- | --- |
-| Sprint 0 exit evidence | **Mostly** | Repo + CI + checks exist; collect a short Sprint 0 exit note if missing |
+| Sprint 0 exit evidence | **Yes (provisional)** | `docs/engineering/governance/SPRINT0_ENGINEERING_EXIT_NOTE.md` |
 | DB / API / DSF accepted for Identity/Org slice | **Partial** | DBF/ACF under SOLO-GOV-001; DSF posture = provisional slices only (B-03) |
 | Threat-model + identity decision | **Partial** | Lite TM + session+MFA yes; IdP/break-glass no |
 | Production topology / DR decision | **Provisional yes** | B-05 Accepted (Fly+Neon+Doppler); live provision still open |
@@ -73,10 +73,10 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 2. ~~**B-04 threat model (lite)**~~ — **Done** (`B-04-lite-threat-model-session-mfa-rls.md`).
 3. ~~**B-07 pilot ops minimum**~~ — **Done (stub)** (`B-07-pilot-slos-restore-drill-schedule.md`); execute D1 when staging Neon exists.
 4. ~~**B-03**~~ — **Done (posture)** (`B-03-design-system-freeze-posture.md`): provisional DSF only; kit-wide residual stands.
-5. **Independent countersign** (when humans exist) — supersede SOLO-GOV-001 for freezes that matter to pilot schools.
-6. **PAY-OPS / Beem production** — only with vendor keys + MFA hard + this re-review path.
-7. Operator: provision Fly/Neon/Doppler; run B-07 D1; record drill evidence (out of / after repo).
-8. Optional later: **DSF-KIT-001** / EPIC-DS-01 when Owner wants kit-wide Design System Freeze v1.0.
+5. ~~Operator runbook~~ — **Published** `OPS-001-staging-provision-and-d1.md` (execution pending).
+6. Operator: execute OPS-001 Phases A–E; run B-07 D1; record drill evidence.
+7. Optional later: **DSF-KIT-001** / EPIC-DS-01 when Owner wants kit-wide Design System Freeze v1.0.
+8. **Independent countersign** / **PAY-OPS** / **IdP** when humans/keys ready (unchanged).
 
 ## Explicit non-claims
 
@@ -88,16 +88,19 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 - **B-07 Accepted (stub)** is **not** “restore drills done” — schedule only until D1 evidence exists.
 - **B-04 lite TM** is **not** IdP completion or independent pen-test.
 - **B-03 posture Accepted** is **not** kit-wide Design System Freeze v1.0.
+- **OPS-001 published** is **not** staging live or D1 passed.
 
 ## Next agent/user GO options
 
 | Code | Work |
 | --- | --- |
+| `GO OPS-EXEC` | Owner executes OPS-001 Phases A–C (accounts + Neon); agent can help Dockerfile/Fly IMP if asked |
 | `GO DRILL-D1` | After staging Neon: run restore smoke; write `B-07-restore-drill-YYYY-MM-DD.md` |
+| `GO FLY-DOCKER` | Add API Dockerfile + Fly staging config (unblocks OPS-001 Phase D) |
 | `GO PAY-OPS` | Only if ClickPesa sandbox keys exist |
 | `GO IDP` | IdP/OIDC decision (deferred; needed before unrestricted pilot) |
 | `GO DSF-KIT` | Author kit-wide Design System Freeze v1.0 (closes B-03 residual) |
 
 ---
 
-**Bottom line:** Substantial lab and freeze-slice progress since 2026-07-13; **B-03 / B-04 / B-05 / B-07 Closed-provisional**. **Unrestricted production remains NO GO** until executed drills, IdP/support residuals, kit-wide DSF (or accepted residual forever for gated pilot only), and ideally independent freeze countersign.
+**Bottom line:** Decision stubs B-03…B-07 + Sprint 0 exit note + OPS-001 runbook are in-repo. **Unrestricted production remains NO GO** until live staging, executed drills, IdP/support residuals, and ideally independent freeze countersign.

@@ -106,19 +106,20 @@ Required outputs:
 2. ~~B-04~~ Lite threat model.
 3. ~~B-07~~ Pilot SLOs + restore-drill schedule.
 4. ~~B-03~~ Provisional DSF posture locked (`B-03-design-system-freeze-posture.md`); kit-wide DSF residual stands.
-5. Operator: provision Fly/Neon/Doppler; run D1 restore smoke; no secrets in git.
-6. Do **not** claim public pilot until executed drills + IdP/support residuals addressed.
+5. ~~OPS-001~~ Staging provision + D1 runbook published (`docs/engineering/runbooks/OPS-001-staging-provision-and-d1.md`).
+6. Operator: execute OPS-001; run D1 restore smoke; no secrets in git.
+7. Do **not** claim public pilot until executed drills + IdP/support residuals addressed.
 
-**Parallel:** Readiness prep pack updated; MFA-HARD / AI / COMMS lab Done.
+**Parallel:** Sprint 0 exit note recorded; MFA-HARD / AI / COMMS lab Done.
 
 **Governance:** Full Board re-review still required per `42_ENGINEERING_READINESS_REVIEW.md`.
 
 ## Naming Convention
 
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
-- **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
+- **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — exit note `SPRINT0_ENGINEERING_EXIT_NOTE.md`.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **execute B-07 D1** after staging; PAY-OPS when keys; IdP later; optional `GO DSF-KIT`.
+- **Next epic focus**: **OPS-001 execute** / `GO FLY-DOCKER` / D1; PAY-OPS when keys; IdP later; optional `GO DSF-KIT`.
 
 ## Status Update Rules
 
