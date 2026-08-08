@@ -56,13 +56,16 @@ Optional later: `CLICKPESA_*`, `BEEM_*`, `OPENAI_API_KEY` — only when vendor p
 
 ## Phase D — Fly API staging
 
-1. Add a deployable image path when ready (`Dockerfile` for `apps/api` if not yet present — **create in a follow-on IMP**, do not invent secrets).  
-2. Wire Fly secrets from Doppler sync (or `fly secrets set` from Doppler export once).  
-3. Deploy `educore-api-staging` to `fra`.  
-4. Hit health: `/health` (or engineering status) → expect 200.  
-5. Smoke: login + `/auth/me` with staging admin; confirm tenant bind.
+In-repo artifacts (GO FLY-DOCKER): `apps/api/Dockerfile`, `infra/fly/educore-api.staging.toml`, `infra/fly/README.md`.
 
-**Honesty:** If Dockerfile / Fly config is still missing in-repo, Phase D is **blocked on a small infra IMP** after accounts exist. Phases A–C + Neon-only D1 can still proceed.
+1. Local image smoke (optional): `npm run docker:build:api`.  
+2. `fly apps create educore-api-staging` (once) in `fra`.  
+3. Wire Fly secrets from Doppler sync (or `fly secrets set` from Doppler export once) — Phase B names.  
+4. Deploy: `fly deploy -c infra/fly/educore-api.staging.toml`.  
+5. Hit health: `/health` → expect 200.  
+6. Smoke: login + `/auth/me` with staging admin; confirm tenant bind.
+
+**Honesty:** Phases A–C + Neon-only D1 can proceed before Fly if Dockerfile deploy is deferred; image/config are no longer the blocker.
 
 ## Phase E — B-07 D1 restore smoke (pass criteria)
 

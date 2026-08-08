@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-08 - FLY-DOCKER API image + Fly staging config
+
+- Added `apps/api/Dockerfile`, root `.dockerignore`, `infra/fly/educore-api.staging.toml`.
+- `npm run docker:build:api`; OPS-001 Phase D unblocked in-repo (live deploy still Owner).
+
 ## 2026-08-08 - OPS-001 staging runbook + Sprint 0 exit note
 
 - Published operator runbook for Fly/Neon/Doppler staging + B-07 D1 (`OPS-001-staging-provision-and-d1.md`).

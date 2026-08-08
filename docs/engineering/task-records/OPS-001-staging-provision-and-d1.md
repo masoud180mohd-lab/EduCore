@@ -17,9 +17,9 @@
 ## Explicitly not done
 
 - Live account creation  
-- Dockerfile / Fly config IMP (called out as Phase D blocker if missing)  
 - Executed D1 evidence  
+- Live `fly deploy` (Dockerfile/Fly config now in-repo via FLY-DOCKER)
 
 ## Next
 
-Owner: execute Phases A–E → `GO DRILL-D1` evidence file.
+Owner: execute Phases A–E → `fly deploy -c infra/fly/educore-api.staging.toml` → `GO DRILL-D1` evidence file.

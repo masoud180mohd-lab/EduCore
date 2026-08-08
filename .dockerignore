@@ -1,0 +1,37 @@
+# Keep API image context small — build from repo root with:
+#   docker build -f apps/api/Dockerfile .
+
+.git
+.github
+.cursor
+.agents
+.vscode
+**/.DS_Store
+
+**/node_modules
+**/dist
+**/.next
+**/coverage
+**/*.md
+!infra/fly/README.md
+
+EduCore
+docs
+agent-transcripts
+tests
+scripts
+
+apps/web/src
+apps/web/public
+apps/web/.next
+apps/api/dist
+apps/api/db
+
+*.log
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+docker-compose.yml
+infra/docker

@@ -74,9 +74,10 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 3. ~~**B-07 pilot ops minimum**~~ — **Done (stub)** (`B-07-pilot-slos-restore-drill-schedule.md`); execute D1 when staging Neon exists.
 4. ~~**B-03**~~ — **Done (posture)** (`B-03-design-system-freeze-posture.md`): provisional DSF only; kit-wide residual stands.
 5. ~~Operator runbook~~ — **Published** `OPS-001-staging-provision-and-d1.md` (execution pending).
-6. Operator: execute OPS-001 Phases A–E; run B-07 D1; record drill evidence.
-7. Optional later: **DSF-KIT-001** / EPIC-DS-01 when Owner wants kit-wide Design System Freeze v1.0.
-8. **Independent countersign** / **PAY-OPS** / **IdP** when humans/keys ready (unchanged).
+6. ~~**FLY-DOCKER**~~ — **Done** (`apps/api/Dockerfile`, `infra/fly/educore-api.staging.toml`).
+7. Operator: execute OPS-001 Phases A–E; `fly deploy`; run B-07 D1; record drill evidence.
+8. Optional later: **DSF-KIT-001** / EPIC-DS-01 when Owner wants kit-wide Design System Freeze v1.0.
+9. **Independent countersign** / **PAY-OPS** / **IdP** when humans/keys ready (unchanged).
 
 ## Explicit non-claims
 
@@ -89,14 +90,15 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 - **B-04 lite TM** is **not** IdP completion or independent pen-test.
 - **B-03 posture Accepted** is **not** kit-wide Design System Freeze v1.0.
 - **OPS-001 published** is **not** staging live or D1 passed.
+- **FLY-DOCKER artifacts** are **not** a live Fly deploy.
 
 ## Next agent/user GO options
 
 | Code | Work |
 | --- | --- |
-| `GO OPS-EXEC` | Owner executes OPS-001 Phases A–C (accounts + Neon); agent can help Dockerfile/Fly IMP if asked |
+| `GO OPS-EXEC` | Owner executes OPS-001 Phases A–E (accounts → Neon → Fly deploy → D1) |
 | `GO DRILL-D1` | After staging Neon: run restore smoke; write `B-07-restore-drill-YYYY-MM-DD.md` |
-| `GO FLY-DOCKER` | Add API Dockerfile + Fly staging config (unblocks OPS-001 Phase D) |
+| ~~`GO FLY-DOCKER`~~ | **Done** — `apps/api/Dockerfile` + `infra/fly/educore-api.staging.toml` |
 | `GO PAY-OPS` | Only if ClickPesa sandbox keys exist |
 | `GO IDP` | IdP/OIDC decision (deferred; needed before unrestricted pilot) |
 | `GO DSF-KIT` | Author kit-wide Design System Freeze v1.0 (closes B-03 residual) |

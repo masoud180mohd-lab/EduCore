@@ -1,0 +1,39 @@
+# Fly staging — educore-api (B-05 / OPS-001 Phase D)
+#
+# Prerequisites: flyctl auth, Doppler/Neon secrets set on the app.
+# Deploy from repo root:
+#   fly apps create educore-api-staging --org <org>   # once
+#   fly secrets set -a educore-api-staging ...        # or Doppler sync
+#   fly deploy -c infra/fly/educore-api.staging.toml
+#
+# Do not commit secrets. Production app name (later): educore-api.
+
+app = "educore-api-staging"
+primary_region = "fra"
+
+[build]
+  dockerfile = "apps/api/Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+  SERVICE_NAME = "educore-api"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "15s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
