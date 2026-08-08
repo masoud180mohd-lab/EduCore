@@ -16,7 +16,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 | Identity | Lab opaque-session AuthN + **TOTP MFA** (soft default; **hard continuous gate** available) | Set `MFA_TOTP_ENCRYPTION_KEY`; `MFA_ENFORCE=hard` for privileged production trust; enroll under soft first |
 | Infrastructure | **B-05 provisional** + **FLY-DOCKER** artifacts (`apps/api/Dockerfile`, Fly staging toml); live accounts not done | Owner: OPS-001 deploy; no secrets in repo |
 | Operations | **B-07 provisional** + **OPS-001 runbook** published; drills not executed | Execute OPS-001 → D1 evidence; multi-person on-call still open |
-| Security / identity | **B-04 lite TM** Accepted; sessions + TOTP + MFA-HARD; IdP/OIDC deferred | `MFA_ENFORCE=hard` before pilot finance trust; IdP before unrestricted pilot |
+| Security / identity | **B-04 lite TM** + **ID-001** (IdP deferred); sessions + TOTP + MFA-HARD | `MFA_ENFORCE=hard` before pilot finance trust; IdP required before unrestricted/public pilot |
 | Payments | **ClickPesa PAY-006 UI shipped**; sandbox pilot **deferred** (no keys yet); runtime **Fake** | No secrets in git; resume PAY-OPS-001 when vendor sandbox available; parent pay still out |
 | SMS / notifications | **COMMS-001…005 lab complete** (Fake default; Beem env-gated) | Migrate; optional Beem keys; WhatsApp later |
 

@@ -27,7 +27,7 @@ Prepare evidence for a future Engineering Readiness **re-review**. This document
 | **B-01** | Database Freeze absent | **Closed-provisional (slice)** | `docs/engineering/database-freeze/DBF-001`…`013`, `DBF-AI-001*`; isolation tests under `tests/isolation/` | No kit-wide single ERD Freeze v1.0; SOLO-GOV-001 only |
 | **B-02** | API Contract Freeze absent | **Closed-provisional (slice)** | `docs/engineering/api-contract-freeze/ACF-001`…`014`, `ACF-AI-*`; OpenAPI YAMLs under freeze trees | Not every future product route frozen |
 | **B-03** | Design System Freeze absent | **Closed-provisional (posture locked)** | `B-03-design-system-freeze-posture.md` — provisional DSF-001…006 only | Kit-wide DSF v1.0 still open residual; SOLO-GOV-001 |
-| **B-04** | Threat model + IdP/session | **Closed-provisional (threat artifact)** | Lite TM `B-04-lite-threat-model-session-mfa-rls.md`; opaque sessions + TOTP + MFA-HARD | IdP/OIDC deferred; support/break-glass thin; soft MFA unsuitable for pilot finance |
+| **B-04** | Threat model + IdP/session | **Closed-provisional (threat + IdP posture)** | Lite TM + **ID-001** (IdP deferred); opaque sessions + TOTP + MFA-HARD | OIDC not integrated; support/break-glass thin; soft MFA unsuitable for pilot finance |
 | **B-05** | Production infra + DR | **Closed-provisional** | `docs/engineering/decisions/B-05-mvp-hosting-dr-secrets.md` (Fly.io + Neon + Doppler; RPO≤24h; RTO≤8h) | Live account provisioning + restore-drill **evidence** still open; SOLO-GOV-001 |
 | **B-06** | Engineering foundation | **Closed-provisional** | Monorepo; `npm run check`; `.github/workflows/quality-gate.yml`; module boundaries script | CODEOWNERS / branch-protection proof weak; live DB tests env-dependent |
 | **B-07** | Operational readiness | **Closed-provisional (ops stub)** | `B-07-pilot-slos-restore-drill-schedule.md` — 5 SLOs, alerts, D1 due 2026-09-15 / 30d after staging Neon | Executed drill evidence + multi-person on-call still open |
@@ -63,7 +63,7 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 | --- | --- | --- |
 | Sprint 0 exit evidence | **Yes (provisional)** | `docs/engineering/governance/SPRINT0_ENGINEERING_EXIT_NOTE.md` |
 | DB / API / DSF accepted for Identity/Org slice | **Partial** | DBF/ACF under SOLO-GOV-001; DSF posture = provisional slices only (B-03) |
-| Threat-model + identity decision | **Partial** | Lite TM + session+MFA yes; IdP/break-glass no |
+| Threat-model + identity decision | **Partial** | Lite TM + ID-001 defer IdP; MFA yes; break-glass thin; OIDC not built |
 | Production topology / DR decision | **Provisional yes** | B-05 Accepted (Fly+Neon+Doppler); live provision still open |
 | CI, tenant-isolation, restore, ops evidence | **Partial** | CI + isolation yes; B-07 schedule yes; **executed** restore drills no |
 
@@ -77,7 +77,8 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 6. ~~**FLY-DOCKER**~~ — **Done** (`apps/api/Dockerfile`, `infra/fly/educore-api.staging.toml`).
 7. Operator: execute OPS-001 Phases A–E; `fly deploy`; run B-07 D1; record drill evidence.
 8. Optional later: **DSF-KIT-001** / EPIC-DS-01 when Owner wants kit-wide Design System Freeze v1.0.
-9. **Independent countersign** / **PAY-OPS** / **IdP** when humans/keys ready (unchanged).
+9. ~~**ID-001**~~ — **Done (posture)** (`ID-001-mvp-idp-posture.md`): defer IdP for gated pilot; mandatory before unrestricted/public.
+10. **Independent countersign** / **PAY-OPS** when humans/keys ready; **ID-002** when IdP trigger fires.
 
 ## Explicit non-claims
 
@@ -85,6 +86,7 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 - Slice freezes Accepted under SOLO-GOV-001 are **not** independent peer review.
 - Shipping lab Fake providers is **not** production provider readiness.
 - `MFA_ENFORCE=hard` availability is **not** IdP/OIDC completion.
+- **ID-001 Accepted (defer)** is **not** “IdP ready” — it locks deferral until a trigger.
 - **B-05 Accepted** is **not** “staging is live” — accounts/IaC still operator work.
 - **B-07 Accepted (stub)** is **not** “restore drills done” — schedule only until D1 evidence exists.
 - **B-04 lite TM** is **not** IdP completion or independent pen-test.
@@ -99,10 +101,11 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 | `GO OPS-EXEC` | Owner executes OPS-001 Phases A–E (accounts → Neon → Fly deploy → D1) |
 | `GO DRILL-D1` | After staging Neon: run restore smoke; write `B-07-restore-drill-YYYY-MM-DD.md` |
 | ~~`GO FLY-DOCKER`~~ | **Done** — `apps/api/Dockerfile` + `infra/fly/educore-api.staging.toml` |
+| ~~`GO IDP`~~ | **Done (posture)** — `ID-001-mvp-idp-posture.md` (defer IdP) |
 | `GO PAY-OPS` | Only if ClickPesa sandbox keys exist |
-| `GO IDP` | IdP/OIDC decision (deferred; needed before unrestricted pilot) |
+| `GO IDP-002` | When trigger fires: choose hosted OIDC provider |
 | `GO DSF-KIT` | Author kit-wide Design System Freeze v1.0 (closes B-03 residual) |
 
 ---
 
-**Bottom line:** Decision stubs B-03…B-07 + Sprint 0 exit note + OPS-001 runbook are in-repo. **Unrestricted production remains NO GO** until live staging, executed drills, IdP/support residuals, and ideally independent freeze countersign.
+**Bottom line:** Decision stubs B-03…B-07 + ID-001 + Sprint 0 exit + OPS-001 + FLY-DOCKER are in-repo. **Unrestricted production remains NO GO** until live staging, executed drills, IdP **integration** (when triggered) / support residuals, and ideally independent freeze countersign.

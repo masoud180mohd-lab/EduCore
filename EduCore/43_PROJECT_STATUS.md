@@ -74,7 +74,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 | Area | Status |
 | ---- | ------ |
 | Kit-wide Design System Freeze | Not accepted — **B-03 posture**: provisional DSF-001…006 only (`B-03-design-system-freeze-posture.md`) |
-| Production IdP / MFA | IdP/OIDC not chosen; **TOTP MFA-HARD continuous gate Done** (soft lab default) |
+| Production IdP / MFA | **ID-001:** IdP/OIDC **deferred**; local AuthN + **TOTP MFA-HARD** for gated pilot only |
 | Hosting, IaC, secrets provider, RPO/RTO | **Chosen (provisional):** Fly.io + Neon + Doppler; FRA; RPO≤24h; RTO≤8h — **Dockerfile + Fly staging toml in-repo**; live provision deferred |
 | First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until adapter + secrets |
 | AI provider / release gate | **Lab adapter chosen:** OpenAI (`openai`) env-gated; Fake CI default; product features still gate-blocked (`lab.echo` only) |
@@ -109,7 +109,8 @@ Required outputs:
 5. ~~OPS-001~~ Staging provision + D1 runbook published.
 6. ~~FLY-DOCKER~~ API Dockerfile + Fly staging toml (`apps/api/Dockerfile`, `infra/fly/educore-api.staging.toml`).
 7. Operator: execute OPS-001; `fly deploy -c infra/fly/educore-api.staging.toml`; D1 evidence; no secrets in git.
-8. Do **not** claim public pilot until executed drills + IdP/support residuals addressed.
+8. ~~ID-001~~ IdP deferred for gated pilot (`ID-001-mvp-idp-posture.md`); unrestricted still needs IdP when triggered.
+9. Do **not** claim public pilot until executed drills + IdP trigger path (ID-002+) + support residuals addressed.
 
 **Parallel:** Sprint 0 exit note recorded; MFA-HARD / AI / COMMS lab Done.
 
@@ -120,7 +121,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — exit note `SPRINT0_ENGINEERING_EXIT_NOTE.md`.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **OPS-001 execute** / D1; PAY-OPS when keys; IdP later; optional `GO DSF-KIT`.
+- **Next epic focus**: **OPS-001 execute** / D1; PAY-OPS when keys; optional `GO DSF-KIT` / `GO IDP-002`.
 
 ## Status Update Rules
 

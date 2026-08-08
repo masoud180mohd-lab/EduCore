@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-08 - ID-001 MVP IdP posture
+
+- Accepted Option A: defer external IdP/OIDC; local AuthN + MFA for gated private pilot only.
+- Unrestricted/public pilot still requires IdP revisit (`ID-002`+) when triggers fire.
+
 ## 2026-08-08 - FLY-DOCKER API image + Fly staging config
 
 - Added `apps/api/Dockerfile`, root `.dockerignore`, `infra/fly/educore-api.staging.toml`.
