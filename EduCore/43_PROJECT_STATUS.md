@@ -98,16 +98,17 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**B-05 hosting/DR decision** — **Done** (provisional). Production still **NO GO**.
+**B-04 + B-07** — **Done** (provisional stubs). Production still **NO GO**.
 
 Required outputs:
 
-1. ~~B-05~~ Fly.io + Neon + Doppler; RPO≤24h; RTO≤8h (`docs/engineering/decisions/B-05-mvp-hosting-dr-secrets.md`).
-2. Next: **B-04** lite threat model → **B-07** pilot SLOs + restore-drill schedule.
-3. Operator: provision Fly/Neon/Doppler when ready (out of repo); no secrets in git.
-4. Do **not** claim public pilot until B-07 + threat/IdP residuals addressed.
+1. ~~B-05~~ Fly.io + Neon + Doppler; RPO≤24h; RTO≤8h.
+2. ~~B-04~~ Lite threat model (`docs/engineering/decisions/B-04-lite-threat-model-session-mfa-rls.md`).
+3. ~~B-07~~ Pilot SLOs + restore-drill schedule (`docs/engineering/decisions/B-07-pilot-slos-restore-drill-schedule.md`).
+4. Operator: provision Fly/Neon/Doppler; run D1 restore smoke; no secrets in git.
+5. Do **not** claim public pilot until executed drills + IdP/support residuals addressed.
 
-**Parallel:** Readiness prep pack exists; MFA-HARD / AI / COMMS lab Done.
+**Parallel:** Readiness prep pack updated; MFA-HARD / AI / COMMS lab Done.
 
 **Governance:** Full Board re-review still required per `42_ENGINEERING_READINESS_REVIEW.md`.
 
@@ -116,7 +117,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — largely executed.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **B-04 threat model → B-07 ops**; PAY-OPS when keys; IdP later.
+- **Next epic focus**: **execute B-07 D1** after staging; **B-03 DSF residual**; PAY-OPS when keys; IdP later.
 
 ## Status Update Rules
 

@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-08 - B-04 lite threat model + B-07 pilot ops stub
+
+- Accepted lite threat model (session/MFA/RLS/support): `B-04-lite-threat-model-session-mfa-rls.md`.
+- Accepted pilot SLOs + restore-drill schedule on B-05 topology: `B-07-pilot-slos-restore-drill-schedule.md`.
+- Readiness prep: B-04 / B-07 Closed-provisional; production still NO GO (drills + IdP residuals open).
+
 ## 2026-08-04 - B-05 MVP hosting / DR / secrets decision
 
 - Accepted provisional topology: Fly.io + Neon + Doppler (Frankfurt); RPO≤24h; RTO≤8h.
