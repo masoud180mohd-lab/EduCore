@@ -3,8 +3,8 @@
 | Field       | Value                                                                 |
 | ----------- | --------------------------------------------------------------------- |
 | Decision ID | `B-03` / `DSF-POSTURE-001`                                            |
-| Status      | **Accepted (solo-operator)** — 2026-08-08 (`GO B03-DSF`)              |
-| Date        | 2026-08-08                                                            |
+| Status      | **Superseded for kit-wide residual** — 2026-08-08 by `DSF-KIT-001` (`GO DSF-KIT`) |
+| Date        | 2026-08-08 (original Accepted 2026-08-08; kit freeze closed residual same day) |
 | Program     | Engineering Readiness blocker **B-03** (`42_ENGINEERING_READINESS_REVIEW.md`) |
 | Authority   | Solo-operator provisional (SOLO-GOV-001)                              |
 | Governing   | `07_DESIGN_SYSTEM.md` · Architecture Freeze Gate 3 · DSF-001…006      |
@@ -86,6 +86,6 @@ Track as future `DSF-KIT-001` / EPIC-DS-01 — **not** started in this decision.
 2. Update Known Limitations / project status to match.  
 3. Next readiness work is **operator/staging** (B-07 D1) or product residuals (IdP, PAY-OPS), not inventing DSF-KIT unless Owner asks.
 
-## Honesty
+## Supersession
 
-Accepted under SOLO-GOV-001. Closing B-03 as “provisional only” is intentional under-claiming, not design completion.
+**2026-08-08:** Kit-wide Design System Freeze **Accepted** as `docs/engineering/design-freeze/DSF-KIT-001-design-system-freeze.md`. Option B residual for “no kit-wide freeze” is **closed**. Slice DSF-001…006 remain screen inventories under the kit chrome contract.

@@ -2,6 +2,16 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-08 - B-07 D1 restore drill (staging Neon)
+
+- Ephemeral Neon branch clone drill Pass; RTO ~6s; evidence `B-07-restore-drill-2026-08-08.md`.
+- Staging Fly API live; admin seed + login smoke earlier same day.
+
+## 2026-08-08 - DSF-KIT-001 + OPS-EXEC status
+
+- Accepted kit-wide Design System Freeze `DSF-KIT-001` (tokens, shells, nav, components, a11y/offline).
+- OPS-EXEC blocked: fly/doppler/neon CLIs missing, Docker daemon down; Phase 0 tooling + `npm run ops:prereq` added.
+
 ## 2026-08-08 - ID-001 MVP IdP posture
 
 - Accepted Option A: defer external IdP/OIDC; local AuthN + MFA for gated private pilot only.

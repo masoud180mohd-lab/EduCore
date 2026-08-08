@@ -2,17 +2,17 @@
 #
 # Prerequisites: flyctl auth, Doppler/Neon secrets set on the app.
 # Deploy from repo root:
-#   fly apps create educore-api-staging --org <org>   # once
-#   fly secrets set -a educore-api-staging ...        # or Doppler sync
-#   fly deploy -c infra/fly/educore-api.staging.toml
+#   flyctl deploy -c infra/fly/educore-api.staging.toml --remote-only
 #
+# dockerfile path is relative to this toml file (infra/fly/).
+
 # Do not commit secrets. Production app name (later): educore-api.
 
 app = "educore-api-staging"
 primary_region = "fra"
 
 [build]
-  dockerfile = "apps/api/Dockerfile"
+  dockerfile = "../../apps/api/Dockerfile"
 
 [env]
   NODE_ENV = "production"

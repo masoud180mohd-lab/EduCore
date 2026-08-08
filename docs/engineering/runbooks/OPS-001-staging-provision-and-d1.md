@@ -16,6 +16,7 @@ This runbook does **not** create cloud accounts, store secrets in git, or flip p
 
 ## Preconditions
 
+- [ ] Phase 0 tooling installed — `docs/engineering/runbooks/OPS-001-phase0-tooling.md` (`npm run ops:prereq` green)
 - [ ] Owner can create billing accounts on Fly / Neon / Doppler (or org already exists)
 - [ ] Repo `main` builds locally: `npm run check` (or CI green on latest `main`)
 - [ ] No production secrets in chat, tickets, or git

@@ -93,7 +93,7 @@ For a task affecting a specific domain, read its related bible before proposing 
 
 1. Read `43_PROJECT_STATUS.md` before planning or coding — it is the canonical phase page.
 2. Use the Master Engineering Execution Prompt and AI-EOS for every task; confirm the governing DBF/ACF/DSF slice exists before changing contracts or UI.
-3. **Next MVP milestone:** ID-001 Done (IdP deferred); Owner executes OPS-001 → D1; production still NO GO.
+3. **Next MVP milestone:** DSF-KIT-001 Done; Owner runs Phase 0 tooling then OPS-EXEC → D1; production still NO GO.
 4. Do not open another Admin UI polish wave as the default next epic; readiness re-review before production trust.
 5. Close applicable readiness blockers and request an Engineering Readiness Re-Review before any production/pilot claim.
 

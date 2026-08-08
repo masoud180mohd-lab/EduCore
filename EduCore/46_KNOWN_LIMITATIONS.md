@@ -12,11 +12,11 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 | Freeze authority | Slice freezes Accepted under **SOLO-GOV-001** (acting seats), not independent multi-person countersign | Always qualify freeze language; do not invent “three independent signers” |
 | Database | Slice DBF artifacts exist under `docs/engineering/database-freeze/`; **kit-wide** ERD/index/RLS pack is not a single Accepted Freeze v1.0 document | New tables require a DBF revision for that slice before persistence work |
 | API | Slice ACF / OpenAPI baselines exist; not every future product route is open | New endpoints require ACF revision + IMP gate |
-| Design | **B-03 posture:** provisional DSF-001…006 only; kit-wide Design System Freeze **not** accepted | Stay inside provisional DSF; new screens need new/amended DSF; kit-wide = future `GO DSF-KIT` |
-| Identity | Lab opaque-session AuthN + **TOTP MFA** (soft default; **hard continuous gate** available) | Set `MFA_TOTP_ENCRYPTION_KEY`; `MFA_ENFORCE=hard` for privileged production trust; enroll under soft first |
-| Infrastructure | **B-05 provisional** + **FLY-DOCKER** artifacts (`apps/api/Dockerfile`, Fly staging toml); live accounts not done | Owner: OPS-001 deploy; no secrets in repo |
-| Operations | **B-07 provisional** + **OPS-001 runbook** published; drills not executed | Execute OPS-001 → D1 evidence; multi-person on-call still open |
+| Design | **DSF-KIT-001** Accepted (kit chrome); slice DSF-001…006 for screens | Cite kit + slice DSF for UI IMP; independent design countersign still open |
+| Infrastructure | **B-05 provisional** + **FLY-DOCKER** artifacts; live accounts not done | Owner: Phase 0 → OPS-001 deploy; no secrets in repo |
+| Operations | **B-07** + OPS-001 in-repo; **OPS-EXEC blocked** (CLIs/Docker/accounts); drills not executed | Phase 0 install → deploy → D1; multi-person on-call still open |
 | Security / identity | **B-04 lite TM** + **ID-001** (IdP deferred); sessions + TOTP + MFA-HARD | `MFA_ENFORCE=hard` before pilot finance trust; IdP required before unrestricted/public pilot |
+| Identity | Lab opaque-session AuthN + **TOTP MFA** (soft default; **hard continuous gate** available) | Set `MFA_TOTP_ENCRYPTION_KEY`; enroll under soft before hard |
 | Payments | **ClickPesa PAY-006 UI shipped**; sandbox pilot **deferred** (no keys yet); runtime **Fake** | No secrets in git; resume PAY-OPS-001 when vendor sandbox available; parent pay still out |
 | SMS / notifications | **COMMS-001…005 lab complete** (Fake default; Beem env-gated) | Migrate; optional Beem keys; WhatsApp later |
 
