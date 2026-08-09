@@ -74,7 +74,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 | Area | Status |
 | ---- | ------ |
 | Kit-wide Design System Freeze | **Accepted (provisional):** `DSF-KIT-001` v1.0 — slice DSF-001…006 still govern screens |
-| Production IdP / MFA | **ID-001** local AuthN for gated pilot; **ID-002 Auth0** selected (not integrated); **TOTP MFA-HARD** available |
+| Production IdP / MFA | **ID-001** local default; **ID-003** Auth0 assertion → opaque session (flag off by default); **TOTP MFA-HARD** available |
 | Hosting, IaC, secrets provider, RPO/RTO | **Chosen (provisional):** Fly.io + Neon + Doppler; FRA; RPO≤24h; RTO≤8h — **Dockerfile + Fly staging toml in-repo**; live provision deferred |
 | First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until adapter + secrets |
 | AI provider / release gate | **Lab adapter chosen:** OpenAI (`openai`) env-gated; Fake CI default; product features still gate-blocked (`lab.echo` only) |

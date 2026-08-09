@@ -24,6 +24,7 @@ function createAuth(
   permissionSource: unknown = null,
   mfa: unknown = stubMfa,
   mfaRepo: unknown = stubMfaRepo,
+  idpVerifier: unknown = null,
 ): AuthService {
   return new AuthService(
     sessions as never,
@@ -33,6 +34,7 @@ function createAuth(
     permissionSource as never,
     mfa as never,
     mfaRepo as never,
+    idpVerifier as never,
   );
 }
 
@@ -218,6 +220,7 @@ describe('AuthService login', () => {
       null,
       stubMfa as never,
       stubMfaRepo as never,
+      null,
     );
     const cmd = {
       email: 'a@example.com',
@@ -228,6 +231,127 @@ describe('AuthService login', () => {
     await expect(service.login(cmd)).rejects.toBeInstanceOf(AppError);
     await expect(service.login(cmd)).rejects.toBeInstanceOf(AppError);
     await expect(service.login(cmd)).rejects.toMatchObject({ code: 'RATE_LIMITED' });
+  });
+
+  it('rejects idpAssertion when AUTH_IDP_PROVIDER is local', async () => {
+    const prev = process.env['AUTH_IDP_PROVIDER'];
+    process.env['AUTH_IDP_PROVIDER'] = 'local';
+    const sessions = { isAvailable: () => true };
+    const service = createAuth(sessions);
+    await expect(
+      service.login({
+        idpAssertion: 'aaa.bbb.ccc',
+        correlationId: 'c1',
+      }),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining('not enabled'),
+    });
+    if (prev === undefined) delete process.env['AUTH_IDP_PROVIDER'];
+    else process.env['AUTH_IDP_PROVIDER'] = prev;
+  });
+
+  it('mints opaque session from Auth0 assertion when mapped by external subject', async () => {
+    const prev = process.env['AUTH_IDP_PROVIDER'];
+    process.env['AUTH_IDP_PROVIDER'] = 'auth0';
+    const sessions = {
+      isAvailable: () => true,
+      lookupUserByExternalSubject: vi.fn().mockResolvedValue({
+        id: '01900000-0000-7000-8000-000000000001',
+        email: 'user@example.com',
+        displayName: 'User',
+        status: 'active',
+        passwordHash: null,
+      }),
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
+      createSession: vi.fn().mockResolvedValue('sess-id'),
+    };
+    const idpVerifier = {
+      verify: vi.fn().mockResolvedValue({
+        subject: 'auth0|abc',
+        email: 'user@example.com',
+        emailVerified: true,
+      }),
+    };
+    const service = createAuth(sessions, null, stubRbac, null, stubMfa, stubMfaRepo, idpVerifier);
+    const result = await service.login({
+      idpAssertion: 'aaa.bbb.ccc',
+      tenantId: '01900000-0000-7000-8000-0000000000aa',
+      correlationId: 'c1',
+    });
+    expect(result.accessToken?.startsWith('ecs_')).toBe(true);
+    expect(result.refreshToken?.startsWith('ecr_')).toBe(true);
+    expect(sessions.createSession).toHaveBeenCalledOnce();
+    expect(idpVerifier.verify).toHaveBeenCalledOnce();
+    if (prev === undefined) delete process.env['AUTH_IDP_PROVIDER'];
+    else process.env['AUTH_IDP_PROVIDER'] = prev;
+  });
+
+  it('first-links verified email then issues session', async () => {
+    const prev = process.env['AUTH_IDP_PROVIDER'];
+    process.env['AUTH_IDP_PROVIDER'] = 'auth0';
+    const user = {
+      id: '01900000-0000-7000-8000-000000000001',
+      email: 'user@example.com',
+      displayName: 'User',
+      status: 'active',
+      passwordHash: 'hash',
+    };
+    const sessions = {
+      isAvailable: () => true,
+      lookupUserByExternalSubject: vi
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(user),
+      lookupUserByEmail: vi.fn().mockResolvedValue(user),
+      linkExternalSubject: vi.fn().mockResolvedValue(true),
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
+      createSession: vi.fn().mockResolvedValue('sess-id'),
+    };
+    const idpVerifier = {
+      verify: vi.fn().mockResolvedValue({
+        subject: 'auth0|new',
+        email: 'user@example.com',
+        emailVerified: true,
+      }),
+    };
+    const service = createAuth(sessions, null, stubRbac, null, stubMfa, stubMfaRepo, idpVerifier);
+    const result = await service.login({
+      idpAssertion: JSON.stringify({ idToken: 'a.b.c' }),
+      tenantId: '01900000-0000-7000-8000-0000000000aa',
+      correlationId: 'c1',
+    });
+    expect(result.accessToken?.startsWith('ecs_')).toBe(true);
+    expect(sessions.linkExternalSubject).toHaveBeenCalledWith(user.id, 'auth0|new');
+    if (prev === undefined) delete process.env['AUTH_IDP_PROVIDER'];
+    else process.env['AUTH_IDP_PROVIDER'] = prev;
+  });
+
+  it('does not auto-provision unmapped IdP subjects', async () => {
+    const prev = process.env['AUTH_IDP_PROVIDER'];
+    process.env['AUTH_IDP_PROVIDER'] = 'auth0';
+    const sessions = {
+      isAvailable: () => true,
+      lookupUserByExternalSubject: vi.fn().mockResolvedValue(null),
+      lookupUserByEmail: vi.fn().mockResolvedValue(null),
+      createSession: vi.fn(),
+    };
+    const idpVerifier = {
+      verify: vi.fn().mockResolvedValue({
+        subject: 'auth0|unknown',
+        email: 'new@example.com',
+        emailVerified: true,
+      }),
+    };
+    const service = createAuth(sessions, null, stubRbac, null, stubMfa, stubMfaRepo, idpVerifier);
+    await expect(
+      service.login({
+        idpAssertion: 'a.b.c',
+        correlationId: 'c1',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_CREDENTIALS' });
+    expect(sessions.createSession).not.toHaveBeenCalled();
+    if (prev === undefined) delete process.env['AUTH_IDP_PROVIDER'];
+    else process.env['AUTH_IDP_PROVIDER'] = prev;
   });
 });
 

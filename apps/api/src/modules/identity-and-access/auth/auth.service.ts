@@ -10,9 +10,19 @@ import type { AuditPublisher } from '../../platform-operations/index.js';
 import { AUDIT_PUBLISHER } from '../../platform-operations/index.js';
 import { RbacReadRepository } from '../rbac/rbac-read.repository.js';
 import { MfaService } from '../application/mfa.service.js';
-import { SessionRepository } from '../repositories/session.repository.js';
+import {
+  SessionRepository,
+  type UserCredentialRow,
+} from '../repositories/session.repository.js';
+import { resolveAuthIdpProvider } from './auth-idp-config.js';
 import type { LoginRateLimiter } from './login-rate-limiter.js';
 import { LOGIN_RATE_LIMITER } from './login-rate-limiter.js';
+import {
+  DisabledIdpAssertionVerifier,
+  IDP_ASSERTION_VERIFIER,
+  type IdpAssertionVerifier,
+  type IdpVerifiedClaims,
+} from './idp-assertion.verifier.js';
 import { hashPassword, TIMING_DUMMY_PASSWORD_HASH, verifyPassword } from './password-hasher.js';
 import {
   ACCESS_TOKEN_PREFIX,
@@ -108,23 +118,22 @@ export class AuthService {
     private readonly permissionSource: PermissionSource | null = null,
     private readonly mfa: MfaService,
     private readonly mfaRepo: MfaRepository,
+    @Optional()
+    @Inject(IDP_ASSERTION_VERIFIER)
+    private readonly idpVerifier: IdpAssertionVerifier | null = null,
   ) {}
 
   /**
    * Password login → opaque access + refresh tokens bound to an active membership tenant.
-   * IdP assertion path is dual-ready contract only (not implemented yet).
+   * IdP assertion (Auth0) when AUTH_IDP_PROVIDER=auth0 — still mints EduCore opaque sessions.
    */
   async login(command: LoginCommand): Promise<LoginResult> {
     if (!this.sessions.isAvailable()) {
       throw new AppError('INTERNAL_ERROR', 'Authentication service is unavailable.', 503);
     }
 
-    if (
-      command.idpAssertion !== undefined &&
-      command.idpAssertion !== null &&
-      command.idpAssertion !== ''
-    ) {
-      throw AppError.validation('IdP assertion login is not enabled in this environment.');
+    if (hasIdpAssertion(command.idpAssertion)) {
+      return this.loginWithIdpAssertion(command);
     }
 
     const email = normalizeEmail(command.email);
@@ -163,6 +172,88 @@ export class AuthService {
       throw AppError.invalidCredentials();
     }
 
+    return this.finalizeAuthenticatedLogin({
+      user,
+      command,
+      rateKey,
+      authMethod: 'password',
+    });
+  }
+
+  private async loginWithIdpAssertion(command: LoginCommand): Promise<LoginResult> {
+    if (resolveAuthIdpProvider() !== 'auth0') {
+      throw AppError.validation('IdP assertion login is not enabled in this environment.');
+    }
+
+    const verifier = this.idpVerifier ?? new DisabledIdpAssertionVerifier();
+    const claims = await verifier.verify(command.idpAssertion);
+
+    const rateKey = `idp:${claims.subject}|${command.ip ?? 'unknown'}`;
+    const limit = await this.rateLimiter.check(rateKey);
+    if (!limit.allowed) {
+      throw AppError.rateLimited(
+        'Too many login attempts. Try again later.',
+        limit.retryAfterSeconds,
+      );
+    }
+
+    const user = await this.resolveUserFromIdpClaims(claims);
+    if (user === null || user.status !== 'active') {
+      await this.rateLimiter.recordFailure(rateKey);
+      await this.safeAudit({
+        action: 'auth.login',
+        outcome: 'failure',
+        correlationId: command.correlationId,
+        metadata: { reason: 'idp_user_unmapped', provider: 'auth0' },
+      });
+      throw AppError.invalidCredentials();
+    }
+
+    return this.finalizeAuthenticatedLogin({
+      user,
+      command,
+      rateKey,
+      authMethod: 'auth0',
+    });
+  }
+
+  /**
+   * Map Auth0 `sub` → EduCore user. Prefer external_subject_id; optional first-link by
+   * verified email when subject is unset. Never auto-provisions users.
+   */
+  private async resolveUserFromIdpClaims(
+    claims: IdpVerifiedClaims,
+  ): Promise<UserCredentialRow | null> {
+    const bySubject = await this.sessions.lookupUserByExternalSubject(claims.subject);
+    if (bySubject !== null) {
+      return bySubject;
+    }
+
+    if (!claims.emailVerified || claims.email === null) {
+      return null;
+    }
+
+    const byEmail = await this.sessions.lookupUserByEmail(claims.email);
+    if (byEmail === null || byEmail.status !== 'active') {
+      return null;
+    }
+
+    const linked = await this.sessions.linkExternalSubject(byEmail.id, claims.subject);
+    if (!linked) {
+      return null;
+    }
+
+    return this.sessions.lookupUserByExternalSubject(claims.subject);
+  }
+
+  private async finalizeAuthenticatedLogin(input: {
+    readonly user: UserCredentialRow;
+    readonly command: LoginCommand;
+    readonly rateKey: string;
+    readonly authMethod: 'password' | 'auth0';
+  }): Promise<LoginResult> {
+    const { user, command, rateKey, authMethod } = input;
+
     const tenantId = await this.resolveTenantId(user.id, command);
     if (tenantId === undefined) {
       await this.rateLimiter.recordFailure(rateKey);
@@ -171,7 +262,7 @@ export class AuthService {
         outcome: 'failure',
         correlationId: command.correlationId,
         actorUserId: user.id,
-        metadata: { reason: 'tenant_required_or_membership' },
+        metadata: { reason: 'tenant_required_or_membership', authMethod },
       });
       throw AppError.invalidCredentials();
     }
@@ -185,7 +276,7 @@ export class AuthService {
         correlationId: command.correlationId,
         actorUserId: user.id,
         tenantId,
-        metadata: { reason: 'mfa_store_unavailable' },
+        metadata: { reason: 'mfa_store_unavailable', authMethod },
       });
       throw new AppError(
         'MFA_REQUIRED',
@@ -205,7 +296,7 @@ export class AuthService {
         correlationId: command.correlationId,
         actorUserId: user.id,
         tenantId,
-        metadata: { reason: 'mfa_enrollment_required' },
+        metadata: { reason: 'mfa_enrollment_required', authMethod },
       });
       throw new AppError(
         'MFA_REQUIRED',
@@ -227,7 +318,7 @@ export class AuthService {
         correlationId: command.correlationId,
         actorUserId: user.id,
         tenantId,
-        metadata: { requiresMfa: true },
+        metadata: { requiresMfa: true, authMethod },
       });
       return {
         accessToken: null,
@@ -270,7 +361,7 @@ export class AuthService {
         correlationId: command.correlationId,
         actorUserId: user.id,
         tenantId,
-        metadata: { reason: 'session_create_failed' },
+        metadata: { reason: 'session_create_failed', authMethod },
       });
       throw AppError.invalidCredentials();
     }
@@ -284,6 +375,7 @@ export class AuthService {
       tenantId,
       resourceType: 'session',
       resourceId: sessionId,
+      metadata: { authMethod },
     });
 
     return {
@@ -650,4 +742,8 @@ function normalizeEmail(value: unknown): string | undefined {
     return undefined;
   }
   return trimmed;
+}
+
+function hasIdpAssertion(value: unknown): boolean {
+  return value !== undefined && value !== null && value !== '';
 }

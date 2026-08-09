@@ -16,10 +16,10 @@
 
 ## Explicitly not done
 
-- Auth0 tenant provisioning
-- OIDC code / ACF assertion enablement (`ID-003`)
+- Auth0 tenant provisioning (ops — Owner)
+- Web Universal Login UI
 - Production GO
 
 ## Next
 
-`GO IDP-003` when Owner schedules integrate; `GO PAY-OPS` when ClickPesa keys exist.
+~~`GO IDP-003`~~ **Done** (`ID-003-auth0-oidc-opaque-session.md`). Staging enable Auth0 when Owner provisions tenant; `GO PAY-OPS` when ClickPesa keys exist.

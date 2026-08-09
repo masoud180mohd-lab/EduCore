@@ -2243,7 +2243,10 @@ components:
           minLength: 8
         idpAssertion:
           type: string
-          description: Optional external IdP assertion/token exchange payload
+          description: >
+            Optional Auth0 assertion when AUTH_IDP_PROVIDER=auth0 — compact ID token JWT,
+            or JSON {"idToken":"..."} / {"code":"...","redirectUri":"...","codeVerifier":"..."}.
+            Verified proof mints EduCore opaque session tokens (not Auth0 bearers).
       description: Provide password pair or idpAssertion depending on auth mode
     LoginResponseEnvelope:
       type: object

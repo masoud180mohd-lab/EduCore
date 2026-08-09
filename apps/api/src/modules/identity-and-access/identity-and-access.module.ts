@@ -18,6 +18,11 @@ import { RolesService } from './application/roles.service.js';
 import { UserRolesService } from './application/user-roles.service.js';
 import { UsersService } from './application/users.service.js';
 import { AuthService } from './auth/auth.service.js';
+import {
+  createIdpAssertionVerifier,
+  IDP_ASSERTION_VERIFIER,
+  type IdpAssertionVerifier,
+} from './auth/idp-assertion.verifier.js';
 import { HardPrivilegedMfaGate } from './auth/hard-privileged-mfa.gate.js';
 import {
   createLoginRateLimiter,
@@ -92,6 +97,10 @@ import { SessionRepository } from './repositories/session.repository.js';
     UsersRepository,
     UsersService,
     AuthService,
+    {
+      provide: IDP_ASSERTION_VERIFIER,
+      useFactory: (): IdpAssertionVerifier => createIdpAssertionVerifier(),
+    },
     {
       provide: LOGIN_RATE_LIMITER,
       inject: [PG_POOL],

@@ -107,9 +107,9 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 | ~~`GO IDP`~~ | **Done (defer)** — `ID-001` |
 | ~~`GO DSF-KIT`~~ | **Done** — `DSF-KIT-001` |
 | ~~`GO IDP-002`~~ | **Done** — Auth0 selected (`ID-002-hosted-oidc-provider-auth0.md`) |
-| `GO IDP-003` | Implement Auth0 OIDC → EduCore opaque session (integration) |
+| ~~`GO IDP-003`~~ | **Done** — Auth0 → opaque session behind `AUTH_IDP_PROVIDER` (`ID-003-auth0-oidc-opaque-session.md`) |
 | `GO PAY-OPS` | Only if ClickPesa sandbox keys exist |
 
 ---
 
-**Bottom line:** Staging on Fly `fra` + Neon Frankfurt; D1 Pass; ID-002 Auth0 chosen (not wired). **Unrestricted production remains NO GO**.
+**Bottom line:** Staging on Fly `fra` + Neon Frankfurt; D1 Pass; ID-003 Auth0 code ready (flag default local). **Unrestricted production remains NO GO**.

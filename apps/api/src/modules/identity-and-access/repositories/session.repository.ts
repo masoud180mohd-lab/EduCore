@@ -57,17 +57,33 @@ export class SessionRepository {
       status: string;
       password_hash: string | null;
     }>(`SELECT * FROM app.auth_lookup_user_by_email($1::citext)`, [email]);
-    const row = result.rows[0];
-    if (row === undefined) {
+    return mapUserCredential(result.rows[0]);
+  }
+
+  async lookupUserByExternalSubject(subject: string): Promise<UserCredentialRow | null> {
+    if (this.pool === null) {
       return null;
     }
-    return {
-      id: row.id,
-      email: row.email,
-      displayName: row.display_name,
-      status: row.status,
-      passwordHash: row.password_hash,
-    };
+    const result = await this.pool.query<{
+      id: string;
+      email: string;
+      display_name: string;
+      status: string;
+      password_hash: string | null;
+    }>(`SELECT * FROM app.auth_lookup_user_by_external_subject($1::text)`, [subject]);
+    return mapUserCredential(result.rows[0]);
+  }
+
+  /** First-link Auth0/OIDC sub onto an existing active user (null or same subject only). */
+  async linkExternalSubject(userId: string, subject: string): Promise<boolean> {
+    if (this.pool === null) {
+      return false;
+    }
+    const result = await this.pool.query<{ ok: boolean }>(
+      `SELECT app.auth_link_external_subject($1::uuid, $2::text) AS ok`,
+      [userId, subject],
+    );
+    return result.rows[0]?.ok === true;
   }
 
   async listActiveMembershipTenants(userId: string): Promise<readonly string[]> {
@@ -254,6 +270,29 @@ export class SessionRepository {
     );
     return result.rows[0]?.ok === true;
   }
+}
+
+function mapUserCredential(
+  row:
+    | {
+        id: string;
+        email: string;
+        display_name: string;
+        status: string;
+        password_hash: string | null;
+      }
+    | undefined,
+): UserCredentialRow | null {
+  if (row === undefined) {
+    return null;
+  }
+  return {
+    id: row.id,
+    email: row.email,
+    displayName: row.display_name,
+    status: row.status,
+    passwordHash: row.password_hash,
+  };
 }
 
 function mapSession(

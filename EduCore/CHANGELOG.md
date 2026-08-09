@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-09 - ID-003 Auth0 OIDC → opaque session
+
+- Assertion login on `POST /auth/login` when `AUTH_IDP_PROVIDER=auth0`; maps Auth0 `sub` → `users.external_subject_id`.
+- Local password AuthN remains default; MFA path unchanged after IdP proof.
+
 ## 2026-08-09 - ID-002 Auth0 OIDC provider selection
 
 - Accepted Auth0 as hosted IdP for future ID-003; local AuthN remains until integrate.
