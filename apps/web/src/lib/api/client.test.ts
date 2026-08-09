@@ -36,4 +36,21 @@ describe('teacherFriendlyMessage', () => {
       ),
     ).toMatch(/offline/i);
   });
+
+  it('maps MFA codes before generic 403', () => {
+    expect(
+      teacherFriendlyMessage(
+        new ApiClientError({
+          status: 403,
+          code: 'MFA_REQUIRED',
+          message: 'Privileged accounts must enroll TOTP before login (MFA_ENFORCE=hard).',
+        }),
+      ),
+    ).toMatch(/enroll TOTP/i);
+    expect(
+      teacherFriendlyMessage(
+        new ApiClientError({ status: 401, code: 'MFA_INVALID', message: 'bad' }),
+      ),
+    ).toMatch(/authenticator code/i);
+  });
 });

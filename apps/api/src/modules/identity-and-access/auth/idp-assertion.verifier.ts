@@ -27,17 +27,21 @@ export type IdpAssertionVerifier = {
 };
 
 export class DisabledIdpAssertionVerifier implements IdpAssertionVerifier {
-  async verify(_assertion: unknown): Promise<IdpVerifiedClaims> {
-    throw AppError.validation('IdP assertion login is not enabled in this environment.');
+  verify(_assertion: unknown): Promise<IdpVerifiedClaims> {
+    return Promise.reject(
+      AppError.validation('IdP assertion login is not enabled in this environment.'),
+    );
   }
 }
 
 export class MisconfiguredAuth0IdpAssertionVerifier implements IdpAssertionVerifier {
-  async verify(_assertion: unknown): Promise<IdpVerifiedClaims> {
-    throw new AppError(
-      'INTERNAL_ERROR',
-      'Auth0 IdP is selected but AUTH0_DOMAIN / AUTH0_CLIENT_ID are not configured.',
-      503,
+  verify(_assertion: unknown): Promise<IdpVerifiedClaims> {
+    return Promise.reject(
+      new AppError(
+        'INTERNAL_ERROR',
+        'Auth0 IdP is selected but AUTH0_DOMAIN / AUTH0_CLIENT_ID are not configured.',
+        503,
+      ),
     );
   }
 }
@@ -59,8 +63,7 @@ export class Auth0IdpAssertionVerifier implements IdpAssertionVerifier {
     private readonly fetchImpl: typeof fetch = fetch,
     getKey?: jose.JWTVerifyGetKey,
   ) {
-    this.getKey =
-      getKey ?? jose.createRemoteJWKSet(new URL(auth0JwksUrl(config.domain)));
+    this.getKey = getKey ?? jose.createRemoteJWKSet(new URL(auth0JwksUrl(config.domain)));
   }
 
   async verify(assertion: unknown): Promise<IdpVerifiedClaims> {
@@ -72,9 +75,7 @@ export class Auth0IdpAssertionVerifier implements IdpAssertionVerifier {
     }
 
     const idToken =
-      parsed.kind === 'id_token'
-        ? parsed.idToken
-        : await this.exchangeAuthorizationCode(parsed);
+      parsed.kind === 'id_token' ? parsed.idToken : await this.exchangeAuthorizationCode(parsed);
 
     return this.verifyIdToken(idToken);
   }
@@ -103,7 +104,7 @@ export class Auth0IdpAssertionVerifier implements IdpAssertionVerifier {
         method: 'POST',
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
-          accept: 'application/json',
+          'accept': 'application/json',
         },
         body,
       });
@@ -159,6 +160,11 @@ export class Auth0IdpAssertionVerifier implements IdpAssertionVerifier {
 }
 
 export function parseIdpAssertion(raw: unknown): ParsedAssertion | null {
+  // WEB-AUTH0: browser may POST a JSON object (not only a stringified payload).
+  if (raw !== null && typeof raw === 'object' && !Array.isArray(raw)) {
+    return parseAssertionObject(raw as Record<string, unknown>);
+  }
+
   if (typeof raw !== 'string') {
     return null;
   }
@@ -177,33 +183,35 @@ export function parseIdpAssertion(raw: unknown): ParsedAssertion | null {
     if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return null;
     }
-    const obj = parsed as Record<string, unknown>;
-    if (typeof obj['idToken'] === 'string' && obj['idToken'].trim() !== '') {
-      return { kind: 'id_token', idToken: obj['idToken'].trim() };
-    }
-    if (typeof obj['code'] === 'string' && obj['code'].trim() !== '') {
-      const redirectUri =
-        typeof obj['redirectUri'] === 'string' ? obj['redirectUri'].trim() : '';
-      if (redirectUri === '') {
-        return null;
-      }
-      const codeVerifier =
-        typeof obj['codeVerifier'] === 'string' && obj['codeVerifier'].trim() !== ''
-          ? obj['codeVerifier'].trim()
-          : null;
-      return {
-        kind: 'authorization_code',
-        code: obj['code'].trim(),
-        redirectUri,
-        codeVerifier,
-      };
-    }
-    return null;
+    return parseAssertionObject(parsed as Record<string, unknown>);
   }
 
   // Compact JWT: header.payload.sig
   if (trimmed.split('.').length === 3) {
     return { kind: 'id_token', idToken: trimmed };
+  }
+  return null;
+}
+
+function parseAssertionObject(obj: Record<string, unknown>): ParsedAssertion | null {
+  if (typeof obj['idToken'] === 'string' && obj['idToken'].trim() !== '') {
+    return { kind: 'id_token', idToken: obj['idToken'].trim() };
+  }
+  if (typeof obj['code'] === 'string' && obj['code'].trim() !== '') {
+    const redirectUri = typeof obj['redirectUri'] === 'string' ? obj['redirectUri'].trim() : '';
+    if (redirectUri === '') {
+      return null;
+    }
+    const codeVerifier =
+      typeof obj['codeVerifier'] === 'string' && obj['codeVerifier'].trim() !== ''
+        ? obj['codeVerifier'].trim()
+        : null;
+    return {
+      kind: 'authorization_code',
+      code: obj['code'].trim(),
+      redirectUri,
+      codeVerifier,
+    };
   }
   return null;
 }

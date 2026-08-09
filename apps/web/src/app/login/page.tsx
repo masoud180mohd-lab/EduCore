@@ -3,9 +3,15 @@
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useState } from 'react';
 
+import { MfaChallengeForm } from '@/components/MfaChallengeForm';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
-import { resolvePostLoginPath } from '@/lib/auth/routing';
-import { writeSession } from '@/lib/auth/session';
+import { beginAuth0Login, isAuth0Configured } from '@/lib/auth/auth0-pkce';
+import {
+  completeLoginFromTokens,
+  selectTenantAndFinish,
+  verifyMfaAndComplete,
+  type TenantChoice,
+} from '@/lib/auth/complete-login';
 
 type LoginResponse = {
   readonly data?: {
@@ -15,38 +21,6 @@ type LoginResponse = {
   };
 };
 
-type TenantList = {
-  readonly data: ReadonlyArray<{
-    readonly id: string;
-    readonly name?: string;
-    readonly code?: string;
-  }>;
-};
-
-async function fetchAccessibleTenants(accessToken: string): Promise<TenantList['data']> {
-  const base = (process.env['NEXT_PUBLIC_API_BASE_URL'] ?? 'http://127.0.0.1:3000').replace(
-    /\/$/,
-    '',
-  );
-  const response = await fetch(`${base}/api/v1/tenants`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: 'application/json',
-    },
-  });
-  const json = (await response.json()) as TenantList & {
-    error?: { message?: string };
-  };
-  if (!response.ok) {
-    throw new ApiClientError({
-      status: response.status,
-      code: 'HTTP_ERROR',
-      message: json.error?.message ?? 'Could not load schools.',
-    });
-  }
-  return json.data ?? [];
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -54,14 +28,34 @@ export default function LoginPage() {
   const [tenantId, setTenantId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tenants, setTenants] = useState<TenantList['data'] | null>(null);
+  const [auth0Busy, setAuth0Busy] = useState(false);
+  const [tenants, setTenants] = useState<ReadonlyArray<TenantChoice> | null>(null);
   const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [mfaChallengeToken, setMfaChallengeToken] = useState<string | null>(null);
+  const auth0Ready = isAuth0Configured();
 
-  async function finish(accessToken: string, boundTenant: string) {
-    const auth = { accessToken, tenantId: boundTenant };
-    writeSession(auth);
-    const path = await resolvePostLoginPath(auth);
-    router.replace(path);
+  async function handleOutcome(
+    outcome: Awaited<ReturnType<typeof completeLoginFromTokens>>,
+  ): Promise<void> {
+    if (outcome.kind === 'routed') {
+      router.replace(outcome.path);
+      return;
+    }
+    if (outcome.kind === 'choose_tenant') {
+      setPendingToken(outcome.accessToken);
+      setTenants(outcome.tenants);
+      setMfaChallengeToken(null);
+      setError('Select a school to continue.');
+      return;
+    }
+    if (outcome.kind === 'mfa_required') {
+      setMfaChallengeToken(outcome.mfaChallengeToken);
+      setTenants(null);
+      setPendingToken(null);
+      setError(null);
+      return;
+    }
+    setError(outcome.message);
   }
 
   async function onSubmit(event: FormEvent) {
@@ -78,43 +72,43 @@ export default function LoginPage() {
         requireTenant: false,
       });
 
-      if (result.data?.mfaChallengeToken) {
-        setError('MFA is not supported in teacher v1. Ask an admin for a non-MFA account.');
-        return;
-      }
-
-      const accessToken = result.data?.accessToken;
-      if (accessToken === undefined || accessToken === '') {
-        setError('Login failed — no access token returned.');
-        return;
-      }
-
-      let boundTenant = result.data?.tenantId ?? null;
-      if (boundTenant === null || boundTenant === '') {
-        const list = await fetchAccessibleTenants(accessToken);
-        if (list.length === 0) {
-          setError('No school membership found for this account.');
-          return;
-        }
-        if (list.length === 1) {
-          boundTenant = list[0]?.id ?? null;
-        } else {
-          setPendingToken(accessToken);
-          setTenants(list);
-          setError('Select a school to continue.');
-          return;
-        }
-      }
-
-      if (boundTenant === null || boundTenant === '') {
-        setError('Could not bind a school (tenant).');
-        return;
-      }
-
-      await finish(accessToken, boundTenant);
+      await handleOutcome(
+        await completeLoginFromTokens({
+          accessToken: result.data?.accessToken ?? '',
+          tenantId: result.data?.tenantId ?? null,
+          mfaChallengeToken: result.data?.mfaChallengeToken ?? null,
+        }),
+      );
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
       else setError('Sign-in failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onAuth0Click() {
+    setError(null);
+    setAuth0Busy(true);
+    try {
+      await beginAuth0Login();
+    } catch {
+      setError('Auth0 is not configured for this web build.');
+      setAuth0Busy(false);
+    }
+  }
+
+  async function onMfaVerify(code: string) {
+    if (mfaChallengeToken === null) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await handleOutcome(
+        await verifyMfaAndComplete({ mfaChallengeToken, code }),
+      );
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+      else setError('MFA verification failed.');
     } finally {
       setBusy(false);
     }
@@ -125,12 +119,8 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await apiRequest('/api/v1/auth/select-tenant', {
-        method: 'POST',
-        body: { tenantId: id },
-        auth: { accessToken: pendingToken, tenantId: id },
-      });
-      await finish(pendingToken, id);
+      const path = await selectTenantAndFinish(pendingToken, id);
+      router.replace(path);
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
       else setError('Could not select school.');
@@ -141,15 +131,24 @@ export default function LoginPage() {
 
   return (
     <div className="app-shell">
-      <h1>Teacher sign in</h1>
-      <p className="muted">EduCore attendance — staff accounts with attendance permissions.</p>
+      <h1>Sign in</h1>
+      <p className="muted">EduCore — staff, admin, and parent accounts.</p>
       {error !== null ? (
         <div className="banner banner-error" role="alert">
           {error}
         </div>
       ) : null}
 
-      {tenants !== null ? (
+      {mfaChallengeToken !== null ? (
+        <MfaChallengeForm
+          busy={busy}
+          onSubmit={onMfaVerify}
+          onCancel={() => {
+            setMfaChallengeToken(null);
+            setError(null);
+          }}
+        />
+      ) : tenants !== null ? (
         <div className="stack">
           <p>Choose your school:</p>
           <ul className="list">
@@ -169,46 +168,68 @@ export default function LoginPage() {
           </ul>
         </div>
       ) : (
-        <form className="stack" onSubmit={(e) => void onSubmit(e)}>
-          <div className="field">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="username"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="tenantId">School id (optional)</label>
-            <input
-              id="tenantId"
-              name="tenantId"
-              type="text"
-              placeholder="UUID if you know it"
-              value={tenantId}
-              onChange={(e) => setTenantId(e.target.value)}
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
+        <div className="stack">
+          {auth0Ready ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={busy || auth0Busy}
+                onClick={() => void onAuth0Click()}
+              >
+                {auth0Busy ? 'Redirecting…' : 'Ingia na Auth0'}
+              </button>
+              <p className="muted" style={{ textAlign: 'center', margin: 0 }}>
+                or email / password
+              </p>
+            </>
+          ) : null}
+
+          <form className="stack" onSubmit={(e) => void onSubmit(e)}>
+            <div className="field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="username"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="tenantId">School id (optional)</label>
+              <input
+                id="tenantId"
+                name="tenantId"
+                type="text"
+                placeholder="UUID if you know it"
+                value={tenantId}
+                onChange={(e) => setTenantId(e.target.value)}
+              />
+            </div>
+            <button
+              type="submit"
+              className={auth0Ready ? 'btn btn-secondary' : 'btn btn-primary'}
+              disabled={busy || auth0Busy}
+            >
+              {busy ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+        </div>
       )}
     </div>
   );

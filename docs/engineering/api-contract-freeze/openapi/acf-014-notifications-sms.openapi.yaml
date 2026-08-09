@@ -1,0 +1,560 @@
+openapi: 3.1.0
+info:
+  title: EduCore API — Notifications / SMS (ACF-014)
+  version: 1.1.0
+  description: >-
+    Machine-readable contract for notification templates, SMS requests,
+    deliveries, usage meter, and Beem DLR webhook (ACF-014 / DBF-013).
+    Solo-operator provisional (SOLO-GOV-001). Publishing this OpenAPI does
+    not re-accept freezes. Fake SMS is the CI default; Beem is env-gated.
+    AuthZ stack (product routes): Authenticated → Tenant header → Session
+    tenant bind → Permission → RLS. Webhook is shared-secret only.
+  contact:
+    name: EduCore Engineering
+servers:
+  - url: /api/v1
+    description: Versioned API root
+tags:
+  - name: NotificationTemplates
+  - name: NotificationRequests
+  - name: NotificationDeliveries
+  - name: NotificationUsage
+  - name: NotificationWebhooks
+paths:
+  /notification-templates:
+    get:
+      tags: [NotificationTemplates]
+      operationId: listNotificationTemplates
+      summary: List active SMS templates for tenant preview
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+      responses:
+        '200':
+          description: Active templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationTemplateListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions: [notification.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [notification.read]
+  /notifications/requests:
+    post:
+      tags: [NotificationRequests]
+      operationId: createNotificationRequest
+      summary: Create SMS notification request (enqueue / skip)
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotificationRequest'
+      responses:
+        '201':
+          description: Request created (queued/submitted/skipped)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRequestEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+      x-permissions: [notification.manage]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [notification.manage]
+        notes: >-
+          Idempotency-Key required. Same key + body hash replays. Guardian
+          without phone may return status=skipped.
+  /notifications/requests/{requestId}:
+    get:
+      tags: [NotificationRequests]
+      operationId: getNotificationRequest
+      summary: Get notification request by id
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRequestEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-permissions: [notification.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [notification.read]
+  /notifications/deliveries:
+    get:
+      tags: [NotificationDeliveries]
+      operationId: listNotificationDeliveries
+      summary: List deliveries (cursor); phoneLast4 only
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - name: requestId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [queued, submitted, sent, delivered, failed]
+      responses:
+        '200':
+          description: Delivery page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationDeliveryListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions: [notification.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [notification.read]
+  /notifications/usage:
+    get:
+      tags: [NotificationUsage]
+      operationId: getNotificationUsage
+      summary: Daily SMS usage meter (UTC)
+      security:
+        - bearerAuth: []
+          tenantHeader: []
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - name: date
+          in: query
+          description: YYYY-MM-DD UTC; default today
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Usage snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationUsageEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-permissions: [notification.read]
+      x-authz:
+        stack:
+          - authenticated
+          - tenant_header
+          - session_tenant_bind
+          - active_membership
+          - permission_codes
+          - scope
+          - rls
+        permissionCodes: [notification.read]
+  /notifications/webhooks/beem:
+    post:
+      tags: [NotificationWebhooks]
+      operationId: beemDeliveryWebhook
+      summary: Beem DLR webhook (shared secret; no session)
+      security: []
+      parameters:
+        - name: X-Beem-Webhook-Secret
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Accepted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+      x-permissions: []
+      x-authz:
+        stack:
+          - shared_secret
+        permissionCodes: []
+        notes: >-
+          Compares X-Beem-Webhook-Secret to BEEM_WEBHOOK_SECRET. 501 when
+          secret unset.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: Access token from /auth/login or /auth/refresh
+    tenantHeader:
+      type: apiKey
+      in: header
+      name: X-Tenant-Id
+  parameters:
+    TenantIdHeader:
+      name: X-Tenant-Id
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    IdempotencyKeyRequired:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+    ErrorBody:
+      type: object
+      additionalProperties: false
+      required: [code, message, requestId]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        requestId:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    PageMeta:
+      type: object
+      additionalProperties: false
+      required: [limit]
+      properties:
+        nextCursor:
+          type: string
+          nullable: true
+        limit:
+          type: integer
+    CreateNotificationRequest:
+      type: object
+      additionalProperties: false
+      required: [templateCode, recipientType, recipientId, payload]
+      properties:
+        templateCode:
+          type: string
+        locale:
+          type: string
+          enum: [en, sw]
+        recipientType:
+          type: string
+          enum: [guardian]
+        recipientId:
+          $ref: '#/components/schemas/Uuid'
+        payload:
+          type: object
+          additionalProperties:
+            type: string
+    NotificationTemplate:
+      type: object
+      additionalProperties: false
+      required: [id, code, channel, locale, version, body, status, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        code:
+          type: string
+        channel:
+          type: string
+        locale:
+          type: string
+        version:
+          type: integer
+        body:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    NotificationTemplateListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationTemplate'
+    NotificationRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - templateCode
+        - templateVersion
+        - locale
+        - channel
+        - recipientType
+        - recipientId
+        - payload
+        - status
+        - skipReason
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        templateCode:
+          type: string
+        templateVersion:
+          type: integer
+        locale:
+          type: string
+        channel:
+          type: string
+        recipientType:
+          type: string
+        recipientId:
+          $ref: '#/components/schemas/Uuid'
+        payload:
+          type: object
+          additionalProperties:
+            type: string
+        status:
+          type: string
+        skipReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    NotificationRequestEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/NotificationRequest'
+    NotificationDelivery:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tenantId
+        - requestId
+        - providerCode
+        - phoneLast4
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        tenantId:
+          $ref: '#/components/schemas/Uuid'
+        requestId:
+          $ref: '#/components/schemas/Uuid'
+        providerCode:
+          type: string
+        providerMessageId:
+          type: string
+          nullable: true
+        phoneLast4:
+          type: string
+          nullable: true
+          description: Last 4 of MSISDN only — never full number
+        status:
+          type: string
+        segmentCount:
+          type: integer
+          nullable: true
+        errorCode:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    NotificationDeliveryListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationDelivery'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    NotificationUsage:
+      type: object
+      additionalProperties: false
+      required:
+        - usageDate
+        - channel
+        - sentCount
+        - segmentCount
+        - dailyCap
+        - bypassDailyCap
+      properties:
+        usageDate:
+          type: string
+          format: date
+        channel:
+          type: string
+        sentCount:
+          type: integer
+        segmentCount:
+          type: integer
+        dailyCap:
+          type: integer
+          nullable: true
+        bypassDailyCap:
+          type: boolean
+    NotificationUsageEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/NotificationUsage'
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    Unauthorized:
+      description: Missing/invalid credentials or webhook secret
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    Forbidden:
+      description: Missing permission or isolation deny
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    Conflict:
+      description: Idempotency body mismatch or daily cap
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    NotImplemented:
+      description: Provider/webhook not configured
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'

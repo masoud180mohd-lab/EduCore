@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-09 - Hardening polish: WEB-MFA-UI + ACF-014 OpenAPI
+
+- Web: login/Auth0 MFA challenge + Admin Settings TOTP enroll/disable (ACF-001); no payments.
+- OpenAPI: `acf-014-notifications-sms.openapi.yaml` + ACF index rows for 013/014.
+- OPS-001: MFA-HARD staging flip checklist after privileged enrollment.
+
 ## 2026-08-09 - ID-003-OPS clear unverified-email lab flag
 
 - Removed `AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK` from staging after linked-sub smoke re-pass.

@@ -31,6 +31,18 @@ describe('parseIdpAssertion', () => {
       redirectUri: 'https://app.example/callback',
       codeVerifier: 'verifier',
     });
+    expect(
+      parseIdpAssertion({
+        code: 'authcode',
+        redirectUri: 'https://app.example/callback',
+        codeVerifier: 'verifier',
+      }),
+    ).toEqual({
+      kind: 'authorization_code',
+      code: 'authcode',
+      redirectUri: 'https://app.example/callback',
+      codeVerifier: 'verifier',
+    });
     expect(parseIdpAssertion('not-a-token')).toBeNull();
   });
 });

@@ -16,6 +16,15 @@ export function apiFriendlyMessage(
 ): string {
   const forbiddenCopy = options.forbiddenCopy ?? 'You do not have access for this school.';
 
+  if (error.code === 'MFA_INVALID') {
+    return 'Invalid or expired authenticator code. Try again.';
+  }
+  if (error.code === 'MFA_REQUIRED') {
+    return error.message.trim() !== ''
+      ? error.message
+      : 'Authenticator enrollment is required before you can continue.';
+  }
+
   if (error.status === 401) return 'Sign in again.';
   if (error.status === 403) return forbiddenCopy;
   if (error.status === 404) return 'Not found.';

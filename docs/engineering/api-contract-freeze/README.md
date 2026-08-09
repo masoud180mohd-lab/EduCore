@@ -26,8 +26,10 @@ Engineering design freezes for public HTTP contracts. These refine `EduCore/06_A
 | ACF-010 | Guardians         | [ACF-010-guardians-slice.md](./ACF-010-guardians-slice.md)                         | [openapi/acf-010-011-guardians-marks.openapi.yaml](./openapi/acf-010-011-guardians-marks.openapi.yaml)               | Provisional + OpenAPI (no re-sign)             |
 | ACF-011 | Marks/Assessment  | [ACF-011-marks-assessment-slice.md](./ACF-011-marks-assessment-slice.md)           | [openapi/acf-010-011-guardians-marks.openapi.yaml](./openapi/acf-010-011-guardians-marks.openapi.yaml)               | Provisional + OpenAPI (rev 1.1; no re-sign)    |
 | ACF-012 | Finance / Fees    | [ACF-012-finance-fees-slice.md](./ACF-012-finance-fees-slice.md)                   | [openapi/acf-012-finance-fees.openapi.yaml](./openapi/acf-012-finance-fees.openapi.yaml)                             | Provisional + OpenAPI (IMP-009; rev 1.2)       |
+| ACF-013 | Parent portal     | [ACF-013-parent-portal-fees.md](./ACF-013-parent-portal-fees.md)                     | [openapi/acf-013-parent-portal.openapi.yaml](./openapi/acf-013-parent-portal.openapi.yaml)                           | Provisional + OpenAPI (no re-sign)             |
+| ACF-014 | Notifications/SMS | [ACF-014-notifications-sms-slice.md](./ACF-014-notifications-sms-slice.md)         | [openapi/acf-014-notifications-sms.openapi.yaml](./openapi/acf-014-notifications-sms.openapi.yaml)                   | Provisional + OpenAPI (ASSURE; no re-sign)     |
 
-**Layout note (ASSURE-001 D1):** ACF-002…007 share one combined OpenAPI file for reviewability. ACF-008/009 share another. ACF-010/011 share another. ACF-012 is its own file (money surface). ACF-001 remains its own file.
+**Layout note (ASSURE-001 D1):** ACF-002…007 share one combined OpenAPI file for reviewability. ACF-008/009 share another. ACF-010/011 share another. ACF-012 is its own file (money surface). ACF-013 parent portal and ACF-014 notifications each have their own file. ACF-001 remains its own file.
 
 ## Rules
 

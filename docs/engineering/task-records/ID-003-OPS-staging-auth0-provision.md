@@ -1,13 +1,13 @@
 # ID-003-OPS — Provision Auth0 for staging
 
-| Field | Value |
-| --- | --- |
-| Program | Staging Auth0 enablement after ID-003 |
-| Date | 2026-08-09 |
-| Status | **Done** + **SMOKE_PASS** (with lab flag **removed**) |
-| Script | `scripts/ops-stg-provision-auth0.mjs`, `scripts/ops-stg-auth0-smoke.mjs` |
-| Tenant | `dev-ght4bps24glm825x` (US — residency residual vs EU preference) |
-| Domain | `dev-ght4bps24glm825x.us.auth0.com` |
+| Field   | Value                                                                    |
+| ------- | ------------------------------------------------------------------------ |
+| Program | Staging Auth0 enablement after ID-003                                    |
+| Date    | 2026-08-09                                                               |
+| Status  | **Done** + **SMOKE_PASS** (with lab flag **removed**)                    |
+| Script  | `scripts/ops-stg-provision-auth0.mjs`, `scripts/ops-stg-auth0-smoke.mjs` |
+| Tenant  | `dev-ght4bps24glm825x` (US — residency residual vs EU preference)        |
+| Domain  | `dev-ght4bps24glm825x.us.auth0.com`                                      |
 
 ## Completed
 
@@ -24,7 +24,7 @@ Auth0 → Users → `admin@educore.staging` → set **Email Verified** (recommen
 ## Residuals
 
 - Auth0 region US (not EU).
-- Web Universal Login UI not built; password login remains enabled.
+- **WEB-AUTH0 Done** — `/login` “Ingia na Auth0” (PKCE → `/auth/callback`); password login remains enabled.
 - ClickPesa / PAY-OPS deferred by Owner.
 - Production GO still NO GO.
 

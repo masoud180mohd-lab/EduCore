@@ -44,10 +44,10 @@ Wire **Auth0** proof into `POST /api/v1/auth/login` via `idpAssertion`, then min
 
 ## Explicit non-goals
 
-- Auth0 tenant provisioning on Owner account (ops checklist in task record)  
-- Web Auth0 Universal Login UI  
-- Replacing MFA-001 TOTP with Auth0 MFA  
-- Production GO / password cutover  
+- Auth0 tenant provisioning on Owner account (ops checklist in task record)
+- Web Auth0 Universal Login UI (**done in WEB-AUTH0** — see task record)
+- Replacing MFA-001 TOTP with Auth0 MFA
+- Production GO / password cutover
 
 ## Consequences
 

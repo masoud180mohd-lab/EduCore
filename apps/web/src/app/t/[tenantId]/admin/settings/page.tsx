@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
+import { AdminMfaPanel } from '@/components/admin/AdminMfaPanel';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -238,6 +239,8 @@ export default function AdminSettingsPage() {
           ) : null}
         </form>
       ) : null}
+
+      <AdminMfaPanel />
 
       <ConfirmDialog
         open={confirmAdvancedSave}

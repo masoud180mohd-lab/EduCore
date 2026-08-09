@@ -31,6 +31,6 @@ Bootstrap: enroll TOTP under **soft**, then flip to **hard**.
 ## Explicitly not done
 
 - Session `mfa_verified_at` column / revoke-all on hard flip
-- Web enroll/challenge UI
+- ~~Web enroll/challenge UI~~ → **WEB-MFA-UI** (2026-08-09)
 - Recovery codes / WebAuthn (MFA-006+)
-- IdP/OIDC (ID-001)
+- IdP/OIDC (see ID-001…003 / WEB-AUTH0)

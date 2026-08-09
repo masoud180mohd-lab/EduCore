@@ -117,4 +117,4 @@ Returns active system (+ tenant) templates: `code`, `channel`, `locale`, `versio
 
 ## Solo-operator honesty
 
-Provisional for EPIC-COMMS lab. OpenAPI companion may land with COMMS-003 implementation.
+Provisional for EPIC-COMMS lab. OpenAPI companion: `openapi/acf-014-notifications-sms.openapi.yaml` (ASSURE-014-O; no re-sign).
