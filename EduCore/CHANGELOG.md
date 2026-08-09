@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-09 - INFRA-002 staging Neon region residual
+
+- Accepted: keep staging Neon on us-east-2 for now; B-05 Frankfurt remains pilot/production intent.
+- Password rotate + Fly health verified earlier same period.
+
 ## 2026-08-08 - B-07 D1 restore drill (staging Neon)
 
 - Ephemeral Neon branch clone drill Pass; RTO ~6s; evidence `B-07-restore-drill-2026-08-08.md`.

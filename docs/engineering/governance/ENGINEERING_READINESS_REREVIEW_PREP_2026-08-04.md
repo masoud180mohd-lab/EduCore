@@ -108,7 +108,8 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 | ~~`GO DSF-KIT`~~ | **Done** — `DSF-KIT-001` |
 | `GO PAY-OPS` | Only if ClickPesa sandbox keys exist |
 | `GO IDP-002` | When trigger fires: choose hosted OIDC provider |
+| `GO INFRA-002-CUTOVER` | Recreate Neon in Frankfurt (closes INFRA-002 residual) |
 
 ---
 
-**Bottom line:** In-repo readiness stubs + **DSF-KIT-001** + deploy artifacts ready. **OPS-EXEC blocked on Owner tooling/accounts**. **Unrestricted production remains NO GO**.
+**Bottom line:** Staging live + D1 Pass + password rotate; INFRA-002 names us-east-2 staging residual. **Unrestricted production remains NO GO**.
