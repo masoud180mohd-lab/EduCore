@@ -17,17 +17,31 @@
 4. **Redeployed** API image with ID-003 code (`flyctl deploy …staging.toml --remote-only`).
 5. Smoke: bad `idpAssertion` → `INVALID_CREDENTIALS` (path **enabled**; not “not enabled”). `/health` → 200.
 
-## Owner follow-ups (optional smoke)
+## Auth0 login smoke (in progress)
 
-1. Create Auth0 user with email **`admin@educore.staging`** (matches seed) so first-link works.
-2. Obtain Auth0 ID token (Auth0 dashboard test / PKCE), then:
+**Done so far**
+- EduCore password login OK → tenant `01900000-0010-7000-8000-000000000001`
+- Auth0 user **`admin@educore.staging`** created (first signup succeeded)
+- Password grant **not** enabled on app → automated ID-token mint blocked
+- Script: `scripts/ops-stg-auth0-smoke.mjs` (password grant, else PKCE → `localhost:3001`)
 
-```http
-POST /api/v1/auth/login
-{ "idpAssertion": "<id_token>", "tenantId": "<staging-tenant-uuid>" }
+**Owner — pick one, then re-run**
+
+### Option A (rahisi): washa Password grant
+1. Auth0 → Applications → `educore-api-staging` → Settings → **Advanced Settings** → **Grant Types**
+2. Tick **Password** (na Password Realm ikiwaipo)
+3. Save
+4. Sema **sawa** — agent ataendesha tena:
+
+```powershell
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+doppler run --project educore --config stg -- node scripts/ops-stg-auth0-smoke.mjs
 ```
 
-Password login remains enabled.
+### Option B: PKCE (browser)
+Run command hiyo hapo juu; browser itafunguka — login `admin@educore.staging` kwa **SEED_ADMIN_PASS** (Doppler), kamilisha ndani ya dakika 3.
+
+ClickPesa / PAY-OPS bado imeahirishwa.
 
 ## Residuals
 
