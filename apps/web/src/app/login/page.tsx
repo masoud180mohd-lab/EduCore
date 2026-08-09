@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 
 import { MfaChallengeForm } from '@/components/MfaChallengeForm';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
@@ -32,7 +32,12 @@ export default function LoginPage() {
   const [tenants, setTenants] = useState<ReadonlyArray<TenantChoice> | null>(null);
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [mfaChallengeToken, setMfaChallengeToken] = useState<string | null>(null);
-  const auth0Ready = isAuth0Configured();
+  // Defer Auth0 UI until after mount so SSR HTML matches the first client paint.
+  const [auth0Ready, setAuth0Ready] = useState(false);
+
+  useEffect(() => {
+    setAuth0Ready(isAuth0Configured());
+  }, []);
 
   async function handleOutcome(
     outcome: Awaited<ReturnType<typeof completeLoginFromTokens>>,
@@ -103,9 +108,7 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await handleOutcome(
-        await verifyMfaAndComplete({ mfaChallengeToken, code }),
-      );
+      await handleOutcome(await verifyMfaAndComplete({ mfaChallengeToken, code }));
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
       else setError('MFA verification failed.');
