@@ -230,7 +230,12 @@ export class AuthService {
     }
 
     if (!claims.emailVerified || claims.email === null) {
-      return null;
+      const allowUnverified =
+        process.env['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK']?.trim() === '1';
+      if (!allowUnverified || claims.email === null) {
+        return null;
+      }
+      // Staging/lab: Auth0 DB signup often leaves email_verified=false until inbox confirm.
     }
 
     const byEmail = await this.sessions.lookupUserByEmail(claims.email);

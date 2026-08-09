@@ -25,6 +25,7 @@ const AUTH0_NAMES = [
   'AUTH0_DOMAIN',
   'AUTH0_CLIENT_ID',
   'AUTH0_CLIENT_SECRET',
+  'AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK',
 ];
 
 function getSecret(name, { required }) {
@@ -78,12 +79,16 @@ const auth0Domain = getSecret('AUTH0_DOMAIN', { required: false });
 const syncAuth0 = idp === 'auth0' || Boolean(auth0Domain);
 
 if (syncAuth0) {
+  const optionalAuth0 = new Set(['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK']);
   for (const name of AUTH0_NAMES) {
-    const value = getSecret(name, { required: name !== 'AUTH0_CLIENT_SECRET' || idp === 'auth0' });
+    const required = !optionalAuth0.has(name) && (name !== 'AUTH0_CLIENT_SECRET' || idp === 'auth0');
+    const value = getSecret(name, { required });
     if (value !== undefined) {
       setFlySecret(name, value);
     } else if (name === 'AUTH_IDP_PROVIDER') {
       setFlySecret(name, idp);
+    } else if (optionalAuth0.has(name)) {
+      process.stdout.write(`skip optional ${name}\n`);
     } else {
       process.stderr.write(`Missing Doppler secret ${name} (required for Auth0 sync)\n`);
       process.exit(1);

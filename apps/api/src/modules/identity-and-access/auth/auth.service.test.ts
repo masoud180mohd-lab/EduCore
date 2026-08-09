@@ -326,6 +326,50 @@ describe('AuthService login', () => {
     else process.env['AUTH_IDP_PROVIDER'] = prev;
   });
 
+  it('first-links unverified email when AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK=1', async () => {
+    const prevProvider = process.env['AUTH_IDP_PROVIDER'];
+    const prevAllow = process.env['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK'];
+    process.env['AUTH_IDP_PROVIDER'] = 'auth0';
+    process.env['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK'] = '1';
+    const user = {
+      id: '01900000-0000-7000-8000-000000000001',
+      email: 'user@example.com',
+      displayName: 'User',
+      status: 'active',
+      passwordHash: 'hash',
+    };
+    const sessions = {
+      isAvailable: () => true,
+      lookupUserByExternalSubject: vi
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(user),
+      lookupUserByEmail: vi.fn().mockResolvedValue(user),
+      linkExternalSubject: vi.fn().mockResolvedValue(true),
+      hasActiveMembership: vi.fn().mockResolvedValue(true),
+      createSession: vi.fn().mockResolvedValue('sess-id'),
+    };
+    const idpVerifier = {
+      verify: vi.fn().mockResolvedValue({
+        subject: 'auth0|unverified',
+        email: 'user@example.com',
+        emailVerified: false,
+      }),
+    };
+    const service = createAuth(sessions, null, stubRbac, null, stubMfa, stubMfaRepo, idpVerifier);
+    const result = await service.login({
+      idpAssertion: 'a.b.c',
+      tenantId: '01900000-0000-7000-8000-0000000000aa',
+      correlationId: 'c1',
+    });
+    expect(result.accessToken?.startsWith('ecs_')).toBe(true);
+    expect(sessions.linkExternalSubject).toHaveBeenCalledWith(user.id, 'auth0|unverified');
+    if (prevProvider === undefined) delete process.env['AUTH_IDP_PROVIDER'];
+    else process.env['AUTH_IDP_PROVIDER'] = prevProvider;
+    if (prevAllow === undefined) delete process.env['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK'];
+    else process.env['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK'] = prevAllow;
+  });
+
   it('does not auto-provision unmapped IdP subjects', async () => {
     const prev = process.env['AUTH_IDP_PROVIDER'];
     process.env['AUTH_IDP_PROVIDER'] = 'auth0';

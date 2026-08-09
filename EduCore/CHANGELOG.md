@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-09 - ID-003-OPS Auth0 staging smoke pass
+
+- Full path: Auth0 ID token → EduCore opaque session for `admin@educore.staging`.
+- Lab flag `AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK=1` (Auth0 email_verified=false on DB signup).
+
 ## 2026-08-09 - ID-003-OPS Auth0 staging live
 
 - Doppler + Fly: `AUTH_IDP_PROVIDER=auth0` + Auth0 domain/client; ID-003 migration applied; API redeployed.
