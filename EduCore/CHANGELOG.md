@@ -2,6 +2,10 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-09 - ID-003-OPS clear unverified-email lab flag
+
+- Removed `AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK` from staging after linked-sub smoke re-pass.
+
 ## 2026-08-09 - ID-003-OPS Auth0 staging smoke pass
 
 - Full path: Auth0 ID token → EduCore opaque session for `admin@educore.staging`.
