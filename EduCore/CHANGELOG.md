@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-09 - INFRA-002-CUTOVER Neon staging → Frankfurt
+
+- Created `educore-staging-fra` (`aws-eu-central-1`); Doppler/Fly pointed at EU; migrate + seed + login OK.
+- Supersedes INFRA-002 us-east-2 residual; legacy URL in `DATABASE_URL_LEGACY_USEAST2`.
+
 ## 2026-08-09 - INFRA-002 staging Neon region residual
 
 - Accepted: keep staging Neon on us-east-2 for now; B-05 Frankfurt remains pilot/production intent.

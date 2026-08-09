@@ -13,7 +13,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 | Database | Slice DBF artifacts exist under `docs/engineering/database-freeze/`; **kit-wide** ERD/index/RLS pack is not a single Accepted Freeze v1.0 document | New tables require a DBF revision for that slice before persistence work |
 | API | Slice ACF / OpenAPI baselines exist; not every future product route is open | New endpoints require ACF revision + IMP gate |
 | Design | **DSF-KIT-001** Accepted (kit chrome); slice DSF-001…006 for screens | Cite kit + slice DSF for UI IMP; independent design countersign still open |
-| Infrastructure | **B-05** Fly+Neon+Doppler; staging Neon currently **us-east-2** (INFRA-002 residual); Fly `fra`; live staging + D1 Pass | EU Neon cutover before TZ pilot if residency/latency requires; no secrets in repo |
+| Infrastructure | **B-05** Fly `fra` + Neon **Frankfurt** (`educore-staging-fra`, INFRA-002-CUTOVER Done); Doppler secrets | Legacy us-east-2 project optional delete; no secrets in repo |
 | Operations | **B-07** + OPS-001 in-repo; **OPS-EXEC blocked** (CLIs/Docker/accounts); drills not executed | Phase 0 install → deploy → D1; multi-person on-call still open |
 | Security / identity | **B-04 lite TM** + **ID-001** (IdP deferred); sessions + TOTP + MFA-HARD | `MFA_ENFORCE=hard` before pilot finance trust; IdP required before unrestricted/public pilot |
 | Identity | Lab opaque-session AuthN + **TOTP MFA** (soft default; **hard continuous gate** available) | Set `MFA_TOTP_ENCRYPTION_KEY`; enroll under soft before hard |

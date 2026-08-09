@@ -3,8 +3,8 @@
 | Field       | Value                                                                 |
 | ----------- | --------------------------------------------------------------------- |
 | Decision ID | `INFRA-002`                                                           |
-| Status      | **Accepted (solo-operator)** — 2026-08-09                             |
-| Date        | 2026-08-09                                                            |
+| Status      | **Superseded by cutover** — 2026-08-09 (`GO INFRA-002-CUTOVER`) |
+| Date        | 2026-08-09 (residual Accepted earlier same day; cutover completed) |
 | Depends     | B-05 (Fly + Neon + Doppler; primary region Frankfurt)                 |
 | Authority   | Solo-operator provisional (SOLO-GOV-001)                              |
 
@@ -44,6 +44,6 @@ Moving live staging mid-flight (new EU project + re-migrate + secret rewrite + r
 - [x] Staging evidence (D1/Fly) remains valid on current region  
 - [x] Production region intent unchanged (Frankfurt)
 
-## Honesty
+## Supersession
 
-Accepted under SOLO-GOV-001. Latency TZ→US and data-residency preferences are why EU cutover remains on the backlog.
+**2026-08-09:** Staging Neon cut over to **`educore-staging-fra`** in **`aws-eu-central-1`** (Frankfurt). See `docs/engineering/task-records/INFRA-002-CUTOVER.md`. Legacy us-east-2 URL kept in Doppler as `DATABASE_URL_LEGACY_USEAST2` only.

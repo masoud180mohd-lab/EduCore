@@ -37,10 +37,17 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
-const platform = new URL(databaseUrl);
-platform.username = 'educore_platform';
-platform.password = 'educore_platform_local_only';
-setSecret('SEED_PLATFORM_DATABASE_URL', platform.toString());
+if (!getSecret('SEED_PLATFORM_DATABASE_URL')) {
+  const platform = new URL(databaseUrl);
+  platform.username = 'educore_platform';
+  platform.password = 'educore_platform_local_only';
+  setSecret('SEED_PLATFORM_DATABASE_URL', platform.toString());
+  process.stdout.write(
+    'SEED_PLATFORM_DATABASE_URL set to bootstrap lab password — run ops-stg-rotate-db-passwords.mjs before production-like use\n',
+  );
+} else {
+  process.stdout.write('keep SEED_PLATFORM_DATABASE_URL (already set)\n');
+}
 
 setSecret('SEED_ADMIN_ALLOW_PRODUCTION', '1');
 setSecret('SEED_ADMIN_EMAIL', 'admin@educore.staging');

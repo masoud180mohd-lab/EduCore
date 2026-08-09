@@ -106,10 +106,10 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 | ~~`GO FLY-DOCKER`~~ | **Done** |
 | ~~`GO IDP`~~ | **Done (defer)** — `ID-001` |
 | ~~`GO DSF-KIT`~~ | **Done** — `DSF-KIT-001` |
+| ~~`GO INFRA-002-CUTOVER`~~ | **Done** — Neon `educore-staging-fra` / `aws-eu-central-1` |
 | `GO PAY-OPS` | Only if ClickPesa sandbox keys exist |
 | `GO IDP-002` | When trigger fires: choose hosted OIDC provider |
-| `GO INFRA-002-CUTOVER` | Recreate Neon in Frankfurt (closes INFRA-002 residual) |
 
 ---
 
-**Bottom line:** Staging live + D1 Pass + password rotate; INFRA-002 names us-east-2 staging residual. **Unrestricted production remains NO GO**.
+**Bottom line:** Staging live on Fly `fra` + Neon Frankfurt; D1 Pass (prior US project); password rotate done. **Unrestricted production remains NO GO**.
