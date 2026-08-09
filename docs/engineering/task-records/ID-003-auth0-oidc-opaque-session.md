@@ -16,22 +16,15 @@
 - `AuthService` assertion path → same opaque session + MFA finalize as password
 - Unit tests; `.env.example` names; ADR + this record
 
-## Ops checklist (Owner machine — not done in this commit)
+## Ops checklist (Owner machine)
 
-1. Create Auth0 tenant (prefer **EU**).
-2. Application: SPA or Regular Web; callback URLs for web origin; OIDC.
-3. Doppler `stg`: `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID` (+ `AUTH0_CLIENT_SECRET` if confidential), then `AUTH_IDP_PROVIDER=auth0`.
+1. Create Auth0 tenant (prefer **EU**) — see `ID-003-OPS-staging-auth0-provision.md`.
+2. Application: Regular Web; callback URLs for web origin; OIDC.
+3. Doppler `stg`: `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID` (+ `AUTH0_CLIENT_SECRET`), then `AUTH_IDP_PROVIDER=auth0` — or `scripts/ops-stg-provision-auth0.mjs` with M2M.
 4. `npm run db:migrate` against staging (FRA Neon).
-5. Sync Fly secrets; create/link Auth0 user email = existing EduCore user; POST login with `idpAssertion` = ID token.
+5. `node scripts/ops-stg-sync-fly-secrets.mjs`; create/link Auth0 user email = existing EduCore user; POST login with `idpAssertion` = ID token.
 6. Leave password login enabled until a separate cutover decision.
-
-## Explicitly not done
-
-- Live Auth0 tenant creation
-- Web Universal Login UI
-- Password disabled / SSO-only cutover
-- Production GO
 
 ## Next
 
-Staging enable when Owner provisions Auth0; `GO PAY-OPS` when ClickPesa keys exist.
+Owner completes Auth0 tenant + Doppler secrets (`ID-003-OPS`); then migrate + Fly sync. `GO PAY-OPS` when ClickPesa keys exist.

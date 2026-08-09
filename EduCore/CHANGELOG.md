@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-09 - ID-003-OPS Auth0 staging provision tooling
+
+- Added `ops-stg-provision-auth0.mjs`; Fly secret sync includes Auth0 when enabled.
+- Live Auth0 tenant still Owner-created (EU preferred).
+
 ## 2026-08-09 - ID-003 Auth0 OIDC → opaque session
 
 - Assertion login on `POST /auth/login` when `AUTH_IDP_PROVIDER=auth0`; maps Auth0 `sub` → `users.external_subject_id`.

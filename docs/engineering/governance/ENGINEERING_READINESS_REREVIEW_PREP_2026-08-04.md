@@ -108,6 +108,7 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 | ~~`GO DSF-KIT`~~ | **Done** — `DSF-KIT-001` |
 | ~~`GO IDP-002`~~ | **Done** — Auth0 selected (`ID-002-hosted-oidc-provider-auth0.md`) |
 | ~~`GO IDP-003`~~ | **Done** — Auth0 → opaque session behind `AUTH_IDP_PROVIDER` (`ID-003-auth0-oidc-opaque-session.md`) |
+| `GO IDP-003-OPS` | Owner: create Auth0 EU tenant + Doppler secrets (`ID-003-OPS-staging-auth0-provision.md`) |
 | `GO PAY-OPS` | Only if ClickPesa sandbox keys exist |
 
 ---
