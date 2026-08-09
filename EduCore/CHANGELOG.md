@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-09 - ID-002 Auth0 OIDC provider selection
+
+- Accepted Auth0 as hosted IdP for future ID-003; local AuthN remains until integrate.
+- PAY-OPS still deferred (no ClickPesa keys).
+
 ## 2026-08-09 - INFRA-002-CUTOVER Neon staging → Frankfurt
 
 - Created `educore-staging-fra` (`aws-eu-central-1`); Doppler/Fly pointed at EU; migrate + seed + login OK.

@@ -106,10 +106,10 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 | ~~`GO FLY-DOCKER`~~ | **Done** |
 | ~~`GO IDP`~~ | **Done (defer)** — `ID-001` |
 | ~~`GO DSF-KIT`~~ | **Done** — `DSF-KIT-001` |
-| ~~`GO INFRA-002-CUTOVER`~~ | **Done** — Neon `educore-staging-fra` / `aws-eu-central-1` |
+| ~~`GO IDP-002`~~ | **Done** — Auth0 selected (`ID-002-hosted-oidc-provider-auth0.md`) |
+| `GO IDP-003` | Implement Auth0 OIDC → EduCore opaque session (integration) |
 | `GO PAY-OPS` | Only if ClickPesa sandbox keys exist |
-| `GO IDP-002` | When trigger fires: choose hosted OIDC provider |
 
 ---
 
-**Bottom line:** Staging live on Fly `fra` + Neon Frankfurt; D1 Pass (prior US project); password rotate done. **Unrestricted production remains NO GO**.
+**Bottom line:** Staging on Fly `fra` + Neon Frankfurt; D1 Pass; ID-002 Auth0 chosen (not wired). **Unrestricted production remains NO GO**.
