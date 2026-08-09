@@ -35,9 +35,13 @@ Auth0 app callbacks must include `http://localhost:3001/auth/callback` (already 
 - Password AuthN not cut over
 - Production GO still NO GO
 
-## Manual check
+## Manual check (Owner)
 
-1. Set web public Auth0 env; run `npm run dev:web`
-2. Open `/login` → see **Ingia na Auth0**
-3. Complete Auth0 Universal Login → land in EduCore with opaque session
-4. Without public env → button absent; password still works
+1. `apps/web/.env.local` has `NEXT_PUBLIC_AUTH0_DOMAIN` + `NEXT_PUBLIC_AUTH0_CLIENT_ID` (and API base — staging Fly or local API with Auth0).
+2. `npm run dev:web` → http://localhost:3001/login → **Ingia na Auth0**
+3. Auth0 Universal Login → `/auth/callback` → EduCore session
+4. Without public Auth0 env → button hidden; password still works
+
+## 2026-08-09 Owner GO
+
+`GO WEB-AUTH0` — code already on `main`; Owner env wired to staging Auth0 public client + staging API base for local web smoke.

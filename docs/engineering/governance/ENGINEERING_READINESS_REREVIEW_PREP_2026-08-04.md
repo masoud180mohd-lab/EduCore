@@ -109,7 +109,8 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 | ~~`GO IDP-002`~~ | **Done** — Auth0 selected (`ID-002-hosted-oidc-provider-auth0.md`) |
 | ~~`GO IDP-003`~~ | **Done** — Auth0 → opaque session behind `AUTH_IDP_PROVIDER` (`ID-003-auth0-oidc-opaque-session.md`) |
 | ~~`GO IDP-003-OPS`~~ | **Done** — staging Auth0 secrets + migrate + Fly (`ID-003-OPS-staging-auth0-provision.md`; US tenant residual) |
-| `GO PAY-OPS` | Only if ClickPesa sandbox keys exist |
+| ~~`GO WEB-AUTH0`~~ | **Done** — PKCE “Ingia na Auth0” on `/login` (`WEB-AUTH0-pkce-login-ui.md`) |
+| `GO PAY-OPS` | Deferred by Owner (no ClickPesa keys) |
 
 ---
 
