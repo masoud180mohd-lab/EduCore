@@ -46,7 +46,7 @@ describe('teacherFriendlyMessage', () => {
           message: 'Privileged accounts must enroll TOTP before login (MFA_ENFORCE=hard).',
         }),
       ),
-    ).toMatch(/enroll TOTP/i);
+    ).toMatch(/Authenticator enrollment is required/i);
     expect(
       teacherFriendlyMessage(
         new ApiClientError({ status: 401, code: 'MFA_INVALID', message: 'bad' }),

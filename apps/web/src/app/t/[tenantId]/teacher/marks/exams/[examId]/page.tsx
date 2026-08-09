@@ -90,11 +90,12 @@ export default function ExamDetailPage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
+      <p>
+        <Link href={`/t/${tenantId}/teacher/marks`}>← Marks</Link>
+      </p>
       <h1>{exam?.name ?? 'Exam'}</h1>
       {exam !== null ? (
-        <p className="muted">
-          Status {exam.status} · class {exam.classId}
-        </p>
+        <p className="muted">Status {exam.status}</p>
       ) : null}
       {error !== null ? (
         <div className="banner banner-error" role="alert">

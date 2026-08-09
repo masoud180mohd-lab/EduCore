@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -179,6 +180,9 @@ export default function MarkEntryPage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
+      <p>
+        <Link href={`/t/${tenantId}/teacher/marks`}>← Marks</Link>
+      </p>
       <h1>Enter marks</h1>
       <p className="muted">
         {examName}

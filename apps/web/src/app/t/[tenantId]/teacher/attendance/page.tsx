@@ -31,11 +31,13 @@ export default function AttendancePickerPage() {
   const [sessionDate, setSessionDate] = useState(todayIso());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loadingClasses, setLoadingClasses] = useState(true);
 
   useEffect(() => {
     const auth = readSession();
     if (auth === null) return;
     void (async () => {
+      setLoadingClasses(true);
       try {
         const result = await apiRequest<{ data: ClassRow[] }>(
           '/api/v1/classes?limit=100&status=active',
@@ -46,6 +48,8 @@ export default function AttendancePickerPage() {
         setClasses(result.data ?? []);
       } catch (err) {
         if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
+      } finally {
+        setLoadingClasses(false);
       }
     })();
   }, []);
@@ -128,12 +132,17 @@ export default function AttendancePickerPage() {
           {error}
         </div>
       ) : null}
+      {loadingClasses ? <p className="muted">Loading classes…</p> : null}
+      {!loadingClasses && classes.length === 0 ? (
+        <div className="banner banner-info">No active classes yet. Ask an admin to create one.</div>
+      ) : null}
       <form className="stack" onSubmit={(e) => void onOpen(e)}>
         <div className="field">
           <label htmlFor="classId">Class</label>
           <select
             id="classId"
             required
+            disabled={loadingClasses || classes.length === 0}
             value={classId}
             onChange={(e) => {
               setClassId(e.target.value);

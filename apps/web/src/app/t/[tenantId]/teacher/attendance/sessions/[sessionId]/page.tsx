@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -26,6 +27,7 @@ type Session = {
 type Enrollment = { readonly studentId: string; readonly status: string };
 type RecordRow = { readonly studentId: string; readonly status: string };
 type Student = { readonly id: string; readonly displayName: string };
+type ClassRow = { readonly id: string; readonly name: string; readonly code: string | null };
 
 const STATUSES: readonly AttendanceRecordStatus[] = ['present', 'absent', 'late', 'excused'];
 
@@ -33,6 +35,7 @@ export default function MarkSessionPage() {
   const params = useParams<{ tenantId: string; sessionId: string }>();
   const { tenantId, sessionId } = params;
   const [session, setSession] = useState<Session | null>(null);
+  const [classLabel, setClassLabel] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<MarkDraft[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -54,6 +57,19 @@ export default function MarkSessionPage() {
       );
       const sess = sessionRes.data;
       setSession(sess);
+
+      try {
+        const classRes = await apiRequest<{ data: ClassRow }>(`/api/v1/classes/${sess.classId}`, {
+          auth,
+        });
+        const code =
+          classRes.data.code !== null && classRes.data.code !== ''
+            ? ` (${classRes.data.code})`
+            : '';
+        setClassLabel(`${classRes.data.name}${code}`);
+      } catch {
+        setClassLabel(null);
+      }
 
       const enrollQs = new URLSearchParams({
         classId: sess.classId,
@@ -159,10 +175,13 @@ export default function MarkSessionPage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
+      <p>
+        <Link href={`/t/${tenantId}/teacher/attendance`}>← Take attendance</Link>
+      </p>
       <h1>Mark attendance</h1>
       {session !== null ? (
         <p className="muted">
-          {session.sessionDate} · class {session.classId} ·{' '}
+          {session.sessionDate} · {classLabel ?? 'Class'} ·{' '}
           <span className={`chip chip-${session.status === 'open' ? 'open' : 'closed'}`}>
             {session.status}
           </span>
@@ -188,7 +207,6 @@ export default function MarkSessionPage() {
           <li key={d.studentId} className="mark-row">
             <div>
               <strong>{d.displayName}</strong>
-              <div className="muted">{d.studentId}</div>
             </div>
             <div
               className="status-group"

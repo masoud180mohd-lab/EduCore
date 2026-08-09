@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-09 - UX-POLISH-R1 + MFA-HARD-OPS script
+
+- Teacher/parent/admin chrome polish (class labels, empty states, soft parent copy); no payments.
+- `ops-stg-mfa-hard.mjs` + npm scripts for Owner staging MFA_ENFORCE=hard flip (Doppler/flyctl required).
+
 ## 2026-08-09 - Hardening polish: WEB-MFA-UI + ACF-014 OpenAPI
 
 - Web: login/Auth0 MFA challenge + Admin Settings TOTP enroll/disable (ACF-001); no payments.

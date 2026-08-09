@@ -5,8 +5,8 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import '@/styles/tokens.css';
 
 export const metadata = {
-  title: 'EduCore Teacher',
-  description: 'Teacher attendance capture',
+  title: 'EduCore',
+  description: 'School management — admin, teacher, and parent',
 };
 
 export default function RootLayout({ children }: { readonly children: ReactNode }) {

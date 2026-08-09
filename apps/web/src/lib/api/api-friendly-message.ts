@@ -20,9 +20,7 @@ export function apiFriendlyMessage(
     return 'Invalid or expired authenticator code. Try again.';
   }
   if (error.code === 'MFA_REQUIRED') {
-    return error.message.trim() !== ''
-      ? error.message
-      : 'Authenticator enrollment is required before you can continue.';
+    return 'Authenticator enrollment is required for this account. Ask an admin to keep soft enforce until you enroll under Settings → Security, or enroll before hard enforce is enabled.';
   }
 
   if (error.status === 401) return 'Sign in again.';

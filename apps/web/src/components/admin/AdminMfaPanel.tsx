@@ -165,19 +165,20 @@ export function AdminMfaPanel() {
 
   return (
     <section className="stack card" style={{ marginTop: '1.5rem' }}>
-      <h2 style={{ margin: 0, fontSize: '1.125rem' }}>Security — authenticator (MFA)</h2>
+      <h2 style={{ margin: 0, fontSize: '1.125rem' }}>Security — authenticator</h2>
       <p className="muted" style={{ margin: 0 }}>
-        Privileged accounts should enroll TOTP under soft enforce before staging flips to{' '}
-        <code>MFA_ENFORCE=hard</code>.
+        Add an authenticator app for privileged accounts before the school turns on required
+        two-step sign-in.
       </p>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      {loading ? <p className="muted">Loading MFA…</p> : null}
+      {loading ? <p className="muted">Loading security…</p> : null}
 
       {!loading && me !== null ? (
         <p className="muted" style={{ margin: 0 }}>
-          Mode: <strong>{me.mfaEnforced ?? 'soft'}</strong>
-          {me.mfaEnrollmentRequired ? ' — enrollment recommended for your role.' : null}
+          Enforcement:{' '}
+          <strong>{me.mfaEnforced === 'hard' ? 'required' : 'optional (lab)'}</strong>
+          {me.mfaEnrollmentRequired ? ' — enroll recommended for your role.' : null}
           {hasActive ? ' — authenticator active.' : ' — no active authenticator.'}
         </p>
       ) : null}
@@ -191,11 +192,11 @@ export function AdminMfaPanel() {
       {!loading && pending !== null ? (
         <form className="stack" onSubmit={(e) => void confirmEnroll(e)}>
           <p>
-            Add this account in your authenticator app. Prefer opening the otpauth link on your
-            phone, or enter the secret manually.
+            Add this account in your authenticator app. Prefer opening the setup link on your phone,
+            or enter the secret manually.
           </p>
           <div className="field">
-            <label htmlFor="otpauthUri">otpauth URI</label>
+            <label htmlFor="otpauthUri">Setup link</label>
             <textarea
               id="otpauthUri"
               readOnly
@@ -256,8 +257,10 @@ export function AdminMfaPanel() {
             <li key={f.id}>
               <div className="stack" style={{ gap: '0.5rem' }}>
                 <span>
-                  {f.label ?? f.factorType} — active
-                  {f.confirmedAt !== null ? ` since ${f.confirmedAt}` : ''}
+                  {f.label ?? 'Authenticator'} — active
+                  {f.confirmedAt !== null
+                    ? ` since ${new Date(f.confirmedAt).toLocaleDateString()}`
+                    : ''}
                 </span>
                 <button
                   type="button"
@@ -276,7 +279,7 @@ export function AdminMfaPanel() {
       <ConfirmDialog
         open={disableId !== null}
         title="Disable authenticator?"
-        body="You will no longer be asked for a code at sign-in. Re-enroll before MFA_ENFORCE=hard if you are privileged."
+        body="You will no longer be asked for a code at sign-in. Re-enroll before required two-step sign-in is turned on if you are an admin."
         confirmLabel="Disable"
         danger
         busy={busy}

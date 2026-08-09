@@ -47,19 +47,21 @@ In Doppler `staging`, set (values from Neon / generated locally):
 
 Optional later: `CLICKPESA_*`, `BEEM_*`, `OPENAI_API_KEY` — only when vendor paths are intentional.
 
-### MFA-HARD staging flip (WEB-MFA-UI)
+### MFA-HARD staging flip (WEB-MFA-UI + MFA-HARD-OPS)
 
 Do **not** set `MFA_ENFORCE=hard` until every privileged staging user has an active TOTP factor.
 
 1. Keep `MFA_ENFORCE=soft` and ensure `MFA_TOTP_ENCRYPTION_KEY` is set in Doppler/Fly.
-2. Sign in as each privileged admin → **Admin → Settings → Security — authenticator** → enroll + confirm.
+2. Sign in as each privileged admin → **Admin → Settings → Security** → enroll + confirm.
 3. Sign out; sign in again and complete the 6-digit challenge (password and Auth0 paths).
-4. Flip Doppler/Fly: `MFA_ENFORCE=hard` → redeploy/restart API.
+4. On an Owner machine with Doppler + flyctl:
+   - `CONFIRM=YES npm run ops:stg:mfa-hard`
+   - `npm run ops:stg:sync-fly-secrets`
 5. Smoke: privileged login without TOTP → `403 MFA_REQUIRED`; with TOTP → challenge then session; finance/tenant/role routes fail closed if MFA store down.
 
-**Rollback:** set `MFA_ENFORCE=soft` and restart. Does not remove enrolled factors.
+**Rollback:** set `MFA_ENFORCE=soft` (Doppler) then sync Fly. Does not remove enrolled factors.
 
-**Honesty:** Hard enforce is available; production/public pilot still NO GO without Board re-review.
+**Honesty:** This workstation may lack Doppler/flyctl — Owner runs the flip. Hard enforce is available; production/public pilot still NO GO without Board re-review.
 
 ## Phase C — Database bootstrap
 

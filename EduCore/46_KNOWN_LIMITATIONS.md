@@ -16,7 +16,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 | Infrastructure | **B-05** Fly `fra` + Neon **Frankfurt** (`educore-staging-fra`, INFRA-002-CUTOVER Done); Doppler secrets | Legacy us-east-2 project optional delete; no secrets in repo |
 | Operations | **B-07** + OPS-001 in-repo; **OPS-EXEC blocked** (CLIs/Docker/accounts); drills not executed | Phase 0 install → deploy → D1; multi-person on-call still open |
 | Security / identity | **B-04** + **ID-001…003** + **WEB-AUTH0** + **WEB-MFA-UI** (challenge + Settings enroll) | Enable Auth0 public env when using Universal Login; enroll TOTP under soft before `MFA_ENFORCE=hard` |
-| Identity | Lab opaque-session AuthN + **TOTP MFA** (soft default; **hard continuous gate** available) | Set `MFA_TOTP_ENCRYPTION_KEY`; enroll via Admin Settings; OPS-001 MFA-HARD flip checklist |
+| Identity | Lab opaque-session AuthN + **TOTP MFA** (soft default; **hard** via `ops:stg:mfa-hard` Owner flip) | Enroll via Admin Settings; Owner: `CONFIRM=YES npm run ops:stg:mfa-hard` then Fly sync |
 | Payments | **ClickPesa PAY-006 UI shipped**; sandbox pilot **deferred** (no keys yet); runtime **Fake** | No secrets in git; resume PAY-OPS-001 when vendor sandbox available; parent pay still out |
 | SMS / notifications | **COMMS-001…005 lab complete** (Fake default; Beem env-gated) | Migrate; optional Beem keys; WhatsApp later |
 

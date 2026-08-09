@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
 import { TeacherShell } from '@/components/TeacherShell';
+import { buildClassLabelMap, formatClassLabel } from '@/lib/academic/class-labels';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -25,6 +26,7 @@ export default function MarksHomePage() {
   const router = useRouter();
   const [exams, setExams] = useState<ExamRow[]>([]);
   const [classes, setClasses] = useState<ClassRow[]>([]);
+  const [classLabels, setClassLabels] = useState<ReadonlyMap<string, string>>(new Map());
   const [years, setYears] = useState<YearRow[]>([]);
   const [name, setName] = useState('');
   const [classId, setClassId] = useState('');
@@ -43,8 +45,10 @@ export default function MarksHomePage() {
           apiRequest<{ data: ClassRow[] }>('/api/v1/classes?limit=100&status=active', { auth }),
           apiRequest<{ data: YearRow[] }>('/api/v1/academic-years?limit=50', { auth }),
         ]);
+        const classRows = clRes.data ?? [];
         setExams(exRes.data ?? []);
-        setClasses(clRes.data ?? []);
+        setClasses(classRows);
+        setClassLabels(buildClassLabelMap(classRows));
         setYears(yrRes.data ?? []);
       } catch (err) {
         if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
@@ -149,7 +153,7 @@ export default function MarksHomePage() {
               <span className={`chip chip-${exam.status === 'open' ? 'open' : 'closed'}`}>
                 {exam.status}
               </span>
-              <div className="muted">Class {exam.classId}</div>
+              <div className="muted">{formatClassLabel(classLabels, exam.classId)}</div>
             </Link>
           </li>
         ))}

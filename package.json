@@ -22,6 +22,8 @@
     "seed:parent-demo": "tsx scripts/seed-parent-demo.ts",
     "rbac:reconcile-grants": "tsx scripts/reconcile-system-role-grants.ts",
     "ops:prereq": "node scripts/ops-prereq-check.mjs",
+    "ops:stg:mfa-hard": "node scripts/ops-stg-mfa-hard.mjs",
+    "ops:stg:sync-fly-secrets": "node scripts/ops-stg-sync-fly-secrets.mjs",
     "docker:build:api": "docker build -f apps/api/Dockerfile -t educore-api:local .",
     "docker:down": "docker compose --env-file .env.docker.example down",
     "docker:logs": "docker compose --env-file .env.docker.example logs -f",

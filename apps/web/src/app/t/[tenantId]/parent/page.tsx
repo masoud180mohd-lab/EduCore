@@ -52,7 +52,7 @@ export default function ParentHomePage() {
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(accessMessage(err));
-      else setError('Could not load parent fees.');
+      else setError('Could not load your linked students.');
     } finally {
       setLoading(false);
     }
@@ -68,9 +68,9 @@ export default function ParentHomePage() {
   return (
     <ParentShell tenantId={tenantId}>
       <h1>Fees — {guardian?.displayName ?? 'Parent'}</h1>
-      <p className="muted">Read-only invoices for your linked students (DSF-006 / ACF-013).</p>
+      <p className="muted">Read-only invoices for your linked students.</p>
       <div className="banner banner-info" role="status">
-        Pay at the school office. Mobile money is not enabled (PAY-PROVIDER-001).
+        Pay at the school office. Online payment is not available yet.
       </div>
       {error !== null ? (
         <div className="banner banner-error" role="alert">

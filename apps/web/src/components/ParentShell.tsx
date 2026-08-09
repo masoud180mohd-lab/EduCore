@@ -43,7 +43,7 @@ export function ParentShell({
         <strong>EduCore</strong>
         <nav aria-label="Parent">
           <Link href={homeHref} aria-current={pathname === homeHref ? 'page' : undefined}>
-            Fees
+            Home
           </Link>
         </nav>
         <button
@@ -54,7 +54,7 @@ export function ParentShell({
             router.replace('/login');
           }}
         >
-          Sign out
+          Log out
         </button>
       </header>
       <main className="page" style={{ maxWidth: '56rem' }}>
