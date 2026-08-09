@@ -108,9 +108,9 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 | ~~`GO DSF-KIT`~~ | **Done** — `DSF-KIT-001` |
 | ~~`GO IDP-002`~~ | **Done** — Auth0 selected (`ID-002-hosted-oidc-provider-auth0.md`) |
 | ~~`GO IDP-003`~~ | **Done** — Auth0 → opaque session behind `AUTH_IDP_PROVIDER` (`ID-003-auth0-oidc-opaque-session.md`) |
-| `GO IDP-003-OPS` | Owner: create Auth0 EU tenant + Doppler secrets (`ID-003-OPS-staging-auth0-provision.md`) |
+| ~~`GO IDP-003-OPS`~~ | **Done** — staging Auth0 secrets + migrate + Fly (`ID-003-OPS-staging-auth0-provision.md`; US tenant residual) |
 | `GO PAY-OPS` | Only if ClickPesa sandbox keys exist |
 
 ---
 
-**Bottom line:** Staging on Fly `fra` + Neon Frankfurt; D1 Pass; ID-003 Auth0 code ready (flag default local). **Unrestricted production remains NO GO**.
+**Bottom line:** Staging on Fly `fra` + Neon Frankfurt; D1 Pass; Auth0 staging **enabled** (US tenant residual). **Unrestricted production remains NO GO**.

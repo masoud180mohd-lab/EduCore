@@ -4,60 +4,33 @@
 | --- | --- |
 | Program | Staging Auth0 enablement after ID-003 |
 | Date | 2026-08-09 |
-| Status | **Blocked on Owner Auth0 tenant** (tooling + script ready) |
+| Status | **Done** (tenant + Doppler + migrate + Fly) |
 | Script | `scripts/ops-stg-provision-auth0.mjs` |
+| Tenant | `dev-ght4bps24glm825x` (US — residency residual vs EU preference) |
+| Domain | `dev-ght4bps24glm825x.us.auth0.com` |
 
-## Why blocked
+## Completed
 
-Auth0 **tenant creation** requires an Owner Auth0 account (prefer **EU**). Doppler `educore`/`stg` currently has **no** `AUTH0_*` secrets. Auth0 CLI download on this host was unreliable (corrupt/partial zip); Management API mode does not need the CLI once M2M credentials exist.
+1. Owner created Auth0 app `educore-api-staging` (Regular Web) + Doppler secrets.
+2. Applied migration `20260809150000_auth_idp_external_subject` on FRA Neon.
+3. Synced Auth0 secrets to Fly `educore-api-staging` (`AUTH_IDP_PROVIDER=auth0`).
+4. **Redeployed** API image with ID-003 code (`flyctl deploy …staging.toml --remote-only`).
+5. Smoke: bad `idpAssertion` → `INVALID_CREDENTIALS` (path **enabled**; not “not enabled”). `/health` → 200.
 
-## Owner one-time (5–10 min)
+## Owner follow-ups (optional smoke)
 
-1. Sign in at [manage.auth0.com](https://manage.auth0.com/) → create tenant (prefer **EU**).
-2. **Applications → Create Application**
-   - Name: `educore-api-staging`
-   - Type: **Regular Web Application**
-   - Allowed Callback URLs: `https://educore-api-staging.fly.dev/auth/callback,http://localhost:3001/auth/callback`
-   - Allowed Logout URLs: `https://educore-api-staging.fly.dev/,http://localhost:3001/`
-   - Allowed Web Origins: `https://educore-api-staging.fly.dev,http://localhost:3001`
-3. Copy **Domain**, **Client ID**, **Client Secret** (do not paste into chat).
-4. In Doppler `educore` / `stg` (names only):
+1. Create Auth0 user with email **`admin@educore.staging`** (matches seed) so first-link works.
+2. Obtain Auth0 ID token (Auth0 dashboard test / PKCE), then:
 
-```powershell
-doppler secrets set AUTH0_DOMAIN="YOUR_TENANT.eu.auth0.com" --project educore --config stg
-doppler secrets set AUTH0_CLIENT_ID="..." --project educore --config stg
-doppler secrets set AUTH0_CLIENT_SECRET="..." --project educore --config stg
-doppler secrets set AUTH_IDP_PROVIDER=auth0 --project educore --config stg
+```http
+POST /api/v1/auth/login
+{ "idpAssertion": "<id_token>", "tenantId": "<staging-tenant-uuid>" }
 ```
 
-### Optional: automate app create next time
+Password login remains enabled.
 
-Create an Auth0 **Machine to Machine** app authorized for Management API (`create:clients`, `update:clients`, `read:clients`), put `AUTH0_MGMT_CLIENT_ID` / `AUTH0_MGMT_CLIENT_SECRET` in Doppler, then:
+## Residuals
 
-```powershell
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-doppler run --project educore --config stg -- node scripts/ops-stg-provision-auth0.mjs
-```
-
-## After secrets are set (agent or Owner)
-
-```powershell
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-doppler run --project educore --config stg -- npm run db:migrate
-node scripts/ops-stg-sync-fly-secrets.mjs
-```
-
-Create Auth0 user with email `admin@educore.staging` (matches seed) so first-link / sub mapping works. Password login stays enabled.
-
-## Delivered in repo (this slice)
-
-- `scripts/ops-stg-provision-auth0.mjs`
-- Fly sync includes Auth0 secrets when `AUTH_IDP_PROVIDER=auth0`
-- This task record
-
-## Explicitly not done until Owner tenant exists
-
-- Live Auth0 tenant / app
-- Doppler Auth0 values
-- Fly Auth0 secret push
-- Staging assertion smoke
+- Auth0 region is **US** (not EU) — document as residency residual until EU tenant recreate.
+- Web Universal Login UI not built.
+- Production GO still NO GO.
