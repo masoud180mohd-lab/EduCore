@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-10 - IMP-037 Admin home hub clarity
+
+- Loading/empty states; permission-filtered “Common next steps” deep links; clearer hub blurbs.
+- Academic/Fees hubs: AdminPageHeader + back to Admin.
+
 ## 2026-08-10 - IMP-036 Admin list filters
 
 - Students / Users: wire `status` alongside existing `search` (Apply resets cursor).

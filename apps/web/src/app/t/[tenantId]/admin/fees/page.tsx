@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -88,21 +89,15 @@ export default function AdminFeesHubPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <h1>Fees</h1>
       <p className="muted">
-        Bursar workflow: fee structures → invoices → office or mobile-money payment → receipts
-        (ACF-012 / DSF-004). Refresh from provider updates pending MoMo without relying on webhooks.
+        <Link href={`/t/${tenantId}/admin`}>← Admin</Link>
       </p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Fees"
+        description="Bursar path: structures → invoices → office or mobile-money payment → receipts. Sync pending refreshes MoMo without webhooks."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {canReconcile ? (
         <div className="actions" style={{ marginBottom: '1rem' }}>
           <button
@@ -126,7 +121,7 @@ export default function AdminFeesHubPage() {
         <li>
           <Link className="card" href={`${base}/invoices`}>
             <strong>Invoices</strong>
-            <div className="muted">Draft, issue, void, office pay, and mobile money</div>
+            <div className="muted">Draft, issue, void, filter, office pay, mobile money</div>
           </Link>
         </li>
         <li>

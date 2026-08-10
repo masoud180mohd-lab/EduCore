@@ -4,9 +4,15 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
-import { ApiClientError, apiRequest } from '@/lib/api/client';
+import {
+  ADMIN_HUB_BY_ID,
+  visibleAdminHubQuickStarts,
+  type AdminHubCard,
+} from '@/lib/admin/admin-hub';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { groupAdminNav, visibleAdminNavIds, type AdminNavId } from '@/lib/auth/admin-access';
 import type { MeLike } from '@/lib/auth/home-preference';
 import { readSession } from '@/lib/auth/session';
@@ -18,55 +24,6 @@ type TenantCurrent = {
 type MeEnvelope = {
   readonly data: MeLike;
 };
-
-type HubCard = {
-  readonly id: AdminNavId;
-  readonly hrefSuffix: string;
-  readonly title: string;
-  readonly blurb: string;
-};
-
-const HUB_CARDS: ReadonlyArray<HubCard> = [
-  { id: 'users', hrefSuffix: '/users', title: 'Users', blurb: 'Staff directory' },
-  {
-    id: 'memberships',
-    hrefSuffix: '/memberships',
-    title: 'Memberships',
-    blurb: 'Roster by status',
-  },
-  {
-    id: 'organizations',
-    hrefSuffix: '/organizations',
-    title: 'Organizations',
-    blurb: 'Campuses and units',
-  },
-  { id: 'students', hrefSuffix: '/students', title: 'Students', blurb: 'Student registry' },
-  { id: 'guardians', hrefSuffix: '/guardians', title: 'Guardians', blurb: 'Parents and links' },
-  { id: 'roles', hrefSuffix: '/roles', title: 'Roles', blurb: 'Permissions and assignments' },
-  {
-    id: 'academic',
-    hrefSuffix: '/academic',
-    title: 'Academic',
-    blurb: 'Years, classes, subjects, enrollments',
-  },
-  {
-    id: 'fees',
-    hrefSuffix: '/fees',
-    title: 'Fees',
-    blurb: 'Structures, invoices, office payments',
-  },
-  {
-    id: 'notifications',
-    hrefSuffix: '/notifications',
-    title: 'SMS',
-    blurb: 'Deliveries, usage, and test SMS',
-  },
-  { id: 'settings', hrefSuffix: '/settings', title: 'Settings', blurb: 'Tenant settings document' },
-];
-
-const HUB_BY_ID = Object.fromEntries(HUB_CARDS.map((c) => [c.id, c])) as Partial<
-  Record<AdminNavId, HubCard>
->;
 
 export default function AdminHomePage() {
   const params = useParams<{ tenantId: string }>();
@@ -94,40 +51,78 @@ export default function AdminHomePage() {
   }, []);
 
   const base = `/t/${tenantId}/admin`;
+  const loading = navIds === null && error === null;
   const groups = navIds === null ? [] : groupAdminNav(navIds).filter((g) => g.id !== 'home');
+  const areaCards = groups.flatMap((group) =>
+    group.items
+      .map((id) => ADMIN_HUB_BY_ID[id])
+      .filter((card): card is AdminHubCard => card !== undefined),
+  );
+  const quickStarts = navIds === null ? [] : visibleAdminHubQuickStarts(navIds);
+  const emptyAreas = !loading && error === null && areaCards.length === 0;
 
   return (
     <AdminShell tenantId={tenantId}>
-      <h1>Admin</h1>
-      <p className="muted">{school !== null ? school : 'Loading school…'}</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
+      <AdminPageHeader
+        title="Admin"
+        description={
+          school !== null
+            ? `${school} — open an area below, or use a common next step.`
+            : 'Loading school…'
+        }
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {loading ? <p className="muted">Loading admin areas…</p> : null}
+      {emptyAreas ? (
+        <Banner tone="info">
+          No admin areas are available for your permissions. Ask an owner to grant access, or use
+          Teacher / Parent from the school switcher if those roles apply.
+        </Banner>
       ) : null}
-      <ul className="admin-hub-groups">
-        {groups.map((group) => {
-          const cards = group.items
-            .map((id) => HUB_BY_ID[id])
-            .filter((card): card is HubCard => card !== undefined);
-          if (cards.length === 0) return null;
-          return (
-            <li key={group.id} className="admin-hub-group">
-              <h2 className="admin-hub-group-label">{group.label}</h2>
-              <ul className="list">
-                {cards.map((card) => (
-                  <li key={card.id}>
-                    <Link className="card" href={`${base}${card.hrefSuffix}`}>
-                      <strong>{card.title}</strong>
-                      <div className="muted">{card.blurb}</div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          );
-        })}
-      </ul>
+
+      {quickStarts.length > 0 ? (
+        <section className="admin-hub-quick" aria-labelledby="admin-hub-quick-heading">
+          <h2 id="admin-hub-quick-heading" className="admin-hub-group-label">
+            Common next steps
+          </h2>
+          <ul className="list admin-hub-quick-list">
+            {quickStarts.map((item) => (
+              <li key={item.id}>
+                <Link className="card" href={`${base}${item.hrefSuffix}`}>
+                  <strong>{item.label}</strong>
+                  <div className="muted">{item.hint}</div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {!loading && !emptyAreas ? (
+        <ul className="admin-hub-groups">
+          {groups.map((group) => {
+            const cards = group.items
+              .map((id) => ADMIN_HUB_BY_ID[id])
+              .filter((card): card is AdminHubCard => card !== undefined);
+            if (cards.length === 0) return null;
+            return (
+              <li key={group.id} className="admin-hub-group">
+                <h2 className="admin-hub-group-label">{group.label}</h2>
+                <ul className="list">
+                  {cards.map((card) => (
+                    <li key={card.id}>
+                      <Link className="card" href={`${base}${card.hrefSuffix}`}>
+                        <strong>{card.title}</strong>
+                        <div className="muted">{card.blurb}</div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
     </AdminShell>
   );
 }

@@ -3,7 +3,47 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
+import { AdminPageHeader } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+
+type AcademicHubLink = {
+  readonly hrefSuffix: string;
+  readonly title: string;
+  readonly blurb: string;
+};
+
+const ACADEMIC_LINKS: ReadonlyArray<AcademicHubLink> = [
+  {
+    hrefSuffix: '/years',
+    title: 'Academic years',
+    blurb: 'Create and close school years',
+  },
+  {
+    hrefSuffix: '/terms',
+    title: 'Terms',
+    blurb: 'Terms within a year',
+  },
+  {
+    hrefSuffix: '/classes',
+    title: 'Classes',
+    blurb: 'Classes by year',
+  },
+  {
+    hrefSuffix: '/streams',
+    title: 'Streams',
+    blurb: 'Streams within a class',
+  },
+  {
+    hrefSuffix: '/subjects',
+    title: 'Subjects',
+    blurb: 'Subject catalog',
+  },
+  {
+    hrefSuffix: '/enrollments',
+    title: 'Enrollments',
+    blurb: 'Place students in classes or streams',
+  },
+];
 
 export default function AdminAcademicHubPage() {
   const params = useParams<{ tenantId: string }>();
@@ -12,49 +52,22 @@ export default function AdminAcademicHubPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <h1>Academic</h1>
       <p className="muted">
-        School year tree and enrollments (ACF-003…008 / DSF-002). Structure entities support create,
-        edit, delete, and reparenting (year/term/class) — delete only succeeds when nothing depends
-        on the record (IMP-014).
+        <Link href={`/t/${tenantId}/admin`}>← Admin</Link>
       </p>
+      <AdminPageHeader
+        title="Academic"
+        description="School year tree and enrollments. Edit structure on detail pages; delete only when nothing depends on the record."
+      />
       <ul className="list">
-        <li>
-          <Link className="card" href={`${base}/years`}>
-            <strong>Academic years</strong>
-            <div className="muted">School years</div>
-          </Link>
-        </li>
-        <li>
-          <Link className="card" href={`${base}/terms`}>
-            <strong>Terms</strong>
-            <div className="muted">Terms within a year</div>
-          </Link>
-        </li>
-        <li>
-          <Link className="card" href={`${base}/classes`}>
-            <strong>Classes</strong>
-            <div className="muted">Classes by year</div>
-          </Link>
-        </li>
-        <li>
-          <Link className="card" href={`${base}/streams`}>
-            <strong>Streams</strong>
-            <div className="muted">Streams within a class</div>
-          </Link>
-        </li>
-        <li>
-          <Link className="card" href={`${base}/subjects`}>
-            <strong>Subjects</strong>
-            <div className="muted">Subject catalog</div>
-          </Link>
-        </li>
-        <li>
-          <Link className="card" href={`${base}/enrollments`}>
-            <strong>Enrollments</strong>
-            <div className="muted">Place students in classes</div>
-          </Link>
-        </li>
+        {ACADEMIC_LINKS.map((link) => (
+          <li key={link.hrefSuffix}>
+            <Link className="card" href={`${base}${link.hrefSuffix}`}>
+              <strong>{link.title}</strong>
+              <div className="muted">{link.blurb}</div>
+            </Link>
+          </li>
+        ))}
       </ul>
     </AdminShell>
   );
