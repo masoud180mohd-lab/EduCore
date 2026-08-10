@@ -11,7 +11,9 @@ export const metadata = {
 
 export default function RootLayout({ children }: { readonly children: ReactNode }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: browser extensions (e.g. Dark Reader) inject
+    // attributes on <html>/<body> before React hydrates; that is not app state.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -19,7 +21,7 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
           href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&display=swap"
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <OfflineBanner />
         {children}
       </body>
