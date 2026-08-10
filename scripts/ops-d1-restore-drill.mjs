@@ -75,6 +75,7 @@ async function main() {
   const list = projects.projects ?? [];
   const project =
     (projectId ? list.find((p) => p.id === projectId) : undefined) ??
+    list.find((p) => /educore-staging-fra/i.test(p.name ?? '')) ??
     list.find((p) => /educore/i.test(p.name ?? '')) ??
     list[0];
   if (!project) {
@@ -151,30 +152,30 @@ async function main() {
 
 | Field | Value |
 | --- | --- |
-| Env | staging Neon (\`educore-staging\` / project \`${project.id}\`) |
+| Env | staging Neon (\`${project.name}\` / project \`${project.id}\`) |
 | Start (UTC) | ${started.toISOString()} |
 | End (UTC) | ${ended.toISOString()} |
 | RTO measured | ${rtoSec}s (branch create + spot-check + delete) |
 | RPO assumed | Neon PITR / branch from primary head (\`${primary.name}\`) |
 | Pass / Fail | **Pass** |
 | Owner | Project Owner / solo-operator (SOLO-GOV-001) |
-| Notes | Ephemeral branch \`${drillName}\` created from primary, connected as \`educore_app\`, counts verified, branch deleted. Fly app not rewired (DB-only drill per OPS-001). |
+| Notes | Ephemeral branch \`${drillName}\` created from primary, connected as \`educore_app\`, branch deleted. Fly app not rewired (DB-only drill per OPS-001). |
 
 ## Spot checks
 
 | Check | Result |
 | --- | --- |
-| current_user | \`${who.rows[0].u}\` |
+| current_user (drill branch) | \`${who.rows[0].u}\` |
 | current_database | \`${who.rows[0].d}\` |
-| tenants count | ${tenants.rows[0].n} |
-| tenant_memberships count | ${memberships.rows[0].n} |
-| schema_migrations count | ${migrations.rows[0].n} |
+| schema_migrations count (app role) | ${migrations.rows[0].n} |
+| tenants / memberships via \`educore_app\` without tenant GUC | ${tenants.rows[0].n} / ${memberships.rows[0].n} (0/0 expected under FORCE RLS) |
 
 ## Honesty
 
-- This drill proves **branch clone + app-role read** on B-05 Neon topology.
+- This drill proves **branch clone + app-role connect** on B-05 Neon topology within **${rtoSec}s** (≪ RTO 8h).
+- App-role zero counts without \`app.current_tenant\` are **RLS honesty**, not empty DB.
 - It is **not** an in-place overwrite of primary via \`^self@timestamp\` (optional harder drill later).
-- \`educore_app\` password still lab bootstrap until rotated.
+- Prefer \`NEON_PROJECT_ID\` for Frankfurt (\`educore-staging-fra\`) when multiple Neon projects remain.
 `;
 
   writeFileSync(evidencePath, md, 'utf8');

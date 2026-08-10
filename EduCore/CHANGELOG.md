@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-10 - OPS-HARDEN staging pass
+
+- D1 re-check Pass on Frankfurt Neon (9s) — `B-07-restore-drill-2026-08-10.md`.
+- MFA stays soft (0 factors); `ops:stg:mfa-status` helper; hard flip still Owner-gated after enroll.
+- Secrets hygiene: unverified-email lab flag absent; PAYMENT fake; Auth0 US residual noted.
+
 ## 2026-08-10 - IMP-037 Admin home hub clarity
 
 - Loading/empty states; permission-filtered “Common next steps” deep links; clearer hub blurbs.
