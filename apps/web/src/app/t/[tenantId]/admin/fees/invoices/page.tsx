@@ -23,7 +23,7 @@ import {
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
-import { invoiceStatusLabel } from '@/lib/finance/invoice-actions';
+import { invoiceStatusLabel, INVOICE_LIST_STATUSES, type InvoiceListStatus } from '@/lib/finance/invoice-actions';
 import { formatTzsMinor, parseMajorToMinor } from '@/lib/finance/money';
 
 type InvoiceRow = {
@@ -80,6 +80,13 @@ export default function AdminInvoicesPage() {
   const [feeStructureId, setFeeStructureId] = useState('');
   const [lineDescription, setLineDescription] = useState('');
   const [lineAmountMajor, setLineAmountMajor] = useState('');
+
+  const [statusFilter, setStatusFilter] = useState<'' | InvoiceListStatus>('');
+  const [studentFilter, setStudentFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | InvoiceListStatus>('');
+  const [appliedStudentId, setAppliedStudentId] = useState('');
+  const [appliedYearId, setAppliedYearId] = useState('');
 
   async function loadStudentPicker(opts: {
     readonly cursor: string | null;
@@ -173,7 +180,13 @@ export default function AdminInvoicesPage() {
     }
   }
 
-  async function loadPage(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadPage(opts: {
+    readonly statusQ: '' | InvoiceListStatus;
+    readonly studentIdQ: string;
+    readonly yearIdQ: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMore(true);
@@ -182,6 +195,11 @@ export default function AdminInvoicesPage() {
       const q = buildListQuery('/api/v1/invoices', {
         limit: ADMIN_LIST_DEFAULT_LIMIT,
         cursor: opts.cursor,
+        filters: {
+          status: opts.statusQ === '' ? undefined : opts.statusQ,
+          studentId: opts.studentIdQ === '' ? undefined : opts.studentIdQ,
+          academicYearId: opts.yearIdQ === '' ? undefined : opts.yearIdQ,
+        },
       });
       const result = await apiRequest<PaginatedEnvelope<InvoiceRow>>(q, { auth });
       const page = readPageMeta(result);
@@ -203,7 +221,13 @@ export default function AdminInvoicesPage() {
     void loadStudentPicker({ cursor: null, append: false });
     void loadYearPicker({ cursor: null, append: false });
     void loadStructurePicker({ cursor: null, append: false });
-    void loadPage({ cursor: null, append: false });
+    void loadPage({
+      statusQ: '',
+      studentIdQ: '',
+      yearIdQ: '',
+      cursor: null,
+      append: false,
+    });
   }, []);
 
   useEffect(() => {
@@ -212,6 +236,15 @@ export default function AdminInvoicesPage() {
     if (raw === '') return;
     prefillApplied.current = true;
     setStudentId(raw);
+    setStudentFilter(raw);
+    setAppliedStudentId(raw);
+    void loadPage({
+      statusQ: '',
+      studentIdQ: raw,
+      yearIdQ: '',
+      cursor: null,
+      append: false,
+    });
     void (async () => {
       const auth = readSession();
       if (auth === null) return;
@@ -419,6 +452,74 @@ export default function AdminInvoicesPage() {
         </button>
       </form>
 
+      <form
+        className="stack"
+        style={{ marginTop: '1.5rem' }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setAppliedStatus(statusFilter);
+          setAppliedStudentId(studentFilter);
+          setAppliedYearId(yearFilter);
+          void loadPage({
+            statusQ: statusFilter,
+            studentIdQ: studentFilter,
+            yearIdQ: yearFilter,
+            cursor: null,
+            append: false,
+          });
+        }}
+      >
+        <h2 className="section-title">Filter invoices</h2>
+        <div className="field">
+          <label htmlFor="list-status">Status</label>
+          <select
+            id="list-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as '' | InvoiceListStatus)}
+          >
+            <option value="">All statuses</option>
+            {INVOICE_LIST_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {invoiceStatusLabel(s)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="list-student">Student</label>
+          <select
+            id="list-student"
+            value={studentFilter}
+            onChange={(e) => setStudentFilter(e.target.value)}
+          >
+            <option value="">All students</option>
+            {students.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.displayName}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="list-year">Academic year</label>
+          <select
+            id="list-year"
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+          >
+            <option value="">All years</option>
+            {years.map((y) => (
+              <option key={y.id} value={y.id}>
+                {y.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
+          Apply filters
+        </button>
+      </form>
+
       <ResourceList
         loading={loading}
         empty="No invoices yet."
@@ -429,7 +530,13 @@ export default function AdminInvoicesPage() {
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={() => {
-              void loadPage({ cursor: nextCursor, append: true });
+              void loadPage({
+                statusQ: appliedStatus,
+                studentIdQ: appliedStudentId,
+                yearIdQ: appliedYearId,
+                cursor: nextCursor,
+                append: true,
+              });
             }}
           />
         }

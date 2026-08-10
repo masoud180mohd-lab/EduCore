@@ -7,7 +7,16 @@ export type UserRow = {
   readonly status: string;
 };
 
+export type UserStatus = 'invited' | 'active' | 'disabled' | 'locked';
+
 export type InviteRoleCode = 'owner' | 'admin' | 'staff';
+
+export const USER_STATUSES: ReadonlyArray<UserStatus> = [
+  'invited',
+  'active',
+  'disabled',
+  'locked',
+];
 
 export const INVITE_ROLE_CODES: ReadonlyArray<InviteRoleCode> = ['owner', 'admin', 'staff'];
 

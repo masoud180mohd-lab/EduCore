@@ -37,12 +37,15 @@ export default function AdminStudentsPage() {
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'' | StudentStatus>('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | StudentStatus>('');
   const [displayName, setDisplayName] = useState('');
   const [studentCode, setStudentCode] = useState('');
-  const [status, setStatus] = useState<StudentStatus>('active');
+  const [createStatus, setCreateStatus] = useState<StudentStatus>('active');
 
   async function loadPage(opts: {
     readonly searchQ: string;
+    readonly statusQ: '' | StudentStatus;
     readonly cursor: string | null;
     readonly append: boolean;
   }) {
@@ -54,7 +57,10 @@ export default function AdminStudentsPage() {
       const q = buildListQuery('/api/v1/students', {
         limit: ADMIN_LIST_DEFAULT_LIMIT,
         cursor: opts.cursor,
-        filters: { search: opts.searchQ },
+        filters: {
+          search: opts.searchQ,
+          status: opts.statusQ === '' ? undefined : opts.statusQ,
+        },
       });
       const result = await apiRequest<PaginatedEnvelope<StudentRow>>(q, { auth });
       const page = readPageMeta(result);
@@ -73,7 +79,7 @@ export default function AdminStudentsPage() {
   }
 
   useEffect(() => {
-    void loadPage({ searchQ: '', cursor: null, append: false });
+    void loadPage({ searchQ: '', statusQ: '', cursor: null, append: false });
   }, []);
 
   async function onCreate(event: FormEvent) {
@@ -87,7 +93,7 @@ export default function AdminStudentsPage() {
     try {
       const body: Record<string, string> = {
         displayName: displayName.trim(),
-        status,
+        status: createStatus,
       };
       if (studentCode.trim() !== '') body['studentCode'] = studentCode.trim();
       const created = await apiRequest<{ data: StudentRow }>('/api/v1/students', {
@@ -99,7 +105,7 @@ export default function AdminStudentsPage() {
       clearIdempotencyKey(actionKey);
       setDisplayName('');
       setStudentCode('');
-      setStatus('active');
+      setCreateStatus('active');
       router.push(`/t/${tenantId}/admin/students/${created.data.id}`);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'students'));
@@ -140,11 +146,11 @@ export default function AdminStudentsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="status">Status</label>
+          <label htmlFor="create-status">Status</label>
           <select
-            id="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as StudentStatus)}
+            id="create-status"
+            value={createStatus}
+            onChange={(e) => setCreateStatus(e.target.value as StudentStatus)}
           >
             {STUDENT_STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -164,7 +170,13 @@ export default function AdminStudentsPage() {
         onSubmit={(e) => {
           e.preventDefault();
           setAppliedSearch(search);
-          void loadPage({ searchQ: search, cursor: null, append: false });
+          setAppliedStatus(statusFilter);
+          void loadPage({
+            searchQ: search,
+            statusQ: statusFilter,
+            cursor: null,
+            append: false,
+          });
         }}
       >
         <div className="field">
@@ -176,8 +188,23 @@ export default function AdminStudentsPage() {
             placeholder="Name or code"
           />
         </div>
+        <div className="field">
+          <label htmlFor="list-status">Status</label>
+          <select
+            id="list-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as '' | StudentStatus)}
+          >
+            <option value="">All statuses</option>
+            {STUDENT_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
         <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          Search
+          Apply filters
         </button>
       </form>
 
@@ -191,7 +218,12 @@ export default function AdminStudentsPage() {
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={() => {
-              void loadPage({ searchQ: appliedSearch, cursor: nextCursor, append: true });
+              void loadPage({
+                searchQ: appliedSearch,
+                statusQ: appliedStatus,
+                cursor: nextCursor,
+                append: true,
+              });
             }}
           />
         }

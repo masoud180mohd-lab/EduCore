@@ -23,7 +23,13 @@ import {
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
-import { type InviteRoleCode, type UserRow, INVITE_ROLE_CODES } from '@/lib/users/types';
+import {
+  type InviteRoleCode,
+  type UserRow,
+  type UserStatus,
+  INVITE_ROLE_CODES,
+  USER_STATUSES,
+} from '@/lib/users/types';
 
 export default function AdminUsersPage() {
   const params = useParams<{ tenantId: string }>();
@@ -37,12 +43,15 @@ export default function AdminUsersPage() {
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'' | UserStatus>('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | UserStatus>('');
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [roleCode, setRoleCode] = useState<InviteRoleCode | ''>('staff');
 
   async function loadPage(opts: {
     readonly searchQ: string;
+    readonly statusQ: '' | UserStatus;
     readonly cursor: string | null;
     readonly append: boolean;
   }) {
@@ -54,7 +63,10 @@ export default function AdminUsersPage() {
       const q = buildListQuery('/api/v1/users', {
         limit: ADMIN_LIST_DEFAULT_LIMIT,
         cursor: opts.cursor,
-        filters: { search: opts.searchQ },
+        filters: {
+          search: opts.searchQ,
+          status: opts.statusQ === '' ? undefined : opts.statusQ,
+        },
       });
       const result = await apiRequest<PaginatedEnvelope<UserRow>>(q, { auth });
       const page = readPageMeta(result);
@@ -73,7 +85,7 @@ export default function AdminUsersPage() {
   }
 
   useEffect(() => {
-    void loadPage({ searchQ: '', cursor: null, append: false });
+    void loadPage({ searchQ: '', statusQ: '', cursor: null, append: false });
   }, []);
 
   async function onInvite(event: FormEvent) {
@@ -103,9 +115,15 @@ export default function AdminUsersPage() {
       setEmail('');
       setDisplayName('');
       setRoleCode('staff');
-      setInfo('Invitation sent. User appears when membership is active (or search invited).');
+      setInfo('Invitation sent. User appears when membership is active (or filter status = invited).');
       setAppliedSearch(search);
-      await loadPage({ searchQ: search, cursor: null, append: false });
+      setAppliedStatus(statusFilter);
+      await loadPage({
+        searchQ: search,
+        statusQ: statusFilter,
+        cursor: null,
+        append: false,
+      });
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'users'));
       else setError('Could not invite user.');
@@ -171,7 +189,13 @@ export default function AdminUsersPage() {
         onSubmit={(e) => {
           e.preventDefault();
           setAppliedSearch(search);
-          void loadPage({ searchQ: search, cursor: null, append: false });
+          setAppliedStatus(statusFilter);
+          void loadPage({
+            searchQ: search,
+            statusQ: statusFilter,
+            cursor: null,
+            append: false,
+          });
         }}
       >
         <div className="field">
@@ -183,8 +207,23 @@ export default function AdminUsersPage() {
             placeholder="Name or email"
           />
         </div>
+        <div className="field">
+          <label htmlFor="list-status">Status</label>
+          <select
+            id="list-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as '' | UserStatus)}
+          >
+            <option value="">All statuses</option>
+            {USER_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
         <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
-          Search
+          Apply filters
         </button>
       </form>
 
@@ -198,7 +237,12 @@ export default function AdminUsersPage() {
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={() => {
-              void loadPage({ searchQ: appliedSearch, cursor: nextCursor, append: true });
+              void loadPage({
+                searchQ: appliedSearch,
+                statusQ: appliedStatus,
+                cursor: nextCursor,
+                append: true,
+              });
             }}
           />
         }

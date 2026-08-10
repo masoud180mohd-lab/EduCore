@@ -4,6 +4,17 @@
  */
 
 export type InvoiceStatus = 'draft' | 'issued' | 'partially_paid' | 'paid' | 'void' | string;
+
+/** Filter values for GET /invoices?status=. */
+export const INVOICE_LIST_STATUSES = [
+  'draft',
+  'issued',
+  'partially_paid',
+  'paid',
+  'void',
+] as const;
+
+export type InvoiceListStatus = (typeof INVOICE_LIST_STATUSES)[number];
 export type PaymentStatus =
   | 'created'
   | 'initiated'

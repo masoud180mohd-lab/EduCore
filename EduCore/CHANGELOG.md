@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-10 - IMP-036 Admin list filters
+
+- Students / Users: wire `status` alongside existing `search` (Apply resets cursor).
+- Invoices: filter by `status`, `studentId`, `academicYearId` (API has no text search).
+
 ## 2026-08-09 - UX-POLISH-R1 + MFA-HARD-OPS script
 
 - Teacher/parent/admin chrome polish (class labels, empty states, soft parent copy); no payments.
