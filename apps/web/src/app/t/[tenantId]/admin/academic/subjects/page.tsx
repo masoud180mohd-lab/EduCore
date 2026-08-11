@@ -4,7 +4,14 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { AdminTable, ResourceList, ResourceListPagination, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  AdminTable,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -31,9 +38,18 @@ export default function AdminSubjectsPage() {
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-  const [status, setStatus] = useState<LifecycleStatus>('active');
+  const [createStatus, setCreateStatus] = useState<LifecycleStatus>('active');
+  const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'' | LifecycleStatus>('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | LifecycleStatus>('');
 
-  async function loadPage(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadPage(opts: {
+    readonly searchQ: string;
+    readonly statusQ: '' | LifecycleStatus;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMore(true);
@@ -42,6 +58,10 @@ export default function AdminSubjectsPage() {
       const q = buildListQuery('/api/v1/subjects', {
         limit: SUBJECTS_PAGE_LIMIT,
         cursor: opts.cursor,
+        filters: {
+          search: opts.searchQ,
+          status: opts.statusQ === '' ? undefined : opts.statusQ,
+        },
       });
       const result = await apiRequest<PaginatedEnvelope<SubjectRow>>(q, { auth });
       const page = readPageMeta(result, SUBJECTS_PAGE_LIMIT);
@@ -60,7 +80,7 @@ export default function AdminSubjectsPage() {
   }
 
   useEffect(() => {
-    void loadPage({ cursor: null, append: false });
+    void loadPage({ searchQ: '', statusQ: '', cursor: null, append: false });
   }, []);
 
   async function onCreate(event: FormEvent) {
@@ -72,7 +92,7 @@ export default function AdminSubjectsPage() {
     const actionKey = `subject.create:${name}:${code}`;
     const idem = readOrCreateIdempotencyKey(actionKey);
     try {
-      const body: Record<string, string> = { name: name.trim(), status };
+      const body: Record<string, string> = { name: name.trim(), status: createStatus };
       if (code.trim() !== '') body['code'] = code.trim();
       const created = await apiRequest<{ data: SubjectRow }>('/api/v1/subjects', {
         method: 'POST',
@@ -83,6 +103,7 @@ export default function AdminSubjectsPage() {
       clearIdempotencyKey(actionKey);
       setName('');
       setCode('');
+      setCreateStatus('active');
       router.push(`/t/${tenantId}/admin/academic/subjects/${created.data.id}`);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
@@ -97,16 +118,14 @@ export default function AdminSubjectsPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/academic`}>← Academic</Link>
       </p>
-      <h1>Subjects</h1>
-      <p className="muted">Tenant-wide subject catalog (ACF-007).</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Subjects"
+        description="Tenant-wide subject catalog. Search and filter the list below."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Create subject</h2>
+        <h2 className="section-title">Create subject</h2>
         <div className="field">
           <label htmlFor="subject-name">Name</label>
           <input
@@ -122,11 +141,11 @@ export default function AdminSubjectsPage() {
           <input id="subject-code" value={code} onChange={(e) => setCode(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="subject-status">Status</label>
+          <label htmlFor="subject-create-status">Status</label>
           <select
-            id="subject-status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as LifecycleStatus)}
+            id="subject-create-status"
+            value={createStatus}
+            onChange={(e) => setCreateStatus(e.target.value as LifecycleStatus)}
           >
             {LIFECYCLE_STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -140,6 +159,50 @@ export default function AdminSubjectsPage() {
         </button>
       </form>
 
+      <form
+        className="stack"
+        style={{ marginTop: '1.5rem' }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setAppliedSearch(search);
+          setAppliedStatus(statusFilter);
+          void loadPage({
+            searchQ: search,
+            statusQ: statusFilter,
+            cursor: null,
+            append: false,
+          });
+        }}
+      >
+        <div className="field">
+          <label htmlFor="subject-search">Search</label>
+          <input
+            id="subject-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Name or code"
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="subject-list-status">Status</label>
+          <select
+            id="subject-list-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as '' | LifecycleStatus)}
+          >
+            <option value="">All statuses</option>
+            {LIFECYCLE_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
+          Apply filters
+        </button>
+      </form>
+
       <ResourceList
         loading={loading}
         empty="No subjects yet."
@@ -150,7 +213,12 @@ export default function AdminSubjectsPage() {
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={() => {
-              void loadPage({ cursor: nextCursor, append: true });
+              void loadPage({
+                searchQ: appliedSearch,
+                statusQ: appliedStatus,
+                cursor: nextCursor,
+                append: true,
+              });
             }}
           />
         }

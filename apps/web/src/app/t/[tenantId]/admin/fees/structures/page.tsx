@@ -4,7 +4,14 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { AdminTable, ResourceList, ResourceListPagination, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  AdminTable,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -33,6 +40,14 @@ type AcademicYearRow = {
 
 type ItemDraft = { readonly name: string; readonly amountMajor: string };
 
+type FeeStructureListStatus = 'draft' | 'active' | 'archived';
+
+const FEE_STRUCTURE_LIST_STATUSES: ReadonlyArray<FeeStructureListStatus> = [
+  'draft',
+  'active',
+  'archived',
+];
+
 export default function AdminFeeStructuresPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
@@ -50,8 +65,13 @@ export default function AdminFeeStructuresPage() {
 
   const [name, setName] = useState('');
   const [academicYearId, setAcademicYearId] = useState('');
-  const [status, setStatus] = useState<'draft' | 'active'>('active');
+  const [createStatus, setCreateStatus] = useState<'draft' | 'active'>('active');
   const [items, setItems] = useState<ItemDraft[]>([{ name: '', amountMajor: '' }]);
+
+  const [yearFilter, setYearFilter] = useState('');
+  const [appliedYearId, setAppliedYearId] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'' | FeeStructureListStatus>('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | FeeStructureListStatus>('');
 
   async function loadYearPicker(opts: {
     readonly cursor: string | null;
@@ -87,7 +107,12 @@ export default function AdminFeeStructuresPage() {
     }
   }
 
-  async function loadPage(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadPage(opts: {
+    readonly yearIdQ: string;
+    readonly statusQ: '' | FeeStructureListStatus;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMore(true);
@@ -96,6 +121,10 @@ export default function AdminFeeStructuresPage() {
       const q = buildListQuery('/api/v1/fee-structures', {
         limit: ADMIN_LIST_DEFAULT_LIMIT,
         cursor: opts.cursor,
+        filters: {
+          academicYearId: opts.yearIdQ === '' ? undefined : opts.yearIdQ,
+          status: opts.statusQ === '' ? undefined : opts.statusQ,
+        },
       });
       const result = await apiRequest<PaginatedEnvelope<FeeStructureRow>>(q, { auth });
       const page = readPageMeta(result);
@@ -115,7 +144,7 @@ export default function AdminFeeStructuresPage() {
 
   useEffect(() => {
     void loadYearPicker({ cursor: null, append: false });
-    void loadPage({ cursor: null, append: false });
+    void loadPage({ yearIdQ: '', statusQ: '', cursor: null, append: false });
   }, []);
 
   async function onCreate(event: FormEvent) {
@@ -155,7 +184,7 @@ export default function AdminFeeStructuresPage() {
         body: {
           academicYearId,
           name: name.trim(),
-          status,
+          status: createStatus,
           currency: 'TZS',
           items: parsedItems,
         },
@@ -178,16 +207,14 @@ export default function AdminFeeStructuresPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/fees`}>← Fees</Link>
       </p>
-      <h1>Fee structures</h1>
-      <p className="muted">Named fee packages by academic year (ACF-012).</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Fee structures"
+        description="Named fee packages by academic year. Filter the list by year and status."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Create structure</h2>
+        <h2 className="section-title">Create structure</h2>
         <div className="field">
           <label htmlFor="fs-name">Name</label>
           <input
@@ -222,11 +249,11 @@ export default function AdminFeeStructuresPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="fs-status">Status</label>
+          <label htmlFor="fs-create-status">Status</label>
           <select
-            id="fs-status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as 'draft' | 'active')}
+            id="fs-create-status"
+            value={createStatus}
+            onChange={(e) => setCreateStatus(e.target.value as 'draft' | 'active')}
           >
             <option value="active">Active</option>
             <option value="draft">Draft</option>
@@ -281,6 +308,56 @@ export default function AdminFeeStructuresPage() {
         </button>
       </form>
 
+      <form
+        className="stack"
+        style={{ marginTop: '1.5rem' }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setAppliedYearId(yearFilter);
+          setAppliedStatus(statusFilter);
+          void loadPage({
+            yearIdQ: yearFilter,
+            statusQ: statusFilter,
+            cursor: null,
+            append: false,
+          });
+        }}
+      >
+        <div className="field">
+          <label htmlFor="fs-list-year">Academic year</label>
+          <select
+            id="fs-list-year"
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+          >
+            <option value="">All years</option>
+            {years.map((y) => (
+              <option key={y.id} value={y.id}>
+                {y.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="fs-list-status">Status</label>
+          <select
+            id="fs-list-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as '' | FeeStructureListStatus)}
+          >
+            <option value="">All statuses</option>
+            {FEE_STRUCTURE_LIST_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
+          Apply filters
+        </button>
+      </form>
+
       <ResourceList
         loading={loading}
         empty="No fee structures yet."
@@ -291,7 +368,12 @@ export default function AdminFeeStructuresPage() {
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={() => {
-              void loadPage({ cursor: nextCursor, append: true });
+              void loadPage({
+                yearIdQ: appliedYearId,
+                statusQ: appliedStatus,
+                cursor: nextCursor,
+                append: true,
+              });
             }}
           />
         }

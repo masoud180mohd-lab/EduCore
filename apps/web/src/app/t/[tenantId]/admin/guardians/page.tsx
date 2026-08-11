@@ -32,6 +32,10 @@ type GuardianRow = {
   readonly status: string;
 };
 
+type GuardianStatus = 'active' | 'inactive';
+
+const GUARDIAN_STATUSES: ReadonlyArray<GuardianStatus> = ['active', 'inactive'];
+
 export default function AdminGuardiansPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
@@ -45,8 +49,17 @@ export default function AdminGuardiansPage() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'' | GuardianStatus>('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | GuardianStatus>('');
 
-  async function loadPage(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadPage(opts: {
+    readonly searchQ: string;
+    readonly statusQ: '' | GuardianStatus;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMore(true);
@@ -55,6 +68,10 @@ export default function AdminGuardiansPage() {
       const q = buildListQuery('/api/v1/guardians', {
         limit: ADMIN_LIST_DEFAULT_LIMIT,
         cursor: opts.cursor,
+        filters: {
+          search: opts.searchQ,
+          status: opts.statusQ === '' ? undefined : opts.statusQ,
+        },
       });
       const result = await apiRequest<PaginatedEnvelope<GuardianRow>>(q, { auth });
       const page = readPageMeta(result);
@@ -73,7 +90,7 @@ export default function AdminGuardiansPage() {
   }
 
   useEffect(() => {
-    void loadPage({ cursor: null, append: false });
+    void loadPage({ searchQ: '', statusQ: '', cursor: null, append: false });
   }, []);
 
   async function onCreate(event: FormEvent) {
@@ -139,6 +156,50 @@ export default function AdminGuardiansPage() {
         </button>
       </form>
 
+      <form
+        className="stack"
+        style={{ marginTop: '1.5rem' }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setAppliedSearch(search);
+          setAppliedStatus(statusFilter);
+          void loadPage({
+            searchQ: search,
+            statusQ: statusFilter,
+            cursor: null,
+            append: false,
+          });
+        }}
+      >
+        <div className="field">
+          <label htmlFor="search">Search</label>
+          <input
+            id="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Name, email, or phone"
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="list-status">Status</label>
+          <select
+            id="list-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as '' | GuardianStatus)}
+          >
+            <option value="">All statuses</option>
+            {GUARDIAN_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
+          Apply filters
+        </button>
+      </form>
+
       <ResourceList
         loading={loading}
         empty="No guardians yet."
@@ -149,7 +210,12 @@ export default function AdminGuardiansPage() {
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={() => {
-              void loadPage({ cursor: nextCursor, append: true });
+              void loadPage({
+                searchQ: appliedSearch,
+                statusQ: appliedStatus,
+                cursor: nextCursor,
+                append: true,
+              });
             }}
           />
         }

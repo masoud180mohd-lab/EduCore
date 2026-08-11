@@ -22,7 +22,7 @@ export const ADMIN_HUB_CARDS: ReadonlyArray<AdminHubCard> = [
     id: 'guardians',
     hrefSuffix: '/guardians',
     title: 'Guardians',
-    blurb: 'Parents and student links',
+    blurb: 'Parents and student links — search; filter by status',
   },
   {
     id: 'organizations',
@@ -52,13 +52,13 @@ export const ADMIN_HUB_CARDS: ReadonlyArray<AdminHubCard> = [
     id: 'academic',
     hrefSuffix: '/academic',
     title: 'Academic',
-    blurb: 'Years, classes, subjects, and enrollments',
+    blurb: 'Years and subjects — search / status; classes and enrollments',
   },
   {
     id: 'fees',
     hrefSuffix: '/fees',
     title: 'Fees',
-    blurb: 'Structures, invoices, office pay, receipts',
+    blurb: 'Structures by year/status; invoices; office pay; receipts',
   },
   {
     id: 'notifications',

@@ -4,7 +4,14 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { AdminTable, ResourceList, ResourceListPagination, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  AdminTable,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -36,9 +43,18 @@ export default function AdminAcademicYearsPage() {
   const [code, setCode] = useState('');
   const [startsOn, setStartsOn] = useState('');
   const [endsOn, setEndsOn] = useState('');
-  const [status, setStatus] = useState<LifecycleStatus>('active');
+  const [createStatus, setCreateStatus] = useState<LifecycleStatus>('active');
+  const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'' | LifecycleStatus>('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | LifecycleStatus>('');
 
-  async function loadPage(opts: { readonly cursor: string | null; readonly append: boolean }) {
+  async function loadPage(opts: {
+    readonly searchQ: string;
+    readonly statusQ: '' | LifecycleStatus;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
     const auth = readSession();
     if (auth === null) return;
     if (opts.append) setLoadingMore(true);
@@ -47,6 +63,10 @@ export default function AdminAcademicYearsPage() {
       const q = buildListQuery('/api/v1/academic-years', {
         limit: ADMIN_LIST_DEFAULT_LIMIT,
         cursor: opts.cursor,
+        filters: {
+          search: opts.searchQ,
+          status: opts.statusQ === '' ? undefined : opts.statusQ,
+        },
       });
       const result = await apiRequest<PaginatedEnvelope<AcademicYearRow>>(q, { auth });
       const page = readPageMeta(result);
@@ -65,7 +85,7 @@ export default function AdminAcademicYearsPage() {
   }
 
   useEffect(() => {
-    void loadPage({ cursor: null, append: false });
+    void loadPage({ searchQ: '', statusQ: '', cursor: null, append: false });
   }, []);
 
   async function onCreate(event: FormEvent) {
@@ -77,7 +97,7 @@ export default function AdminAcademicYearsPage() {
     const actionKey = `academic-year.create:${name}:${code}`;
     const idem = readOrCreateIdempotencyKey(actionKey);
     try {
-      const body: Record<string, string> = { name: name.trim(), status };
+      const body: Record<string, string> = { name: name.trim(), status: createStatus };
       if (code.trim() !== '') body['code'] = code.trim();
       if (startsOn !== '') body['startsOn'] = startsOn;
       if (endsOn !== '') body['endsOn'] = endsOn;
@@ -92,7 +112,7 @@ export default function AdminAcademicYearsPage() {
       setCode('');
       setStartsOn('');
       setEndsOn('');
-      setStatus('active');
+      setCreateStatus('active');
       router.push(`/t/${tenantId}/admin/academic/years/${created.data.id}`);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
@@ -107,16 +127,14 @@ export default function AdminAcademicYearsPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/academic`}>← Academic</Link>
       </p>
-      <h1>Academic years</h1>
-      <p className="muted">Create years used by terms, classes, fees, and marks (ACF-003).</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Academic years"
+        description="Create years used by terms, classes, fees, and marks. Search and filter the list below."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Create year</h2>
+        <h2 className="section-title">Create year</h2>
         <div className="field">
           <label htmlFor="year-name">Name</label>
           <input
@@ -150,11 +168,11 @@ export default function AdminAcademicYearsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="year-status">Status</label>
+          <label htmlFor="year-create-status">Status</label>
           <select
-            id="year-status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as LifecycleStatus)}
+            id="year-create-status"
+            value={createStatus}
+            onChange={(e) => setCreateStatus(e.target.value as LifecycleStatus)}
           >
             {LIFECYCLE_STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -168,6 +186,50 @@ export default function AdminAcademicYearsPage() {
         </button>
       </form>
 
+      <form
+        className="stack"
+        style={{ marginTop: '1.5rem' }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setAppliedSearch(search);
+          setAppliedStatus(statusFilter);
+          void loadPage({
+            searchQ: search,
+            statusQ: statusFilter,
+            cursor: null,
+            append: false,
+          });
+        }}
+      >
+        <div className="field">
+          <label htmlFor="year-search">Search</label>
+          <input
+            id="year-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Name or code"
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="year-list-status">Status</label>
+          <select
+            id="year-list-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as '' | LifecycleStatus)}
+          >
+            <option value="">All statuses</option>
+            {LIFECYCLE_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
+          Apply filters
+        </button>
+      </form>
+
       <ResourceList
         loading={loading}
         empty="No academic years yet."
@@ -178,7 +240,12 @@ export default function AdminAcademicYearsPage() {
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={() => {
-              void loadPage({ cursor: nextCursor, append: true });
+              void loadPage({
+                searchQ: appliedSearch,
+                statusQ: appliedStatus,
+                cursor: nextCursor,
+                append: true,
+              });
             }}
           />
         }

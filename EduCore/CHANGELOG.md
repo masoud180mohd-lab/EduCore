@@ -2,6 +2,13 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-11 - IMP-038 Remaining Admin list filters
+
+- Guardians: wire `search` + `status` (Apply resets cursor).
+- Academic years / subjects: wire `search` + `status`; AdminPageHeader + Banner.
+- Fee structures: wire `academicYearId` + `status`; AdminPageHeader + Banner.
+- Admin hub blurbs updated for Guardians / Academic / Fees filter parity.
+
 ## 2026-08-11 - MFA-HARD staging live
 
 - Owner enrolled TOTP; Doppler + Fly `MFA_ENFORCE=hard`.
