@@ -19,7 +19,7 @@ import {
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
-import { resolveClassNames, resolveGuardianNames } from '@/lib/admin/resolve-related-names';
+import { resolveClassNames, resolveGuardianNames, resolveStreamNames } from '@/lib/admin/resolve-related-names';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { visibleAdminNavIds } from '@/lib/auth/admin-access';
 import type { MeLike } from '@/lib/auth/home-preference';
@@ -71,6 +71,7 @@ export default function AdminStudentDetailPage() {
   const [enrollmentLoadingMore, setEnrollmentLoadingMore] = useState(false);
   const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
   const [classNames, setClassNames] = useState<Record<string, string>>({});
+  const [streamNames, setStreamNames] = useState<Record<string, string>>({});
 
   const [invoices, setInvoices] = useState<InvoiceSummaryRow[]>([]);
   const [invoiceCursor, setInvoiceCursor] = useState<string | null>(null);
@@ -123,6 +124,11 @@ export default function AdminStudentDetailPage() {
           rows.map((r) => r.classId),
         );
         setClassNames((prev) => ({ ...prev, ...names }));
+        const streams = await resolveStreamNames(
+          auth,
+          rows.map((r) => r.streamId).filter((id): id is string => id !== null && id !== ''),
+        );
+        setStreamNames((prev) => ({ ...prev, ...streams }));
         setEnrollmentError(null);
       } catch (err) {
         if (err instanceof ApiClientError) {
@@ -331,7 +337,9 @@ export default function AdminStudentDetailPage() {
                     </Link>
                     <div className="muted">
                       <StatusChip label={enr.status} />
-                      {enr.streamId !== null ? ` · Stream ${enr.streamId}` : null}
+                      {enr.streamId !== null
+                        ? ` · Stream ${streamNames[enr.streamId] ?? enr.streamId}`
+                        : null}
                     </div>
                   </li>
                 ))}

@@ -22,6 +22,7 @@ import {
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
+import { missingNameIds, resolveStudentNames } from '@/lib/admin/resolve-related-names';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import { invoiceStatusLabel, INVOICE_LIST_STATUSES, type InvoiceListStatus } from '@/lib/finance/invoice-actions';
 import { formatTzsMinor, parseMajorToMinor } from '@/lib/finance/money';
@@ -70,6 +71,8 @@ export default function AdminInvoicesPage() {
   const [structuresCursor, setStructuresCursor] = useState<string | null>(null);
   const [loadingMoreStructures, setLoadingMoreStructures] = useState(false);
   const [studentNames, setStudentNames] = useState<Record<string, string>>({});
+  const studentNamesRef = useRef(studentNames);
+  studentNamesRef.current = studentNames;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -203,11 +206,18 @@ export default function AdminInvoicesPage() {
       });
       const result = await apiRequest<PaginatedEnvelope<InvoiceRow>>(q, { auth });
       const page = readPageMeta(result);
-      setRows((prev) =>
-        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
-      );
+      const list = result.data ?? [];
+      setRows((prev) => (opts.append ? appendById(prev, list) : [...list]));
       setNextCursor(page.nextCursor);
       setError(null);
+      const miss = missingNameIds(
+        list.map((inv) => inv.studentId),
+        studentNamesRef.current,
+      );
+      if (miss.length > 0) {
+        const names = await resolveStudentNames(auth, miss);
+        setStudentNames((prev) => ({ ...prev, ...names }));
+      }
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not load invoices.');
@@ -546,7 +556,7 @@ export default function AdminInvoicesPage() {
             <tr key={inv.id}>
               <td>
                 <Link href={`/t/${tenantId}/admin/fees/invoices/${inv.id}`}>
-                  {studentNames[inv.studentId] ?? inv.studentId.slice(0, 8)}
+                  {studentNames[inv.studentId] ?? inv.studentId}
                 </Link>
               </td>
               <td>

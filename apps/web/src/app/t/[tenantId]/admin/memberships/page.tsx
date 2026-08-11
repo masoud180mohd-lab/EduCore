@@ -22,6 +22,7 @@ import {
 } from '@/lib/admin/list-pagination';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { resolveUserNames } from '@/lib/admin/resolve-related-names';
 import { readSession } from '@/lib/auth/session';
 
 type MembershipStatus = 'invited' | 'active' | 'suspended' | 'removed';
@@ -54,6 +55,7 @@ export default function AdminMembershipsPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
 
   async function loadPage(opts: {
     readonly statusFilter: '' | MembershipStatus;
@@ -72,11 +74,15 @@ export default function AdminMembershipsPage() {
       });
       const result = await apiRequest<PaginatedEnvelope<MembershipRow>>(q, { auth });
       const page = readPageMeta(result);
-      setRows((prev) =>
-        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
-      );
+      const list = result.data ?? [];
+      setRows((prev) => (opts.append ? appendById(prev, list) : [...list]));
       setNextCursor(page.nextCursor);
       setError(null);
+      const names = await resolveUserNames(
+        auth,
+        list.map((m) => m.userId),
+      );
+      setUserNames((prev) => (opts.append ? { ...prev, ...names } : { ...names }));
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'memberships'));
       else setError('Could not load memberships.');
@@ -148,7 +154,11 @@ export default function AdminMembershipsPage() {
               <td>
                 <StatusChip label={m.status} />
               </td>
-              <td className="muted">{m.userId}</td>
+              <td>
+                <Link href={`/t/${tenantId}/admin/users/${m.userId}`}>
+                  {userNames[m.userId] ?? m.userId}
+                </Link>
+              </td>
               <td className="muted">{m.joinedAt ?? '—'}</td>
               <td className="admin-table-actions">
                 <Link

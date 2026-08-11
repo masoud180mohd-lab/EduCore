@@ -2,6 +2,13 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-11 - IMP-039 Admin UUID → display names
+
+- Memberships: resolve user displayName/email instead of raw userId.
+- Invoices / enrollments lists: backfill missing student (and class) names beyond the first picker page.
+- Student detail enrollments: resolve stream names.
+- Shared helpers: `resolveStudentNames`, `resolveUserNames`, `resolveStreamNames`.
+
 ## 2026-08-11 - IMP-038 Remaining Admin list filters
 
 - Guardians: wire `search` + `status` (Apply resets cursor).

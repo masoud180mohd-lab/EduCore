@@ -16,6 +16,11 @@ import {
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
 import {
+  missingNameIds,
+  resolveClassNames,
+  resolveStudentNames,
+} from '@/lib/admin/resolve-related-names';
+import {
   type ClassRow,
   type EnrollmentRow,
   type EnrollmentStatus,
@@ -44,6 +49,10 @@ export default function AdminEnrollmentsPage() {
   const [loadingMoreStreams, setLoadingMoreStreams] = useState(false);
   const [classNames, setClassNames] = useState<Record<string, string>>({});
   const [studentNames, setStudentNames] = useState<Record<string, string>>({});
+  const classNamesRef = useRef(classNames);
+  classNamesRef.current = classNames;
+  const studentNamesRef = useRef(studentNames);
+  studentNamesRef.current = studentNames;
   const [filterClassId, setFilterClassId] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -180,11 +189,26 @@ export default function AdminEnrollmentsPage() {
       });
       const result = await apiRequest<PaginatedEnvelope<EnrollmentRow>>(q, { auth });
       const page = readPageMeta(result);
-      setRows((prev) =>
-        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
-      );
+      const list = result.data ?? [];
+      setRows((prev) => (opts.append ? appendById(prev, list) : [...list]));
       setNextCursor(page.nextCursor);
       setError(null);
+      const missStudents = missingNameIds(
+        list.map((r) => r.studentId),
+        studentNamesRef.current,
+      );
+      const missClasses = missingNameIds(
+        list.map((r) => r.classId),
+        classNamesRef.current,
+      );
+      if (missStudents.length > 0) {
+        const names = await resolveStudentNames(auth, missStudents);
+        setStudentNames((prev) => ({ ...prev, ...names }));
+      }
+      if (missClasses.length > 0) {
+        const names = await resolveClassNames(auth, missClasses);
+        setClassNames((prev) => ({ ...prev, ...names }));
+      }
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load enrollments.');
