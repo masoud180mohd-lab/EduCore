@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-11 - MFA-HARD staging live
+
+- Owner enrolled TOTP; Doppler + Fly `MFA_ENFORCE=hard`.
+- Next sign-in requires authenticator code for privileged path.
+
 ## 2026-08-11 - MFA-FIX enrollment 500 (ambiguous SQL columns)
 
 - Root cause: PL/pgSQL OUT params vs `factor_type`/`status` columns in MFA helpers.

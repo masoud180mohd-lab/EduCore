@@ -4,7 +4,7 @@
 | --------- | -------------------------------------------------- |
 | Program   | **MFA-HARD-OPS**                                   |
 | Date      | 2026-08-09                                         |
-| Status    | **Script Ready**; staging remains **soft** (0 enrolled factors as of 2026-08-10) |
+| Status    | **Done** — staging `MFA_ENFORCE=hard` (2026-08-11 Owner enroll + flip) |
 | Depends   | MFA-HARD · WEB-MFA-UI · OPS-001 · Doppler + flyctl |
 | Authority | Solo-operator provisional (SOLO-GOV-001)           |
 
@@ -20,20 +20,19 @@ Provide a fail-closed Owner command to set staging `MFA_ENFORCE=hard` after priv
 
 ## Live flip status
 
-**Not executed** — as of **2026-08-10** (`OPS-HARDEN`): `MFA_ENFORCE=soft`, `mfa_factors.count=0`. Flipping hard now would lock privileged staging login.
+**Executed 2026-08-11** — Owner enrolled TOTP for `admin@educore.staging`; Doppler `MFA_ENFORCE=hard`; Fly synced.
 
-Owner sequence:
+Owner smoke:
 
-1. Enroll TOTP: Admin → Settings → Security (password or Auth0 path).
-2. `npm run ops:stg:mfa-status` → factor count ≥ 1.
-3. Soft-mode challenge smoke (sign out / sign in → 6-digit).
-4. `CONFIRM=YES npm run ops:stg:mfa-hard`
-5. `npm run ops:stg:sync-fly-secrets`
-6. Smoke: privileged login without TOTP → `403 MFA_REQUIRED`.
+1. Sign out → sign in (password or Auth0) → enter 6-digit authenticator code.
+2. Privileged login without TOTP should fail closed under hard.
 
 ```bash
+npm run ops:stg:mfa-status
 CONFIRM=YES DRY_RUN=1 npm run ops:stg:mfa-hard   # safe preview
 ```
+
+**Rollback:** `doppler secrets set MFA_ENFORCE soft --project educore --config stg` then `npm run ops:stg:sync-fly-secrets`.
 
 ## Honesty
 
