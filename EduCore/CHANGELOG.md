@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-11 - MFA-FIX enrollment 500 (ambiguous SQL columns)
+
+- Root cause: PL/pgSQL OUT params vs `factor_type`/`status` columns in MFA helpers.
+- Migration `20260811120000_mfa_helpers_ambiguous_columns` applied on staging FRA.
+
 ## 2026-08-10 - OPS-HARDEN staging pass
 
 - D1 re-check Pass on Frankfurt Neon (9s) — `B-07-restore-drill-2026-08-10.md`.

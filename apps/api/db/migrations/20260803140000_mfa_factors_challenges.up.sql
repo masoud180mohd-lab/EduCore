@@ -157,8 +157,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, app
 AS $$
-DECLARE
-  v_existing uuid;
+#variable_conflict use_column
 BEGIN
   IF p_user_id IS NULL OR p_factor_id IS NULL OR p_secret_encrypted IS NULL
      OR btrim(p_secret_encrypted) = '' OR p_idempotency_key IS NULL THEN
@@ -173,9 +172,9 @@ BEGIN
   END IF;
 
   -- Collapse pending enrollments for this user.
-  UPDATE mfa_factors
+  UPDATE mfa_factors AS f
   SET status = 'disabled', updated_at = now()
-  WHERE user_id = p_user_id AND factor_type = 'totp' AND status = 'pending';
+  WHERE f.user_id = p_user_id AND f.factor_type = 'totp' AND f.status = 'pending';
 
   INSERT INTO mfa_factors (
     id, user_id, factor_type, status, secret_encrypted, label, created_at, updated_at
@@ -186,7 +185,7 @@ BEGIN
 
   RETURN QUERY
   SELECT f.id, f.factor_type, f.status, f.label, f.created_at
-  FROM mfa_factors f WHERE f.id = p_factor_id;
+  FROM mfa_factors AS f WHERE f.id = p_factor_id;
 END;
 $$;
 
@@ -207,12 +206,13 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, app
 AS $$
+#variable_conflict use_column
 BEGIN
   IF p_user_id IS NULL OR p_factor_id IS NULL THEN
     RAISE EXCEPTION 'invalid parameters' USING ERRCODE = '22023';
   END IF;
 
-  UPDATE mfa_factors f
+  UPDATE mfa_factors AS f
   SET status = 'active',
       confirmed_at = now(),
       updated_at = now()
@@ -227,7 +227,7 @@ BEGIN
 
   RETURN QUERY
   SELECT f.id, f.factor_type, f.status, f.label, f.confirmed_at, f.created_at, f.updated_at
-  FROM mfa_factors f WHERE f.id = p_factor_id;
+  FROM mfa_factors AS f WHERE f.id = p_factor_id;
 END;
 $$;
 
@@ -245,8 +245,9 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, app
 AS $$
+#variable_conflict use_column
 BEGIN
-  UPDATE mfa_factors f
+  UPDATE mfa_factors AS f
   SET status = 'disabled',
       secret_encrypted = NULL,
       updated_at = now()
@@ -260,7 +261,7 @@ BEGIN
 
   RETURN QUERY
   SELECT f.id, f.factor_type, f.status, f.updated_at
-  FROM mfa_factors f WHERE f.id = p_factor_id;
+  FROM mfa_factors AS f WHERE f.id = p_factor_id;
 END;
 $$;
 
