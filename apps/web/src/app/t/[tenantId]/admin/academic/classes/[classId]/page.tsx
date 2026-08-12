@@ -326,7 +326,6 @@ export default function AdminClassDetailPage() {
                 ))}
               </select>
             </label>
-            <div className="muted">Id: {row.id}</div>
             <button className="btn btn-primary" type="submit" disabled={busy}>
               {busy ? 'Saving…' : 'Save changes'}
             </button>

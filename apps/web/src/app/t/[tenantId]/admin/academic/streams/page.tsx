@@ -2,9 +2,16 @@
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 
-import { AdminTable, ResourceList, ResourceListPagination, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  AdminTable,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -15,6 +22,7 @@ import {
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
+import { missingNameIds, resolveClassNames } from '@/lib/admin/resolve-related-names';
 import {
   type ClassRow,
   type LifecycleStatus,
@@ -33,7 +41,16 @@ export default function AdminStreamsPage() {
   const [classesCursor, setClassesCursor] = useState<string | null>(null);
   const [loadingMoreClasses, setLoadingMoreClasses] = useState(false);
   const [classNames, setClassNames] = useState<Record<string, string>>({});
-  const [filterClassId, setFilterClassId] = useState('');
+  const classNamesRef = useRef(classNames);
+  classNamesRef.current = classNames;
+
+  const [classFilter, setClassFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'' | LifecycleStatus>('');
+  const [appliedClassId, setAppliedClassId] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | LifecycleStatus>('');
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -41,7 +58,7 @@ export default function AdminStreamsPage() {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [classId, setClassId] = useState('');
-  const [status, setStatus] = useState<LifecycleStatus>('active');
+  const [createStatus, setCreateStatus] = useState<LifecycleStatus>('active');
 
   async function loadClassPicker(opts: {
     readonly cursor: string | null;
@@ -78,7 +95,9 @@ export default function AdminStreamsPage() {
   }
 
   async function loadPage(opts: {
-    readonly classFilter: string;
+    readonly classIdQ: string;
+    readonly searchQ: string;
+    readonly statusQ: '' | LifecycleStatus;
     readonly cursor: string | null;
     readonly append: boolean;
   }) {
@@ -90,15 +109,26 @@ export default function AdminStreamsPage() {
       const q = buildListQuery('/api/v1/streams', {
         limit: ADMIN_LIST_DEFAULT_LIMIT,
         cursor: opts.cursor,
-        filters: { classId: opts.classFilter === '' ? undefined : opts.classFilter },
+        filters: {
+          classId: opts.classIdQ === '' ? undefined : opts.classIdQ,
+          search: opts.searchQ,
+          status: opts.statusQ === '' ? undefined : opts.statusQ,
+        },
       });
       const result = await apiRequest<PaginatedEnvelope<StreamRow>>(q, { auth });
       const page = readPageMeta(result);
-      setRows((prev) =>
-        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
-      );
+      const list = result.data ?? [];
+      setRows((prev) => (opts.append ? appendById(prev, list) : [...list]));
       setNextCursor(page.nextCursor);
       setError(null);
+      const miss = missingNameIds(
+        list.map((r) => r.classId),
+        classNamesRef.current,
+      );
+      if (miss.length > 0) {
+        const names = await resolveClassNames(auth, miss);
+        setClassNames((prev) => ({ ...prev, ...names }));
+      }
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load streams.');
@@ -110,11 +140,14 @@ export default function AdminStreamsPage() {
 
   useEffect(() => {
     void loadClassPicker({ cursor: null, append: false });
+    void loadPage({
+      classIdQ: '',
+      searchQ: '',
+      statusQ: '',
+      cursor: null,
+      append: false,
+    });
   }, []);
-
-  useEffect(() => {
-    void loadPage({ classFilter: filterClassId, cursor: null, append: false });
-  }, [filterClassId]);
 
   async function onCreate(event: FormEvent) {
     event.preventDefault();
@@ -125,7 +158,11 @@ export default function AdminStreamsPage() {
     const actionKey = `stream.create:${classId}:${name}`;
     const idem = readOrCreateIdempotencyKey(actionKey);
     try {
-      const body: Record<string, string> = { classId, name: name.trim(), status };
+      const body: Record<string, string> = {
+        classId,
+        name: name.trim(),
+        status: createStatus,
+      };
       if (code.trim() !== '') body['code'] = code.trim();
       const created = await apiRequest<{ data: StreamRow }>('/api/v1/streams', {
         method: 'POST',
@@ -136,6 +173,7 @@ export default function AdminStreamsPage() {
       clearIdempotencyKey(actionKey);
       setName('');
       setCode('');
+      setCreateStatus('active');
       router.push(`/t/${tenantId}/admin/academic/streams/${created.data.id}`);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
@@ -150,39 +188,14 @@ export default function AdminStreamsPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/academic`}>← Academic</Link>
       </p>
-      <h1>Streams</h1>
-      <p className="muted">Streams belong to a class (ACF-006).</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-
-      <div className="field">
-        <label htmlFor="filter-class">Filter by class</label>
-        <select
-          id="filter-class"
-          value={filterClassId}
-          onChange={(e) => setFilterClassId(e.target.value)}
-        >
-          <option value="">All classes</option>
-          {classes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <ResourceListPagination
-          nextCursor={classesCursor}
-          loadingMore={loadingMoreClasses}
-          onLoadMore={() => {
-            void loadClassPicker({ cursor: classesCursor, append: true });
-          }}
-        />
-      </div>
+      <AdminPageHeader
+        title="Streams"
+        description="Streams belong to a class. Search and filter the list below."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Create stream</h2>
+        <h2 className="section-title">Create stream</h2>
         <div className="field">
           <label htmlFor="stream-class">Class</label>
           <select
@@ -221,11 +234,11 @@ export default function AdminStreamsPage() {
           <input id="stream-code" value={code} onChange={(e) => setCode(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="stream-status">Status</label>
+          <label htmlFor="stream-create-status">Status</label>
           <select
-            id="stream-status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as LifecycleStatus)}
+            id="stream-create-status"
+            value={createStatus}
+            onChange={(e) => setCreateStatus(e.target.value as LifecycleStatus)}
           >
             {LIFECYCLE_STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -239,6 +252,74 @@ export default function AdminStreamsPage() {
         </button>
       </form>
 
+      <form
+        className="stack"
+        style={{ marginTop: '1.5rem' }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setAppliedClassId(classFilter);
+          setAppliedSearch(search);
+          setAppliedStatus(statusFilter);
+          void loadPage({
+            classIdQ: classFilter,
+            searchQ: search,
+            statusQ: statusFilter,
+            cursor: null,
+            append: false,
+          });
+        }}
+      >
+        <div className="field">
+          <label htmlFor="stream-filter-class">Class</label>
+          <select
+            id="stream-filter-class"
+            value={classFilter}
+            onChange={(e) => setClassFilter(e.target.value)}
+          >
+            <option value="">All classes</option>
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <ResourceListPagination
+            nextCursor={classesCursor}
+            loadingMore={loadingMoreClasses}
+            onLoadMore={() => {
+              void loadClassPicker({ cursor: classesCursor, append: true });
+            }}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="stream-search">Search</label>
+          <input
+            id="stream-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Name or code"
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="stream-list-status">Status</label>
+          <select
+            id="stream-list-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as '' | LifecycleStatus)}
+          >
+            <option value="">All statuses</option>
+            {LIFECYCLE_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
+          Apply filters
+        </button>
+      </form>
+
       <ResourceList
         loading={loading}
         empty="No streams yet."
@@ -249,7 +330,13 @@ export default function AdminStreamsPage() {
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={() => {
-              void loadPage({ classFilter: filterClassId, cursor: nextCursor, append: true });
+              void loadPage({
+                classIdQ: appliedClassId,
+                searchQ: appliedSearch,
+                statusQ: appliedStatus,
+                cursor: nextCursor,
+                append: true,
+              });
             }}
           />
         }

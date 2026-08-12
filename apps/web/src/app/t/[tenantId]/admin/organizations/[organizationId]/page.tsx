@@ -8,6 +8,7 @@ import { AdminPageHeader, Banner, ConfirmDialog, StatusChip } from '@/components
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { looksLikeUuid, resolveOrganizationNames } from '@/lib/admin/resolve-related-names';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import { type OrganizationRow } from '@/lib/organizations/types';
 
@@ -22,6 +23,7 @@ export default function AdminOrganizationDetailPage() {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [parentOrganizationId, setParentOrganizationId] = useState('');
+  const [parentOrgLabel, setParentOrgLabel] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const auth = readSession();
@@ -34,7 +36,15 @@ export default function AdminOrganizationDetailPage() {
       setRow(result.data);
       setName(result.data.name);
       setCode(result.data.code ?? '');
-      setParentOrganizationId(result.data.parentOrganizationId ?? '');
+      const parentId = result.data.parentOrganizationId ?? '';
+      setParentOrganizationId(parentId);
+      if (parentId !== '' && looksLikeUuid(parentId)) {
+        const names = await resolveOrganizationNames(auth, [parentId]);
+        const label = names[parentId];
+        setParentOrgLabel(label !== undefined && label !== parentId ? label : null);
+      } else {
+        setParentOrgLabel(null);
+      }
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'organizations'));
@@ -45,6 +55,26 @@ export default function AdminOrganizationDetailPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    const trimmed = parentOrganizationId.trim();
+    if (!looksLikeUuid(trimmed)) {
+      setParentOrgLabel(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const auth = readSession();
+      if (auth === null) return;
+      const names = await resolveOrganizationNames(auth, [trimmed]);
+      if (cancelled) return;
+      const label = names[trimmed];
+      setParentOrgLabel(label !== undefined && label !== trimmed ? label : null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [parentOrganizationId]);
 
   async function onSave(event: FormEvent) {
     event.preventDefault();
@@ -152,8 +182,12 @@ export default function AdminOrganizationDetailPage() {
                 onChange={(e) => setParentOrganizationId(e.target.value)}
                 placeholder="UUID or empty to clear"
               />
+              {parentOrgLabel !== null ? (
+                <p className="muted" style={{ margin: '0.35rem 0 0' }}>
+                  Parent: {parentOrgLabel}
+                </p>
+              ) : null}
             </label>
-            <div className="muted">Id: {row.id}</div>
             <button className="btn btn-primary" type="submit" disabled={busy}>
               {busy ? 'Saving…' : 'Save changes'}
             </button>

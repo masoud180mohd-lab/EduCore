@@ -466,7 +466,7 @@ export default function AdminUserDetailPage() {
               />
             </label>
             <div className="muted">
-              Email: {row.email} · Status: {row.status} · Id: {row.id}
+              Email: {row.email} · Status: {row.status}
             </div>
             <button className="btn btn-primary" type="submit" disabled={busy}>
               {busy ? 'Saving…' : 'Save changes'}
@@ -501,7 +501,7 @@ export default function AdminUserDetailPage() {
         <div className="stack" style={{ marginTop: '1.5rem' }}>
           <h2>Membership</h2>
           <p className="muted">
-            Status: <strong>{membership.status}</strong> · Id: {membership.id}
+            Status: <strong>{membership.status}</strong>
             {membership.joinedAt !== null ? ` · Joined: ${membership.joinedAt}` : null}
           </p>
           {isSelf ? (

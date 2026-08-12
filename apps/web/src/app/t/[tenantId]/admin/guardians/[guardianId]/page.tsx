@@ -406,7 +406,6 @@ export default function AdminGuardianDetailPage() {
               ))}
             </select>
           </div>
-          <div className="muted">Id: {guardian.id}</div>
           <button type="submit" className="btn btn-primary" disabled={busy}>
             {busy ? 'Saving…' : 'Save profile'}
           </button>

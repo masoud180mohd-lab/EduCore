@@ -20,6 +20,7 @@ import {
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
+import { looksLikeUuid, resolveOrganizationNames } from '@/lib/admin/resolve-related-names';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -41,6 +42,7 @@ export default function AdminOrganizationsPage() {
   const [code, setCode] = useState('');
   const [orgType, setOrgType] = useState<OrgType>('school');
   const [parentOrganizationId, setParentOrganizationId] = useState('');
+  const [parentOrgLabel, setParentOrgLabel] = useState<string | null>(null);
 
   async function loadPage(opts: {
     readonly searchQ: string;
@@ -76,6 +78,26 @@ export default function AdminOrganizationsPage() {
   useEffect(() => {
     void loadPage({ searchQ: '', cursor: null, append: false });
   }, []);
+
+  useEffect(() => {
+    const trimmed = parentOrganizationId.trim();
+    if (!looksLikeUuid(trimmed)) {
+      setParentOrgLabel(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const auth = readSession();
+      if (auth === null) return;
+      const names = await resolveOrganizationNames(auth, [trimmed]);
+      if (cancelled) return;
+      const label = names[trimmed];
+      setParentOrgLabel(label !== undefined && label !== trimmed ? label : null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [parentOrganizationId]);
 
   async function onCreate(event: FormEvent) {
     event.preventDefault();
@@ -166,6 +188,11 @@ export default function AdminOrganizationsPage() {
             onChange={(e) => setParentOrganizationId(e.target.value)}
             placeholder="UUID"
           />
+          {parentOrgLabel !== null ? (
+            <p className="muted" style={{ margin: '0.35rem 0 0' }}>
+              Parent: {parentOrgLabel}
+            </p>
+          ) : null}
         </div>
         <button className="btn btn-primary" type="submit" disabled={busy || name.trim() === ''}>
           {busy ? 'Creating…' : 'Create organization'}

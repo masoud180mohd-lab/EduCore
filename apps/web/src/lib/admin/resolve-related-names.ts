@@ -8,7 +8,9 @@ export function missingNameIds(
 ): string[] {
   return [
     ...new Set(
-      ids.filter((id): id is string => typeof id === 'string' && id !== '' && known[id] === undefined),
+      ids.filter(
+        (id): id is string => typeof id === 'string' && id !== '' && known[id] === undefined,
+      ),
     ),
   ];
 }
@@ -102,6 +104,28 @@ export async function resolveUserNames(
   return map;
 }
 
+/** Resolve academic year display names for list FK columns. */
+export async function resolveYearNames(
+  auth: SessionAuth,
+  yearIds: ReadonlyArray<string>,
+): Promise<Record<string, string>> {
+  const unique = [...new Set(yearIds.filter((id) => id !== ''))];
+  const map: Record<string, string> = {};
+  await Promise.all(
+    unique.map(async (id) => {
+      try {
+        const res = await apiRequest<{ data: { name: string } }>(`/api/v1/academic-years/${id}`, {
+          auth,
+        });
+        map[id] = res.data.name;
+      } catch {
+        map[id] = id;
+      }
+    }),
+  );
+  return map;
+}
+
 /** Resolve stream display names for enrollment-related lists. */
 export async function resolveStreamNames(
   auth: SessionAuth,
@@ -122,4 +146,31 @@ export async function resolveStreamNames(
     }),
   );
   return map;
+}
+
+/** Resolve organization display names (parent org FK). */
+export async function resolveOrganizationNames(
+  auth: SessionAuth,
+  organizationIds: ReadonlyArray<string>,
+): Promise<Record<string, string>> {
+  const unique = [...new Set(organizationIds.filter((id) => id !== ''))];
+  const map: Record<string, string> = {};
+  await Promise.all(
+    unique.map(async (id) => {
+      try {
+        const res = await apiRequest<{ data: { name: string } }>(`/api/v1/organizations/${id}`, {
+          auth,
+        });
+        map[id] = res.data.name;
+      } catch {
+        map[id] = id;
+      }
+    }),
+  );
+  return map;
+}
+
+/** Loose UUID shape check for optional parent-org paste fields (IMP-040). */
+export function looksLikeUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.trim());
 }

@@ -2,9 +2,16 @@
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 
-import { AdminTable, ResourceList, ResourceListPagination, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  AdminTable,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -15,6 +22,7 @@ import {
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
+import { missingNameIds, resolveYearNames } from '@/lib/admin/resolve-related-names';
 import {
   type AcademicYearRow,
   type LifecycleStatus,
@@ -33,7 +41,16 @@ export default function AdminTermsPage() {
   const [yearsCursor, setYearsCursor] = useState<string | null>(null);
   const [loadingMoreYears, setLoadingMoreYears] = useState(false);
   const [yearNames, setYearNames] = useState<Record<string, string>>({});
-  const [filterYearId, setFilterYearId] = useState('');
+  const yearNamesRef = useRef(yearNames);
+  yearNamesRef.current = yearNames;
+
+  const [yearFilter, setYearFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'' | LifecycleStatus>('');
+  const [appliedYearId, setAppliedYearId] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | LifecycleStatus>('');
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -43,7 +60,7 @@ export default function AdminTermsPage() {
   const [academicYearId, setAcademicYearId] = useState('');
   const [startsOn, setStartsOn] = useState('');
   const [endsOn, setEndsOn] = useState('');
-  const [status, setStatus] = useState<LifecycleStatus>('active');
+  const [createStatus, setCreateStatus] = useState<LifecycleStatus>('active');
 
   async function loadYearPicker(opts: {
     readonly cursor: string | null;
@@ -80,7 +97,9 @@ export default function AdminTermsPage() {
   }
 
   async function loadPage(opts: {
-    readonly yearFilter: string;
+    readonly yearIdQ: string;
+    readonly searchQ: string;
+    readonly statusQ: '' | LifecycleStatus;
     readonly cursor: string | null;
     readonly append: boolean;
   }) {
@@ -92,15 +111,26 @@ export default function AdminTermsPage() {
       const q = buildListQuery('/api/v1/terms', {
         limit: ADMIN_LIST_DEFAULT_LIMIT,
         cursor: opts.cursor,
-        filters: { academicYearId: opts.yearFilter === '' ? undefined : opts.yearFilter },
+        filters: {
+          academicYearId: opts.yearIdQ === '' ? undefined : opts.yearIdQ,
+          search: opts.searchQ,
+          status: opts.statusQ === '' ? undefined : opts.statusQ,
+        },
       });
       const result = await apiRequest<PaginatedEnvelope<TermRow>>(q, { auth });
       const page = readPageMeta(result);
-      setRows((prev) =>
-        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
-      );
+      const list = result.data ?? [];
+      setRows((prev) => (opts.append ? appendById(prev, list) : [...list]));
       setNextCursor(page.nextCursor);
       setError(null);
+      const miss = missingNameIds(
+        list.map((r) => r.academicYearId),
+        yearNamesRef.current,
+      );
+      if (miss.length > 0) {
+        const names = await resolveYearNames(auth, miss);
+        setYearNames((prev) => ({ ...prev, ...names }));
+      }
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load terms.');
@@ -112,11 +142,14 @@ export default function AdminTermsPage() {
 
   useEffect(() => {
     void loadYearPicker({ cursor: null, append: false });
+    void loadPage({
+      yearIdQ: '',
+      searchQ: '',
+      statusQ: '',
+      cursor: null,
+      append: false,
+    });
   }, []);
-
-  useEffect(() => {
-    void loadPage({ yearFilter: filterYearId, cursor: null, append: false });
-  }, [filterYearId]);
 
   async function onCreate(event: FormEvent) {
     event.preventDefault();
@@ -130,7 +163,7 @@ export default function AdminTermsPage() {
       const body: Record<string, string> = {
         academicYearId,
         name: name.trim(),
-        status,
+        status: createStatus,
       };
       if (code.trim() !== '') body['code'] = code.trim();
       if (startsOn !== '') body['startsOn'] = startsOn;
@@ -146,6 +179,7 @@ export default function AdminTermsPage() {
       setCode('');
       setStartsOn('');
       setEndsOn('');
+      setCreateStatus('active');
       router.push(`/t/${tenantId}/admin/academic/terms/${created.data.id}`);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
@@ -160,39 +194,14 @@ export default function AdminTermsPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/academic`}>← Academic</Link>
       </p>
-      <h1>Terms</h1>
-      <p className="muted">Terms belong to an academic year (ACF-004).</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-
-      <div className="field">
-        <label htmlFor="filter-year">Filter by year</label>
-        <select
-          id="filter-year"
-          value={filterYearId}
-          onChange={(e) => setFilterYearId(e.target.value)}
-        >
-          <option value="">All years</option>
-          {years.map((y) => (
-            <option key={y.id} value={y.id}>
-              {y.name}
-            </option>
-          ))}
-        </select>
-        <ResourceListPagination
-          nextCursor={yearsCursor}
-          loadingMore={loadingMoreYears}
-          onLoadMore={() => {
-            void loadYearPicker({ cursor: yearsCursor, append: true });
-          }}
-        />
-      </div>
+      <AdminPageHeader
+        title="Terms"
+        description="Terms belong to an academic year. Search and filter the list below."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Create term</h2>
+        <h2 className="section-title">Create term</h2>
         <div className="field">
           <label htmlFor="term-year">Academic year</label>
           <select
@@ -249,11 +258,11 @@ export default function AdminTermsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="term-status">Status</label>
+          <label htmlFor="term-create-status">Status</label>
           <select
-            id="term-status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as LifecycleStatus)}
+            id="term-create-status"
+            value={createStatus}
+            onChange={(e) => setCreateStatus(e.target.value as LifecycleStatus)}
           >
             {LIFECYCLE_STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -267,6 +276,74 @@ export default function AdminTermsPage() {
         </button>
       </form>
 
+      <form
+        className="stack"
+        style={{ marginTop: '1.5rem' }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setAppliedYearId(yearFilter);
+          setAppliedSearch(search);
+          setAppliedStatus(statusFilter);
+          void loadPage({
+            yearIdQ: yearFilter,
+            searchQ: search,
+            statusQ: statusFilter,
+            cursor: null,
+            append: false,
+          });
+        }}
+      >
+        <div className="field">
+          <label htmlFor="term-filter-year">Academic year</label>
+          <select
+            id="term-filter-year"
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+          >
+            <option value="">All years</option>
+            {years.map((y) => (
+              <option key={y.id} value={y.id}>
+                {y.name}
+              </option>
+            ))}
+          </select>
+          <ResourceListPagination
+            nextCursor={yearsCursor}
+            loadingMore={loadingMoreYears}
+            onLoadMore={() => {
+              void loadYearPicker({ cursor: yearsCursor, append: true });
+            }}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="term-search">Search</label>
+          <input
+            id="term-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Name or code"
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="term-list-status">Status</label>
+          <select
+            id="term-list-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as '' | LifecycleStatus)}
+          >
+            <option value="">All statuses</option>
+            {LIFECYCLE_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
+          Apply filters
+        </button>
+      </form>
+
       <ResourceList
         loading={loading}
         empty="No terms yet."
@@ -277,7 +354,13 @@ export default function AdminTermsPage() {
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={() => {
-              void loadPage({ yearFilter: filterYearId, cursor: nextCursor, append: true });
+              void loadPage({
+                yearIdQ: appliedYearId,
+                searchQ: appliedSearch,
+                statusQ: appliedStatus,
+                cursor: nextCursor,
+                append: true,
+              });
             }}
           />
         }

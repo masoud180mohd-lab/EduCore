@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 
 import {
   AdminPageHeader,
@@ -22,6 +22,7 @@ import {
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
+import { missingNameIds, resolveYearNames } from '@/lib/admin/resolve-related-names';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import { parseMajorToMinor } from '@/lib/finance/money';
 
@@ -58,6 +59,8 @@ export default function AdminFeeStructuresPage() {
   const [yearsCursor, setYearsCursor] = useState<string | null>(null);
   const [loadingMoreYears, setLoadingMoreYears] = useState(false);
   const [yearNames, setYearNames] = useState<Record<string, string>>({});
+  const yearNamesRef = useRef(yearNames);
+  yearNamesRef.current = yearNames;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -93,7 +96,7 @@ export default function AdminFeeStructuresPage() {
       setYears((prev) => (opts.append ? appendById(prev, list) : [...list]));
       setYearsCursor(page.nextCursor);
       setYearNames((prev) => {
-        const next = opts.append ? { ...prev } : {};
+        const next = { ...prev };
         for (const y of list) next[y.id] = y.name;
         return next;
       });
@@ -128,11 +131,18 @@ export default function AdminFeeStructuresPage() {
       });
       const result = await apiRequest<PaginatedEnvelope<FeeStructureRow>>(q, { auth });
       const page = readPageMeta(result);
-      setRows((prev) =>
-        opts.append ? appendById(prev, result.data ?? []) : [...(result.data ?? [])],
-      );
+      const list = result.data ?? [];
+      setRows((prev) => (opts.append ? appendById(prev, list) : [...list]));
       setNextCursor(page.nextCursor);
       setError(null);
+      const miss = missingNameIds(
+        list.map((r) => r.academicYearId),
+        yearNamesRef.current,
+      );
+      if (miss.length > 0) {
+        const names = await resolveYearNames(auth, miss);
+        setYearNames((prev) => ({ ...prev, ...names }));
+      }
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'finance'));
       else setError('Could not load fee structures.');

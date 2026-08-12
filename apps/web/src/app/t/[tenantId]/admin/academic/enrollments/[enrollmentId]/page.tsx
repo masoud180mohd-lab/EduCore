@@ -22,6 +22,7 @@ import {
   type StreamRow,
   ENROLLMENT_STATUSES,
 } from '@/lib/academic/types';
+import { resolveYearNames } from '@/lib/admin/resolve-related-names';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
 type ConfirmState = { readonly kind: 'status' } | { readonly kind: 'transfer' } | null;
@@ -31,6 +32,7 @@ export default function AdminEnrollmentDetailPage() {
   const { tenantId, enrollmentId } = params;
   const [row, setRow] = useState<EnrollmentRow | null>(null);
   const [studentName, setStudentName] = useState<string | null>(null);
+  const [yearName, setYearName] = useState<string | null>(null);
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [classesCursor, setClassesCursor] = useState<string | null>(null);
   const [loadingMoreClasses, setLoadingMoreClasses] = useState(false);
@@ -161,6 +163,8 @@ export default function AdminEnrollmentDetailPage() {
       } catch {
         setStudentName(data.studentId);
       }
+      const years = await resolveYearNames(auth, [data.academicYearId]);
+      setYearName(years[data.academicYearId] ?? data.academicYearId);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load enrollment.');
@@ -271,8 +275,7 @@ export default function AdminEnrollmentDetailPage() {
               <span className="chip">{row.status}</span>
             </div>
             <div className="muted">Student: {studentName ?? row.studentId}</div>
-            <div className="muted">Year id: {row.academicYearId}</div>
-            <div className="muted">Id: {row.id}</div>
+            <div className="muted">Year: {yearName ?? row.academicYearId}</div>
           </div>
 
           <form className="stack card" onSubmit={onTransfer}>

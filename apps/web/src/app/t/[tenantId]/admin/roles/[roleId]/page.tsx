@@ -128,7 +128,7 @@ export default function AdminRoleDetailPage() {
       {row !== null ? (
         <div className="stack">
           <p className="muted">
-            Code: {row.code} · {row.isSystem ? 'System' : 'Custom'} · Id: {row.id}
+            Code: {row.code} · {row.isSystem ? 'System' : 'Custom'}
           </p>
           <form className="card stack" onSubmit={(e) => void onRename(e)}>
             <label className="field">

@@ -2,6 +2,13 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-11 - IMP-040 Admin UUID → display names (wave 2)
+
+- Terms / classes / streams / fee structures: backfill year/class names past the first picker page.
+- Terms / classes / streams: wire `search` + `status` Apply/cursor filters.
+- Enrollment detail year name; org parent name hint; remove muted detail `Id:` UUID footers.
+- Helpers: `resolveYearNames`, `resolveOrganizationNames`, `looksLikeUuid` (+ vitest).
+
 ## 2026-08-11 - IMP-039 Admin UUID → display names
 
 - Memberships: resolve user displayName/email instead of raw userId.
