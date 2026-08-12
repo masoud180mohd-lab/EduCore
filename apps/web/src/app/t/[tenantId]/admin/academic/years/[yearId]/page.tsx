@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog } from '@/components/admin';
+import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
@@ -133,20 +133,12 @@ export default function AdminAcademicYearDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/academic/years`}>← Years</Link>
       </p>
-      <h1>{row?.name ?? 'Academic year'}</h1>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader title={row?.name ?? 'Academic year'} />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {deleteDependents !== null ? (
         <DeleteDependentsBanner tenantId={tenantId} groups={deleteDependents} />
       ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {row !== null ? (
         <div className="stack">
           <form className="card stack" onSubmit={onSave}>

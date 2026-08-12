@@ -127,7 +127,7 @@ export default function AdminFeesHubPage() {
         <li>
           <Link className="card" href={`${base}/receipts`}>
             <strong>Receipts</strong>
-            <div className="muted">Issued payment receipts</div>
+            <div className="muted">Payment receipts by number and status (no list filters yet)</div>
           </Link>
         </li>
       </ul>

@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-12 - IMP-044 Admin chrome Academic details + Roles
+
+- Academic detail pages (year/term/class/stream/subject/enrollment): AdminPageHeader + Banner.
+- Roles list + detail: same chrome; hub blurbs tightened (Academic, Roles, Fees receipts).
+
 ## 2026-08-12 - IMP-043 Enrollments year + stream filters
 
 - Enrollments Apply: `academicYearId` + `streamId` (stream after class is chosen).

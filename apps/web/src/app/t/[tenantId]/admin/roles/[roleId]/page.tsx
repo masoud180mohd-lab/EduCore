@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -113,23 +114,18 @@ export default function AdminRoleDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/roles`}>← Roles</Link>
       </p>
-      <h1>{row?.name || 'Role'}</h1>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
-
-      {row !== null ? (
-        <div className="stack">
+      <AdminPageHeader title={row?.name || 'Role'}>
+        {row !== null ? (
           <p className="muted">
             Code: {row.code} · {row.isSystem ? 'System' : 'Custom'}
           </p>
+        ) : null}
+      </AdminPageHeader>
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
+
+      {row !== null ? (
+        <div className="stack">
           <form className="card stack" onSubmit={(e) => void onRename(e)}>
             <label className="field">
               <span>Display name</span>

@@ -4,7 +4,13 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { AdminTable, ResourceList, ResourceListPagination } from '@/components/admin';
+import {
+  AdminPageHeader,
+  AdminTable,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -91,18 +97,14 @@ export default function AdminRolesPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <h1>Roles</h1>
-      <p className="muted">
-        Tenant roles and permission sets (ACF-001). System roles cannot delete.
-      </p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Roles"
+        description="Tenant roles and permission sets. System roles cannot be deleted."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Create custom role</h2>
+        <h2 className="section-title">Create custom role</h2>
         <label className="field">
           <span>Code</span>
           <input

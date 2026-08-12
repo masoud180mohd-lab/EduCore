@@ -16,32 +16,32 @@ const ACADEMIC_LINKS: ReadonlyArray<AcademicHubLink> = [
   {
     hrefSuffix: '/years',
     title: 'Academic years',
-    blurb: 'Create and close school years',
+    blurb: 'Create years — search and filter by status',
   },
   {
     hrefSuffix: '/terms',
     title: 'Terms',
-    blurb: 'Terms within a year',
+    blurb: 'Terms by year — search and status filters',
   },
   {
     hrefSuffix: '/classes',
     title: 'Classes',
-    blurb: 'Classes by year',
+    blurb: 'Classes by year — search and status filters',
   },
   {
     hrefSuffix: '/streams',
     title: 'Streams',
-    blurb: 'Streams within a class',
+    blurb: 'Streams by class — search and status filters',
   },
   {
     hrefSuffix: '/subjects',
     title: 'Subjects',
-    blurb: 'Subject catalog',
+    blurb: 'Subject catalog — search and status filters',
   },
   {
     hrefSuffix: '/enrollments',
     title: 'Enrollments',
-    blurb: 'Place students in classes or streams',
+    blurb: 'Filter by year, student, class, stream, status',
   },
 ];
 

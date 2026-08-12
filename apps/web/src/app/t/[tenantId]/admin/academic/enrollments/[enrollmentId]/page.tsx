@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog, ResourceListPagination } from '@/components/admin';
+import { AdminPageHeader, Banner, ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -257,17 +257,9 @@ export default function AdminEnrollmentDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/academic/enrollments`}>← Enrollments</Link>
       </p>
-      <h1>{studentName ?? 'Enrollment'}</h1>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      <AdminPageHeader title={studentName ?? 'Enrollment'} />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {row !== null ? (
         <div className="stack">
           <div className="card stack">

@@ -46,13 +46,13 @@ export const ADMIN_HUB_CARDS: ReadonlyArray<AdminHubCard> = [
     id: 'roles',
     hrefSuffix: '/roles',
     title: 'Roles',
-    blurb: 'Permission sets and assignments',
+    blurb: 'Custom and system roles — open a role to edit permissions',
   },
   {
     id: 'academic',
     hrefSuffix: '/academic',
     title: 'Academic',
-    blurb: 'Years/subjects/terms/classes/streams filters; enroll by student/class/status',
+    blurb: 'Years through enrollments — filters on every list',
   },
   {
     id: 'fees',
