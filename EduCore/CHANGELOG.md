@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-12 - IMP-041 Enrollments list filter parity
+
+- Enrollments: Apply `studentId` + `classId` + `status` (draft/applied; Load more keeps filters).
+- URL `?studentId=` filters the list and still prefills create.
+- AdminPageHeader + Banner.
+
 ## 2026-08-12 - WEB-AUTH0 client env inlining
 
 - `loadAuth0PublicConfig()` reads static `process.env.NEXT_PUBLIC_AUTH0_*` so Next.js inlines them in the browser bundle.

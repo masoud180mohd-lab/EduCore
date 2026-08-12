@@ -27,8 +27,8 @@ Wire Admin UI list filters the API already supported on Guardians, Academic year
 
 ## Explicitly not done
 
-- Terms / classes / streams / enrollments remaining filters
-- UUID → name resolution (IMP-039 candidate)
+- ~~Terms / classes / streams / enrollments remaining filters~~ → Terms/classes/streams in **IMP-040**; enrollments in **IMP-041**
+- ~~UUID → name resolution (IMP-039 candidate)~~ → **IMP-039** / **IMP-040**
 - Receipts (API has no list filters)
 - New APIs / OpenAPI
 - PAY-OPS / MFA

@@ -4,7 +4,14 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 
-import { AdminTable, ResourceList, ResourceListPagination, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  AdminTable,
+  Banner,
+  ResourceList,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -53,8 +60,12 @@ export default function AdminEnrollmentsPage() {
   classNamesRef.current = classNames;
   const studentNamesRef = useRef(studentNames);
   studentNamesRef.current = studentNames;
-  const [filterClassId, setFilterClassId] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [studentFilter, setStudentFilter] = useState('');
+  const [classFilter, setClassFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'' | EnrollmentStatus>('');
+  const [appliedStudentId, setAppliedStudentId] = useState('');
+  const [appliedClassId, setAppliedClassId] = useState('');
+  const [appliedStatus, setAppliedStatus] = useState<'' | EnrollmentStatus>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -169,8 +180,9 @@ export default function AdminEnrollmentsPage() {
   }
 
   async function loadPage(opts: {
+    readonly studentIdQ: string;
     readonly classFilter: string;
-    readonly statusFilter: string;
+    readonly statusFilter: '' | EnrollmentStatus;
     readonly cursor: string | null;
     readonly append: boolean;
   }) {
@@ -183,6 +195,7 @@ export default function AdminEnrollmentsPage() {
         limit: ADMIN_LIST_DEFAULT_LIMIT,
         cursor: opts.cursor,
         filters: {
+          studentId: opts.studentIdQ === '' ? undefined : opts.studentIdQ,
           classId: opts.classFilter === '' ? undefined : opts.classFilter,
           status: opts.statusFilter === '' ? undefined : opts.statusFilter,
         },
@@ -221,6 +234,13 @@ export default function AdminEnrollmentsPage() {
   useEffect(() => {
     void loadClassPicker({ cursor: null, append: false });
     void loadStudentPicker({ cursor: null, append: false });
+    void loadPage({
+      studentIdQ: '',
+      classFilter: '',
+      statusFilter: '',
+      cursor: null,
+      append: false,
+    });
   }, []);
 
   useEffect(() => {
@@ -229,6 +249,15 @@ export default function AdminEnrollmentsPage() {
     if (raw === '') return;
     prefillApplied.current = true;
     setStudentId(raw);
+    setStudentFilter(raw);
+    setAppliedStudentId(raw);
+    void loadPage({
+      studentIdQ: raw,
+      classFilter: '',
+      statusFilter: '',
+      cursor: null,
+      append: false,
+    });
     void (async () => {
       const auth = readSession();
       if (auth === null) return;
@@ -243,15 +272,6 @@ export default function AdminEnrollmentsPage() {
       }
     })();
   }, [searchParams]);
-
-  useEffect(() => {
-    void loadPage({
-      classFilter: filterClassId,
-      statusFilter: filterStatus,
-      cursor: null,
-      append: false,
-    });
-  }, [filterClassId, filterStatus]);
 
   useEffect(() => {
     setStreamId('');
@@ -292,54 +312,14 @@ export default function AdminEnrollmentsPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/academic`}>← Academic</Link>
       </p>
-      <h1>Enrollments</h1>
-      <p className="muted">Place students in classes (ACF-008). Year/term come from the class.</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-
-      <div className="field">
-        <label htmlFor="filter-class">Filter by class</label>
-        <select
-          id="filter-class"
-          value={filterClassId}
-          onChange={(e) => setFilterClassId(e.target.value)}
-        >
-          <option value="">All classes</option>
-          {classes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <ResourceListPagination
-          nextCursor={classesCursor}
-          loadingMore={loadingMoreClasses}
-          onLoadMore={() => {
-            void loadClassPicker({ cursor: classesCursor, append: true });
-          }}
-        />
-      </div>
-      <div className="field">
-        <label htmlFor="filter-status">Filter by status</label>
-        <select
-          id="filter-status"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-        >
-          <option value="">All statuses</option>
-          {ENROLLMENT_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
+      <AdminPageHeader
+        title="Enrollments"
+        description="Place students in classes. Filter by student, class, and status; year/term come from the class."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Enroll student</h2>
+        <h2 className="section-title">Enroll student</h2>
         <div className="field">
           <label htmlFor="enroll-student">Student</label>
           <select
@@ -433,6 +413,87 @@ export default function AdminEnrollmentsPage() {
         </button>
       </form>
 
+      <form
+        className="stack"
+        style={{ marginTop: '1.5rem' }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setAppliedStudentId(studentFilter);
+          setAppliedClassId(classFilter);
+          setAppliedStatus(statusFilter);
+          void loadPage({
+            studentIdQ: studentFilter,
+            classFilter,
+            statusFilter,
+            cursor: null,
+            append: false,
+          });
+        }}
+      >
+        <div className="field">
+          <label htmlFor="filter-student">Student</label>
+          <select
+            id="filter-student"
+            value={studentFilter}
+            onChange={(e) => setStudentFilter(e.target.value)}
+          >
+            <option value="">All students</option>
+            {students.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.displayName}
+              </option>
+            ))}
+          </select>
+          <ResourceListPagination
+            nextCursor={studentsCursor}
+            loadingMore={loadingMoreStudents}
+            onLoadMore={() => {
+              void loadStudentPicker({ cursor: studentsCursor, append: true });
+            }}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="filter-class">Class</label>
+          <select
+            id="filter-class"
+            value={classFilter}
+            onChange={(e) => setClassFilter(e.target.value)}
+          >
+            <option value="">All classes</option>
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <ResourceListPagination
+            nextCursor={classesCursor}
+            loadingMore={loadingMoreClasses}
+            onLoadMore={() => {
+              void loadClassPicker({ cursor: classesCursor, append: true });
+            }}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="filter-status">Status</label>
+          <select
+            id="filter-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as '' | EnrollmentStatus)}
+          >
+            <option value="">All statuses</option>
+            {ENROLLMENT_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
+          Apply filters
+        </button>
+      </form>
+
       <ResourceList
         loading={loading}
         empty="No enrollments yet."
@@ -444,8 +505,9 @@ export default function AdminEnrollmentsPage() {
             loadingMore={loadingMore}
             onLoadMore={() => {
               void loadPage({
-                classFilter: filterClassId,
-                statusFilter: filterStatus,
+                studentIdQ: appliedStudentId,
+                classFilter: appliedClassId,
+                statusFilter: appliedStatus,
                 cursor: nextCursor,
                 append: true,
               });

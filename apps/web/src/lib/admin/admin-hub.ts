@@ -52,7 +52,7 @@ export const ADMIN_HUB_CARDS: ReadonlyArray<AdminHubCard> = [
     id: 'academic',
     hrefSuffix: '/academic',
     title: 'Academic',
-    blurb: 'Years and subjects — search / status; classes and enrollments',
+    blurb: 'Years/subjects/terms/classes/streams filters; enroll by student/class/status',
   },
   {
     id: 'fees',
@@ -108,7 +108,7 @@ export const ADMIN_HUB_QUICK_STARTS: ReadonlyArray<AdminHubQuickStart> = [
     requires: 'academic',
     hrefSuffix: '/academic/enrollments',
     label: 'Enroll a student',
-    hint: 'Place in class or stream for a year',
+    hint: 'Filter by student, class, or status; or create from the list',
   },
   {
     id: 'invoices',
