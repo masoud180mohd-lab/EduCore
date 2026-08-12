@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -87,29 +88,21 @@ export default function GuardianStudentInvoicesPage() {
       <p className="muted">
         <Link href={`${base}/fees`}>← Guardian fees</Link>
       </p>
-      <h1>Invoices — {studentName ?? 'Student'}</h1>
-      <div className="banner banner-info" role="status">
+      <AdminPageHeader title={`Invoices — ${studentName ?? 'Student'}`} />
+      <Banner tone="info">
         Pay at the school office. Mobile money is not enabled (PAY-PROVIDER-001).
-      </div>
+      </Banner>
 
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       {forbiddenStudent ? (
-        <div className="banner banner-error" role="alert">
-          This student is not actively linked to this guardian.
-        </div>
+        <Banner tone="error">This student is not actively linked to this guardian.</Banner>
       ) : null}
 
       {loading && !forbiddenStudent ? <p className="muted">Loading…</p> : null}
 
       {!loading && !forbiddenStudent && error === null && invoices.length === 0 ? (
-        <div className="banner banner-info" role="status">
-          No invoices for this student yet.
-        </div>
+        <Banner tone="info">No invoices for this student yet.</Banner>
       ) : null}
 
       {!loading && !forbiddenStudent && invoices.length > 0 ? (

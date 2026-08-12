@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -109,21 +110,17 @@ export default function GuardianFeesReceiptDetailPage() {
           <Link href={`${base}/fees`}>← Guardian fees</Link>
         )}
       </p>
-      <h1>Receipt (read-only)</h1>
-      <div className="banner banner-info" role="status">
+      <AdminPageHeader title="Receipt (read-only)" />
+      <Banner tone="info">
         Pay at the school office. Mobile money is not enabled (PAY-PROVIDER-001).
-      </div>
+      </Banner>
 
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       {isolationBlocked ? (
-        <div className="banner banner-error" role="alert">
+        <Banner tone="error">
           This receipt belongs to a student not actively linked to this guardian.
-        </div>
+        </Banner>
       ) : null}
 
       {loading && !isolationBlocked ? <p className="muted">Loading…</p> : null}

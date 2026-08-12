@@ -4,7 +4,13 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { RelatedRecordsSection, ResourceListPagination, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  Banner,
+  RelatedRecordsSection,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import {
   adminEnrollmentsCreatePath,
@@ -262,17 +268,9 @@ export default function AdminStudentDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/students`}>← Students</Link>
       </p>
-      <h1>{row?.displayName ?? 'Student'}</h1>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      <AdminPageHeader title={row?.displayName ?? 'Student'} />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {row !== null ? (
         <div className="stack">
           <form className="card stack" onSubmit={(e) => void onSave(e)}>

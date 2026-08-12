@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -126,21 +127,17 @@ export default function GuardianFeesInvoiceDetailPage() {
           <Link href={`${base}/fees`}>← Guardian fees</Link>
         )}
       </p>
-      <h1>Invoice (read-only)</h1>
-      <div className="banner banner-info" role="status">
+      <AdminPageHeader title="Invoice (read-only)" />
+      <Banner tone="info">
         Pay at the school office. Mobile money is not enabled (PAY-PROVIDER-001).
-      </div>
+      </Banner>
 
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       {isolationBlocked ? (
-        <div className="banner banner-error" role="alert">
+        <Banner tone="error">
           This invoice belongs to a student not actively linked to this guardian.
-        </div>
+        </Banner>
       ) : null}
 
       {loading && !isolationBlocked ? <p className="muted">Loading…</p> : null}
@@ -168,7 +165,7 @@ export default function GuardianFeesInvoiceDetailPage() {
 
           <h2 style={{ fontSize: '1.1rem' }}>Lines</h2>
           {invoice.lines.length === 0 ? (
-            <div className="banner banner-info">No line items.</div>
+            <Banner tone="info">No line items.</Banner>
           ) : (
             <ul className="list">
               {invoice.lines.map((line) => (
@@ -182,7 +179,7 @@ export default function GuardianFeesInvoiceDetailPage() {
 
           <h2 style={{ fontSize: '1.1rem' }}>Payments</h2>
           {payments.length === 0 ? (
-            <div className="banner banner-info">No payments recorded yet.</div>
+            <Banner tone="info">No payments recorded yet.</Banner>
           ) : (
             <ul className="list">
               {payments.map((p) => (

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -198,18 +199,10 @@ export default function AdminFeeStructureDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/fees/structures`}>← Fee structures</Link>
       </p>
-      <h1>{row?.name ?? 'Fee structure'}</h1>
+      <AdminPageHeader title={row?.name ?? 'Fee structure'} />
       {loading ? <p className="muted">Loading…</p> : null}
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {notice !== null ? (
-        <div className="banner banner-info" role="status">
-          {notice}
-        </div>
-      ) : null}
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {notice !== null ? <Banner tone="info">{notice}</Banner> : null}
       {row !== null ? (
         <>
           <p className="muted">

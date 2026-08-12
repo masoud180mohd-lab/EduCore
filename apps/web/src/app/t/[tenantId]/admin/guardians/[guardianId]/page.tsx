@@ -4,7 +4,12 @@ import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
-import { ConfirmDialog, ResourceListPagination } from '@/components/admin';
+import {
+  AdminPageHeader,
+  Banner,
+  ConfirmDialog,
+  ResourceListPagination,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -340,7 +345,7 @@ export default function AdminGuardianDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/guardians`}>← Guardians</Link>
       </p>
-      <h1>{guardian?.displayName ?? 'Guardian'}</h1>
+      <AdminPageHeader title={guardian?.displayName ?? 'Guardian'} />
       <p>
         <Link
           className="btn btn-secondary"
@@ -349,16 +354,8 @@ export default function AdminGuardianDetailPage() {
           View fees (read-only)
         </Link>
       </p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
 
       {guardian !== null ? (
         <form className="stack card" onSubmit={(e) => void onSaveProfile(e)}>
@@ -418,11 +415,7 @@ export default function AdminGuardianDetailPage() {
       <p className="muted">
         Bind an existing school user (active membership) so they can open the parent fees portal.
       </p>
-      {usersError !== null ? (
-        <div className="banner banner-error" role="alert">
-          {usersError}
-        </div>
-      ) : null}
+      {usersError !== null ? <Banner tone="error">{usersError}</Banner> : null}
       {guardian?.userId !== null && guardian?.userId !== undefined ? (
         <div className="card stack">
           <div>
@@ -441,10 +434,10 @@ export default function AdminGuardianDetailPage() {
       ) : (
         <form className="stack card" onSubmit={(e) => void onBind(e)}>
           {!usersLoading && usersError === null && users.length === 0 ? (
-            <div className="banner banner-info" role="status">
+            <Banner tone="info">
               No users returned for this school. Create a membership first, or use advanced UUID
               paste.
-            </div>
+            </Banner>
           ) : null}
           <div className="field">
             <label htmlFor="bindUserSelect">School user</label>
@@ -502,7 +495,7 @@ export default function AdminGuardianDetailPage() {
       )}
 
       <h2 style={{ fontSize: '1.1rem' }}>Linked students</h2>
-      {links.length === 0 ? <div className="banner banner-info">No links yet.</div> : null}
+      {links.length === 0 ? <Banner tone="info">No links yet.</Banner> : null}
       <ul className="list">
         {links.map((link) => (
           <li key={link.id} className="card">

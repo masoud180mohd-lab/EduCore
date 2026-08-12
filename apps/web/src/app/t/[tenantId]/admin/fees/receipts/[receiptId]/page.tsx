@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -121,18 +122,10 @@ export default function AdminReceiptDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/fees/receipts`}>← Receipts</Link>
       </p>
-      <h1>{receipt?.receiptNumber ?? 'Receipt'}</h1>
+      <AdminPageHeader title={receipt?.receiptNumber ?? 'Receipt'} />
       {loading ? <p className="muted">Loading…</p> : null}
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {receipt !== null ? (
         <div className="card stack">
           <div>

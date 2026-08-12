@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -83,26 +84,23 @@ export default function GuardianFeesEntryPage() {
       <p className="muted">
         <Link href={`${base}`}>← Guardian</Link>
       </p>
-      <h1>Fees — {guardian?.displayName ?? 'Guardian'}</h1>
-      <p className="muted">
-        Read-only invoices and balances for linked students (DSF-005 / IMP-011).
-      </p>
-      <div className="banner banner-info" role="status">
+      <AdminPageHeader title={`Fees — ${guardian?.displayName ?? 'Guardian'}`}>
+        <p className="muted">
+          Read-only invoices and balances for linked students (DSF-005 / IMP-011).
+        </p>
+      </AdminPageHeader>
+      <Banner tone="info">
         Pay at the school office. Mobile money is not enabled (PAY-PROVIDER-001).
-      </div>
+      </Banner>
 
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       {loading ? <p className="muted">Loading…</p> : null}
 
       {!loading && error === null && activeLinks.length === 0 ? (
-        <div className="banner banner-info" role="status">
+        <Banner tone="info">
           Link a student to this guardian first, then return here to view fees.
-        </div>
+        </Banner>
       ) : null}
 
       {!loading && activeLinks.length > 0 ? (

@@ -22,5 +22,5 @@ Align remaining Academic detail pages and Roles list/detail with `AdminPageHeade
 
 ## Explicitly not done
 
-- Guardian / fees / users / students detail chrome wave (later)
+- ~~Guardian / fees / users / students detail chrome wave~~ → **IMP-045**
 - Receipts list filters / PAY-OPS

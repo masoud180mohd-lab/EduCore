@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog, ResourceListPagination } from '@/components/admin';
+import {
+  AdminPageHeader,
+  Banner,
+  ConfirmDialog,
+  ResourceListPagination,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -442,17 +447,9 @@ export default function AdminUserDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/users`}>← Users</Link>
       </p>
-      <h1>{row?.displayName || row?.email || 'User'}</h1>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      <AdminPageHeader title={row?.displayName || row?.email || 'User'} />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {showUserForm ? (
         <div className="stack">
           <form className="card stack" onSubmit={(e) => void onSave(e)}>

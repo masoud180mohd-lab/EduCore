@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-12 - IMP-045 Admin chrome Students/Guardians/Users/Fees details
+
+- Detail pages: AdminPageHeader + Banner (students, users, guardians, fee structures/invoices/receipts, guardian fees).
+- Completes the chrome wave started in IMP-044.
+
 ## 2026-08-12 - IMP-044 Admin chrome Academic details + Roles
 
 - Academic detail pages (year/term/class/stream/subject/enrollment): AdminPageHeader + Banner.

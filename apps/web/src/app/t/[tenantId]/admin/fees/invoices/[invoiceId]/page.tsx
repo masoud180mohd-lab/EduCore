@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog } from '@/components/admin';
+import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import {
@@ -484,23 +484,11 @@ export default function AdminInvoiceDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/fees/invoices`}>← Invoices</Link>
       </p>
-      <h1>Invoice</h1>
+      <AdminPageHeader title="Invoice" />
       {loading ? <p className="muted">Loading…</p> : null}
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
-      {!momoConfigured ? (
-        <div className="banner banner-warn" role="status">
-          {FAKE_PROVIDER_BANNER}
-        </div>
-      ) : null}
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
+      {!momoConfigured ? <Banner tone="warn">{FAKE_PROVIDER_BANNER}</Banner> : null}
 
       {invoice !== null ? (
         <>
@@ -535,13 +523,9 @@ export default function AdminInvoiceDetailPage() {
                 Linked guardians
               </h2>
               {guardianLoading ? <p className="muted">Loading…</p> : null}
-              {guardianError !== null ? (
-                <div className="banner banner-error" role="alert">
-                  {guardianError}
-                </div>
-              ) : null}
+              {guardianError !== null ? <Banner tone="error">{guardianError}</Banner> : null}
               {!guardianLoading && guardianError === null && guardianLinks.length === 0 ? (
-                <div className="banner banner-info">No active guardian links for this student.</div>
+                <Banner tone="info">No active guardian links for this student.</Banner>
               ) : null}
               {!guardianLoading && guardianError === null && guardianLinks.length > 0 ? (
                 <ul className="list">
@@ -646,11 +630,7 @@ export default function AdminInvoiceDetailPage() {
                 Creates a pending BillPay attempt (ClickPesa). Ask parent to pay the number; webhook
                 or Refresh updates status.
               </p>
-              {!momoConfigured ? (
-                <div className="banner banner-warn" role="status">
-                  {FAKE_PROVIDER_BANNER}
-                </div>
-              ) : null}
+              {!momoConfigured ? <Banner tone="warn">{FAKE_PROVIDER_BANNER}</Banner> : null}
               <div className="field">
                 <label htmlFor="momo-amount">Amount (TZS major, ≤ balance)</label>
                 <input
@@ -670,9 +650,7 @@ export default function AdminInvoiceDetailPage() {
           ) : null}
 
           <h2 style={{ fontSize: '1.1rem' }}>Payments</h2>
-          {payments.length === 0 ? (
-            <div className="banner banner-info">No payments yet.</div>
-          ) : null}
+          {payments.length === 0 ? <Banner tone="info">No payments yet.</Banner> : null}
           <ul className="list">
             {payments.map((p) => {
               const billPay = billPayDisplay(p);
