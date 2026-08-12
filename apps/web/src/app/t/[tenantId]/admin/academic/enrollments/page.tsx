@@ -28,6 +28,7 @@ import {
   resolveStudentNames,
 } from '@/lib/admin/resolve-related-names';
 import {
+  type AcademicYearRow,
   type ClassRow,
   type EnrollmentRow,
   type EnrollmentStatus,
@@ -45,6 +46,9 @@ export default function AdminEnrollmentsPage() {
   const prefillApplied = useRef(false);
   const [rows, setRows] = useState<EnrollmentRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [years, setYears] = useState<AcademicYearRow[]>([]);
+  const [yearsCursor, setYearsCursor] = useState<string | null>(null);
+  const [loadingMoreYears, setLoadingMoreYears] = useState(false);
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [classesCursor, setClassesCursor] = useState<string | null>(null);
   const [loadingMoreClasses, setLoadingMoreClasses] = useState(false);
@@ -54,17 +58,24 @@ export default function AdminEnrollmentsPage() {
   const [streams, setStreams] = useState<StreamRow[]>([]);
   const [streamsCursor, setStreamsCursor] = useState<string | null>(null);
   const [loadingMoreStreams, setLoadingMoreStreams] = useState(false);
+  const [filterStreams, setFilterStreams] = useState<StreamRow[]>([]);
+  const [filterStreamsCursor, setFilterStreamsCursor] = useState<string | null>(null);
+  const [loadingMoreFilterStreams, setLoadingMoreFilterStreams] = useState(false);
   const [classNames, setClassNames] = useState<Record<string, string>>({});
   const [studentNames, setStudentNames] = useState<Record<string, string>>({});
   const classNamesRef = useRef(classNames);
   classNamesRef.current = classNames;
   const studentNamesRef = useRef(studentNames);
   studentNamesRef.current = studentNames;
+  const [yearFilter, setYearFilter] = useState('');
   const [studentFilter, setStudentFilter] = useState('');
   const [classFilter, setClassFilter] = useState('');
+  const [streamFilter, setStreamFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | EnrollmentStatus>('');
+  const [appliedYearId, setAppliedYearId] = useState('');
   const [appliedStudentId, setAppliedStudentId] = useState('');
   const [appliedClassId, setAppliedClassId] = useState('');
+  const [appliedStreamId, setAppliedStreamId] = useState('');
   const [appliedStatus, setAppliedStatus] = useState<'' | EnrollmentStatus>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,6 +85,35 @@ export default function AdminEnrollmentsPage() {
   const [classId, setClassId] = useState('');
   const [streamId, setStreamId] = useState('');
   const [status, setStatus] = useState<EnrollmentStatus>('active');
+
+  async function loadYearPicker(opts: {
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null) return;
+    if (opts.append) setLoadingMoreYears(true);
+    try {
+      const result = await apiRequest<PaginatedEnvelope<AcademicYearRow>>(
+        buildListQuery('/api/v1/academic-years', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setYears((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setYearsCursor(page.nextCursor);
+    } catch {
+      if (!opts.append) {
+        setYears([]);
+        setYearsCursor(null);
+      }
+    } finally {
+      setLoadingMoreYears(false);
+    }
+  }
 
   async function loadClassPicker(opts: {
     readonly cursor: string | null;
@@ -179,9 +219,46 @@ export default function AdminEnrollmentsPage() {
     }
   }
 
+  async function loadFilterStreamPicker(opts: {
+    readonly forClassId: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null || opts.forClassId === '') {
+      setFilterStreams([]);
+      setFilterStreamsCursor(null);
+      return;
+    }
+    if (opts.append) setLoadingMoreFilterStreams(true);
+    try {
+      const result = await apiRequest<PaginatedEnvelope<StreamRow>>(
+        buildListQuery('/api/v1/streams', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+          filters: { classId: opts.forClassId },
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setFilterStreams((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setFilterStreamsCursor(page.nextCursor);
+    } catch {
+      if (!opts.append) {
+        setFilterStreams([]);
+        setFilterStreamsCursor(null);
+      }
+    } finally {
+      setLoadingMoreFilterStreams(false);
+    }
+  }
+
   async function loadPage(opts: {
+    readonly yearIdQ: string;
     readonly studentIdQ: string;
     readonly classFilter: string;
+    readonly streamIdQ: string;
     readonly statusFilter: '' | EnrollmentStatus;
     readonly cursor: string | null;
     readonly append: boolean;
@@ -195,8 +272,10 @@ export default function AdminEnrollmentsPage() {
         limit: ADMIN_LIST_DEFAULT_LIMIT,
         cursor: opts.cursor,
         filters: {
+          academicYearId: opts.yearIdQ === '' ? undefined : opts.yearIdQ,
           studentId: opts.studentIdQ === '' ? undefined : opts.studentIdQ,
           classId: opts.classFilter === '' ? undefined : opts.classFilter,
+          streamId: opts.streamIdQ === '' ? undefined : opts.streamIdQ,
           status: opts.statusFilter === '' ? undefined : opts.statusFilter,
         },
       });
@@ -232,11 +311,14 @@ export default function AdminEnrollmentsPage() {
   }
 
   useEffect(() => {
+    void loadYearPicker({ cursor: null, append: false });
     void loadClassPicker({ cursor: null, append: false });
     void loadStudentPicker({ cursor: null, append: false });
     void loadPage({
+      yearIdQ: '',
       studentIdQ: '',
       classFilter: '',
+      streamIdQ: '',
       statusFilter: '',
       cursor: null,
       append: false,
@@ -252,8 +334,10 @@ export default function AdminEnrollmentsPage() {
     setStudentFilter(raw);
     setAppliedStudentId(raw);
     void loadPage({
+      yearIdQ: '',
       studentIdQ: raw,
       classFilter: '',
+      streamIdQ: '',
       statusFilter: '',
       cursor: null,
       append: false,
@@ -277,6 +361,11 @@ export default function AdminEnrollmentsPage() {
     setStreamId('');
     void loadStreamPicker({ forClassId: classId, cursor: null, append: false });
   }, [classId]);
+
+  useEffect(() => {
+    setStreamFilter('');
+    void loadFilterStreamPicker({ forClassId: classFilter, cursor: null, append: false });
+  }, [classFilter]);
 
   async function onCreate(event: FormEvent) {
     event.preventDefault();
@@ -314,7 +403,7 @@ export default function AdminEnrollmentsPage() {
       </p>
       <AdminPageHeader
         title="Enrollments"
-        description="Place students in classes. Filter by student, class, and status; year/term come from the class."
+        description="Place students in classes. Filter by year, student, class, stream, and status."
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
@@ -418,18 +507,44 @@ export default function AdminEnrollmentsPage() {
         style={{ marginTop: '1.5rem' }}
         onSubmit={(e) => {
           e.preventDefault();
+          setAppliedYearId(yearFilter);
           setAppliedStudentId(studentFilter);
           setAppliedClassId(classFilter);
+          setAppliedStreamId(streamFilter);
           setAppliedStatus(statusFilter);
           void loadPage({
+            yearIdQ: yearFilter,
             studentIdQ: studentFilter,
             classFilter,
+            streamIdQ: streamFilter,
             statusFilter,
             cursor: null,
             append: false,
           });
         }}
       >
+        <div className="field">
+          <label htmlFor="filter-year">Academic year</label>
+          <select
+            id="filter-year"
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+          >
+            <option value="">All years</option>
+            {years.map((y) => (
+              <option key={y.id} value={y.id}>
+                {y.name}
+              </option>
+            ))}
+          </select>
+          <ResourceListPagination
+            nextCursor={yearsCursor}
+            loadingMore={loadingMoreYears}
+            onLoadMore={() => {
+              void loadYearPicker({ cursor: yearsCursor, append: true });
+            }}
+          />
+        </div>
         <div className="field">
           <label htmlFor="filter-student">Student</label>
           <select
@@ -475,6 +590,35 @@ export default function AdminEnrollmentsPage() {
           />
         </div>
         <div className="field">
+          <label htmlFor="filter-stream">Stream</label>
+          <select
+            id="filter-stream"
+            value={streamFilter}
+            onChange={(e) => setStreamFilter(e.target.value)}
+            disabled={classFilter === ''}
+          >
+            <option value="">{classFilter === '' ? 'Select a class first' : 'All streams'}</option>
+            {filterStreams.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          {classFilter !== '' ? (
+            <ResourceListPagination
+              nextCursor={filterStreamsCursor}
+              loadingMore={loadingMoreFilterStreams}
+              onLoadMore={() => {
+                void loadFilterStreamPicker({
+                  forClassId: classFilter,
+                  cursor: filterStreamsCursor,
+                  append: true,
+                });
+              }}
+            />
+          ) : null}
+        </div>
+        <div className="field">
           <label htmlFor="filter-status">Status</label>
           <select
             id="filter-status"
@@ -505,8 +649,10 @@ export default function AdminEnrollmentsPage() {
             loadingMore={loadingMore}
             onLoadMore={() => {
               void loadPage({
+                yearIdQ: appliedYearId,
                 studentIdQ: appliedStudentId,
                 classFilter: appliedClassId,
+                streamIdQ: appliedStreamId,
                 statusFilter: appliedStatus,
                 cursor: nextCursor,
                 append: true,

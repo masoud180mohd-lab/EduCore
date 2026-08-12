@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-12 - IMP-043 Enrollments year + stream filters
+
+- Enrollments Apply: `academicYearId` + `streamId` (stream after class is chosen).
+- Completes ACF-008 list filter wiring with IMP-041.
+
 ## 2026-08-12 - IMP-042 Organization parent picker
 
 - Create/detail: parent is a select of active organizations (+ Load more), not UUID paste.

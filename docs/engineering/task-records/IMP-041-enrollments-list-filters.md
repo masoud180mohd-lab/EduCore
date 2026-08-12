@@ -27,4 +27,5 @@ Close the last IMP-038 Academic filter residual: Enrollments list uses the same 
 
 - Receipts list filters (API has none)
 - Org parent picker redesign
+- ~~Enrollments `academicYearId` / `streamId`~~ → **IMP-043**
 - PAY-OPS

@@ -108,7 +108,7 @@ export const ADMIN_HUB_QUICK_STARTS: ReadonlyArray<AdminHubQuickStart> = [
     requires: 'academic',
     hrefSuffix: '/academic/enrollments',
     label: 'Enroll a student',
-    hint: 'Filter by student, class, or status; or create from the list',
+    hint: 'Filter by year, student, class, stream, or status',
   },
   {
     id: 'invoices',
