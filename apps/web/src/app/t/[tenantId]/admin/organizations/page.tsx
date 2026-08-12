@@ -20,7 +20,6 @@ import {
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
-import { looksLikeUuid, resolveOrganizationNames } from '@/lib/admin/resolve-related-names';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -42,7 +41,39 @@ export default function AdminOrganizationsPage() {
   const [code, setCode] = useState('');
   const [orgType, setOrgType] = useState<OrgType>('school');
   const [parentOrganizationId, setParentOrganizationId] = useState('');
-  const [parentOrgLabel, setParentOrgLabel] = useState<string | null>(null);
+  const [parentOptions, setParentOptions] = useState<OrganizationRow[]>([]);
+  const [parentsCursor, setParentsCursor] = useState<string | null>(null);
+  const [loadingMoreParents, setLoadingMoreParents] = useState(false);
+
+  async function loadParentPicker(opts: {
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null) return;
+    if (opts.append) setLoadingMoreParents(true);
+    try {
+      const result = await apiRequest<PaginatedEnvelope<OrganizationRow>>(
+        buildListQuery('/api/v1/organizations', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+          filters: { status: 'active' },
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setParentOptions((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setParentsCursor(page.nextCursor);
+    } catch {
+      if (!opts.append) {
+        setParentOptions([]);
+        setParentsCursor(null);
+      }
+    } finally {
+      setLoadingMoreParents(false);
+    }
+  }
 
   async function loadPage(opts: {
     readonly searchQ: string;
@@ -77,27 +108,8 @@ export default function AdminOrganizationsPage() {
 
   useEffect(() => {
     void loadPage({ searchQ: '', cursor: null, append: false });
+    void loadParentPicker({ cursor: null, append: false });
   }, []);
-
-  useEffect(() => {
-    const trimmed = parentOrganizationId.trim();
-    if (!looksLikeUuid(trimmed)) {
-      setParentOrgLabel(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      const auth = readSession();
-      if (auth === null) return;
-      const names = await resolveOrganizationNames(auth, [trimmed]);
-      if (cancelled) return;
-      const label = names[trimmed];
-      setParentOrgLabel(label !== undefined && label !== trimmed ? label : null);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [parentOrganizationId]);
 
   async function onCreate(event: FormEvent) {
     event.preventDefault();
@@ -113,8 +125,8 @@ export default function AdminOrganizationsPage() {
         name: name.trim(),
       };
       if (code.trim() !== '') body['code'] = code.trim();
-      if (parentOrganizationId.trim() !== '') {
-        body['parentOrganizationId'] = parentOrganizationId.trim();
+      if (parentOrganizationId !== '') {
+        body['parentOrganizationId'] = parentOrganizationId;
       }
       const created = await apiRequest<{ data: OrganizationRow }>('/api/v1/organizations', {
         method: 'POST',
@@ -181,18 +193,27 @@ export default function AdminOrganizationsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="parentOrganizationId">Parent organization id (optional)</label>
-          <input
+          <label htmlFor="parentOrganizationId">Parent organization (optional)</label>
+          <select
             id="parentOrganizationId"
             value={parentOrganizationId}
             onChange={(e) => setParentOrganizationId(e.target.value)}
-            placeholder="UUID"
+          >
+            <option value="">None</option>
+            {parentOptions.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+                {o.code !== null && o.code !== '' ? ` (${o.code})` : ''}
+              </option>
+            ))}
+          </select>
+          <ResourceListPagination
+            nextCursor={parentsCursor}
+            loadingMore={loadingMoreParents}
+            onLoadMore={() => {
+              void loadParentPicker({ cursor: parentsCursor, append: true });
+            }}
           />
-          {parentOrgLabel !== null ? (
-            <p className="muted" style={{ margin: '0.35rem 0 0' }}>
-              Parent: {parentOrgLabel}
-            </p>
-          ) : null}
         </div>
         <button className="btn btn-primary" type="submit" disabled={busy || name.trim() === ''}>
           {busy ? 'Creating…' : 'Create organization'}

@@ -4,11 +4,23 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { AdminPageHeader, Banner, ConfirmDialog, StatusChip } from '@/components/admin';
+import {
+  AdminPageHeader,
+  Banner,
+  ConfirmDialog,
+  ResourceListPagination,
+  StatusChip,
+} from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
-import { looksLikeUuid, resolveOrganizationNames } from '@/lib/admin/resolve-related-names';
+import {
+  ADMIN_LIST_DEFAULT_LIMIT,
+  appendById,
+  buildListQuery,
+  readPageMeta,
+  type PaginatedEnvelope,
+} from '@/lib/admin/list-pagination';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import { type OrganizationRow } from '@/lib/organizations/types';
 
@@ -23,7 +35,54 @@ export default function AdminOrganizationDetailPage() {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [parentOrganizationId, setParentOrganizationId] = useState('');
-  const [parentOrgLabel, setParentOrgLabel] = useState<string | null>(null);
+  const [parentOptions, setParentOptions] = useState<OrganizationRow[]>([]);
+  const [parentsCursor, setParentsCursor] = useState<string | null>(null);
+  const [loadingMoreParents, setLoadingMoreParents] = useState(false);
+
+  const loadParentPicker = useCallback(
+    async (opts: { readonly cursor: string | null; readonly append: boolean }) => {
+      const auth = readSession();
+      if (auth === null) return;
+      if (opts.append) setLoadingMoreParents(true);
+      try {
+        const result = await apiRequest<PaginatedEnvelope<OrganizationRow>>(
+          buildListQuery('/api/v1/organizations', {
+            limit: ADMIN_LIST_DEFAULT_LIMIT,
+            cursor: opts.cursor,
+            filters: { status: 'active' },
+          }),
+          { auth },
+        );
+        const page = readPageMeta(result);
+        const list = (result.data ?? []).filter((o) => o.id !== organizationId);
+        setParentOptions((prev) => (opts.append ? appendById(prev, list) : [...list]));
+        setParentsCursor(page.nextCursor);
+      } catch {
+        if (!opts.append) {
+          setParentOptions([]);
+          setParentsCursor(null);
+        }
+      } finally {
+        setLoadingMoreParents(false);
+      }
+    },
+    [organizationId],
+  );
+
+  const ensureParentOption = useCallback(async (parentId: string) => {
+    if (parentId === '') return;
+    const auth = readSession();
+    if (auth === null) return;
+    try {
+      const res = await apiRequest<{ data: OrganizationRow }>(
+        `/api/v1/organizations/${parentId}`,
+        { auth },
+      );
+      setParentOptions((prev) => appendById(prev, [res.data]));
+    } catch {
+      /* select still holds id until picker catches up */
+    }
+  }, []);
 
   const load = useCallback(async () => {
     const auth = readSession();
@@ -38,43 +97,20 @@ export default function AdminOrganizationDetailPage() {
       setCode(result.data.code ?? '');
       const parentId = result.data.parentOrganizationId ?? '';
       setParentOrganizationId(parentId);
-      if (parentId !== '' && looksLikeUuid(parentId)) {
-        const names = await resolveOrganizationNames(auth, [parentId]);
-        const label = names[parentId];
-        setParentOrgLabel(label !== undefined && label !== parentId ? label : null);
-      } else {
-        setParentOrgLabel(null);
-      }
       setError(null);
+      if (parentId !== '') {
+        await ensureParentOption(parentId);
+      }
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'organizations'));
       else setError('Could not load organization.');
     }
-  }, [organizationId]);
+  }, [organizationId, ensureParentOption]);
 
   useEffect(() => {
     void load();
-  }, [load]);
-
-  useEffect(() => {
-    const trimmed = parentOrganizationId.trim();
-    if (!looksLikeUuid(trimmed)) {
-      setParentOrgLabel(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      const auth = readSession();
-      if (auth === null) return;
-      const names = await resolveOrganizationNames(auth, [trimmed]);
-      if (cancelled) return;
-      const label = names[trimmed];
-      setParentOrgLabel(label !== undefined && label !== trimmed ? label : null);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [parentOrganizationId]);
+    void loadParentPicker({ cursor: null, append: false });
+  }, [load, loadParentPicker]);
 
   async function onSave(event: FormEvent) {
     event.preventDefault();
@@ -92,8 +128,7 @@ export default function AdminOrganizationDetailPage() {
         body: {
           name: name.trim(),
           code: code.trim() === '' ? null : code.trim(),
-          parentOrganizationId:
-            parentOrganizationId.trim() === '' ? null : parentOrganizationId.trim(),
+          parentOrganizationId: parentOrganizationId === '' ? null : parentOrganizationId,
         },
         idempotencyKey: idem,
       });
@@ -175,19 +210,29 @@ export default function AdminOrganizationDetailPage() {
                 title="Lowercase letters, numbers, hyphens"
               />
             </label>
-            <label className="field">
-              <span>Parent organization id (optional)</span>
-              <input
+            <div className="field">
+              <label htmlFor="parentOrganizationId">Parent organization (optional)</label>
+              <select
+                id="parentOrganizationId"
                 value={parentOrganizationId}
                 onChange={(e) => setParentOrganizationId(e.target.value)}
-                placeholder="UUID or empty to clear"
+              >
+                <option value="">None</option>
+                {parentOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                    {o.code !== null && o.code !== '' ? ` (${o.code})` : ''}
+                  </option>
+                ))}
+              </select>
+              <ResourceListPagination
+                nextCursor={parentsCursor}
+                loadingMore={loadingMoreParents}
+                onLoadMore={() => {
+                  void loadParentPicker({ cursor: parentsCursor, append: true });
+                }}
               />
-              {parentOrgLabel !== null ? (
-                <p className="muted" style={{ margin: '0.35rem 0 0' }}>
-                  Parent: {parentOrgLabel}
-                </p>
-              ) : null}
-            </label>
+            </div>
             <button className="btn btn-primary" type="submit" disabled={busy}>
               {busy ? 'Saving…' : 'Save changes'}
             </button>

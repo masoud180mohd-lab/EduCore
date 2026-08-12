@@ -30,7 +30,7 @@ Helpers added in `apps/web/src/lib/admin/resolve-related-names.ts`:
 
 - Notifications `shortId` (intentional truncate)
 - New list join fields / OpenAPI
-- Full org-tree parent picker redesign
+- ~~Full org-tree parent picker redesign~~ → **IMP-042**
 - PAY-OPS / Beem / Board re-review
 
 ## Verify

@@ -28,7 +28,7 @@ export const ADMIN_HUB_CARDS: ReadonlyArray<AdminHubCard> = [
     id: 'organizations',
     hrefSuffix: '/organizations',
     title: 'Organizations',
-    blurb: 'Campuses and units',
+    blurb: 'Campuses and units — pick parent from list (no UUID paste)',
   },
   {
     id: 'users',

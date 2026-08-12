@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-12 - IMP-042 Organization parent picker
+
+- Create/detail: parent is a select of active organizations (+ Load more), not UUID paste.
+- Detail excludes self; seeds current parent by id when not on the first picker page.
+
 ## 2026-08-12 - IMP-041 Enrollments list filter parity
 
 - Enrollments: Apply `studentId` + `classId` + `status` (draft/applied; Load more keeps filters).
