@@ -28,14 +28,27 @@ export function normalizeAuth0Domain(raw: string): string {
 
 /** Public Auth0 SPA/web config from Next env. Missing → Auth0 UI hidden. */
 export function loadAuth0PublicConfig(
-  environment: Record<string, string | undefined> = typeof process !== 'undefined'
-    ? process.env
-    : {},
+  environment?: Record<string, string | undefined>,
 ): Auth0PublicConfig | null {
-  const domain = normalizeAuth0Domain(environment['NEXT_PUBLIC_AUTH0_DOMAIN'] ?? '');
-  const clientId = (environment['NEXT_PUBLIC_AUTH0_CLIENT_ID'] ?? '').trim();
+  // Next.js only inlines *static* `process.env.NEXT_PUBLIC_*` in the browser bundle.
+  // Dynamic `env[name]` lookups stay empty on the client — do not use them for defaults.
+  const domainRaw =
+    environment === undefined
+      ? (process.env.NEXT_PUBLIC_AUTH0_DOMAIN ?? '')
+      : (environment['NEXT_PUBLIC_AUTH0_DOMAIN'] ?? '');
+  const clientIdRaw =
+    environment === undefined
+      ? (process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID ?? '')
+      : (environment['NEXT_PUBLIC_AUTH0_CLIENT_ID'] ?? '');
+  const audienceRaw =
+    environment === undefined
+      ? (process.env.NEXT_PUBLIC_AUTH0_AUDIENCE ?? '')
+      : (environment['NEXT_PUBLIC_AUTH0_AUDIENCE'] ?? '');
+
+  const domain = normalizeAuth0Domain(domainRaw);
+  const clientId = clientIdRaw.trim();
   if (domain === '' || clientId === '') return null;
-  const audience = (environment['NEXT_PUBLIC_AUTH0_AUDIENCE'] ?? '').trim();
+  const audience = audienceRaw.trim();
   return {
     domain,
     clientId,

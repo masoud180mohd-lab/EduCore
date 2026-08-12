@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-12 - WEB-AUTH0 client env inlining
+
+- `loadAuth0PublicConfig()` reads static `process.env.NEXT_PUBLIC_AUTH0_*` so Next.js inlines them in the browser bundle.
+- Dynamic `env[name]` lookups hid the Auth0 button even when `.env.local` was set.
+
 ## 2026-08-11 - IMP-040 Admin UUID → display names (wave 2)
 
 - Terms / classes / streams / fee structures: backfill year/class names past the first picker page.

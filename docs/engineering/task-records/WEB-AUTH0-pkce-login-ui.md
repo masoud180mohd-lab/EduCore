@@ -42,6 +42,10 @@ Auth0 app callbacks must include `http://localhost:3001/auth/callback` (already 
 3. Auth0 Universal Login → `/auth/callback` → EduCore session
 4. Without public Auth0 env → button hidden; password still works
 
+## Fix (2026-08-11)
+
+Next.js only inlines **static** `process.env.NEXT_PUBLIC_*` in the browser. Dynamic `env[name]` lookups left Auth0 config empty on the client (button stayed hidden even with `.env.local` set). `loadAuth0PublicConfig()` now reads static `process.env.NEXT_PUBLIC_AUTH0_*` by default.
+
 ## 2026-08-09 Owner GO
 
 `GO WEB-AUTH0` — code already on `main`; Owner env wired to staging Auth0 public client + staging API base for local web smoke.

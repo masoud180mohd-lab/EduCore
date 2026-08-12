@@ -41,6 +41,17 @@ describe('loadAuth0PublicConfig', () => {
       audience: 'https://api.example',
     });
   });
+
+  it('uses static NEXT_PUBLIC_ process.env when no override map is passed', () => {
+    vi.stubEnv('NEXT_PUBLIC_AUTH0_DOMAIN', 'https://from-env.us.auth0.com/');
+    vi.stubEnv('NEXT_PUBLIC_AUTH0_CLIENT_ID', 'env-client');
+    vi.stubEnv('NEXT_PUBLIC_AUTH0_AUDIENCE', '');
+    expect(loadAuth0PublicConfig()).toEqual({
+      domain: 'from-env.us.auth0.com',
+      clientId: 'env-client',
+      audience: null,
+    });
+  });
 });
 
 describe('PKCE challenge', () => {
