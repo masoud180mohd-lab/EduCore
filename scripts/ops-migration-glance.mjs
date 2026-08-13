@@ -38,8 +38,6 @@ const webhook = await client.query(
 await client.end();
 
 process.stdout.write(`config=${CONFIG}\n`);
-process.stdout.write(
-  `aug13_migrations=${mig.rows.map((r) => r.id).join(',') || '(none)'}\n`,
-);
+process.stdout.write(`aug13_migrations=${mig.rows.map((r) => r.id).join(',') || '(none)'}\n`);
 process.stdout.write(`bursar_system_role=${bursar.rows[0].n}\n`);
 process.stdout.write(`educore_webhook_role=${webhook.rows[0].ok}\n`);
