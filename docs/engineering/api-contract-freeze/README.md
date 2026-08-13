@@ -1,5 +1,7 @@
 # API Contract Freeze Records
 
+> **SOLO-GOV-002:** Slice ACFs below are **Owner-accepted**. “Provisional + no re-sign” meant a Board that was never staffed. Do not wait for independent countersign.
+
 Engineering design freezes for public HTTP contracts. These refine `EduCore/06_API_SPECIFICATION.md` for a concrete slice and do **not** replace the immutable kit.
 
 ## Authority order
@@ -36,4 +38,4 @@ Engineering design freezes for public HTTP contracts. These refine `EduCore/06_A
 - Freeze ≠ implementation (no controllers required to “complete” the freeze).
 - Breaking changes need a new version or superseding freeze revision.
 - Cross-tenant leakage is a release blocker; contracts must fail closed.
-- Publishing OpenAPI YAML does **not** re-accept freezes under SOLO-GOV-001.
+- Publishing OpenAPI YAML does not invent an Independent Board. Owner-accepted (SOLO-GOV-002) is enough.

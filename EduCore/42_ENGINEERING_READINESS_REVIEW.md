@@ -1,5 +1,7 @@
 # 42 Engineering Readiness Review
 
+> **SOLO-GOV-002 (2026-08-13):** This file is a **2026-07-13 technical snapshot** written as if an Independent Engineering Review Board existed. **That Board was never staffed.** Do not wait for Board re-review. Do not invent countersigners. Owner + AI is the operating model. Keep the blocker table as a **checklist**; it is not a people-gate. See `docs/engineering/governance/SOLO-GOV-002-owner-plus-ai.md`.
+
 ## Review Mandate
 
 Independent Engineering Review Board assessment of whether EduCore is ready to enter production software development. Reviewed on 2026-07-13 against the EduCore AI Development Kit v2.0, accepted ADRs, Architecture Freeze v1.0, Engineering Execution Roadmap, Master Engineering Execution Prompt, and AI-EOS.
@@ -130,17 +132,12 @@ Scores represent present execution evidence, not ambition or document quality.
 
 # NO GO
 
-EduCore is **not approved to begin unrestricted production feature development**. The Board does approve the tightly bounded, non-business Sprint 0 Engineering Foundation as the corrective path.
+**Historical (2026-07-13) Board wording, retained as snapshot:** EduCore is **not approved to begin unrestricted production feature development**. The Board does approve the tightly bounded, non-business Sprint 0 Engineering Foundation as the corrective path.
 
 The required blockers are B-01 through B-07. No production domain data model, business API, role-specific production UI, financial workflow, offline workflow, or AI feature should be implemented until the relevant blocker evidence is accepted. The current documentation is a strong constitution; it is not yet sufficient proof that the system can be built, operated, restored, and secured safely in production.
 
+**SOLO-GOV-002 operating note:** there is no Board to re-convene. Sprint 0 and slice freezes have since been executed under Owner + AI. Remaining limits are technical (see `43_PROJECT_STATUS.md`), not missing architects. This file is **not** a public-pilot GO.
+
 ## Re-Review Gate
 
-A follow-up Engineering Readiness Review is required after:
-
-- Sprint 0 exit evidence is available.
-- Database, API Contract, and Design System Freeze records are accepted for the Identity/Organization slice.
-- The threat-model/identity decision and production topology/DR decision are recorded.
-- CI, tenant-isolation, restore, and operational-readiness evidence is demonstrated.
-
-Only then should the Board reconsider a conditional approval for the first production feature slice.
+**Retired.** A follow-up Independent Board review will not happen. Owner uses `43_PROJECT_STATUS.md` plus remaining technical residuals. Do not block Owner-directed work solely because this section once required a Board.

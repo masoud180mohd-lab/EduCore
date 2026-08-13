@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-13 - SOLO-GOV-002 Owner + AI (Board retired)
+
+- Kit Independent Board / architect-team people-gates retired. `42` kept as historical checklist.
+- F-005 withdrawn (not fake-closed). Remaining limits: ClickPesa keys, Neon PITR 6h.
+
 ## 2026-08-13 - F-002 prod MFA hard (F-005 still open)
 
 - Privileged TOTP enrolled on prod admin; Doppler `prd` + Fly `educore-api` `MFA_ENFORCE=hard`.

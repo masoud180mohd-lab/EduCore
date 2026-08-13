@@ -65,3 +65,5 @@ Even after Freeze v1.0 (solo-operator):
 ---
 
 _Recorded so future readers are never told a fiction of three independent human signers._
+
+**Follow-on:** [SOLO-GOV-002](./SOLO-GOV-002-owner-plus-ai.md) retires Independent Board / freeze re-sign as a required gate. This note remains the Identity & Tenant acting-seat record.

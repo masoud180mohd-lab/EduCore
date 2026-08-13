@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This is the mandatory first document for every AI agent, engineer, reviewer, product contributor, and delivery lead working on EduCore.
+This is the mandatory first document for the **Project Owner and AI agent** working on EduCore. There is no separate architecture team.
 
 Do not begin analysis, planning, implementation, or document changes until you understand this page. It prevents local task requests from overriding the project constitution, frozen architecture, or readiness gates.
 
@@ -14,28 +14,29 @@ The MVP focuses on tenant onboarding, identity and access, student registry, aca
 
 ## Current Project Phase
 
-**Phase: Staging lab MVP live (FRA), post–Engineering Sprint 0. Production / public pilot still NO GO.**
+**Phase: Staging lab MVP live (FRA). Owner + AI (SOLO-GOV-002). No Independent Board.**
 
 Completed (kit):
 
 - Product vision, brief, requirements, and SRS.
-- Architecture review and Architecture Freeze v1.0.
+- Architecture Freeze v1.0 (planning baseline).
 - AI Development Kit v2.0, execution roadmap, Master Engineering Execution Prompt, and AI-EOS.
-- Independent Engineering Readiness Review (verdict retained below).
+- `42` retained as a **historical checklist** — Board wrapper retired.
 
-Completed (engineering, under SOLO-GOV-001 honesty):
+Completed (engineering, Owner + AI):
 
 - Engineering Sprint 0 foundation largely executed.
-- Slice DBF/ACF freezes and provisional DSF UI slices for identity, students, academic, attendance, marks, guardians, fees, and admin/teacher/parent lab UIs.
+- Slice DBF/ACF/DSF for identity, students, academic, attendance, marks, guardians, fees, and admin/teacher/parent lab UIs — **Owner-accepted** (SOLO-GOV-002).
 - Admin UI polish program (AUDIT-ADMIN-UI-R1 / IMP-027…046 + residuals) closed on `main`.
-- Staging FRA live: Fly `educore-api-staging` + Neon Frankfurt; D1 Pass; D2 Pass (app redeploy); Auth0 US + MFA-HARD.
-- Production infra live (Owner ops): Fly `educore-api` + Neon `educore-prod` + Doppler `prd` — **not** Board GO.
+- Staging FRA live: Fly `educore-api-staging` + Neon Frankfurt; D1 Pass; D2 Pass; Auth0 US + MFA-HARD.
+- Production infra live: Fly `educore-api` + Neon `educore-prod` + Doppler `prd`; prod MFA hard. Infra-live ≠ public-school cutover.
 
-Current Board / readiness position:
+Current readiness (technical, not missing people):
 
-- **NO GO for unrestricted production feature development or public pilot.** Independent re-review of `42` is still required (chat is not the Board).
-- **Gated IMP work is allowed** only behind accepted/provisional slice freezes (`docs/engineering/…`) with solo-operator qualification (SOLO-GOV-001).
-- Real mobile-money cutover remains blocked until ClickPesa secrets + readiness/MFA gates allow pilot (`PAY-001`…`PAY-005` shipped; runtime Fake until secrets).
+- **Gated IMP work is allowed** behind Owner-accepted slice freezes.
+- Real mobile-money cutover waits on **ClickPesa keys** (runtime Fake until then).
+- Neon PITR on current plan is **6h** (kit RPO was 24h).
+- Do **not** wait for Board re-review of `42`.
 
 Canonical phase detail: `43_PROJECT_STATUS.md`. Readiness blockers: `42_ENGINEERING_READINESS_REVIEW.md`.
 
@@ -82,7 +83,7 @@ For a task affecting a specific domain, read its related bible before proposing 
 
 ## What AI And Engineers Must Not Do
 
-- Do not write domain code, business APIs, persistence schemas, or role-specific UI outside an accepted/provisional slice freeze (DBF/ACF/DSF) and IMP gate; do not treat SOLO-GOV-001 as unrestricted production approval.
+- Do not write domain code, business APIs, persistence schemas, or role-specific UI outside an Owner-accepted slice freeze (DBF/ACF/DSF) and IMP gate. SOLO-GOV-002 is not a public-pilot stamp.
 - Do not silently redesign frozen architecture; raise an ADR-required decision instead.
 - Do not bypass tenant isolation, authorization, audit, ledger, offline-sync, AI Gateway, privacy, or observability controls.
 - Do not add a technology, dependency, data store, service, provider, or public contract without documented fit and required approval.
@@ -95,9 +96,9 @@ For a task affecting a specific domain, read its related bible before proposing 
 
 1. Read `43_PROJECT_STATUS.md` before planning or coding — it is the canonical phase page.
 2. Use the Master Engineering Execution Prompt and AI-EOS for every task; confirm the governing DBF/ACF/DSF slice exists before changing contracts or UI.
-3. **Lab/staging MVP:** live on FRA (API + Neon + MFA-HARD + Auth0 US). **PAY-OPS** waits on ClickPesa keys. **Production still NO GO** until Board re-review + Owner ops close-out (D2, weekly PITR, secrets hygiene).
+3. **Lab/staging MVP:** live on FRA. **PAY-OPS** waits on ClickPesa keys. Public-school cutover is an **Owner** decision with those technical residuals — not a Board meeting.
 4. Do not open another Admin UI polish wave as the default next epic.
-5. Do not claim production/public-pilot trust from lab IMP or solo-operator signatures (SOLO-GOV-001).
+5. Do not invent an Independent Board. Do not claim schools are live when payments are still Fake.
 
 ## Task Start Checklist
 

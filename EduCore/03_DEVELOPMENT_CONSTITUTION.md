@@ -2,6 +2,10 @@
 
 This file defines how all AI agents and developers must work on EduCore.
 
+## Who builds EduCore
+
+**Project Owner + AI only.** Kit documents that name an Independent Board, separate architects, or countersigners (PM Master, Masoud Salum, Rashid Mohammed as distinct humans) are **retired as people-gates** ([SOLO-GOV-002](../docs/engineering/governance/SOLO-GOV-002-owner-plus-ai.md)). Do not wait for those people. Do not invent them. Technical rules below still bind.
+
 ## Prime Directive
 
 Do not build random features. Build a trustworthy education operations platform.
@@ -48,7 +52,7 @@ Before coding, every AI agent must:
 3. Check accepted ADRs, the relevant freeze gates, and known limitations.
 4. State assumptions, blockers, and scope boundaries.
 5. Use `44_DEFINITION_OF_READY.md`, the Master Prompt, and the relevant AI-EOS prompt.
-6. Keep changes scoped and do not start production feature work without permission.
+6. Keep changes scoped. Owner permission is enough; do not wait for a fictional Board.
 AI agents must not:
 
 - Add new technologies without justification.

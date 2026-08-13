@@ -25,7 +25,8 @@ This is the human-readable control register for the EduCore documentation system
 | Architecture decisions | `decisions/ADR-*.md` | Accepted | New material decision |
 | Current execution sequence | `39_ENGINEERING_EXECUTION_ROADMAP.md` | Active | Milestone/workstream change |
 | Implementation behavior | `40_MASTER_ENGINEERING_EXECUTION_PROMPT.md` and `41_AI_ENGINEERING_OPERATING_SYSTEM.md` | Active | Process/control change |
-| Implementation permission | `42_ENGINEERING_READINESS_REVIEW.md` | Active | Re-review evidence available |
+| Implementation permission | `43_PROJECT_STATUS.md` + [SOLO-GOV-002](../docs/engineering/governance/SOLO-GOV-002-owner-plus-ai.md) | Active | Owner residual / freeze change |
+| Historical readiness snapshot | `42_ENGINEERING_READINESS_REVIEW.md` | Historical | Do not wait for Board re-review |
 | Task entry gate | `44_DEFINITION_OF_READY.md` | Active | Delivery-control change |
 | Deferred decisions | `46_KNOWN_LIMITATIONS.md` | Active | Decision/freeze changes |
 | Documentation change history | `CHANGELOG.md` | Active | Material documentation update |
