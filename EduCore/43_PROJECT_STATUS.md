@@ -8,13 +8,13 @@ This is the canonical status page for EduCore. It answers what is complete, what
 
 ## Current Phase
 
-**Controlled MVP vertical-slice implementation (lab / local), post–Engineering Sprint 0.**
+**Staging lab MVP live (Frankfurt), post–Engineering Sprint 0. Production / public pilot still NO GO.**
 
 - Architecture Freeze v1.0 remains the kit baseline (`38_ARCHITECTURE_FREEZE_RECORD.md`).
 - Independent Engineering Readiness Review (`42_ENGINEERING_READINESS_REVIEW.md`) remains **NO GO for unrestricted production / public pilot**.
 - Domain work proceeds only behind **slice** Database / API / provisional Design freezes and IMP gates under SOLO-GOV-001 — not as open-ended production feature development.
 
-Last status sync: **2026-07-31**.
+Last status sync: **2026-08-13**.
 
 ## Completed And Approved
 
@@ -46,9 +46,10 @@ Authoritative artifacts live under `docs/engineering/` (not rewritten into kit f
 ### Product surface shipped in lab (gated IMP)
 
 - Auth sessions, tenant bind, memberships/roles/permissions (deny-by-default).
-- Admin ops UI polish closed for AUDIT-ADMIN-UI-R1 (IMP-027…035 + Wave X + IMP-028 AdminTable residual).
+- Admin ops UI polish closed for AUDIT-ADMIN-UI-R1 (IMP-027…046).
 - Teacher attendance/marks UI; parent/guardian fee visibility (Fake payments path).
 - Office fees path: structures → invoices → office payment → receipts (real MoMo **not** integrated).
+- **Staging FRA:** Fly `educore-api-staging` + Neon `educore-staging-fra`; D1 Pass (2026-08-08 + FRA re-check 2026-08-10); Auth0 US PKCE; **MFA_ENFORCE=hard**.
 
 ## Frozen
 
@@ -74,8 +75,8 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 | Area | Status |
 | ---- | ------ |
 | Kit-wide Design System Freeze | **Accepted (provisional):** `DSF-KIT-001` v1.0 — slice DSF-001…006 still govern screens |
-| Production IdP / MFA | **ID-001** local default; **ID-003** + **WEB-AUTH0**; **WEB-MFA-UI** enroll/challenge; **MFA-HARD** available (enroll under soft before staging flip) |
-| Hosting, IaC, secrets provider, RPO/RTO | **Chosen (provisional):** Fly.io + Neon + Doppler; FRA; RPO≤24h; RTO≤8h — **Dockerfile + Fly staging toml in-repo**; live provision deferred |
+| Production IdP / MFA | **WEB-AUTH0** (US tenant residual); **WEB-MFA-UI**; staging **MFA-HARD** live (Owner enrolled TOTP) |
+| Hosting, IaC, secrets provider, RPO/RTO | **Live staging:** Fly.io + Neon Frankfurt + Doppler; RPO≤24h; RTO≤8h (D1 evidence). Production project **not** provisioned |
 | First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until adapter + secrets |
 | AI provider / release gate | **Lab adapter chosen:** OpenAI (`openai`) env-gated; Fake CI default; product features still gate-blocked (`lab.echo` only) |
 | Offline attendance worker | Foundation/docs path; not production offline cutover |
@@ -85,7 +86,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 1. Gated IMP increments behind **existing** accepted/provisional slice freezes (DBF/ACF/DSF), with SOLO-GOV-001 honesty in docs.
 2. Hardening, isolation tests, OpenAPI/docs sync, and Admin/Teacher/Parent UX polish **within** frozen contracts.
-3. Decision briefs that close open limitations (**PAY-001 done**; next **PAY-002** ClickPesa adapter contract).
+3. Decision briefs that close open limitations (**PAY-001…006** lab shipped; **PAY-OPS-001** when keys).
 4. Engineering Readiness **re-review preparation** before any production/pilot claim.
 
 ## Work Not Allowed Now
@@ -98,20 +99,24 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**Readiness decision stubs B-03…B-07** — **Done** (provisional). Production still **NO GO**.
+**Lab/staging MVP** — **Done (provisional, SOLO-GOV-001).** Production still **NO GO**.
 
-Required outputs:
+Closed:
 
 1. ~~B-05~~ Fly.io + Neon + Doppler; RPO≤24h; RTO≤8h.
 2. ~~B-04~~ Lite threat model.
-3. ~~B-07~~ Pilot SLOs + restore-drill schedule.
+3. ~~B-07 stub + D1~~ SLOs + executed DB restore (FRA re-check Pass).
 4. ~~B-03 / DSF-KIT-001~~ Kit-wide Design System Freeze Accepted (`DSF-KIT-001`).
-5. ~~OPS-001 / FLY-DOCKER / ID-001~~ Runbook + image + IdP defer Done.
-6. **OPS-EXEC** blocked until Owner installs CLIs + starts Docker Desktop + creates accounts (`OPS-001-phase0-tooling.md`).
-7. Then: `fly deploy` + D1 evidence; no secrets in git.
-8. Do **not** claim public pilot until drills + IdP trigger path when needed.
+5. ~~OPS-001 / FLY-DOCKER / OPS-EXEC~~ Staging provisioned; D1 evidence on `main`.
+6. ~~WEB-AUTH0 + MFA-HARD~~ Staging privileged path requires TOTP.
 
-**Parallel:** Sprint 0 exit note recorded; MFA-HARD / AI / COMMS lab Done.
+Owner close-out **before Board re-review** (not done by chat):
+
+1. **D2** — restore app on Fly against a PITR branch (D1 was DB-only).
+2. **Weekly Neon PITR glance** (SLO-5).
+3. **Secrets hygiene** — rotate chat-exposed seed admin password if applicable.
+4. **PAY-OPS-001** when ClickPesa sandbox keys exist (runtime stays Fake).
+5. Request Engineering Readiness **re-review** (`42`) — independent Board; SOLO-GOV-001 ≠ production GO.
 
 **Governance:** Full Board re-review still required per `42_ENGINEERING_READINESS_REVIEW.md`.
 
@@ -120,7 +125,7 @@ Required outputs:
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — exit note `SPRINT0_ENGINEERING_EXIT_NOTE.md`.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **Owner OPS-EXEC** / D1; PAY-OPS when keys; optional `GO IDP-002`.
+- **Next epic focus**: Owner **D2 + PITR cadence + secrets**; **PAY-OPS** when keys; **Board re-review** before any production claim.
 
 ## Status Update Rules
 

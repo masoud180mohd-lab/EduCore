@@ -8,15 +8,15 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 
 | Area | Current Limitation Or Deferral | Rule |
 |---|---|---|
-| Production readiness | Independent review remains **NO GO** for unrestricted production / public pilot; **2026-08-04 re-review prep** maps B-01…B-07 progress | Follow `42_ENGINEERING_READINESS_REVIEW.md` + `docs/engineering/governance/ENGINEERING_READINESS_REREVIEW_PREP_2026-08-04.md`; do not claim production readiness from lab IMP alone |
+| Production readiness | Independent review remains **NO GO** for unrestricted production / public pilot. Staging lab MVP is live (FRA). **2026-08-13** kit sync + `ENGINEERING_READINESS_REREVIEW_PREP_2026-08-04.md` | Follow `42_ENGINEERING_READINESS_REVIEW.md`; do not claim production readiness from lab IMP or SOLO-GOV-001 |
 | Freeze authority | Slice freezes Accepted under **SOLO-GOV-001** (acting seats), not independent multi-person countersign | Always qualify freeze language; do not invent “three independent signers” |
 | Database | Slice DBF artifacts exist under `docs/engineering/database-freeze/`; **kit-wide** ERD/index/RLS pack is not a single Accepted Freeze v1.0 document | New tables require a DBF revision for that slice before persistence work |
 | API | Slice ACF / OpenAPI baselines exist; not every future product route is open | New endpoints require ACF revision + IMP gate |
 | Design | **DSF-KIT-001** Accepted (kit chrome); slice DSF-001…006 for screens | Cite kit + slice DSF for UI IMP; independent design countersign still open |
 | Infrastructure | **B-05** Fly `fra` + Neon **Frankfurt** (`educore-staging-fra`, INFRA-002-CUTOVER Done); Doppler secrets | Legacy us-east-2 project optional delete; no secrets in repo |
-| Operations | **B-07** + OPS-001 in-repo; **OPS-EXEC blocked** (CLIs/Docker/accounts); drills not executed | Phase 0 install → deploy → D1; multi-person on-call still open |
-| Security / identity | **B-04** + **ID-001…003** + **WEB-AUTH0** + **WEB-MFA-UI** (challenge + Settings enroll) | Enable Auth0 public env when using Universal Login; enroll TOTP under soft before `MFA_ENFORCE=hard` |
-| Identity | Lab opaque-session AuthN + **TOTP MFA** (soft default; **hard** via `ops:stg:mfa-hard` Owner flip) | Enroll via Admin Settings; Owner: `CONFIRM=YES npm run ops:stg:mfa-hard` then Fly sync |
+| Operations | **B-07** D1 Pass on FRA; **D2** (app redeploy) and weekly PITR glance still Owner | Multi-person on-call still open; production Fly/Neon not provisioned |
+| Security / identity | **WEB-AUTH0** US residual; **WEB-MFA-UI**; staging **MFA_ENFORCE=hard** | Auth0 EU cutover cancelled (tenant limit); password AuthN still available |
+| Identity | Opaque session + TOTP; privileged path **hard** on staging | Rollback: Doppler `MFA_ENFORCE=soft` + Fly sync |
 | Payments | **ClickPesa PAY-006 UI shipped**; sandbox pilot **deferred** (no keys yet); runtime **Fake** | No secrets in git; resume PAY-OPS-001 when vendor sandbox available; parent pay still out |
 | SMS / notifications | **COMMS-001…005 lab complete** (Fake default; Beem env-gated) | Migrate; optional Beem keys; WhatsApp later |
 

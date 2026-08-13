@@ -76,9 +76,11 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 5. ~~Operator runbook~~ — **Published** `OPS-001` + Phase 0 tooling.
 6. ~~**FLY-DOCKER**~~ — **Done**.
 7. ~~**ID-001**~~ — **Done** (defer IdP).
-8. **OPS-EXEC** — **Blocked** on Owner machine (CLIs + Docker Desktop + billing accounts); see `OPS-EXEC-2026-08-08.md`.
-9. Operator: install Phase 0 tools → Phases A–E → D1 evidence.
-10. **Independent countersign** / **PAY-OPS** when humans/keys ready; **ID-002** when IdP trigger fires.
+8. ~~**OPS-EXEC**~~ — **Done** 2026-08-08 (`OPS-EXEC-2026-08-08.md`); staging Fly + Neon FRA.
+9. ~~D1~~ — **Pass** (2026-08-08 + FRA re-check 2026-08-10). **D2** (app redeploy) still Owner.
+10. ~~Auth0 + MFA-HARD~~ — Staging live 2026-08-11 (US tenant residual; hard TOTP).
+11. Owner before Board re-review: D2, weekly PITR glance, secrets hygiene; PAY-OPS when ClickPesa keys.
+12. Do **not** stamp production GO in this prep doc. Independent countersign still required.
 
 ## Explicit non-claims
 
@@ -87,22 +89,22 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 - Shipping lab Fake providers is **not** production provider readiness.
 - `MFA_ENFORCE=hard` availability is **not** IdP/OIDC completion.
 - **ID-001 Accepted (defer)** is **not** “IdP ready” — it locks deferral until a trigger.
-- **B-05 Accepted** is **not** “staging is live” — accounts/IaC still operator work.
-- **B-07 Accepted (stub)** is **not** “restore drills done” — schedule only until D1 evidence exists.
+- **B-05 Accepted** plus live staging is **not** production hosting.
+- **D1 Pass** is **not** D2 (app redeploy) and **not** weekly PITR cadence.
 - **B-04 lite TM** is **not** IdP completion or independent pen-test.
 - **B-03 posture** superseded same day by **DSF-KIT-001** — kit freeze Accepted under SOLO-GOV-001 (not independent design countersign).
-- **OPS-001 published** is **not** staging live or D1 passed.
-- **OPS-EXEC 2026-08-08** is **blocked** on CLIs/Docker/accounts — not a live deploy.
-- **FLY-DOCKER artifacts** are **not** a live Fly deploy.
+- **OPS-001 published** was not itself D1; D1 evidence is separate and now exists.
+- **OPS-EXEC** live deploy is **not** production GO.
 - **DSF-KIT-001** is **not** unrestricted production UI GO.
 
 ## Next agent/user GO options
 
 | Code | Work |
 | --- | --- |
-| `GO OPS-PHASE0` | Owner: install flyctl/Doppler, start Docker Desktop (`OPS-001-phase0-tooling.md`) |
-| `GO OPS-EXEC` | After Phase 0: accounts → Neon → `fly deploy` → D1 |
-| `GO DRILL-D1` | After staging Neon: restore smoke evidence file |
+| ~~`GO OPS-PHASE0`~~ | **Done** |
+| ~~`GO OPS-EXEC`~~ | **Done** |
+| ~~`GO DRILL-D1`~~ | **Pass** (FRA re-check 2026-08-10) |
+| `GO DRILL-D2` | Owner: app redeploy against PITR restore |
 | ~~`GO FLY-DOCKER`~~ | **Done** |
 | ~~`GO IDP`~~ | **Done (defer)** — `ID-001` |
 | ~~`GO DSF-KIT`~~ | **Done** — `DSF-KIT-001` |

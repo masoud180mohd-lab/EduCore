@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-13 - Staging lab MVP close (kit honesty)
+
+- Kit status (`00`, `43`, `46`, `VERSION`) synced: staging FRA + MFA-HARD + Auth0 live.
+- Production / public pilot remains **NO GO** until Board re-review + Owner D2/PITR/secrets + PAY-OPS keys.
+
 ## 2026-08-13 - Login / teacher / parent AdminPageHeader chrome
 
 - Sign-in, Auth0 callback, teacher, and parent pages use AdminPageHeader + Banner (same chrome as Admin).

@@ -34,12 +34,12 @@ This version expands the original AI Development Kit from a strong starter pack 
 
 ## Last Updated
 
-2026-07-31
+2026-08-13
 
 ## Freeze Status
 
 Architecture is frozen for downstream planning.
 
-Database design, API contracts, and design system are not frozen yet. They are the next freeze gates.
+Slice Database / API / Design freezes exist under `docs/engineering/` (SOLO-GOV-001). Kit-wide independent countersign is still open.
 
-The Engineering Readiness Review is NO GO for unrestricted production feature development. Controlled, non-business Sprint 0 foundation work is permitted.
+The Engineering Readiness Review is **NO GO** for unrestricted production / public pilot. Staging lab MVP is live on Frankfurt (Fly + Neon); that is not production GO.
