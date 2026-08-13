@@ -27,6 +27,9 @@ const tenantB = '01900000-0000-7000-8000-0000000000bb';
 /**
  * AUDIT-R4 / IMP-001 P10 — HTTP integration proving RequirePermission + session bind
  * are wired on representative product read routes (no live DB required).
+ *
+ * Nest `AppModule` compile on Windows can exceed Vitest's default 10s hook timeout,
+ * which skips this whole file (~83 tests). Keep hooks generous; tests stay short.
  */
 describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
   let app: INestApplication;
@@ -77,11 +80,13 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     await app.init();
     await app.listen(0);
     server = app.getHttpServer() as Server;
-  });
+  }, 120_000);
 
   afterAll(async () => {
-    await app.close();
-  });
+    if (app !== undefined) {
+      await app.close();
+    }
+  }, 30_000);
 
   it('GET /api/v1/tenants requires authentication', async () => {
     const response = await httpCall(server, 'GET', '/api/v1/tenants');
