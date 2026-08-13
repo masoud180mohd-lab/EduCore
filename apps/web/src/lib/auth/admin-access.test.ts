@@ -18,11 +18,11 @@ describe('canAccessAdminShell', () => {
     expect(canAccessAdminShell({ roles: [{ code: 'admin' }], permissions: [] })).toBe(true);
   });
 
-  it('allows staff with finance or student read (bursar / registry)', () => {
+  it('allows bursar finance.read or staff student read (registry)', () => {
     expect(
       canAccessAdminShell({
-        roles: [{ code: 'staff' }],
-        permissions: ['finance.read', 'attendance.manage'],
+        roles: [{ code: 'bursar' }],
+        permissions: ['finance.read', 'finance.manage'],
       }),
     ).toBe(true);
     expect(
@@ -64,10 +64,10 @@ describe('visibleAdminNavIds', () => {
     expect(ids.has('roles')).toBe(true);
   });
 
-  it('filters staff with finance+academic to Fees/Academic/Home only (no Users/Settings)', () => {
+  it('filters bursar+academic perms to Fees/Academic/Home only (no Users/Settings)', () => {
     const ids = visibleAdminNavIds({
-      roles: [{ code: 'staff' }],
-      permissions: ['finance.manage', 'academic.read', 'attendance.manage'],
+      roles: [{ code: 'bursar' }],
+      permissions: ['finance.manage', 'academic.read'],
     });
     expect(ids.has('home')).toBe(true);
     expect(ids.has('fees')).toBe(true);

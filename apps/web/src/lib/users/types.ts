@@ -9,7 +9,7 @@ export type UserRow = {
 
 export type UserStatus = 'invited' | 'active' | 'disabled' | 'locked';
 
-export type InviteRoleCode = 'owner' | 'admin' | 'staff';
+export type InviteRoleCode = 'owner' | 'admin' | 'staff' | 'bursar';
 
 export const USER_STATUSES: ReadonlyArray<UserStatus> = [
   'invited',
@@ -18,7 +18,12 @@ export const USER_STATUSES: ReadonlyArray<UserStatus> = [
   'locked',
 ];
 
-export const INVITE_ROLE_CODES: ReadonlyArray<InviteRoleCode> = ['owner', 'admin', 'staff'];
+export const INVITE_ROLE_CODES: ReadonlyArray<InviteRoleCode> = [
+  'owner',
+  'admin',
+  'staff',
+  'bursar',
+];
 
 export function userMessage(err: ApiClientError): string {
   if (err.status === 403) return 'You do not have access for this action.';

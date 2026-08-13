@@ -43,7 +43,9 @@ const ADMIN_SHELL_PERMS = [
 /** True when the actor may open AdminShell at all (any admin-domain capability). */
 export function canAccessAdminShell(me: MeLike): boolean {
   const roles = me.roles ?? [];
-  if (roles.some((r) => r.code === 'owner' || r.code === 'admin')) return true;
+  if (roles.some((r) => r.code === 'owner' || r.code === 'admin' || r.code === 'bursar')) {
+    return true;
+  }
   const perms = new Set(me.permissions ?? []);
   return ADMIN_SHELL_PERMS.some((code) => perms.has(code));
 }
@@ -116,7 +118,9 @@ export function canManageTenantSettings(me: MeLike): boolean {
 /** UX gate for office pay / MoMo initiate (API still enforces finance.manage). */
 export function canFinanceManage(me: MeLike): boolean {
   const roles = me.roles ?? [];
-  if (roles.some((r) => r.code === 'owner' || r.code === 'admin')) return true;
+  if (roles.some((r) => r.code === 'owner' || r.code === 'admin' || r.code === 'bursar')) {
+    return true;
+  }
   return new Set(me.permissions ?? []).has('finance.manage');
 }
 

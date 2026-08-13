@@ -70,9 +70,18 @@ describe('IMP-009 finance fees foundation', () => {
     // staff baseline must not include reconcile (owner/admin get it via full catalogue)
     const staffBlock = roles.slice(
       roles.indexOf('const STAFF_PERMISSIONS'),
-      roles.indexOf('export const SYSTEM_ROLE_DEFINITIONS'),
+      roles.indexOf('const BURSAR_PERMISSIONS'),
     );
     expect(staffBlock).not.toContain("'finance.reconcile'");
+    expect(staffBlock).not.toContain("'finance.read'");
+    expect(staffBlock).not.toContain("'finance.manage'");
+    const bursarBlock = roles.slice(
+      roles.indexOf('const BURSAR_PERMISSIONS'),
+      roles.indexOf('const PARENT_PERMISSIONS'),
+    );
+    expect(bursarBlock).toContain("'finance.read'");
+    expect(bursarBlock).toContain("'finance.manage'");
+    expect(bursarBlock).not.toContain("'finance.reconcile'");
   });
 
   it('ships product controllers with RequirePermission', () => {

@@ -24,8 +24,10 @@ describe('prefersAdminHome', () => {
 });
 
 describe('prefersStaffHome / prefersParentHome', () => {
-  it('prefers staff over bare parent when finance.read present', () => {
-    expect(prefersStaffHome({ roles: [], permissions: ['finance.read'] })).toBe(true);
+  it('routes bursar / finance.manage to admin, not teacher', () => {
+    expect(prefersAdminHome({ roles: [{ code: 'bursar' }], permissions: [] })).toBe(true);
+    expect(prefersAdminHome({ roles: [], permissions: ['finance.manage'] })).toBe(true);
+    expect(prefersStaffHome({ roles: [], permissions: ['finance.read'] })).toBe(false);
     expect(
       prefersParentHome({ roles: [{ code: 'parent' }], permissions: ['parent.finance.read'] }),
     ).toBe(true);

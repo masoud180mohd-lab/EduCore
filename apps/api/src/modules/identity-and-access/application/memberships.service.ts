@@ -42,7 +42,7 @@ export type LifecycleMembershipResult = {
 };
 
 const MEMBERSHIP_STATUSES = new Set(['invited', 'active', 'suspended', 'removed']);
-const SYSTEM_ROLE_CODES = new Set(['owner', 'admin', 'staff']);
+const SYSTEM_ROLE_CODES = new Set(['owner', 'admin', 'staff', 'bursar']);
 const CREATE_ROUTE = '/api/v1/memberships';
 const LIFECYCLE_ROUTE_PREFIX = '/api/v1/memberships/';
 // Practical email shape; full RFC not required for product invite.
@@ -536,9 +536,12 @@ export function parseCreateMembershipRequest(raw: unknown): {
     }
     roleCodes = body['roleCodes'].map((code, index) => {
       if (typeof code !== 'string' || !SYSTEM_ROLE_CODES.has(code)) {
-        throw AppError.validation(`roleCodes[${String(index)}] must be owner, admin, or staff.`, {
-          field: 'roleCodes',
-        });
+        throw AppError.validation(
+          `roleCodes[${String(index)}] must be owner, admin, staff, or bursar.`,
+          {
+            field: 'roleCodes',
+          },
+        );
       }
       return code;
     });

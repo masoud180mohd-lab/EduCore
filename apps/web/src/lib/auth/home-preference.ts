@@ -3,30 +3,28 @@ export type MeLike = {
   readonly permissions?: ReadonlyArray<string>;
 };
 
-/** Admin home if owner/admin role or tenant/user/org manage surface. */
+/** Admin home if owner/admin/bursar or tenant/user/org manage surface. */
 export function prefersAdminHome(me: MeLike): boolean {
   const roles = me.roles ?? [];
-  if (roles.some((r) => r.code === 'owner' || r.code === 'admin')) return true;
+  if (roles.some((r) => r.code === 'owner' || r.code === 'admin' || r.code === 'bursar')) {
+    return true;
+  }
   const perms = new Set(me.permissions ?? []);
   return (
     perms.has('tenant.manage') ||
     perms.has('user.manage') ||
     perms.has('user.invite') ||
-    perms.has('organization.manage')
+    perms.has('organization.manage') ||
+    perms.has('finance.manage')
   );
 }
 
-/** Staff classroom/bursar surface — wins over parent when both apply. */
+/** Classroom staff surface — wins over parent when both apply. Not bursar. */
 export function prefersStaffHome(me: MeLike): boolean {
   const roles = me.roles ?? [];
   if (roles.some((r) => r.code === 'staff')) return true;
   const perms = new Set(me.permissions ?? []);
-  return (
-    perms.has('attendance.manage') ||
-    perms.has('finance.read') ||
-    perms.has('finance.manage') ||
-    perms.has('marks.manage')
-  );
+  return perms.has('attendance.manage') || perms.has('marks.manage');
 }
 
 export function prefersParentHome(me: MeLike): boolean {

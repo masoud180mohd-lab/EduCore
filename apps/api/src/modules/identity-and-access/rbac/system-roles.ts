@@ -4,7 +4,7 @@
  */
 import { PERMISSION_CODES, type PermissionCode } from '../../../common/policy/permission-codes.js';
 
-export const SYSTEM_ROLE_CODES = ['owner', 'admin', 'staff', 'parent'] as const;
+export const SYSTEM_ROLE_CODES = ['owner', 'admin', 'staff', 'bursar', 'parent'] as const;
 export type SystemRoleCode = (typeof SYSTEM_ROLE_CODES)[number];
 
 export type SystemRoleDefinition = {
@@ -13,7 +13,7 @@ export type SystemRoleDefinition = {
   readonly permissions: ReadonlyArray<PermissionCode>;
 };
 
-/** Classroom staff baseline: reads + attendance.manage for teacher mark flow. */
+/** Classroom staff: attendance/marks. No bursar money path (F-004). */
 const STAFF_PERMISSIONS: ReadonlyArray<PermissionCode> = [
   'tenant.read',
   'organization.read',
@@ -25,8 +25,6 @@ const STAFF_PERMISSIONS: ReadonlyArray<PermissionCode> = [
   'guardian.read',
   'marks.read',
   'marks.manage',
-  'finance.read',
-  'finance.manage',
   'notification.read',
   'notification.manage',
   'ai.read',
@@ -34,6 +32,17 @@ const STAFF_PERMISSIONS: ReadonlyArray<PermissionCode> = [
   'role.read',
   'audit.read',
   'entitlement.read',
+];
+
+/** Office fees path: invoice/pay/receipt. No classroom writes, no reconcile. */
+const BURSAR_PERMISSIONS: ReadonlyArray<PermissionCode> = [
+  'tenant.read',
+  'organization.read',
+  'student.read',
+  'academic.read',
+  'guardian.read',
+  'finance.read',
+  'finance.manage',
 ];
 
 /** Bound guardian portal (DBF-011 / ACF-013) — no bursar finance.read. */
@@ -45,8 +54,7 @@ const PARENT_PERMISSIONS: ReadonlyArray<PermissionCode> = [
 /**
  * Owner holds full identity/tenant admin catalogue.
  * Admin matches owner except entitlement.manage (owner-only).
- * Staff is classroom/bursar-oriented.
- * Parent is portal-scoped only.
+ * Staff is classroom-only. Bursar is office fees. Parent is portal-scoped.
  */
 export const SYSTEM_ROLE_DEFINITIONS: ReadonlyArray<SystemRoleDefinition> = [
   {
@@ -63,6 +71,11 @@ export const SYSTEM_ROLE_DEFINITIONS: ReadonlyArray<SystemRoleDefinition> = [
     code: 'staff',
     name: 'Staff',
     permissions: STAFF_PERMISSIONS,
+  },
+  {
+    code: 'bursar',
+    name: 'Bursar',
+    permissions: BURSAR_PERMISSIONS,
   },
   {
     code: 'parent',

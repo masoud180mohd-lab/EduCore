@@ -32,7 +32,7 @@ export type BootstrapSystemRolesResult = {
 type Queryable = Pick<pg.Client | pg.PoolClient, 'query'>;
 
 /**
- * Ensures owner/admin/staff exist for tenant with baseline role_permissions.
+ * Ensures owner/admin/staff/bursar/parent exist for tenant with baseline role_permissions.
  * Idempotent on (tenant_id, code) and (role_id, permission_id).
  */
 export async function bootstrapSystemRolesForTenant(
