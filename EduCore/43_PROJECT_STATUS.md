@@ -50,7 +50,7 @@ Authoritative artifacts live under `docs/engineering/` (not rewritten into kit f
 - Teacher attendance/marks UI; parent/guardian fee visibility (Fake payments path).
 - Office fees path: structures → invoices → office payment → receipts (real MoMo **not** integrated).
 - **Staging FRA:** Fly `educore-api-staging` + Neon `educore-staging-fra`; D1 Pass (2026-08-08 + FRA re-check 2026-08-10); D2 Pass (app redeploy 2026-08-13); Auth0 US PKCE; **MFA_ENFORCE=hard**.
-- **Production infra (not GO):** Fly `educore-api` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green; IdP local; MFA soft; Fake payments.
+- **Production infra (not GO):** Fly `educore-api` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green; IdP local; **MFA_ENFORCE=hard** (F-002, 2026-08-13); Fake payments.
 
 ## Frozen
 

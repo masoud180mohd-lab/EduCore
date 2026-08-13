@@ -2,6 +2,11 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-13 - F-002 prod MFA hard (F-005 still open)
+
+- Privileged TOTP enrolled on prod admin; Doppler `prd` + Fly `educore-api` `MFA_ENFORCE=hard`.
+- F-005 not closed: independent freeze re-sign packet only (`F-005-independent-resign-packet-2026-08-13.md`).
+
 ## 2026-08-13 - Production infra live (not Board GO)
 
 - Fly `educore-api` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green.
