@@ -148,10 +148,7 @@ describe('IMP-009 finance fees foundation', () => {
 
   it('F-016: payment_reconciliations ENABLE + FORCE RLS and tenant SELECT policy', () => {
     const rls = readFileSync(
-      path.join(
-        root,
-        'apps/api/db/migrations/20260813150000_payment_reconciliations_rls.up.sql',
-      ),
+      path.join(root, 'apps/api/db/migrations/20260813150000_payment_reconciliations_rls.up.sql'),
       'utf8',
     );
     expect(rls).toContain("app.enable_tenant_rls('payment_reconciliations'");
@@ -159,6 +156,18 @@ describe('IMP-009 finance fees foundation', () => {
     expect(rls).toMatch(/FOR SELECT TO educore_app/i);
     expect(rls).toContain('tenant_id = app.current_tenant_id()');
     expect(rls).toContain('REVOKE ALL ON TABLE payment_reconciliations FROM PUBLIC');
+  });
+
+  it('F-017: educore_app loses MoMo EXECUTE; ingest granted to educore_webhook', () => {
+    const sql = readFileSync(
+      path.join(root, 'apps/api/db/migrations/20260813160000_momo_webhook_role_grants.up.sql'),
+      'utf8',
+    );
+    expect(sql).toContain('REVOKE EXECUTE ON FUNCTION app.complete_pending_mobile_money_payment');
+    expect(sql).toContain('REVOKE EXECUTE ON FUNCTION app.ingest_clickpesa_gateway_event');
+    expect(sql).toContain('GRANT EXECUTE ON FUNCTION app.ingest_clickpesa_gateway_event');
+    expect(sql).toContain('TO educore_webhook');
+    expect(sql).toContain('FROM educore_app');
   });
 
   it('binds PAYMENT_PROVIDER_PORT with Fake default (ClickPesa optional)', () => {

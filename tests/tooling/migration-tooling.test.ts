@@ -39,6 +39,7 @@ describe('IMP-001 migration tooling', () => {
     expect(bootstrap).toContain('educore_migrator');
     expect(bootstrap).toContain('educore_app');
     expect(bootstrap).toContain('educore_platform');
+    expect(bootstrap).toContain('educore_webhook');
     expect(bootstrap.toLowerCase()).toContain('force rls');
 
     const readme = read('apps/api/db/README.md').toLowerCase();

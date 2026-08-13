@@ -9,7 +9,7 @@ import type { Pool } from 'pg';
 import { logFailClosedDbError } from '../../../common/logging/fail-closed-log.js';
 import type { AppLogger } from '../../../common/logging/logger.js';
 import { APP_LOGGER } from '../../../common/logging/logger.tokens.js';
-import { PG_POOL } from '../../../common/persistence/pg.tokens.js';
+import { PG_POOL, PG_WEBHOOK_POOL } from '../../../common/persistence/pg.tokens.js';
 import { withTenantTransaction } from '../../../common/persistence/tenant-transaction.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
 
@@ -121,11 +121,16 @@ type ReceiptDbRow = {
 export class PaymentAttemptsRepository {
   constructor(
     @Optional() @Inject(PG_POOL) private readonly pool: Pool | null,
+    @Optional() @Inject(PG_WEBHOOK_POOL) private readonly webhookPool: Pool | null = null,
     @Optional() @Inject(APP_LOGGER) private readonly logger: AppLogger | null = null,
   ) {}
 
   isAvailable(): boolean {
     return this.pool !== null;
+  }
+
+  isWebhookIngestAvailable(): boolean {
+    return this.webhookPool !== null;
   }
 
   async postManualPayment(
@@ -300,7 +305,7 @@ export class PaymentAttemptsRepository {
     });
   }
 
-  /** PAY-004: ClickPesa webhook ingest (no membership; SECURITY DEFINER). */
+  /** PAY-004: ClickPesa webhook ingest via educore_webhook (F-017). */
   async ingestClickPesaGatewayEvent(input: {
     readonly gatewayEventId: string;
     readonly providerEventId: string;
@@ -317,8 +322,8 @@ export class PaymentAttemptsRepository {
     readonly completed: boolean;
     readonly detail: string;
   }> {
-    if (this.pool === null) throw new Error('database unavailable');
-    const client = await this.pool.connect();
+    if (this.webhookPool === null) throw new Error('database unavailable');
+    const client = await this.webhookPool.connect();
     try {
       await client.query('BEGIN');
       const result = await client.query<{

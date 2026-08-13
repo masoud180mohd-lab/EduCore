@@ -113,6 +113,12 @@ and writes `payment_allocations` + `receipts`. **Never** mutate a stored balance
 - `educore_app` SELECT policy: `tenant_id = app.current_tenant_id()` (same pattern as other finance tables).
 - PUBLIC revoked. Writes still only via `app.reconcile_payment` (SECURITY DEFINER).
 
+## Rev 1.5 — F-017 MoMo SECURITY DEFINER EXECUTE split (migration `20260813160000`)
+
+- `educore_app` **REVOKE EXECUTE** on `complete_pending_mobile_money_payment` and `ingest_clickpesa_gateway_event`.
+- New role `educore_webhook` receives EXECUTE on ingest only (HTTP HMAC still required). Complete stays internal (definer call from ingest).
+- Nest ClickPesa ingest uses `EDUCORE_WEBHOOK_DATABASE_URL` / default local webhook URL — never the `educore_app` pool.
+
 ## Solo-operator honesty
 
 Acting seats only.

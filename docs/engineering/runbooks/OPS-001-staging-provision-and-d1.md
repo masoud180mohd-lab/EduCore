@@ -38,6 +38,7 @@ In Doppler `staging`, set (values from Neon / generated locally):
 | `NODE_ENV` | `production` or `staging` as agreed |
 | `DATABASE_URL` | Neon **migrator** / privileged URL (migrate only; not Nest pool) |
 | `EDUCORE_APP_DATABASE_URL` | Neon **`educore_app`** role URL |
+| `EDUCORE_WEBHOOK_DATABASE_URL` | Neon **`educore_webhook`** role URL (F-017 ClickPesa ingest) |
 | `EDUCORE_ENABLE_APP_DB` | `1` |
 | `MFA_ENFORCE` | Prefer `soft` until privileged users enrolled; `hard` before finance pilot trust |
 | `MFA_TOTP_ENCRYPTION_KEY` | 32-byte key (base64 or 64-char hex); generate once; backup in vault |
