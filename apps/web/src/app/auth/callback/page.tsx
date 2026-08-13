@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { MfaChallengeForm } from '@/components/MfaChallengeForm';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearPkcePending, PKCE_MAX_AGE_MS, readPkcePending } from '@/lib/auth/auth0-pkce';
@@ -173,17 +174,15 @@ export default function Auth0CallbackPage() {
 
   return (
     <div className="app-shell">
-      <h1>Auth0 sign-in</h1>
-      <p className="muted">
-        {mfaChallengeToken !== null
-          ? 'Authenticator required to finish EduCore session.'
-          : 'Completing EduCore session after Auth0…'}
-      </p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Auth0 sign-in"
+        description={
+          mfaChallengeToken !== null
+            ? 'Authenticator required to finish EduCore session.'
+            : 'Completing EduCore session after Auth0…'
+        }
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {busy && tenants === null && mfaChallengeToken === null ? (
         <p className="muted">Please wait…</p>
       ) : null}

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog } from '@/components/admin';
+import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
 import { TeacherShell } from '@/components/TeacherShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -183,32 +183,25 @@ export default function MarkEntryPage() {
       <p>
         <Link href={`/t/${tenantId}/teacher/marks`}>← Marks</Link>
       </p>
-      <h1>Enter marks</h1>
-      <p className="muted">
-        {examName}
-        {subject !== null ? (
-          <>
-            {' '}
-            · max {String(subject.maxScore)} ·{' '}
-            <span className={`chip chip-${subject.status === 'draft' ? 'open' : 'closed'}`}>
-              {subject.status}
-            </span>
-          </>
-        ) : null}
-      </p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      <AdminPageHeader title="Enter marks">
+        <p className="muted">
+          {examName}
+          {subject !== null ? (
+            <>
+              {' '}
+              · max {String(subject.maxScore)} ·{' '}
+              <span className={`chip chip-${subject.status === 'draft' ? 'open' : 'closed'}`}>
+                {subject.status}
+              </span>
+            </>
+          ) : null}
+        </p>
+      </AdminPageHeader>
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {loading ? <p className="muted">Loading roster…</p> : null}
       {!loading && drafts.length === 0 ? (
-        <div className="banner banner-warn">No active enrollments for this class.</div>
+        <Banner tone="warn">No active enrollments for this class.</Banner>
       ) : null}
 
       <ul className="list">

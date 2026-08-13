@@ -2,6 +2,10 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-13 - Login / teacher / parent AdminPageHeader chrome
+
+- Sign-in, Auth0 callback, teacher, and parent pages use AdminPageHeader + Banner (same chrome as Admin).
+
 ## 2026-08-13 - IMP-046 Enrollments class picker by year
 
 - Filter class list is scoped to the selected academic year; changing year clears class/stream.

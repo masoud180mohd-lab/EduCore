@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
-import { ConfirmDialog } from '@/components/admin';
+import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
 import { TeacherShell } from '@/components/TeacherShell';
 import {
   type AttendanceRecordStatus,
@@ -178,28 +178,21 @@ export default function MarkSessionPage() {
       <p>
         <Link href={`/t/${tenantId}/teacher/attendance`}>← Take attendance</Link>
       </p>
-      <h1>Mark attendance</h1>
-      {session !== null ? (
-        <p className="muted">
-          {session.sessionDate} · {classLabel ?? 'Class'} ·{' '}
-          <span className={`chip chip-${session.status === 'open' ? 'open' : 'closed'}`}>
-            {session.status}
-          </span>
-        </p>
-      ) : null}
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
-      {info !== null ? (
-        <div className="banner banner-info" role="status">
-          {info}
-        </div>
-      ) : null}
+      <AdminPageHeader title="Mark attendance">
+        {session !== null ? (
+          <p className="muted">
+            {session.sessionDate} · {classLabel ?? 'Class'} ·{' '}
+            <span className={`chip chip-${session.status === 'open' ? 'open' : 'closed'}`}>
+              {session.status}
+            </span>
+          </p>
+        ) : null}
+      </AdminPageHeader>
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {loading ? <p className="muted">Loading roster…</p> : null}
       {!loading && drafts.length === 0 ? (
-        <div className="banner banner-warn">No active enrollments for this class.</div>
+        <Banner tone="warn">No active enrollments for this class.</Banner>
       ) : null}
 
       <ul className="list">

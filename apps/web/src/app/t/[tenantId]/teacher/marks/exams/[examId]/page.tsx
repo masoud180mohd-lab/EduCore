@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { TeacherShell } from '@/components/TeacherShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -93,15 +94,10 @@ export default function ExamDetailPage() {
       <p>
         <Link href={`/t/${tenantId}/teacher/marks`}>← Marks</Link>
       </p>
-      <h1>{exam?.name ?? 'Exam'}</h1>
-      {exam !== null ? (
-        <p className="muted">Status {exam.status}</p>
-      ) : null}
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader title={exam?.name ?? 'Exam'}>
+        {exam !== null ? <p className="muted">Status {exam.status}</p> : null}
+      </AdminPageHeader>
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onAddSubject(e)}>
         <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Add subject</h2>
@@ -139,7 +135,7 @@ export default function ExamDetailPage() {
       </form>
 
       <h2 style={{ fontSize: '1.1rem' }}>Subjects</h2>
-      {subjects.length === 0 ? <div className="banner banner-info">No subjects yet.</div> : null}
+      {subjects.length === 0 ? <Banner tone="info">No subjects yet.</Banner> : null}
       <ul className="list">
         {subjects.map((s) => (
           <li key={s.id}>

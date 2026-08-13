@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { ParentShell } from '@/components/ParentShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { readSession } from '@/lib/auth/session';
@@ -92,15 +93,11 @@ export default function ParentInvoiceDetailPage() {
           <Link href={`/t/${tenantId}/parent`}>← Fees</Link>
         )}
       </p>
-      <h1>Invoice (read-only)</h1>
-      <div className="banner banner-info" role="status">
+      <AdminPageHeader title="Invoice (read-only)" />
+      <Banner tone="info">
         Pay at the school office. Mobile money is not enabled (PAY-PROVIDER-001).
-      </div>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      </Banner>
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {loading ? <p className="muted">Loading…</p> : null}
       {!loading && invoice !== null ? (
         <>
@@ -124,7 +121,7 @@ export default function ParentInvoiceDetailPage() {
           </ul>
           <h2 style={{ fontSize: '1.1rem' }}>Payments</h2>
           {payments.length === 0 ? (
-            <div className="banner banner-info">No payments recorded yet.</div>
+            <Banner tone="info">No payments recorded yet.</Banner>
           ) : (
             <ul className="list">
               {payments.map((p) => (

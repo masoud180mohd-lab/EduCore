@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { TeacherShell } from '@/components/TeacherShell';
 import { buildClassLabelMap, formatClassLabel } from '@/lib/academic/class-labels';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
@@ -86,13 +87,11 @@ export default function MarksHomePage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
-      <h1>Marks</h1>
-      <p className="muted">Create an exam, add subjects, enter scores, then submit.</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Marks"
+        description="Create an exam, add subjects, enter scores, then submit."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
         <h2 style={{ margin: 0, fontSize: '1.1rem' }}>New exam</h2>
@@ -142,9 +141,7 @@ export default function MarksHomePage() {
       </form>
 
       {loading ? <p className="muted">Loading…</p> : null}
-      {!loading && exams.length === 0 ? (
-        <div className="banner banner-info">No exams yet.</div>
-      ) : null}
+      {!loading && exams.length === 0 ? <Banner tone="info">No exams yet.</Banner> : null}
       <ul className="list">
         {exams.map((exam) => (
           <li key={exam.id}>

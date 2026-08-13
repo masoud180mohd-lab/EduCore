@@ -3,6 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { TeacherShell } from '@/components/TeacherShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -125,16 +126,14 @@ export default function AttendancePickerPage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
-      <h1>Take attendance</h1>
-      <p className="muted">Pick class and date to open or resume a session.</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Take attendance"
+        description="Pick class and date to open or resume a session."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {loadingClasses ? <p className="muted">Loading classes…</p> : null}
       {!loadingClasses && classes.length === 0 ? (
-        <div className="banner banner-info">No active classes yet. Ask an admin to create one.</div>
+        <Banner tone="info">No active classes yet. Ask an admin to create one.</Banner>
       ) : null}
       <form className="stack" onSubmit={(e) => void onOpen(e)}>
         <div className="field">

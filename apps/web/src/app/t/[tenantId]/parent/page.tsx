@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { ParentShell } from '@/components/ParentShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { readSession } from '@/lib/auth/session';
@@ -67,22 +68,18 @@ export default function ParentHomePage() {
 
   return (
     <ParentShell tenantId={tenantId}>
-      <h1>Fees — {guardian?.displayName ?? 'Parent'}</h1>
-      <p className="muted">Read-only invoices for your linked students.</p>
-      <div className="banner banner-info" role="status">
-        Pay at the school office. Online payment is not available yet.
-      </div>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title={`Fees — ${guardian?.displayName ?? 'Parent'}`}
+        description="Read-only invoices for your linked students."
+      />
+      <Banner tone="info">Pay at the school office. Online payment is not available yet.</Banner>
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {loading ? <p className="muted">Loading…</p> : null}
       {!loading && error === null && active.length === 0 ? (
-        <div className="banner banner-info" role="status">
+        <Banner tone="info">
           No students are linked to your guardian account yet. Ask the school office to link a
           student.
-        </div>
+        </Banner>
       ) : null}
       {!loading && active.length > 0 ? (
         <ul className="list">

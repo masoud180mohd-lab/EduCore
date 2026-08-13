@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { TeacherShell } from '@/components/TeacherShell';
 import { buildClassLabelMap, formatClassLabel } from '@/lib/academic/class-labels';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
@@ -48,21 +49,19 @@ export default function TeacherHomePage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
-      <h1>Sessions</h1>
-      <p className="muted">Recent attendance sessions for this school.</p>
+      <AdminPageHeader
+        title="Sessions"
+        description="Recent attendance sessions for this school."
+      />
       <p>
         <Link className="btn btn-primary" href={`/t/${tenantId}/teacher/attendance`}>
           Take attendance
         </Link>
       </p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {loading ? <p className="muted">Loading…</p> : null}
       {!loading && rows.length === 0 ? (
-        <div className="banner banner-info">No sessions yet. Open one from Take attendance.</div>
+        <Banner tone="info">No sessions yet. Open one from Take attendance.</Banner>
       ) : null}
       <ul className="list">
         {rows.map((s) => (

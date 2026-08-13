@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { MfaChallengeForm } from '@/components/MfaChallengeForm';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { beginAuth0Login, isAuth0Configured } from '@/lib/auth/auth0-pkce';
@@ -134,13 +135,11 @@ export default function LoginPage() {
 
   return (
     <div className="app-shell">
-      <h1>Sign in</h1>
-      <p className="muted">EduCore — staff, admin, and parent accounts.</p>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      <AdminPageHeader
+        title="Sign in"
+        description="EduCore — staff, admin, and parent accounts."
+      />
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       {mfaChallengeToken !== null ? (
         <MfaChallengeForm

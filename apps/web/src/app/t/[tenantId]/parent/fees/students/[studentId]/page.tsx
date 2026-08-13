@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminPageHeader, Banner } from '@/components/admin';
 import { ParentShell } from '@/components/ParentShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { readSession } from '@/lib/auth/session';
@@ -59,18 +60,14 @@ export default function ParentStudentInvoicesPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/parent`}>← Fees</Link>
       </p>
-      <h1>Invoices</h1>
-      <div className="banner banner-info" role="status">
+      <AdminPageHeader title="Invoices" />
+      <Banner tone="info">
         Pay at the school office. Mobile money is not enabled (PAY-PROVIDER-001).
-      </div>
-      {error !== null ? (
-        <div className="banner banner-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+      </Banner>
+      {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {loading ? <p className="muted">Loading…</p> : null}
       {!loading && error === null && invoices.length === 0 ? (
-        <div className="banner banner-info">No invoices for this student yet.</div>
+        <Banner tone="info">No invoices for this student yet.</Banner>
       ) : null}
       {!loading && invoices.length > 0 ? (
         <ul className="list">
