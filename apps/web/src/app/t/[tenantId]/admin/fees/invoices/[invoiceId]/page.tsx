@@ -89,7 +89,7 @@ type SyncProviderResult = {
 const OFFICE_METHODS = ['cash', 'bank', 'cheque', 'other'] as const;
 
 const FAKE_PROVIDER_BANNER =
-  'Mobile money provider not configured (Fake default). Set ClickPesa secrets for sandbox.';
+  'Collect fees at the office (cash, bank, or cheque). Mobile money waits until a ClickPesa account exists (PAY-007).';
 
 type StudentGuardianLink = {
   readonly id: string;
@@ -619,7 +619,7 @@ export default function AdminInvoiceDetailPage() {
             </form>
           ) : null}
 
-          {canManageFinance && canRecordPayment(invoice.status, invoice.balanceMinor) ? (
+          {canManageFinance && canRecordPayment(invoice.status, invoice.balanceMinor) && momoConfigured ? (
             <form
               className="stack card"
               style={{ marginTop: '1rem' }}
@@ -630,7 +630,6 @@ export default function AdminInvoiceDetailPage() {
                 Creates a pending BillPay attempt (ClickPesa). Ask parent to pay the number; webhook
                 or Refresh updates status.
               </p>
-              {!momoConfigured ? <Banner tone="warn">{FAKE_PROVIDER_BANNER}</Banner> : null}
               <div className="field">
                 <label htmlFor="momo-amount">Amount (TZS major, ≤ balance)</label>
                 <input

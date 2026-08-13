@@ -62,7 +62,7 @@ export default function ParentStudentInvoicesPage() {
       </p>
       <AdminPageHeader title="Invoices" />
       <Banner tone="info">
-        Pay at the school office. Mobile money is not enabled (PAY-PROVIDER-001).
+        Pay at the school office (cash, bank, or cheque). Mobile money is not enabled (PAY-007 / PAY-PROVIDER-001).
       </Banner>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {loading ? <p className="muted">Loading…</p> : null}

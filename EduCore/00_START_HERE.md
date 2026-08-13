@@ -34,7 +34,7 @@ Completed (engineering, Owner + AI):
 Current readiness (technical, not missing people):
 
 - **Gated IMP work is allowed** behind Owner-accepted slice freezes.
-- Real mobile-money cutover waits on **ClickPesa keys** (runtime Fake until then).
+- Live fees: **office cash/bank/cheque** (PAY-007). ClickPesa later when Owner can afford the account.
 - Neon PITR on current plan is **6h** (kit RPO was 24h).
 - Do **not** wait for Board re-review of `42`.
 
@@ -96,7 +96,7 @@ For a task affecting a specific domain, read its related bible before proposing 
 
 1. Read `43_PROJECT_STATUS.md` before planning or coding — it is the canonical phase page.
 2. Use the Master Engineering Execution Prompt and AI-EOS for every task; confirm the governing DBF/ACF/DSF slice exists before changing contracts or UI.
-3. **Lab/staging MVP:** live on FRA. **PAY-OPS** waits on ClickPesa keys. Public-school cutover is an **Owner** decision with those technical residuals — not a Board meeting.
+3. **Lab/staging MVP:** live on FRA. Fees: **office collection**. Public-school cutover is an **Owner** decision (no Mixx/M-Pesa until ClickPesa).
 4. Do not open another Admin UI polish wave as the default next epic.
 5. Do not invent an Independent Board. Do not claim schools are live when payments are still Fake.
 

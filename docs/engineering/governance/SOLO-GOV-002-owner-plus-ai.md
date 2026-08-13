@@ -49,13 +49,13 @@ Keep the **files** (`36`, `37`, `42`, freeze packs). They are technical memory. 
 | ID | Under SOLO-GOV-002 |
 | -- | ------------------- |
 | **F-005** | **Withdrawn** — close condition was independent humans. None exist. Not “closed by fake re-sign.” |
-| **F-001** | Still open until Owner puts real ClickPesa keys in Doppler |
+| **F-001** | **Deferred** (PAY-007) — office cash/bank/cheque is the live path until Owner can afford ClickPesa |
 | **F-003** | Still a known limit (Neon PITR 6h vs kit RPO 24h) until Owner upgrades plan or accepts 6h |
 | **F-002** | Already closed in ops (prod MFA hard) |
 
 ## 6. Production / public schools
 
-Retiring the Board is **not** a public-pilot GO. Owner may point lab/prod infra at real schools only after accepting remaining technical residuals in `43_PROJECT_STATUS.md` (Fake payments until keys; 6h PITR). AI must not stamp “Board GO.”
+Retiring the Board is **not** a public-pilot GO. Owner may point lab/prod infra at real schools only after accepting remaining technical residuals in `43_PROJECT_STATUS.md` (office collection, not MoMo; 6h PITR). AI must not stamp “Board GO.”
 
 ## 7. Honesty line (use this)
 

@@ -26,7 +26,7 @@ type SyncPendingResult = {
 };
 
 const FAKE_PROVIDER_BANNER =
-  'Mobile money provider not configured (Fake default). Set ClickPesa secrets for sandbox.';
+  'Collect fees at the office (cash, bank, or cheque). Mobile money waits until a ClickPesa account exists (PAY-007).';
 
 export default function AdminFeesHubPage() {
   const params = useParams<{ tenantId: string }>();
@@ -94,10 +94,11 @@ export default function AdminFeesHubPage() {
       </p>
       <AdminPageHeader
         title="Fees"
-        description="Bursar path: structures → invoices → office or mobile-money payment → receipts. Sync pending refreshes MoMo without webhooks."
+        description="Bursar path: structures → invoices → office payment (cash/bank/cheque) → receipts. Mobile money later (PAY-007)."
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
+      <Banner tone="info">{FAKE_PROVIDER_BANNER}</Banner>
       {canReconcile ? (
         <div className="actions" style={{ marginBottom: '1rem' }}>
           <button
@@ -121,7 +122,7 @@ export default function AdminFeesHubPage() {
         <li>
           <Link className="card" href={`${base}/invoices`}>
             <strong>Invoices</strong>
-            <div className="muted">Draft, issue, void, filter, office pay, mobile money</div>
+            <div className="muted">Draft, issue, void, filter, office pay</div>
           </Link>
         </li>
         <li>

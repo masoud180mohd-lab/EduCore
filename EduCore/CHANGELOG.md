@@ -2,6 +2,10 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-13 - PAY-007 office collection until ClickPesa is affordable
+
+- Live fee path is office cash/bank/cheque. ClickPesa remains the chosen MoMo vendor for later; F-001 deferred. No invented keys; no substitute paid aggregator.
+
 ## 2026-08-13 - SOLO-GOV-002 Owner + AI (Board retired)
 
 - Kit Independent Board / architect-team people-gates retired. `42` kept as historical checklist.

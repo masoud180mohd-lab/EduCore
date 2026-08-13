@@ -47,10 +47,10 @@ Authoritative artifacts live under `docs/engineering/` (not rewritten into kit f
 
 - Auth sessions, tenant bind, memberships/roles/permissions (deny-by-default).
 - Admin ops UI polish closed for AUDIT-ADMIN-UI-R1 (IMP-027…046).
-- Teacher attendance/marks UI; parent/guardian fee visibility (Fake payments path).
-- Office fees path: structures → invoices → office payment → receipts (real MoMo **not** integrated).
+- Teacher attendance/marks UI; parent/guardian fee visibility (pay at office).
+- Office fees path: structures → invoices → office payment → receipts (PAY-007 live path; MoMo later).
 - **Staging FRA:** Fly `educore-api-staging` + Neon `educore-staging-fra`; D1 Pass (2026-08-08 + FRA re-check 2026-08-10); D2 Pass (app redeploy 2026-08-13); Auth0 US PKCE; **MFA_ENFORCE=hard**.
-- **Production infra (Owner lab, not public-school cutover):** Fly `educore-api` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green; IdP local; **MFA_ENFORCE=hard** (F-002); Fake payments.
+- **Production infra (Owner lab, not public-school cutover):** Fly `educore-api` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green; IdP local; **MFA_ENFORCE=hard** (F-002); office fees (PAY-007).
 
 ## Frozen
 
@@ -78,7 +78,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 | Kit-wide Design System Freeze | **Accepted (provisional):** `DSF-KIT-001` v1.0 — slice DSF-001…006 still govern screens |
 | Production IdP / MFA | **WEB-AUTH0** (US tenant residual); **WEB-MFA-UI**; staging **and prod** MFA-HARD |
 | Hosting, IaC, secrets provider, RPO/RTO | **Live staging + prod infra:** Fly.io + Neon Frankfurt + Doppler. Neon PITR max **6h** on current plan (kit RPO was 24h) |
-| First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until Owner secrets |
+| First **real** payment provider | **Live:** office cash/bank/cheque (PAY-007). **Later:** ClickPesa — PAY-001 choice unchanged; Fake runtime; no keys |
 | AI provider / release gate | **Lab adapter chosen:** OpenAI (`openai`) env-gated; Fake CI default; product features still gate-blocked (`lab.echo` only) |
 | Offline attendance worker | Foundation/docs path; not production offline cutover |
 | Independent Board / freeze re-sign | **Retired** (SOLO-GOV-002). F-005 withdrawn. |
@@ -87,7 +87,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 1. Gated IMP increments behind **existing** Owner-accepted slice freezes (DBF/ACF/DSF).
 2. Hardening, isolation tests, OpenAPI/docs sync, and Admin/Teacher/Parent UX polish **within** frozen contracts.
-3. Decision briefs that close open limitations (**PAY-001…006** lab shipped; **PAY-OPS-001** when keys).
+3. Decision briefs that close open limitations (**PAY-001…007**; **PAY-OPS-001** when Owner can afford ClickPesa).
 4. Owner-directed ops (keys, PITR plan, public-school cutover). No Board meeting required.
 
 ## Work Not Allowed Now
@@ -115,7 +115,7 @@ Owner residuals (not Board):
 1. ~~**D2**~~ Pass — Fly staging redeploy + health.
 2. ~~**Weekly Neon PITR glance**~~ Done — plan max 6h (7d rejected).
 3. ~~**Secrets hygiene**~~ Staging `SEED_ADMIN_PASS` rotated.
-4. **PAY-OPS-001** still blocked — no ClickPesa keys; runtime Fake.
+4. **PAY-OPS-001** deferred (PAY-007) — office collection live; ClickPesa when Owner can fund the account.
 5. ~~**Board re-review** of `42`~~ **Retired** (SOLO-GOV-002).
 6. ~~**Production Fly + Neon + Doppler**~~ Infra live (`OPS-PROD-001`).
 7. ~~**F-002**~~ Prod MFA hard. **F-005** withdrawn.
@@ -127,7 +127,7 @@ Owner residuals (not Board):
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — exit note `SPRINT0_ENGINEERING_EXIT_NOTE.md`.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: **PAY-OPS** when ClickPesa keys; Neon plan upgrade if a 24h PITR window is required; Owner public-school cutover decision.
+- **Next epic focus**: school workflows on office fees; ClickPesa later; Neon plan upgrade if a 24h PITR window is required.
 
 ## Status Update Rules
 

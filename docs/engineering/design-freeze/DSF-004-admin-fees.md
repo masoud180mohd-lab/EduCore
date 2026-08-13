@@ -96,7 +96,7 @@ Same as DSF-002:
 | 403 (reconcile/sync)    | “You do not have finance reconcile access.”                   |
 | 404                     | “Not found.”                                                  |
 | 409                     | Surface API message                                           |
-| 501 / NOT_IMPLEMENTED   | Honest “Mobile money provider not configured (Fake default)…” |
+| 501 / NOT_IMPLEMENTED   | Honest office-collection copy (PAY-007); MoMo request hidden until ClickPesa configured |
 | Missing Idempotency-Key | Existing client copy                                          |
 
 Permissions (UX gate optional; API is truth):

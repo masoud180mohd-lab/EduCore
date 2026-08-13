@@ -8,7 +8,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 
 | Area | Current Limitation Or Deferral | Rule |
 |---|---|---|
-| Production readiness | Staging lab MVP live (FRA). Prod Fly `educore-api` is infra-live. Public-school cutover is **Owner** decision. `42` is a historical checklist (SOLO-GOV-002). | Do not claim schools are live while payments are Fake; `/health` NODE_ENV is not a cutover |
+| Production readiness | Staging lab MVP live (FRA). Prod Fly `educore-api` is infra-live. Public-school cutover is **Owner** decision. `42` is a historical checklist (SOLO-GOV-002). | Do not claim Mixx/M-Pesa works; office collection is the live path (PAY-007); `/health` NODE_ENV is not a cutover |
 | Freeze authority | Slice freezes are **Owner-accepted** (SOLO-GOV-002). Independent Board / named architect seats are retired | Do not invent three independent signers; do not wait for them |
 | Database | Slice DBF artifacts exist under `docs/engineering/database-freeze/`; **kit-wide** ERD/index/RLS pack is not a single Accepted Freeze v1.0 document | New tables require a DBF revision for that slice before persistence work |
 | API | Slice ACF / OpenAPI baselines exist; not every future product route is open | New endpoints require ACF revision + IMP gate |
@@ -18,7 +18,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 | Security / identity | **WEB-AUTH0** US residual; **WEB-MFA-UI**; staging **and prod** `MFA_ENFORCE=hard` | Auth0 EU cutover cancelled (tenant limit); password AuthN still available |
 | Identity | Opaque session + TOTP; privileged path **hard** on staging and prod | Rollback: Doppler `MFA_ENFORCE=soft` + Fly sync |
 | Freeze re-sign | F-005 **withdrawn** (SOLO-GOV-002) | No independent humans to convene |
-| Payments | **ClickPesa PAY-006 UI shipped**; sandbox pilot **deferred** (Doppler re-check 2026-08-13: no `CLICKPESA_*`); runtime **Fake** | No secrets in git/chat; resume PAY-OPS-001 when vendor sandbox available; parent pay still out |
+| Payments | **Live path: office cash/bank/cheque (PAY-007).** ClickPesa remains chosen MoMo for later; runtime Fake; no keys | No secrets in git/chat; do not switch to another paid aggregator to dodge KYC; parent MoMo still out |
 | SMS / notifications | **COMMS-001…005 lab complete** (Fake default; Beem env-gated) | Migrate; optional Beem keys; WhatsApp later |
 
 | Offline | Attendance offline foundation/docs path; 72h offline teacher cutover not production-proven | Do not claim offline MVP complete without worker + conflict UX evidence |

@@ -4,7 +4,7 @@
 | --------- | ---------------------------------------------------------- |
 | Program   | **PAY-OPS-001** (post PAY-006)                             |
 | Date      | 2026-08-02                                                 |
-| Status    | **Deferred** (re-checked 2026-08-13 — still no Doppler `CLICKPESA_*`) |
+| Status    | **Deferred** (PAY-007 — Owner cannot fund ClickPesa account yet; office collection is the live path) |
 | Depends   | PAY-001…PAY-006 Done on `main`                             |
 | Authority | Solo-operator (SOLO-GOV-001)                               |
 
@@ -12,7 +12,7 @@
 
 Prove bursar MoMo path against **ClickPesa sandbox** on a local/lab stack: initiate → BillPay → webhook and/or Refresh → succeeded receipt — without committing secrets.
 
-**Deferral note (2026-08-03):** Operator chose to skip until ClickPesa sandbox credentials are available. Product code (PAY-001…006) remains on `main` with Fake default. Resume this checklist when keys exist; do not invent credentials.
+**Deferral note (2026-08-13, PAY-007):** Owner cannot fund a ClickPesa account yet. Live collection is office cash/bank/cheque. Resume this checklist when keys exist; do not invent credentials; do not substitute another paid aggregator.
 
 ## Non-goals
 
