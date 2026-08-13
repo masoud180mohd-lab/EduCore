@@ -30,4 +30,4 @@ Assign `bursar` to fee clerks. Retrieve passwords locally; never from chat.
 ## Honesty
 
 - Custom roles can still be granted `finance.manage` (no deny-list). Default seed matrix is what F-004 required.
-- Staging/prod DBs are not closed until this migration is applied.
+- Staging DB + Fly image and prod DB + Fly image applied 2026-08-13 (`OPS-F004-F016-live-2026-08-13.md`).

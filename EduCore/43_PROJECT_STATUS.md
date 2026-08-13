@@ -119,6 +119,7 @@ Owner residuals (not Board):
 5. ~~**Board re-review** of `42`~~ **Retired** (SOLO-GOV-002).
 6. ~~**Production Fly + Neon + Doppler**~~ Infra live (`OPS-PROD-001`).
 7. ~~**F-002**~~ Prod MFA hard. **F-005** withdrawn.
+8. ~~**F-004 / F-016 / F-017 live**~~ Prod migrated; staging + prod Fly images 2026-08-13.
 
 **Governance:** Owner + AI. `42` is a checklist, not a people-gate.
 
