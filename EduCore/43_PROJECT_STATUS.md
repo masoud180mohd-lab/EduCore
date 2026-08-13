@@ -49,7 +49,8 @@ Authoritative artifacts live under `docs/engineering/` (not rewritten into kit f
 - Admin ops UI polish closed for AUDIT-ADMIN-UI-R1 (IMP-027…046).
 - Teacher attendance/marks UI; parent/guardian fee visibility (Fake payments path).
 - Office fees path: structures → invoices → office payment → receipts (real MoMo **not** integrated).
-- **Staging FRA:** Fly `educore-api-staging` + Neon `educore-staging-fra`; D1 Pass (2026-08-08 + FRA re-check 2026-08-10); Auth0 US PKCE; **MFA_ENFORCE=hard**.
+- **Staging FRA:** Fly `educore-api-staging` + Neon `educore-staging-fra`; D1 Pass (2026-08-08 + FRA re-check 2026-08-10); D2 Pass (app redeploy 2026-08-13); Auth0 US PKCE; **MFA_ENFORCE=hard**.
+- **Production infra (not GO):** Fly `educore-api` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green; IdP local; MFA soft; Fake payments.
 
 ## Frozen
 
@@ -76,7 +77,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 | ---- | ------ |
 | Kit-wide Design System Freeze | **Accepted (provisional):** `DSF-KIT-001` v1.0 — slice DSF-001…006 still govern screens |
 | Production IdP / MFA | **WEB-AUTH0** (US tenant residual); **WEB-MFA-UI**; staging **MFA-HARD** live (Owner enrolled TOTP) |
-| Hosting, IaC, secrets provider, RPO/RTO | **Live staging:** Fly.io + Neon Frankfurt + Doppler; RPO≤24h; RTO≤8h (D1 evidence). Production project **not** provisioned |
+| Hosting, IaC, secrets provider, RPO/RTO | **Live staging + prod infra:** Fly.io + Neon Frankfurt + Doppler; RPO≤24h; RTO≤8h (D1/D2 evidence). Prod `educore-api` is **infra live, not Board GO**. Neon PITR max **6h** on current plan |
 | First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until adapter + secrets |
 | AI provider / release gate | **Lab adapter chosen:** OpenAI (`openai`) env-gated; Fake CI default; product features still gate-blocked (`lab.echo` only) |
 | Offline attendance worker | Foundation/docs path; not production offline cutover |
@@ -110,13 +111,14 @@ Closed:
 5. ~~OPS-001 / FLY-DOCKER / OPS-EXEC~~ Staging provisioned; D1 evidence on `main`.
 6. ~~WEB-AUTH0 + MFA-HARD~~ Staging privileged path requires TOTP.
 
-Owner close-out **before Board re-review** (not done by chat):
+Owner close-out **before Board re-review**:
 
-1. **D2** — restore app on Fly against a PITR branch (D1 was DB-only).
-2. **Weekly Neon PITR glance** (SLO-5).
-3. **Secrets hygiene** — rotate chat-exposed seed admin password if applicable.
-4. **PAY-OPS-001** when ClickPesa sandbox keys exist (runtime stays Fake).
-5. Request Engineering Readiness **re-review** (`42`) — independent Board; SOLO-GOV-001 ≠ production GO.
+1. ~~**D2**~~ Pass — Fly staging redeploy + health (not PITR rewire).
+2. ~~**Weekly Neon PITR glance**~~ Done — plan max 6h (7d rejected).
+3. ~~**Secrets hygiene**~~ Staging `SEED_ADMIN_PASS` rotated + applied (retrieve via Doppler locally).
+4. **PAY-OPS-001** still blocked — no ClickPesa keys; runtime Fake.
+5. **Board re-review** of `42` — **still required**; chat / SOLO-GOV-001 ≠ that review.
+6. ~~**Production Fly + Neon + Doppler**~~ Infra live (`OPS-PROD-001`) — **not** GO.
 
 **Governance:** Full Board re-review still required per `42_ENGINEERING_READINESS_REVIEW.md`.
 
@@ -125,7 +127,7 @@ Owner close-out **before Board re-review** (not done by chat):
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — exit note `SPRINT0_ENGINEERING_EXIT_NOTE.md`.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: Owner **D2 + PITR cadence + secrets**; **PAY-OPS** when keys; **Board re-review** before any production claim.
+- **Next epic focus**: Independent **Board re-review** of `42`; **PAY-OPS** when ClickPesa keys; Neon plan upgrade if weekly PITR window is required.
 
 ## Status Update Rules
 

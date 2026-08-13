@@ -4,7 +4,7 @@
 | --------- | ---------------------------------------------------------- |
 | Program   | **PAY-OPS-001** (post PAY-006)                             |
 | Date      | 2026-08-02                                                 |
-| Status    | **Deferred** (skipped 2026-08-03 — resume when keys exist) |
+| Status    | **Deferred** (re-checked 2026-08-13 — still no Doppler `CLICKPESA_*`) |
 | Depends   | PAY-001…PAY-006 Done on `main`                             |
 | Authority | Solo-operator (SOLO-GOV-001)                               |
 

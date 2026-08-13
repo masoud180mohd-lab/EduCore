@@ -2,10 +2,16 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-13 - Production infra live (not Board GO)
+
+- Fly `educore-api` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green.
+- D2 Pass (staging app redeploy); weekly PITR glance (plan max 6h); staging admin password rotated.
+- PAY-OPS still Fake (no ClickPesa keys). Board re-review of `42` **not** performed in chat.
+
 ## 2026-08-13 - Staging lab MVP close (kit honesty)
 
 - Kit status (`00`, `43`, `46`, `VERSION`) synced: staging FRA + MFA-HARD + Auth0 live.
-- Production / public pilot remains **NO GO** until Board re-review + Owner D2/PITR/secrets + PAY-OPS keys.
+- Production / public pilot remains **NO GO** until Board re-review + PAY-OPS keys.
 
 ## 2026-08-13 - Login / teacher / parent AdminPageHeader chrome
 

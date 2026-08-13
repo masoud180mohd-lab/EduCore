@@ -28,11 +28,12 @@ Completed (engineering, under SOLO-GOV-001 honesty):
 - Engineering Sprint 0 foundation largely executed.
 - Slice DBF/ACF freezes and provisional DSF UI slices for identity, students, academic, attendance, marks, guardians, fees, and admin/teacher/parent lab UIs.
 - Admin UI polish program (AUDIT-ADMIN-UI-R1 / IMP-027…046 + residuals) closed on `main`.
-- Staging FRA live: Fly `educore-api-staging` + Neon Frankfurt; D1 Pass; Auth0 US + MFA-HARD.
+- Staging FRA live: Fly `educore-api-staging` + Neon Frankfurt; D1 Pass; D2 Pass (app redeploy); Auth0 US + MFA-HARD.
+- Production infra live (Owner ops): Fly `educore-api` + Neon `educore-prod` + Doppler `prd` — **not** Board GO.
 
 Current Board / readiness position:
 
-- **NO GO for unrestricted production feature development or public pilot.**
+- **NO GO for unrestricted production feature development or public pilot.** Independent re-review of `42` is still required (chat is not the Board).
 - **Gated IMP work is allowed** only behind accepted/provisional slice freezes (`docs/engineering/…`) with solo-operator qualification (SOLO-GOV-001).
 - Real mobile-money cutover remains blocked until ClickPesa secrets + readiness/MFA gates allow pilot (`PAY-001`…`PAY-005` shipped; runtime Fake until secrets).
 

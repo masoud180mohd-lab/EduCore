@@ -42,4 +42,4 @@ Architecture is frozen for downstream planning.
 
 Slice Database / API / Design freezes exist under `docs/engineering/` (SOLO-GOV-001). Kit-wide independent countersign is still open.
 
-The Engineering Readiness Review is **NO GO** for unrestricted production / public pilot. Staging lab MVP is live on Frankfurt (Fly + Neon); that is not production GO.
+The Engineering Readiness Review is **NO GO** for unrestricted production / public pilot. Staging lab MVP is live on Frankfurt (Fly + Neon). Production Fly `educore-api` is infra-live only — that is not Board production GO.

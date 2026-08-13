@@ -11,10 +11,15 @@ import { spawnSync } from 'node:child_process';
 
 import pg from 'pg';
 
+const CONFIG =
+  process.env['DOPPLER_TARGET_CONFIG']?.trim() ||
+  process.env['DOPPLER_CONFIG']?.trim() ||
+  'stg';
+
 function setSecret(name, value) {
   const r = spawnSync(
     'doppler',
-    ['secrets', 'set', name, '--project', 'educore', '--config', 'stg'],
+    ['secrets', 'set', name, '--silent', '--project', 'educore', '--config', CONFIG],
     { input: value, encoding: 'utf8', shell: false, windowsHide: true },
   );
   if (r.status !== 0) {
@@ -49,6 +54,10 @@ async function main() {
   if (!ownerUrl) {
     throw new Error('DATABASE_URL required');
   }
+  if (CONFIG !== 'stg' && CONFIG !== 'prd') {
+    throw new Error(`refusing Doppler config ${CONFIG} (expected stg or prd)`);
+  }
+  process.stdout.write(`Doppler target config=${CONFIG}\n`);
 
   const ownerName = decodeURIComponent(new URL(ownerUrl).username || 'neondb_owner');
   const passApp = genPass();
@@ -104,7 +113,7 @@ async function main() {
   setSecret('EDUCORE_APP_DATABASE_URL', newAppUrl);
   setSecret('SEED_PLATFORM_DATABASE_URL', newPlatformUrl);
 
-  process.stdout.write('Doppler stg updated.\n');
+  process.stdout.write(`Doppler ${CONFIG} updated.\n`);
 }
 
 main().catch((err) => {

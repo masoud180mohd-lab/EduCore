@@ -77,10 +77,10 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 6. ~~**FLY-DOCKER**~~ — **Done**.
 7. ~~**ID-001**~~ — **Done** (defer IdP).
 8. ~~**OPS-EXEC**~~ — **Done** 2026-08-08 (`OPS-EXEC-2026-08-08.md`); staging Fly + Neon FRA.
-9. ~~D1~~ — **Pass** (2026-08-08 + FRA re-check 2026-08-10). **D2** (app redeploy) still Owner.
+9. ~~D1~~ — **Pass** (2026-08-08 + FRA re-check 2026-08-10). ~~**D2**~~ — **Pass** 2026-08-13 (app redeploy + health; not PITR rewire).
 10. ~~Auth0 + MFA-HARD~~ — Staging live 2026-08-11 (US tenant residual; hard TOTP).
-11. Owner before Board re-review: D2, weekly PITR glance, secrets hygiene; PAY-OPS when ClickPesa keys.
-12. Do **not** stamp production GO in this prep doc. Independent countersign still required.
+11. ~~Weekly PITR glance + secrets hygiene~~ — Glance 2026-08-13 (plan max 6h); staging `SEED_ADMIN_PASS` rotated. PAY-OPS still blocked (no keys). Prod Fly+Neon+Doppler infra live (`OPS-PROD-001`) — **not GO**.
+12. Do **not** stamp production GO in this prep doc. Independent countersign still required. Chat is not the Board (`BOARD-42-rereview-not-chat-2026-08-13.md`).
 
 ## Explicit non-claims
 
@@ -90,7 +90,8 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 - `MFA_ENFORCE=hard` availability is **not** IdP/OIDC completion.
 - **ID-001 Accepted (defer)** is **not** “IdP ready” — it locks deferral until a trigger.
 - **B-05 Accepted** plus live staging is **not** production hosting.
-- **D1 Pass** is **not** D2 (app redeploy) and **not** weekly PITR cadence.
+- **D1 Pass** is **not** D2; **D2 Pass** (2026-08-13) is still not weekly 7-day PITR (plan max 6h) and **not** Board GO.
+- **OPS-PROD-001** live `educore-api` is **not** Board production GO.
 - **B-04 lite TM** is **not** IdP completion or independent pen-test.
 - **B-03 posture** superseded same day by **DSF-KIT-001** — kit freeze Accepted under SOLO-GOV-001 (not independent design countersign).
 - **OPS-001 published** was not itself D1; D1 evidence is separate and now exists.
@@ -104,7 +105,7 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 | ~~`GO OPS-PHASE0`~~ | **Done** |
 | ~~`GO OPS-EXEC`~~ | **Done** |
 | ~~`GO DRILL-D1`~~ | **Pass** (FRA re-check 2026-08-10) |
-| `GO DRILL-D2` | Owner: app redeploy against PITR restore |
+| ~~`GO DRILL-D2`~~ | **Pass** 2026-08-13 (staging Fly redeploy + `/health`) |
 | ~~`GO FLY-DOCKER`~~ | **Done** |
 | ~~`GO IDP`~~ | **Done (defer)** — `ID-001` |
 | ~~`GO DSF-KIT`~~ | **Done** — `DSF-KIT-001` |
@@ -116,4 +117,4 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 
 ---
 
-**Bottom line:** Staging on Fly `fra` + Neon Frankfurt; D1 Pass; Auth0 staging **enabled** (US tenant residual). **Unrestricted production remains NO GO**.
+**Bottom line:** Staging on Fly `fra` + Neon Frankfurt; D1+D2 Pass; Auth0 staging **enabled** (US tenant residual). Production `educore-api` infra live. **Unrestricted production remains NO GO**.
