@@ -2,6 +2,10 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-13 - IMP-046 Enrollments class picker by year
+
+- Filter class list is scoped to the selected academic year; changing year clears class/stream.
+
 ## 2026-08-12 - IMP-045 Admin chrome Students/Guardians/Users/Fees details
 
 - Detail pages: AdminPageHeader + Banner (students, users, guardians, fee structures/invoices/receipts, guardian fees).

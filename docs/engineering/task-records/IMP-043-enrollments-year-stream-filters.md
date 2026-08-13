@@ -24,5 +24,5 @@ Wire remaining ACF-008 enrollment list filters: `academicYearId` and `streamId`,
 
 ## Explicitly not done
 
-- Class picker scoped by selected year (optional UX)
+- ~~Class picker scoped by selected year~~ → **IMP-046**
 - Receipts filters / PAY-OPS

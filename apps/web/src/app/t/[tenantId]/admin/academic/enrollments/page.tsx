@@ -52,6 +52,9 @@ export default function AdminEnrollmentsPage() {
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [classesCursor, setClassesCursor] = useState<string | null>(null);
   const [loadingMoreClasses, setLoadingMoreClasses] = useState(false);
+  const [filterClasses, setFilterClasses] = useState<ClassRow[]>([]);
+  const [filterClassesCursor, setFilterClassesCursor] = useState<string | null>(null);
+  const [loadingMoreFilterClasses, setLoadingMoreFilterClasses] = useState(false);
   const [students, setStudents] = useState<StudentOption[]>([]);
   const [studentsCursor, setStudentsCursor] = useState<string | null>(null);
   const [loadingMoreStudents, setLoadingMoreStudents] = useState(false);
@@ -146,6 +149,44 @@ export default function AdminEnrollmentsPage() {
       }
     } finally {
       setLoadingMoreClasses(false);
+    }
+  }
+
+  async function loadFilterClassPicker(opts: {
+    readonly forYearId: string;
+    readonly cursor: string | null;
+    readonly append: boolean;
+  }) {
+    const auth = readSession();
+    if (auth === null) return;
+    if (opts.append) setLoadingMoreFilterClasses(true);
+    try {
+      const result = await apiRequest<PaginatedEnvelope<ClassRow>>(
+        buildListQuery('/api/v1/classes', {
+          limit: ADMIN_LIST_DEFAULT_LIMIT,
+          cursor: opts.cursor,
+          filters: {
+            academicYearId: opts.forYearId === '' ? undefined : opts.forYearId,
+          },
+        }),
+        { auth },
+      );
+      const page = readPageMeta(result);
+      const list = result.data ?? [];
+      setFilterClasses((prev) => (opts.append ? appendById(prev, list) : [...list]));
+      setFilterClassesCursor(page.nextCursor);
+      setClassNames((prev) => {
+        const next = { ...prev };
+        for (const c of list) next[c.id] = c.name;
+        return next;
+      });
+    } catch {
+      if (!opts.append) {
+        setFilterClasses([]);
+        setFilterClassesCursor(null);
+      }
+    } finally {
+      setLoadingMoreFilterClasses(false);
     }
   }
 
@@ -313,6 +354,7 @@ export default function AdminEnrollmentsPage() {
   useEffect(() => {
     void loadYearPicker({ cursor: null, append: false });
     void loadClassPicker({ cursor: null, append: false });
+    void loadFilterClassPicker({ forYearId: '', cursor: null, append: false });
     void loadStudentPicker({ cursor: null, append: false });
     void loadPage({
       yearIdQ: '',
@@ -361,6 +403,11 @@ export default function AdminEnrollmentsPage() {
     setStreamId('');
     void loadStreamPicker({ forClassId: classId, cursor: null, append: false });
   }, [classId]);
+
+  useEffect(() => {
+    setClassFilter('');
+    void loadFilterClassPicker({ forYearId: yearFilter, cursor: null, append: false });
+  }, [yearFilter]);
 
   useEffect(() => {
     setStreamFilter('');
@@ -575,17 +622,21 @@ export default function AdminEnrollmentsPage() {
             onChange={(e) => setClassFilter(e.target.value)}
           >
             <option value="">All classes</option>
-            {classes.map((c) => (
+            {filterClasses.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
           </select>
           <ResourceListPagination
-            nextCursor={classesCursor}
-            loadingMore={loadingMoreClasses}
+            nextCursor={filterClassesCursor}
+            loadingMore={loadingMoreFilterClasses}
             onLoadMore={() => {
-              void loadClassPicker({ cursor: classesCursor, append: true });
+              void loadFilterClassPicker({
+                forYearId: yearFilter,
+                cursor: filterClassesCursor,
+                append: true,
+              });
             }}
           />
         </div>
