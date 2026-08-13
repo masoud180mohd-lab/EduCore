@@ -11,12 +11,7 @@ export type UserStatus = 'invited' | 'active' | 'disabled' | 'locked';
 
 export type InviteRoleCode = 'owner' | 'admin' | 'staff' | 'bursar';
 
-export const USER_STATUSES: ReadonlyArray<UserStatus> = [
-  'invited',
-  'active',
-  'disabled',
-  'locked',
-];
+export const USER_STATUSES: ReadonlyArray<UserStatus> = ['invited', 'active', 'disabled', 'locked'];
 
 export const INVITE_ROLE_CODES: ReadonlyArray<InviteRoleCode> = [
   'owner',

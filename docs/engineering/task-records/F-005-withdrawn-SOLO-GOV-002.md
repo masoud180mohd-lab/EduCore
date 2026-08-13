@@ -1,10 +1,10 @@
 # F-005 — withdrawn (SOLO-GOV-002)
 
-| Field   | Value |
-| ------- | ----- |
+| Field   | Value                      |
+| ------- | -------------------------- |
 | Finding | Independent freeze re-sign |
-| Date    | 2026-08-13 |
-| Status  | **Withdrawn** |
+| Date    | 2026-08-13                 |
+| Status  | **Withdrawn**              |
 
 Owner confirmed there is no real architecture team. The close condition (independent humans re-signing DBF/ACF) cannot be met and must not be faked.
 

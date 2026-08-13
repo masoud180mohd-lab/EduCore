@@ -10,13 +10,13 @@ Close Board finding **F-004**: system role `staff` included `finance.manage`, so
 
 ## Resolution
 
-| Item | Change |
-| --- | --- |
-| Matrix | `staff` loses `finance.read` / `finance.manage`. New `bursar` holds them. |
-| SQL | Migration `20260813170000_staff_bursar_split` inserts bursar, revokes staff finance grants, allows `assign_system_role_codes('bursar')`. |
-| Invite UI | Role picker includes `bursar`. |
-| HTTP | Classroom staff permission set → `POST /invoices` and `POST /payments` **403**. |
-| Existing users | Staff are **not** auto-assigned bursar. Owner/admin still have finance.manage. |
+| Item           | Change                                                                                                                                   |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Matrix         | `staff` loses `finance.read` / `finance.manage`. New `bursar` holds them.                                                                |
+| SQL            | Migration `20260813170000_staff_bursar_split` inserts bursar, revokes staff finance grants, allows `assign_system_role_codes('bursar')`. |
+| Invite UI      | Role picker includes `bursar`.                                                                                                           |
+| HTTP           | Classroom staff permission set → `POST /invoices` and `POST /payments` **403**.                                                          |
+| Existing users | Staff are **not** auto-assigned bursar. Owner/admin still have finance.manage.                                                           |
 
 ## Ops after deploy
 

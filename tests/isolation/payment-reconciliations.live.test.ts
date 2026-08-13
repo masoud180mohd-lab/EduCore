@@ -205,8 +205,11 @@ describe.skipIf(!dbAvailable && !forceLive)('F-016 live payment_reconciliations 
   });
 });
 
-describe.skipIf(dbAvailable || forceLive)('F-016 live payment_reconciliations RLS (skipped)', () => {
-  it('skips live isolation when PostgreSQL is unavailable', () => {
-    expect(dbAvailable).toBe(false);
-  });
-});
+describe.skipIf(dbAvailable || forceLive)(
+  'F-016 live payment_reconciliations RLS (skipped)',
+  () => {
+    it('skips live isolation when PostgreSQL is unavailable', () => {
+      expect(dbAvailable).toBe(false);
+    });
+  },
+);

@@ -26,7 +26,7 @@ if (!email || !password) {
 
 const res = await fetch(`${API}/api/v1/auth/login`, {
   method: 'POST',
-  headers: { accept: 'application/json', 'content-type': 'application/json' },
+  headers: { 'accept': 'application/json', 'content-type': 'application/json' },
   body: JSON.stringify({ email, password }),
 });
 const body = await res.json().catch(() => ({}));

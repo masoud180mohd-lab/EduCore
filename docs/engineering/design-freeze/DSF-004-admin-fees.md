@@ -89,15 +89,15 @@ Same as DSF-002:
 
 ## AuthZ UX
 
-| HTTP                    | UX                                                            |
-| ----------------------- | ------------------------------------------------------------- |
-| 401                     | “Sign in again.”                                              |
-| 403                     | “You do not have access for this school.” / action            |
-| 403 (reconcile/sync)    | “You do not have finance reconcile access.”                   |
-| 404                     | “Not found.”                                                  |
-| 409                     | Surface API message                                           |
+| HTTP                    | UX                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| 401                     | “Sign in again.”                                                                        |
+| 403                     | “You do not have access for this school.” / action                                      |
+| 403 (reconcile/sync)    | “You do not have finance reconcile access.”                                             |
+| 404                     | “Not found.”                                                                            |
+| 409                     | Surface API message                                                                     |
 | 501 / NOT_IMPLEMENTED   | Honest office-collection copy (PAY-007); MoMo request hidden until ClickPesa configured |
-| Missing Idempotency-Key | Existing client copy                                          |
+| Missing Idempotency-Key | Existing client copy                                                                    |
 
 Permissions (UX gate optional; API is truth):
 

@@ -112,7 +112,8 @@ export default function GuardianFeesReceiptDetailPage() {
       </p>
       <AdminPageHeader title="Receipt (read-only)" />
       <Banner tone="info">
-        Pay at the school office (cash, bank, or cheque). Mobile money is not enabled (PAY-007 / PAY-PROVIDER-001).
+        Pay at the school office (cash, bank, or cheque). Mobile money is not enabled (PAY-007 /
+        PAY-PROVIDER-001).
       </Banner>
 
       {error !== null ? <Banner tone="error">{error}</Banner> : null}

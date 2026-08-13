@@ -13,12 +13,12 @@ This directory holds **downstream database design freeze** packages. These are e
 
 ## Records
 
-| ID      | Slice                            | Document                                                                 | Status                            |
-| ------- | -------------------------------- | ------------------------------------------------------------------------ | --------------------------------- |
+| ID      | Slice                            | Document                                                                 | Status                             |
+| ------- | -------------------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
 | DBF-001 | Identity & Tenant / Organization | [DBF-001-identity-tenant-slice.md](./DBF-001-identity-tenant-slice.md)   | Owner-accepted v1.0 (SOLO-GOV-002) |
-| DBF-010 | Guardians                        | [DBF-010-guardians-slice.md](./DBF-010-guardians-slice.md)               | Owner-accepted (SOLO-GOV-002)     |
-| DBF-011 | Marks / Assessment               | [DBF-011-marks-assessment-slice.md](./DBF-011-marks-assessment-slice.md) | Owner-accepted (SOLO-GOV-002)     |
-| DBF-012 | Finance / Fees + Ledger          | [DBF-012-finance-fees-slice.md](./DBF-012-finance-fees-slice.md)         | Owner-accepted (SOLO-GOV-002)     |
+| DBF-010 | Guardians                        | [DBF-010-guardians-slice.md](./DBF-010-guardians-slice.md)               | Owner-accepted (SOLO-GOV-002)      |
+| DBF-011 | Marks / Assessment               | [DBF-011-marks-assessment-slice.md](./DBF-011-marks-assessment-slice.md) | Owner-accepted (SOLO-GOV-002)      |
+| DBF-012 | Finance / Fees + Ledger          | [DBF-012-finance-fees-slice.md](./DBF-012-finance-fees-slice.md)         | Owner-accepted (SOLO-GOV-002)      |
 
 ## Rules
 

@@ -10,12 +10,12 @@ Complete for the EXECUTE split. HMAC remains an HTTP control. F-008 write-isolat
 
 ## Resolution
 
-| Item | Change |
-| --- | --- |
-| `complete_pending_mobile_money_payment` | REVOKE EXECUTE from `educore_app` and `educore_webhook` (ingest calls it as definer) |
-| `ingest_clickpesa_gateway_event` | REVOKE from `educore_app`; GRANT to `educore_webhook` |
-| Nest | Dedicated `PG_WEBHOOK_POOL` (`EDUCORE_WEBHOOK_DATABASE_URL` or local default when `EDUCORE_ENABLE_APP_DB=1`) |
-| Evidence | Live tests: app role EXECUTE denied; webhook role can call ingest, not complete |
+| Item                                    | Change                                                                                                       |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `complete_pending_mobile_money_payment` | REVOKE EXECUTE from `educore_app` and `educore_webhook` (ingest calls it as definer)                         |
+| `ingest_clickpesa_gateway_event`        | REVOKE from `educore_app`; GRANT to `educore_webhook`                                                        |
+| Nest                                    | Dedicated `PG_WEBHOOK_POOL` (`EDUCORE_WEBHOOK_DATABASE_URL` or local default when `EDUCORE_ENABLE_APP_DB=1`) |
+| Evidence                                | Live tests: app role EXECUTE denied; webhook role can call ingest, not complete                              |
 
 ## Files
 

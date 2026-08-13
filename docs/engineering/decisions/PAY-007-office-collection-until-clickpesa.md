@@ -1,12 +1,12 @@
 # PAY-007 — Office collection until ClickPesa is affordable
 
-| Field       | Value |
-| ----------- | ----- |
-| Decision ID | `PAY-007` |
-| Status      | **Accepted** (Owner + AI, SOLO-GOV-002) |
-| Date        | 2026-08-13 |
+| Field       | Value                                                                           |
+| ----------- | ------------------------------------------------------------------------------- |
+| Decision ID | `PAY-007`                                                                       |
+| Status      | **Accepted** (Owner + AI, SOLO-GOV-002)                                         |
+| Date        | 2026-08-13                                                                      |
 | Amends      | PAY-001 / PAY-PROVIDER-001 (vendor **choice** unchanged; **live path** changes) |
-| Authority   | Project Owner |
+| Authority   | Project Owner                                                                   |
 
 ## Context
 

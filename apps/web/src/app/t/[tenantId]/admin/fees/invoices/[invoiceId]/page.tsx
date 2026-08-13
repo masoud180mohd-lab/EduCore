@@ -619,7 +619,9 @@ export default function AdminInvoiceDetailPage() {
             </form>
           ) : null}
 
-          {canManageFinance && canRecordPayment(invoice.status, invoice.balanceMinor) && momoConfigured ? (
+          {canManageFinance &&
+          canRecordPayment(invoice.status, invoice.balanceMinor) &&
+          momoConfigured ? (
             <form
               className="stack card"
               style={{ marginTop: '1rem' }}

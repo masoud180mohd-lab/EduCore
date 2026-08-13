@@ -1,12 +1,12 @@
 # Solo-operator + AI — operating model (SOLO-GOV-002)
 
-| Field           | Value |
-| --------------- | ----- |
-| **Document ID** | `SOLO-GOV-002` |
-| **Date**        | 2026-08-13 |
-| **Status**      | **Active** — supersedes Independent Board / multi-person countersign as a required gate |
-| **Supersedes**  | Kit language that assumes a real architecture team, Independent Engineering Review Board, or named countersigners (PM Master / Masoud Salum / Rashid Mohammed as separate humans) |
-| **Does not supersede** | Technical rules (RLS, ledger, MFA, no invented ClickPesa keys, no fake restore drills) |
+| Field                  | Value                                                                                                                                                                             |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Document ID**        | `SOLO-GOV-002`                                                                                                                                                                    |
+| **Date**               | 2026-08-13                                                                                                                                                                        |
+| **Status**             | **Active** — supersedes Independent Board / multi-person countersign as a required gate                                                                                           |
+| **Supersedes**         | Kit language that assumes a real architecture team, Independent Engineering Review Board, or named countersigners (PM Master / Masoud Salum / Rashid Mohammed as separate humans) |
+| **Does not supersede** | Technical rules (RLS, ledger, MFA, no invented ClickPesa keys, no fake restore drills)                                                                                            |
 
 ---
 
@@ -18,11 +18,11 @@ Waiting for “independent humans” to re-sign freezes or re-review `42` is wai
 
 ## 2. Authority now
 
-| Seat | Who |
-| ---- | --- |
-| Human authority | Project Owner |
+| Seat                              | Who                   |
+| --------------------------------- | --------------------- |
+| Human authority                   | Project Owner         |
 | Implementer / in-session reviewer | AI agent in this repo |
-| Independent architecture Board | **None — retired** |
+| Independent architecture Board    | **None — retired**    |
 
 SOLO-GOV-001 remains true (acting seats, not three humans). This note goes further: **do not treat missing independent countersign as an open task.**
 
@@ -46,12 +46,12 @@ Keep the **files** (`36`, `37`, `42`, freeze packs). They are technical memory. 
 
 ## 5. Findings
 
-| ID | Under SOLO-GOV-002 |
-| -- | ------------------- |
-| **F-005** | **Withdrawn** — close condition was independent humans. None exist. Not “closed by fake re-sign.” |
+| ID        | Under SOLO-GOV-002                                                                                 |
+| --------- | -------------------------------------------------------------------------------------------------- |
+| **F-005** | **Withdrawn** — close condition was independent humans. None exist. Not “closed by fake re-sign.”  |
 | **F-001** | **Deferred** (PAY-007) — office cash/bank/cheque is the live path until Owner can afford ClickPesa |
-| **F-003** | Still a known limit (Neon PITR 6h vs kit RPO 24h) until Owner upgrades plan or accepts 6h |
-| **F-002** | Already closed in ops (prod MFA hard) |
+| **F-003** | Still a known limit (Neon PITR 6h vs kit RPO 24h) until Owner upgrades plan or accepts 6h          |
+| **F-002** | Already closed in ops (prod MFA hard)                                                              |
 
 ## 6. Production / public schools
 

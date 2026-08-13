@@ -10,12 +10,12 @@ Complete for SQL write isolation on the four named surfaces. HTTP write isolatio
 
 ## Coverage
 
-| Surface | Direct INSERT as `educore_app` | Cross-tenant helper |
-| --- | --- | --- |
-| Attendance | `attendance_sessions` denied | `create_attendance_session` with tenant B → 42501; class B under tenant A → 22023 |
-| Marks | `marks` denied | `upsert_marks` with tenant B → 42501 |
-| Invoice | `invoices` denied | `create_invoice_draft` tenant B → 42501; `issue_invoice` tenant A + invoice B → P0002 |
-| Webhook | `payment_gateway_events` denied | `create_pending_mobile_money_attempt` tenant B → 42501; `ingest_clickpesa_gateway_event` as app → 42501 (F-017) |
+| Surface    | Direct INSERT as `educore_app`  | Cross-tenant helper                                                                                             |
+| ---------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Attendance | `attendance_sessions` denied    | `create_attendance_session` with tenant B → 42501; class B under tenant A → 22023                               |
+| Marks      | `marks` denied                  | `upsert_marks` with tenant B → 42501                                                                            |
+| Invoice    | `invoices` denied               | `create_invoice_draft` tenant B → 42501; `issue_invoice` tenant A + invoice B → P0002                           |
+| Webhook    | `payment_gateway_events` denied | `create_pending_mobile_money_attempt` tenant B → 42501; `ingest_clickpesa_gateway_event` as app → 42501 (F-017) |
 
 ## Files
 

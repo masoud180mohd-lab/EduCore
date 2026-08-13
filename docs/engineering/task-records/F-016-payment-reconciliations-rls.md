@@ -10,12 +10,12 @@ Complete for the SELECT isolation gap. F-017 (SECURITY DEFINER MoMo helpers) is 
 
 ## Resolution
 
-| Item | Change |
-| --- | --- |
-| RLS | `app.enable_tenant_rls('payment_reconciliations')` |
-| Policy | `rls_payment_reconciliations_select` FOR SELECT TO `educore_app` USING `tenant_id = app.current_tenant_id()` |
-| PUBLIC | `REVOKE ALL` (aligned with other finance tables) |
-| Evidence | Live test: tenant A context cannot SELECT tenant B rows; unset GUC sees none |
+| Item     | Change                                                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------ |
+| RLS      | `app.enable_tenant_rls('payment_reconciliations')`                                                           |
+| Policy   | `rls_payment_reconciliations_select` FOR SELECT TO `educore_app` USING `tenant_id = app.current_tenant_id()` |
+| PUBLIC   | `REVOKE ALL` (aligned with other finance tables)                                                             |
+| Evidence | Live test: tenant A context cannot SELECT tenant B rows; unset GUC sees none                                 |
 
 ## Files
 

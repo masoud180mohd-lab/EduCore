@@ -1,9 +1,9 @@
 # F-002 — Production MFA_ENFORCE=hard (2026-08-13)
 
-| Field     | Value |
-| --------- | ----- |
-| Finding   | **F-002** prod privileged MFA still soft |
-| Status    | **Closed** (ops) |
+| Field     | Value                                       |
+| --------- | ------------------------------------------- |
+| Finding   | **F-002** prod privileged MFA still soft    |
+| Status    | **Closed** (ops)                            |
 | Authority | SOLO-GOV-001 — does **not** change Board V3 |
 
 ## Evidence (no secrets)

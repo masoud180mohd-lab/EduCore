@@ -63,7 +63,7 @@ async function jsonFetch(path, init) {
   const res = await fetch(`${API}${path}`, {
     ...init,
     headers: {
-      accept: 'application/json',
+      'accept': 'application/json',
       'content-type': 'application/json',
       ...(init.headers ?? {}),
     },
@@ -96,7 +96,9 @@ async function main() {
     body: JSON.stringify({ email, password }),
   });
   if (login.status !== 200 || !login.body?.data?.accessToken) {
-    process.stderr.write(`login_failed status=${login.status} code=${login.body?.error?.code ?? 'unknown'}\n`);
+    process.stderr.write(
+      `login_failed status=${login.status} code=${login.body?.error?.code ?? 'unknown'}\n`,
+    );
     process.exit(1);
   }
   const token = login.body.data.accessToken;
@@ -106,7 +108,7 @@ async function main() {
   const begin = await jsonFetch('/api/v1/me/mfa-factors', {
     method: 'POST',
     headers: {
-      authorization: `Bearer ${token}`,
+      'authorization': `Bearer ${token}`,
       'x-tenant-id': tenantId,
       'idempotency-key': `prd-mfa-enroll-${randomUUID()}`,
     },
@@ -126,7 +128,7 @@ async function main() {
   const confirm = await jsonFetch(`/api/v1/me/mfa-factors/${factorId}/confirm`, {
     method: 'POST',
     headers: {
-      authorization: `Bearer ${token}`,
+      'authorization': `Bearer ${token}`,
       'x-tenant-id': tenantId,
     },
     body: JSON.stringify({ code }),
