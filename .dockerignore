@@ -21,8 +21,6 @@ agent-transcripts
 tests
 scripts
 
-apps/web/src
-apps/web/public
 apps/web/.next
 apps/api/dist
 apps/api/db
@@ -30,6 +28,7 @@ apps/api/db
 *.log
 .env
 .env.*
+**/.env.local
 !.env.example
 !.env.docker.example
 

@@ -2,6 +2,10 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-14 - Next.js web on Fly
+
+- `educore-web-staging` and `educore-web` live (fra). API CORS allowlists those origins. Office fees via browser; Auth0 staging callback not updated.
+
 ## 2026-08-13 - F-004 / F-016 / F-017 live on Fly
 
 - Prod Neon: RLS, webhook EXECUTE split, bursar vs staff. Staging + prod API images redeployed.

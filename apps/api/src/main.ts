@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module.js';
 import { loadAppConfig } from './common/config/app-config.js';
+import { resolveCorsOrigins } from './common/config/cors-origins.js';
 import { ConsoleAppLogger } from './common/logging/logger.js';
 
 async function bootstrap(): Promise<void> {
@@ -17,12 +18,7 @@ async function bootstrap(): Promise<void> {
   // Browser UI (@educore/web on :3001) calls the API on :3000. Without CORS,
   // fetch fails with a network error and the login page shows the offline stub.
   app.enableCors({
-    origin: [
-      'http://127.0.0.1:3001',
-      'http://localhost:3001',
-      'http://127.0.0.1:3000',
-      'http://localhost:3000',
-    ],
+    origin: [...resolveCorsOrigins()],
     credentials: true,
     allowedHeaders: [
       'Authorization',

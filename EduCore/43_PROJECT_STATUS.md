@@ -50,7 +50,7 @@ Authoritative artifacts live under `docs/engineering/` (not rewritten into kit f
 - Teacher attendance/marks UI; parent/guardian fee visibility (pay at office).
 - Office fees path: structures → invoices → office payment → receipts (PAY-007 live path; MoMo later).
 - **Staging FRA:** Fly `educore-api-staging` + Neon `educore-staging-fra`; D1 Pass (2026-08-08 + FRA re-check 2026-08-10); D2 Pass (app redeploy 2026-08-13); Auth0 US PKCE; **MFA_ENFORCE=hard**.
-- **Production infra (Owner lab, not public-school cutover):** Fly `educore-api` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green; IdP local; **MFA_ENFORCE=hard** (F-002); office fees (PAY-007).
+- **Production infra (Owner lab, not public-school cutover):** Fly `educore-api` + `educore-web` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green; IdP local; **MFA_ENFORCE=hard** (F-002); office fees (PAY-007). Web: https://educore-web.fly.dev
 
 ## Frozen
 
@@ -120,6 +120,7 @@ Owner residuals (not Board):
 6. ~~**Production Fly + Neon + Doppler**~~ Infra live (`OPS-PROD-001`).
 7. ~~**F-002**~~ Prod MFA hard. **F-005** withdrawn.
 8. ~~**F-004 / F-016 / F-017 live**~~ Prod migrated; staging + prod Fly images 2026-08-13.
+9. ~~**FLY-WEB**~~ `educore-web-staging` + `educore-web` live 2026-08-14.
 
 **Governance:** Owner + AI. `42` is a checklist, not a people-gate.
 
@@ -128,7 +129,7 @@ Owner residuals (not Board):
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — exit note `SPRINT0_ENGINEERING_EXIT_NOTE.md`.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: school workflows on office fees; ClickPesa later; Neon plan upgrade if a 24h PITR window is required.
+- **Next epic focus**: use live web for office-fees school workflows; ClickPesa later; Neon plan upgrade if a 24h PITR window is required.
 
 ## Status Update Rules
 

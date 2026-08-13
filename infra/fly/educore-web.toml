@@ -1,0 +1,38 @@
+# Fly production — educore-web (Next.js)
+#
+# Deploy from repo root:
+#   flyctl deploy -c infra/fly/educore-web.toml --remote-only
+
+app = "educore-web"
+primary_region = "fra"
+
+[build]
+  dockerfile = "../../apps/web/Dockerfile"
+
+  [build.args]
+    NEXT_PUBLIC_API_BASE_URL = "https://educore-api.fly.dev"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+  HOSTNAME = "0.0.0.0"
+  SERVICE_NAME = "educore-web"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "25s"
+    interval = "15s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

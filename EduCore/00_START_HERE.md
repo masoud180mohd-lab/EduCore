@@ -29,7 +29,7 @@ Completed (engineering, Owner + AI):
 - Slice DBF/ACF/DSF for identity, students, academic, attendance, marks, guardians, fees, and admin/teacher/parent lab UIs — **Owner-accepted** (SOLO-GOV-002).
 - Admin UI polish program (AUDIT-ADMIN-UI-R1 / IMP-027…046 + residuals) closed on `main`.
 - Staging FRA live: Fly `educore-api-staging` + Neon Frankfurt; D1 Pass; D2 Pass; Auth0 US + MFA-HARD.
-- Production infra live: Fly `educore-api` + Neon `educore-prod` + Doppler `prd`; prod MFA hard. Infra-live ≠ public-school cutover.
+- Production infra live: Fly `educore-api` + `educore-web` + Neon `educore-prod` + Doppler `prd`; prod MFA hard. Infra-live ≠ public-school cutover. Web: https://educore-web.fly.dev
 
 Current readiness (technical, not missing people):
 
