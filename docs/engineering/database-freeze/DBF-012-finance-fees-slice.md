@@ -107,6 +107,12 @@ and writes `payment_allocations` + `receipts`. **Never** mutate a stored balance
 - `app.record_gateway_event` 9-arg overload (amount + outcome); prior 7-arg dropped.
 - `app.reconcile_payment` — compare attempt vs latest linked event; outcomes `matched` | `amount_mismatch` | `missing_event` | `status_mismatch`. Does **not** post journals or mutate payment status.
 
+## Rev 1.4 — F-016 payment_reconciliations RLS (migration `20260813150000`)
+
+- `payment_reconciliations` now ENABLE + FORCE RLS via `app.enable_tenant_rls`.
+- `educore_app` SELECT policy: `tenant_id = app.current_tenant_id()` (same pattern as other finance tables).
+- PUBLIC revoked. Writes still only via `app.reconcile_payment` (SECURITY DEFINER).
+
 ## Solo-operator honesty
 
 Acting seats only.

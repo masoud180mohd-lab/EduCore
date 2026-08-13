@@ -146,6 +146,21 @@ describe('IMP-009 finance fees foundation', () => {
     expect(gateway).toContain('app.record_gateway_event');
   });
 
+  it('F-016: payment_reconciliations ENABLE + FORCE RLS and tenant SELECT policy', () => {
+    const rls = readFileSync(
+      path.join(
+        root,
+        'apps/api/db/migrations/20260813150000_payment_reconciliations_rls.up.sql',
+      ),
+      'utf8',
+    );
+    expect(rls).toContain("app.enable_tenant_rls('payment_reconciliations'");
+    expect(rls).toContain('rls_payment_reconciliations_select');
+    expect(rls).toMatch(/FOR SELECT TO educore_app/i);
+    expect(rls).toContain('tenant_id = app.current_tenant_id()');
+    expect(rls).toContain('REVOKE ALL ON TABLE payment_reconciliations FROM PUBLIC');
+  });
+
   it('binds PAYMENT_PROVIDER_PORT with Fake default (ClickPesa optional)', () => {
     const mod = readFileSync(
       path.join(root, 'apps/api/src/modules/payments/payments.module.ts'),
