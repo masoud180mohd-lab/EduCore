@@ -75,7 +75,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 | Area | Status |
 | ---- | ------ |
-| Kit-wide Design System Freeze | **Accepted (provisional):** `DSF-KIT-001` v1.0 — slice DSF-001…006 still govern screens |
+| Kit-wide Design System Freeze | **Accepted (provisional):** `DSF-KIT-001` v1.1 — slice DSF-001…006 still govern screens |
 | Production IdP / MFA | **WEB-AUTH0** (US tenant residual); **WEB-MFA-UI**; staging **and prod** MFA-HARD |
 | Hosting, IaC, secrets provider, RPO/RTO | **Live staging + prod infra:** Fly.io + Neon Frankfurt + Doppler. Neon PITR max **6h** on current plan (kit RPO was 24h) |
 | First **real** payment provider | **Live:** office cash/bank/cheque (PAY-007). **Later:** ClickPesa — PAY-001 choice unchanged; Fake runtime; no keys |

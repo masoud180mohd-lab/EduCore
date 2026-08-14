@@ -17,7 +17,7 @@
 ## Explicitly not done
 
 - Independent design countersign
-- UI redesign pass
+- TeacherShell / ParentShell restyle
 - Production GO
 
 ## Next

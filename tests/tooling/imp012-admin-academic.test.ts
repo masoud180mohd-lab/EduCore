@@ -27,7 +27,9 @@ describe('IMP-012 admin academic UI', () => {
       path.join(root, 'apps/web/src/app/t/[tenantId]/admin/page.tsx'),
       'utf8',
     );
-    expect(home).toContain('/academic');
+    expect(home).toContain('ADMIN_HUB_BY_ID');
+    const hub = readFileSync(path.join(root, 'apps/web/src/lib/admin/admin-hub.ts'), 'utf8');
+    expect(hub).toContain("hrefSuffix: '/academic'");
   });
 
   it('ships hub and entity list/detail routes', () => {

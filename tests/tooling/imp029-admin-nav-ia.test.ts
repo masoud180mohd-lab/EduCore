@@ -28,6 +28,7 @@ describe('IMP-029 AdminShell nav IA', () => {
     expect(shell).toContain('canAccessAdminShell');
     expect(shell).toContain('admin-nav-groups');
     expect(shell).toContain('aria-label="Admin"');
+    expect(shell).toContain('admin-console-rail');
   });
 
   it('home hub mirrors groups', () => {

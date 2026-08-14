@@ -64,10 +64,10 @@ export default function AdminHomePage() {
   return (
     <AdminShell tenantId={tenantId}>
       <AdminPageHeader
-        title="Admin"
+        title="Office"
         description={
           school !== null
-            ? `${school} — open an area below, or use a common next step.`
+            ? `${school} — pick a registry, fees, or settings job.`
             : 'Loading school…'
         }
       />

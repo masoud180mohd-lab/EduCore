@@ -3,8 +3,8 @@
 | Field     | Value                                                       |
 | --------- | ----------------------------------------------------------- |
 | Freeze ID | `DSF-002`                                                   |
-| Version   | `1.27`                                                      |
-| Date      | 2026-08-03                                                  |
+| Version   | `1.28`                                                      |
+| Date      | 2026-08-14                                                  |
 | Audience  | School admin / headmaster (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                    |
 | Program   | IMP-007 · … · IMP-032 · **COMMS-006**                       |
@@ -17,7 +17,7 @@ Calm operations shell for school admins: school overview, staff directory, organ
 
 ## Tokens
 
-Reuse DSF-001 CSS variables (`--color-*`, `--space-*`, `--font-sans`, `--radius`, `--focus-ring`). Admin shell may use a wider content max-width (`48rem`–`56rem`) vs teacher `40rem`.
+Reuse DSF-001 / DSF-KIT CSS variables (`--color-*`, `--space-*`, `--font-sans`, `--radius`, `--focus-ring`, `--color-rail*`). Admin workspace max-width is `--content-max-admin` (`72rem`) vs teacher `40rem`.
 
 Avoid purple-on-white AI defaults and marketing hero chrome.
 
@@ -46,7 +46,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 
 ## Component inventory (this slice)
 
-- `AdminShell` — header brand = school name from `GET /tenants/current` (fallback `EduCore Admin`); Logout; **grouped top nav (IMP-029 Option A)** — see Nav IA below
+- `AdminShell` — left rail + top utility bar; school name from `GET /tenants/current` (fallback `EduCore Admin`); Logout; **grouped nav (IMP-029 Option A groups, IMP-046 rail chrome)** — see Nav IA below
 - Shared banners, buttons, fields from DSF-001 language
 - **IMP-027 primitives:** `Banner`, `AdminPageHeader`, `ResourceList`, `StatusChip`, `ConfirmDialog` under `apps/web/src/components/admin/`
 - **IMP-028 ops tables:** `AdminTable` for dense registries (Users, Students, Guardians, Orgs, Memberships, Roles, Academic lists; fees lists in DSF-004); `ResourceList variant="table"`
@@ -73,22 +73,23 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 - 401 → Sign in again
 - **403 (admin pages):** use central **`adminFriendlyMessage(err, domain)`** (`apps/web/src/lib/admin/admin-friendly-message.ts`) — see Error copy table below. API remains AuthZ truth.
 - **AdminShell gate (IMP-033):** after session↔tenant bind, `GET /auth/me` must show an admin-domain capability (owner/admin role **or** any of tenant/user/org/student/guardian/role/academic/finance/notification read|manage). Otherwise show “Admin unavailable” with link to teacher/parent — do **not** render privileged nav or page children.
-- **Nav filter (IMP-033):** top-nav (and home hub cards) only list domains the actor’s permissions can reach; API remains AuthZ truth for mutations. **IMP-029 does not redesign permissions** — it only groups already-visible ids. **COMMS-006:** nav id `notifications` (label SMS) when `notification.read` \| `notification.manage`.
+- **Nav filter (IMP-033):** rail nav (and home hub cards) only list domains the actor’s permissions can reach; API remains AuthZ truth for mutations. **IMP-029 does not redesign permissions** — it only groups already-visible ids. **COMMS-006:** nav id `notifications` (label SMS) when `notification.read` \| `notification.manage`.
 - Attendance-only staff / parent-only → no AdminShell (teacher or parent workspace)
 - Post-login home preference (`prefersAdminHome`) unchanged — still prefers owner/admin/user-invite surfaces; bursars may open Admin Fees via URL when `finance.*` is present
 
-## Nav IA — tablet grouped top nav (IMP-029)
+## Nav IA — grouped rail (IMP-029 Option A groups + IMP-046 chrome)
 
-**Pattern chosen: Option A — Grouped top nav.** Section labels + links under each group; wrap by _group_, not ten equal peer links. Routes unchanged (`/admin/users`, etc.).
+**Pattern chosen: Option A groups in a left rail (IMP-046).** Section labels + links under each group. Routes unchanged (`/admin/users`, etc.). IMP-029 grouping and IMP-033 filtering are unchanged; chrome moved off the wrapped top strip because it did not read as an office console.
 
-| Group        | `AdminNavId` members (when visible)      |
-| ------------ | ---------------------------------------- |
-| **Home**     | `home`                                   |
-| **Registry** | `students`, `guardians`, `organizations` |
-| **Access**   | `users`, `memberships`, `roles`          |
-| **Academic** | `academic`                               |
-| **Fees**     | `fees`                                   |
-| **Settings** | `settings`                               |
+| Group             | `AdminNavId` members (when visible)      |
+| ----------------- | ---------------------------------------- |
+| **Home**          | `home`                                   |
+| **Registry**      | `students`, `guardians`, `organizations` |
+| **Access**        | `users`, `memberships`, `roles`          |
+| **Academic**      | `academic`                               |
+| **Fees**          | `fees`                                   |
+| **Notifications** | `notifications`                          |
+| **Settings**      | `settings`                               |
 
 | Rule              | Behavior                                                                              |
 | ----------------- | ------------------------------------------------------------------------------------- |
@@ -96,12 +97,12 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 | Empty groups      | Omit entirely when all member ids filtered out                                        |
 | Home hub          | Mirror the same groups/cards; skip Home group on the hub itself                       |
 | Active state      | `aria-current="page"` on current link; deep links (e.g. `/fees/invoices/…`) mark Fees |
-| Tablet (≥768)     | Usable without horizontal page scroll; primary nav links ≥44px tall                   |
-| Desktop (≥1024)   | Same grouped IA; calm and scannable                                                   |
-| Mobile (&lt;768)  | Best-effort stacked groups; full phone IA redesign out of scope                       |
-| A11y              | `<nav aria-label="Admin">`; group headings + labelled lists; no hover-only access     |
+| Tablet (≥768)     | Persistent left rail; no horizontal page scroll for nav; links ≥44px tall             |
+| Desktop (≥1024)   | Same rail IA; workspace uses `--content-max-admin` (72rem)                            |
+| Mobile (&lt;768)  | Hamburger + overlay rail; Esc / scrim closes; no hover-only access                    |
+| A11y              | `<nav aria-label="Admin">`; group headings + labelled lists; rail `aria-label="Office navigation"` |
 
-**Non-goals (nav IA):** permission redesign; shadcn/marketing sidebar; ParentShell/TeacherShell; route renames; Option B sessionStorage / Option C side rail (unless a later DSF revise).
+**Non-goals (nav IA):** permission redesign; shadcn/marketing sidebar; ParentShell/TeacherShell restyle; route renames; Option B sessionStorage.
 
 ## List pagination (IMP-030 / ACF)
 
@@ -269,6 +270,7 @@ Accepted under acting seats only; revise when a second review seat exists.
 | IMP-029   | Grouped AdminShell nav IA for tablet                           |
 | IMP-030   | Load more cursor pagination on admin registries                |
 | IMP-033   | AdminShell /auth/me gate + permission-filtered nav             |
+| IMP-046   | AdminShell office console (left rail + utility bar)            |
 | IMP-034   | ConfirmDialog replaces window.confirm (destructive admin)      |
 | IMP-035   | Central adminFriendlyMessage error mapper                      |
 | IMP-031   | Admin cross-links (student ↔ enrollment/fees/guardian)         |
@@ -297,3 +299,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.25 | 2026-07-31 | Wave X closeout: detail pickers + `?studentId=` prefill             |
 | 1.26 | 2026-07-31 | IMP-028 residual: Guardians/Orgs/Memberships/Roles/Academic tables  |
 | 1.27 | 2026-08-03 | COMMS-006 SMS notifications admin (deliveries / test send / usage)  |
+| 1.28 | 2026-08-14 | IMP-046 AdminShell left rail + utility bar (Option A groups kept)   |

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 import { apiRequest } from '@/lib/api/client';
 import {
@@ -45,7 +45,7 @@ const NAV_LINKS: ReadonlyArray<NavLink> = [
   { id: 'home', href: (base) => base, label: 'Home' },
   { id: 'users', href: (base) => `${base}/users`, label: 'Users' },
   { id: 'memberships', href: (base) => `${base}/memberships`, label: 'Memberships' },
-  { id: 'organizations', href: (base) => `${base}/organizations`, label: 'Orgs' },
+  { id: 'organizations', href: (base) => `${base}/organizations`, label: 'Organizations' },
   { id: 'students', href: (base) => `${base}/students`, label: 'Students' },
   { id: 'guardians', href: (base) => `${base}/guardians`, label: 'Guardians' },
   { id: 'roles', href: (base) => `${base}/roles`, label: 'Roles' },
@@ -61,9 +61,10 @@ const NAV_BY_ID = Object.fromEntries(NAV_LINKS.map((l) => [l.id, l])) as Record<
 >;
 
 /**
- * Admin chrome (DSF-002 / IMP-033 / IMP-029).
+ * Admin chrome (DSF-002 / DSF-KIT-001 / IMP-033 / IMP-029 / IMP-046).
  * Session + tenant bind first; then /auth/me capability gate.
- * Nav is permission-filtered and grouped for tablet — API remains AuthZ truth.
+ * Nav is permission-filtered and grouped — API remains AuthZ truth.
+ * Layout is a left rail + utility bar (office console), not a wrapped top strip.
  */
 export function AdminShell({
   tenantId,
@@ -74,8 +75,10 @@ export function AdminShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const menuId = useId();
   const [gate, setGate] = useState<GateState>({ kind: 'loading' });
   const [brand, setBrand] = useState(BRAND_FALLBACK);
+  const [navOpen, setNavOpen] = useState(false);
 
   useEffect(() => {
     const session = readSession();
@@ -118,9 +121,31 @@ export function AdminShell({
     };
   }, [router, tenantId]);
 
+  useEffect(() => {
+    setNavOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!navOpen) return;
+    function onKey(event: KeyboardEvent): void {
+      if (event.key === 'Escape') setNavOpen(false);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [navOpen]);
+
+  useEffect(() => {
+    if (!navOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [navOpen]);
+
   if (gate.kind === 'loading') {
     return (
-      <div className="app-shell app-shell-wide">
+      <div className="admin-console-plain">
         <p className="muted">Checking access…</p>
       </div>
     );
@@ -130,7 +155,7 @@ export function AdminShell({
     const fallbackHref =
       gate.fallback === 'parent' ? `/t/${tenantId}/parent` : `/t/${tenantId}/teacher`;
     return (
-      <div className="app-shell app-shell-wide">
+      <div className="admin-console-plain">
         <h1>Admin unavailable</h1>
         <div className="banner banner-error" role="alert">
           You do not have access to Admin for this school. Sign in with an admin account, or open
@@ -163,11 +188,27 @@ export function AdminShell({
     return pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
   }
 
+  function logOut(): void {
+    clearSession();
+    router.replace('/login');
+  }
+
   return (
-    <div className="app-shell app-shell-wide">
-      <header className="top-nav top-nav-grouped">
-        <strong className="top-nav-brand">{brand}</strong>
-        <nav aria-label="Admin" className="admin-nav-groups">
+    <div className={navOpen ? 'admin-console admin-console-nav-open' : 'admin-console'}>
+      {navOpen ? (
+        <button
+          type="button"
+          className="admin-console-scrim"
+          aria-label="Close menu"
+          onClick={() => setNavOpen(false)}
+        />
+      ) : null}
+      <aside className="admin-console-rail" aria-label="Office navigation">
+        <div className="admin-console-brand">
+          <span className="admin-console-product">EduCore</span>
+          <span className="admin-console-product-meta">Office</span>
+        </div>
+        <nav aria-label="Admin" className="admin-nav-groups" id={menuId}>
           {groups.map((group) => (
             <div key={group.id} className="admin-nav-group">
               <span className="admin-nav-group-label" id={`admin-nav-${group.id}`}>
@@ -180,7 +221,11 @@ export function AdminShell({
                   const current = isCurrent(href);
                   return (
                     <li key={id}>
-                      <Link href={href} aria-current={current ? 'page' : undefined}>
+                      <Link
+                        href={href}
+                        aria-current={current ? 'page' : undefined}
+                        onClick={() => setNavOpen(false)}
+                      >
                         {link.label}
                       </Link>
                     </li>
@@ -190,21 +235,28 @@ export function AdminShell({
             </div>
           ))}
         </nav>
-        <button
-          type="button"
-          className="btn btn-secondary top-nav-logout"
-          onClick={() => {
-            clearSession();
-            router.replace('/login');
-          }}
-        >
-          Log out
-        </button>
-      </header>
-      {children}
-      <p className="muted" style={{ marginTop: '2rem' }}>
-        <Link href={`/t/${tenantId}/teacher`}>Open teacher attendance</Link>
-      </p>
+        <p className="admin-console-rail-foot">
+          <Link href={`/t/${tenantId}/teacher`}>Teacher attendance</Link>
+        </p>
+      </aside>
+      <div className="admin-console-workspace">
+        <header className="admin-console-top">
+          <button
+            type="button"
+            className="btn btn-secondary admin-console-menu"
+            aria-expanded={navOpen}
+            aria-controls={menuId}
+            onClick={() => setNavOpen((open) => !open)}
+          >
+            Menu
+          </button>
+          <strong className="admin-console-school">{brand}</strong>
+          <button type="button" className="btn btn-secondary" onClick={logOut}>
+            Log out
+          </button>
+        </header>
+        <main className="admin-console-main">{children}</main>
+      </div>
     </div>
   );
 }

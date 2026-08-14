@@ -1,10 +1,10 @@
-# DSF-KIT-001 — Kit-wide Design System Freeze v1.0
+# DSF-KIT-001 — Kit-wide Design System Freeze v1.1
 
 | Field       | Value                                                                 |
 | ----------- | --------------------------------------------------------------------- |
 | Freeze ID   | `DSF-KIT-001`                                                         |
-| Version     | `1.0`                                                                 |
-| Date        | 2026-08-08                                                            |
+| Version     | `1.1`                                                                 |
+| Date        | 2026-08-14                                                            |
 | Status      | **Accepted (solo-operator)** — 2026-08-08 (`GO DSF-KIT`)              |
 | Authority   | Solo-operator provisional (SOLO-GOV-001)                              |
 | Governing   | `07_DESIGN_SYSTEM.md` · Architecture Freeze Gate 3 · B-03 · DSF-001…006 |
@@ -58,12 +58,17 @@ Canonical CSS variables (from DSF-001; all slices reuse):
 | `--color-danger` | Errors / destructive | `#b42318` |
 | `--color-warn` | Late / offline / caution | `#b54708` |
 | `--color-ok` | Success / present | `#067647` |
+| `--color-rail` | Admin left rail | `#12202b` |
+| `--color-rail-ink` | Rail text | `#e8eef3` |
+| `--color-rail-muted` | Rail secondary | `#8b9aab` |
+| `--color-rail-line` | Rail rules | `#243445` |
+| `--rail-width` | Admin rail | `15.5rem` |
 | `--space-1`…`--space-6` | 4 / 8 / 12 / 16 / 24 / 32 px | |
 | `--font-sans` | UI | `"Source Sans 3", "Segoe UI", system-ui, sans-serif` |
 | `--radius` | Controls | `6px` |
 | `--focus-ring` | Focus | `2px solid #0f6b5c` |
 | `--content-max-teacher` | Teacher column | `40rem` |
-| `--content-max-admin` | Admin / parent | `48rem`–`56rem` |
+| `--content-max-admin` | Admin workspace | `72rem` (parent remains 48–56rem) |
 
 ### Type scale
 
@@ -81,7 +86,7 @@ Changing tokens requires **DSF-KIT amend** (not silent Tailwind/shadcn swap).
 | Shell | Layout |
 | --- | --- |
 | **TeacherShell** | Mobile column; bottom or compact top nav; max `--content-max-teacher` |
-| **AdminShell** | Header brand = school name (`GET /tenants/current`); grouped top nav; denser tables |
+| **AdminShell** | Left rail (grouped Option A IA) + top utility bar with school name (`GET /tenants/current`) and Log out; denser tables; workspace max `--content-max-admin`. Mobile (&lt;768): hamburger + overlay rail |
 | **ParentShell** | Simple header; Home + Sign out; admin density max-width |
 | **Login / MFA** | Centered narrow form; clear errors; no marketing hero |
 
@@ -205,6 +210,7 @@ Layouts must not break for Kiswahili labels (wrap / allow slightly longer string
 | Ver | Date | Notes |
 | --- | --- | --- |
 | 1.0 | 2026-08-08 | Initial kit-wide freeze from DSF-001…006 synthesis |
+| 1.1 | 2026-08-14 | IMP-046 AdminShell office console: left rail + utility bar; rail tokens; admin content max 72rem |
 
 ## Related
 

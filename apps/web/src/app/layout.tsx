@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&display=swap"
         />
       </head>
       <body suppressHydrationWarning>

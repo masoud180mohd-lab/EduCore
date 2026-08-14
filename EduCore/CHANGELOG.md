@@ -2,6 +2,10 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-14 - Admin office console layout
+
+- AdminShell is a left-rail office console (grouped nav + school name / Log out bar). DSF-KIT-001 v1.1 and DSF-002 v1.28. Teacher and parent shells unchanged.
+
 ## 2026-08-14 - Next.js web on Fly
 
 - `educore-web-staging` and `educore-web` live (fra). API CORS allowlists those origins. Office fees via browser; Auth0 staging callback not updated.
