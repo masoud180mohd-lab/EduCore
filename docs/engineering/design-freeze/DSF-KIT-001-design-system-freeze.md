@@ -1,9 +1,9 @@
-# DSF-KIT-001 — Kit-wide Design System Freeze v1.4
+# DSF-KIT-001 — Kit-wide Design System Freeze v1.5
 
 | Field       | Value                                                                 |
 | ----------- | --------------------------------------------------------------------- |
 | Freeze ID   | `DSF-KIT-001`                                                         |
-| Version     | `1.4`                                                                 |
+| Version     | `1.5`                                                                 |
 | Date        | 2026-08-14                                                            |
 | Status      | **Accepted (solo-operator)** — 2026-08-08 (`GO DSF-KIT`)              |
 | Authority   | Solo-operator provisional (SOLO-GOV-001)                              |
@@ -102,6 +102,8 @@ Changing tokens requires **DSF-KIT amend** (not silent Tailwind/shadcn swap).
 | **Admin / head** | AdminShell | Grouped: Registry · Access · Academic · Fees · Notifications · Settings (DSF-002 IMP-029) |
 | **Bursar** | AdminShell | Fees-focused; same shell; nav filtered by `finance.*` |
 | **Parent / guardian** | ParentShell | Home (fees) · Sign out (DSF-006) |
+
+**IMP-050:** Owner/admin chrome includes a workspace switcher (Ofisi / Mwalimu / Mzazi). Student is a disabled hint — no student login. API remains AuthZ truth.
 
 Rules:
 
@@ -224,6 +226,7 @@ Layouts must not break for Kiswahili labels (wrap / allow slightly longer string
 | 1.2 | 2026-08-14 | IMP-047 dark theme tokens + EN/SW UI locale preference in Admin chrome |
 | 1.3 | 2026-08-14 | IMP-048 KPI grid, Students/Fees i18n, report-card print CSS |
 | 1.4 | 2026-08-14 | IMP-049 remaining Admin/Teacher/Parent/login chrome i18n |
+| 1.5 | 2026-08-14 | IMP-050 workspace switcher (office / teacher / parent) |
 
 ## Related
 

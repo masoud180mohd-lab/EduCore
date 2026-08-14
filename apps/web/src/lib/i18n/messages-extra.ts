@@ -528,6 +528,11 @@ export const EXTRA_EN = {
   'reconcile.amount_mismatch': 'Amount mismatch',
   'reconcile.missing_event': 'No gateway event',
   'reconcile.status_mismatch': 'Status mismatch',
+
+  'shell.workspace': 'Workspace',
+  'shell.student': 'Student',
+  'shell.studentPortalHint':
+    'Students do not sign in. The office keeps the registry; parents see linked fees.',
 } as const;
 
 export const EXTRA_SW: { readonly [K in keyof typeof EXTRA_EN]: string } = {
@@ -1058,4 +1063,9 @@ export const EXTRA_SW: { readonly [K in keyof typeof EXTRA_EN]: string } = {
   'reconcile.amount_mismatch': 'Kiasi hakilingani',
   'reconcile.missing_event': 'Hakuna tukio la lango',
   'reconcile.status_mismatch': 'Hali hailingani',
+
+  'shell.workspace': 'Eneo la kazi',
+  'shell.student': 'Mwanafunzi',
+  'shell.studentPortalHint':
+    'Wanafunzi hawaingii. Ofisi ina daftari; mzazi anaona ada za mwanafunzi aliyeunganishwa.',
 };

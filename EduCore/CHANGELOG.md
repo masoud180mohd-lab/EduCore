@@ -2,6 +2,10 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-14 - Workspace switcher (office / teacher / parent)
+
+- Owner/admin can open Ofisi, Mwalimu, and Mzazi from the top bar. Student has no login portal (registry + parent fees). DSF-KIT-001 v1.5.
+
 ## 2026-08-14 - Full UI EN/SW chrome (Admin, Teacher, Parent, login)
 
 - Remaining office, teacher, parent, and login chrome uses the EN/SW catalog (IMP-049). Language toggle covers more than Students/Fees. DSF-KIT-001 v1.4 · DSF-002 v1.30. API error mapper copy stays English.

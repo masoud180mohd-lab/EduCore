@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 import { AdminChromeControls } from '@/components/chrome/AdminChromeControls';
+import { WorkspaceSwitcher } from '@/components/chrome/WorkspaceSwitcher';
 import { useAppPreferences } from '@/components/AppProviders';
 import { clearSession, readSession } from '@/lib/auth/session';
 
@@ -46,6 +47,7 @@ export function TeacherShell({
     <div className="app-shell">
       <header className="top-nav">
         <strong>EduCore</strong>
+        <WorkspaceSwitcher tenantId={tenantId} />
         <nav aria-label={t('teacher.nav')}>
           <Link href={homeHref} aria-current={pathname === homeHref ? 'page' : undefined}>
             {t('teacher.sessions')}

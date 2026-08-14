@@ -786,6 +786,26 @@ h1 {
   cursor: pointer;
 }
 
+.workspace-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.workspace-switch a {
+  text-decoration: none;
+}
+
+.admin-console-chip.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 .admin-console-chip.is-active {
   background: var(--color-surface);
   color: var(--color-ink);

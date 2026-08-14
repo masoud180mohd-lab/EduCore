@@ -7,6 +7,7 @@ import { useEffect, useId, useState } from 'react';
 
 import { useAppPreferences, useTenantLocaleHint } from '@/components/AppProviders';
 import { AdminChromeControls } from '@/components/chrome/AdminChromeControls';
+import { WorkspaceSwitcher } from '@/components/chrome/WorkspaceSwitcher';
 import { apiRequest } from '@/lib/api/client';
 import {
   adminDeniedFallback,
@@ -245,9 +246,6 @@ export function AdminShell({
             </div>
           ))}
         </nav>
-        <p className="admin-console-rail-foot">
-          <Link href={`/t/${tenantId}/teacher`}>{t('shell.teacherAttendance')}</Link>
-        </p>
       </aside>
       <div className="admin-console-workspace">
         <header className="admin-console-top">
@@ -261,6 +259,7 @@ export function AdminShell({
             {t('shell.menu')}
           </button>
           <strong className="admin-console-school">{brand}</strong>
+          <WorkspaceSwitcher tenantId={tenantId} />
           <AdminChromeControls />
           <button type="button" className="btn btn-secondary" onClick={logOut}>
             {t('shell.logout')}
