@@ -3,7 +3,7 @@
 | Field     | Value                                                       |
 | --------- | ----------------------------------------------------------- |
 | Freeze ID | `DSF-002`                                                   |
-| Version   | `1.29`                                                      |
+| Version   | `1.30`                                                      |
 | Date      | 2026-08-14                                                  |
 | Audience  | School admin / headmaster (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                    |
@@ -282,6 +282,7 @@ Accepted under acting seats only; revise when a second review seat exists.
 | COMMS-006 | Notifications admin UI (deliveries / usage / test SMS)         |
 | IMP-047   | Admin EN/SW + dark mode + MVP nav modules                      |
 | IMP-048   | Dashboard KPIs + Students/Fees i18n + report-card PDF          |
+| IMP-049   | Full Admin/Teacher/Parent/login EN/SW chrome                   |
 
 ## Revisions
 
@@ -304,3 +305,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.27 | 2026-08-03 | COMMS-006 SMS notifications admin (deliveries / test send / usage)  |
 | 1.28 | 2026-08-14 | IMP-046 AdminShell left rail + utility bar (Option A groups kept)   |
 | 1.29 | 2026-08-14 | IMP-048 KPI tiles, Students/Fees i18n, report-card PDF UI           |
+| 1.30 | 2026-08-14 | IMP-049 remaining Admin/Teacher/Parent/login chrome i18n            |

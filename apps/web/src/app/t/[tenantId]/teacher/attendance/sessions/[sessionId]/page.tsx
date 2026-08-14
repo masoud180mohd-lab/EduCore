@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
+import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
 import {
   type AttendanceRecordStatus,
@@ -34,6 +35,7 @@ const STATUSES: readonly AttendanceRecordStatus[] = ['present', 'absent', 'late'
 export default function MarkSessionPage() {
   const params = useParams<{ tenantId: string; sessionId: string }>();
   const { tenantId, sessionId } = params;
+  const { t } = useAppPreferences();
   const [session, setSession] = useState<Session | null>(null);
   const [classLabel, setClassLabel] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<MarkDraft[]>([]);
@@ -176,12 +178,12 @@ export default function MarkSessionPage() {
   return (
     <TeacherShell tenantId={tenantId}>
       <p>
-        <Link href={`/t/${tenantId}/teacher/attendance`}>← Take attendance</Link>
+        <Link href={`/t/${tenantId}/teacher/attendance`}>← {t('teacher.takeAttendance')}</Link>
       </p>
-      <AdminPageHeader title="Mark attendance">
+      <AdminPageHeader title={t('teacher.markAttendance')}>
         {session !== null ? (
           <p className="muted">
-            {session.sessionDate} · {classLabel ?? 'Class'} ·{' '}
+            {session.sessionDate} · {classLabel ?? t('common.class')} ·{' '}
             <span className={`chip chip-${session.status === 'open' ? 'open' : 'closed'}`}>
               {session.status}
             </span>
@@ -190,7 +192,7 @@ export default function MarkSessionPage() {
       </AdminPageHeader>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      {loading ? <p className="muted">Loading roster…</p> : null}
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {!loading && drafts.length === 0 ? (
         <Banner tone="warn">No active enrollments for this class.</Banner>
       ) : null}
@@ -204,7 +206,7 @@ export default function MarkSessionPage() {
             <div
               className="status-group"
               role="radiogroup"
-              aria-label={`Status for ${d.displayName}`}
+              aria-label={`${t('common.status')} ${d.displayName}`}
             >
               {STATUSES.map((status) => (
                 <label key={status}>
@@ -233,7 +235,7 @@ export default function MarkSessionPage() {
           disabled={closed || busy || drafts.length === 0}
           onClick={() => void onSave()}
         >
-          {busy ? 'Working…' : 'Save marks'}
+          {busy ? t('common.saving') : t('common.save')}
         </button>
         <button
           type="button"
@@ -241,15 +243,15 @@ export default function MarkSessionPage() {
           disabled={closed || busy}
           onClick={() => setConfirmClose(true)}
         >
-          Close session
+          {t('common.close')}
         </button>
       </div>
 
       <ConfirmDialog
         open={confirmClose}
-        title="Close this session?"
+        title={t('teacher.closeSession')}
         body="Marks cannot be edited after closing."
-        confirmLabel="Close session"
+        confirmLabel={t('common.close')}
         danger
         busy={busy}
         onCancel={() => {

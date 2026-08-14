@@ -213,12 +213,12 @@ export function AdminShell({
           onClick={() => setNavOpen(false)}
         />
       ) : null}
-      <aside className="admin-console-rail" aria-label="Office navigation">
+      <aside className="admin-console-rail" aria-label={t('common.navOffice')}>
         <div className="admin-console-brand">
           <span className="admin-console-product">EduCore</span>
           <span className="admin-console-product-meta">{t('shell.office')}</span>
         </div>
-        <nav aria-label="Admin" className="admin-nav-groups" id={menuId}>
+        <nav aria-label={t('common.navAdmin')} className="admin-nav-groups" id={menuId}>
           {groups.map((group) => (
             <div key={group.id} className="admin-nav-group">
               <span className="admin-nav-group-label" id={`admin-nav-${group.id}`}>

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { ParentShell } from '@/components/ParentShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { readSession } from '@/lib/auth/session';
 import { activeLinkedStudentIds } from '@/lib/finance/guardian-fees-access';
@@ -24,9 +25,9 @@ type Guardian = {
   readonly displayName: string;
 };
 
-function accessMessage(err: ApiClientError): string {
+function accessMessage(err: ApiClientError, noAccess: string): string {
   if (err.status === 403) {
-    return 'You do not have parent portal access.';
+    return noAccess;
   }
   return teacherFriendlyMessage(err);
 }
@@ -34,6 +35,7 @@ function accessMessage(err: ApiClientError): string {
 export default function ParentHomePage() {
   const params = useParams<{ tenantId: string }>();
   const { tenantId } = params;
+  const { t } = useAppPreferences();
   const [guardian, setGuardian] = useState<Guardian | null>(null);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -52,12 +54,12 @@ export default function ParentHomePage() {
       setLinks(lRes.data ?? []);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(accessMessage(err));
-      else setError('Could not load your linked students.');
+      if (err instanceof ApiClientError) setError(accessMessage(err, t('parent.noAccess')));
+      else setError(t('parent.loadError'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -69,17 +71,14 @@ export default function ParentHomePage() {
   return (
     <ParentShell tenantId={tenantId}>
       <AdminPageHeader
-        title={`Fees — ${guardian?.displayName ?? 'Parent'}`}
-        description="Read-only invoices for your linked students."
+        title={`${t('parent.feesTitle')} — ${guardian?.displayName ?? t('parent.parent')}`}
+        description={t('parent.feesDesc')}
       />
-      <Banner tone="info">Pay at the school office. Online payment is not available yet.</Banner>
+      <Banner tone="info">{t('parent.officePay')}</Banner>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {loading ? <p className="muted">Loading…</p> : null}
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {!loading && error === null && active.length === 0 ? (
-        <Banner tone="info">
-          No students are linked to your guardian account yet. Ask the school office to link a
-          student.
-        </Banner>
+        <Banner tone="info">{t('parent.noStudents')}</Banner>
       ) : null}
       {!loading && active.length > 0 ? (
         <ul className="list">
@@ -89,7 +88,7 @@ export default function ParentHomePage() {
                 <strong>{link.studentDisplayName ?? link.studentId}</strong>
                 <div className="muted">
                   {link.relationshipType}
-                  {link.isPrimary ? ' · primary' : ''} · View invoices
+                  {link.isPrimary ? ` · ${t('common.primary')}` : ''} · {t('parent.viewInvoices')}
                 </div>
               </Link>
             </li>

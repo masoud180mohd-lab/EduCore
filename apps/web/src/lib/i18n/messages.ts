@@ -1,169 +1,8 @@
+import { EXTRA_EN, EXTRA_SW } from './messages-extra.js';
+
 export type UiLocale = 'en' | 'sw';
 
-export type MessageKey =
-  | 'shell.menu'
-  | 'shell.logout'
-  | 'shell.office'
-  | 'shell.closeMenu'
-  | 'shell.teacherAttendance'
-  | 'shell.themeLight'
-  | 'shell.themeDark'
-  | 'shell.language'
-  | 'shell.checkingAccess'
-  | 'shell.adminUnavailable'
-  | 'shell.adminUnavailableBody'
-  | 'shell.openParent'
-  | 'shell.openTeacher'
-  | 'nav.home'
-  | 'nav.users'
-  | 'nav.staff'
-  | 'nav.memberships'
-  | 'nav.organizations'
-  | 'nav.students'
-  | 'nav.guardians'
-  | 'nav.roles'
-  | 'nav.academic'
-  | 'nav.attendance'
-  | 'nav.exams'
-  | 'nav.reportCards'
-  | 'nav.fees'
-  | 'nav.notifications'
-  | 'nav.announcements'
-  | 'nav.reports'
-  | 'nav.settings'
-  | 'group.home'
-  | 'group.registry'
-  | 'group.access'
-  | 'group.academic'
-  | 'group.fees'
-  | 'group.communications'
-  | 'group.insights'
-  | 'group.settings'
-  | 'hub.title'
-  | 'hub.description'
-  | 'hub.loadingSchool'
-  | 'hub.loadingAreas'
-  | 'hub.quickStarts'
-  | 'hub.emptyAreas'
-  | 'page.attendance.title'
-  | 'page.attendance.description'
-  | 'page.exams.title'
-  | 'page.exams.description'
-  | 'page.staff.title'
-  | 'page.staff.description'
-  | 'page.reportCards.title'
-  | 'page.reportCards.description'
-  | 'page.reportCards.soon'
-  | 'page.reports.title'
-  | 'page.reports.description'
-  | 'page.announcements.title'
-  | 'page.announcements.description'
-  | 'page.announcements.soon'
-  | 'common.open'
-  | 'common.loading'
-  | 'common.comingSoon'
-  | 'common.create'
-  | 'common.save'
-  | 'common.saving'
-  | 'common.search'
-  | 'common.applyFilters'
-  | 'common.allStatuses'
-  | 'common.status'
-  | 'common.name'
-  | 'common.code'
-  | 'kpi.students'
-  | 'kpi.staffHint'
-  | 'kpi.attendanceToday'
-  | 'kpi.present'
-  | 'kpi.absent'
-  | 'kpi.collected'
-  | 'kpi.outstanding'
-  | 'kpi.overdue'
-  | 'kpi.late'
-  | 'kpi.excused'
-  | 'kpi.loadError'
-  | 'students.title'
-  | 'students.description'
-  | 'students.add'
-  | 'students.displayName'
-  | 'students.studentCode'
-  | 'students.empty'
-  | 'students.loadError'
-  | 'students.createError'
-  | 'students.searchPlaceholder'
-  | 'students.back'
-  | 'students.updated'
-  | 'students.saveChanges'
-  | 'students.enrollments'
-  | 'students.noEnrollments'
-  | 'students.createEnrollment'
-  | 'students.fees'
-  | 'students.guardians'
-  | 'students.student'
-  | 'students.noInvoices'
-  | 'students.createInvoice'
-  | 'students.noGuardians'
-  | 'students.guardiansDirectory'
-  | 'students.balance'
-  | 'students.total'
-  | 'fees.title'
-  | 'fees.description'
-  | 'fees.officeBanner'
-  | 'fees.structures'
-  | 'fees.structuresHint'
-  | 'fees.invoices'
-  | 'fees.invoicesHint'
-  | 'fees.receipts'
-  | 'fees.receiptsHint'
-  | 'fees.back'
-  | 'fees.invoicesTitle'
-  | 'fees.invoicesDescription'
-  | 'fees.createDraft'
-  | 'fees.student'
-  | 'fees.selectStudent'
-  | 'fees.academicYear'
-  | 'fees.selectYear'
-  | 'fees.feeStructure'
-  | 'fees.manualLine'
-  | 'fees.lineDescription'
-  | 'fees.amountTzs'
-  | 'fees.filterInvoices'
-  | 'fees.allStudents'
-  | 'fees.allYears'
-  | 'fees.structuresTitle'
-  | 'fees.structuresDescription'
-  | 'fees.createStructure'
-  | 'fees.receiptsTitle'
-  | 'fees.receiptsDescription'
-  | 'fees.emptyInvoices'
-  | 'fees.emptyStructures'
-  | 'fees.emptyReceipts'
-  | 'fees.receiptNumber'
-  | 'fees.issued'
-  | 'fees.total'
-  | 'fees.balance'
-  | 'fees.currency'
-  | 'fees.year'
-  | 'fees.addItem'
-  | 'fees.itemName'
-  | 'fees.itemsLegend'
-  | 'fees.linesFromStructure'
-  | 'fees.createDraftBtn'
-  | 'reportCards.pickExam'
-  | 'reportCards.empty'
-  | 'reportCards.downloadPdf'
-  | 'reportCards.print'
-  | 'reportCards.average'
-  | 'reportCards.grade'
-  | 'reportCards.subject'
-  | 'reportCards.score'
-  | 'reportCards.max'
-  | 'reportCards.percent'
-  | 'reportCards.noMarks'
-  | 'reportCards.class'
-  | 'reportCards.exam';
-
-const EN: Record<MessageKey, string> = {
+const BASE_EN = {
   'shell.menu': 'Menu',
   'shell.logout': 'Log out',
   'shell.office': 'Office',
@@ -331,9 +170,9 @@ const EN: Record<MessageKey, string> = {
   'reportCards.noMarks': 'No marks found for this student.',
   'reportCards.class': 'Class',
   'reportCards.exam': 'Exam',
-};
+} as const;
 
-const SW: Record<MessageKey, string> = {
+const BASE_SW = {
   'shell.menu': 'Menyu',
   'shell.logout': 'Toka',
   'shell.office': 'Ofisi',
@@ -502,9 +341,47 @@ const SW: Record<MessageKey, string> = {
   'reportCards.noMarks': 'Hakuna alama kwa mwanafunzi huyu.',
   'reportCards.class': 'Darasa',
   'reportCards.exam': 'Mtihani',
-};
+} as const;
+
+export const EN = { ...BASE_EN, ...EXTRA_EN };
+export const SW = { ...BASE_SW, ...EXTRA_SW };
+export type MessageKey = keyof typeof EN;
 
 export const MESSAGES: Record<UiLocale, Record<MessageKey, string>> = { en: EN, sw: SW };
+
+export function formatMessage(
+  template: string,
+  vars?: Readonly<Record<string, string | number>>,
+): string {
+  if (vars === undefined) return template;
+  return template.replace(/\{(\w+)\}/g, (whole, name: string) => {
+    const value = vars[name];
+    return value === undefined ? whole : String(value);
+  });
+}
+
+export function translateToken(t: (key: MessageKey) => string, token: string): string {
+  const normalized = token.trim().toLowerCase().replace(/\s+/g, '_');
+  const statusKey = `status.${normalized}`;
+  const methodKey = `method.${normalized}`;
+  const statusVal = t(statusKey as MessageKey);
+  if (statusVal !== statusKey) return statusVal;
+  const methodVal = t(methodKey as MessageKey);
+  if (methodVal !== methodKey) return methodVal;
+  return token;
+}
+
+export function hubBlurbKey(id: string): MessageKey {
+  return `hub.blurb.${id}` as MessageKey;
+}
+
+export function quickLabelKey(id: string): MessageKey {
+  return `hub.quick.${id}` as MessageKey;
+}
+
+export function quickHintKey(id: string): MessageKey {
+  return `hub.quick.${id}Hint` as MessageKey;
+}
 
 export function resolveUiLocale(raw: string | null | undefined): UiLocale {
   if (raw === null || raw === undefined) return 'en';

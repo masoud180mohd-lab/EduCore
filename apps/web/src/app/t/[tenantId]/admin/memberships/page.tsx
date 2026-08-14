@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -37,17 +38,17 @@ type MembershipRow = {
   readonly updatedAt: string;
 };
 
-const STATUS_FILTERS: ReadonlyArray<{ value: '' | MembershipStatus; label: string }> = [
-  { value: '', label: 'All statuses' },
-  { value: 'active', label: 'Active' },
-  { value: 'invited', label: 'Invited' },
-  { value: 'suspended', label: 'Suspended' },
-  { value: 'removed', label: 'Removed' },
+const MEMBERSHIP_STATUSES: ReadonlyArray<MembershipStatus> = [
+  'active',
+  'invited',
+  'suspended',
+  'removed',
 ];
 
 export default function AdminMembershipsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<MembershipRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [status, setStatus] = useState<'' | MembershipStatus>('');
@@ -105,33 +106,34 @@ export default function AdminMembershipsPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <AdminPageHeader
-        title="Memberships"
-        description="Tenant roster by membership status. Open a user to suspend, reactivate, or remove."
+        title={t('memberships.title')}
+        description={t('memberships.description')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack" onSubmit={onFilter} style={{ marginBottom: '1rem' }}>
         <label className="field">
-          <span>Status</span>
+          <span>{t('common.status')}</span>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as '' | MembershipStatus)}
           >
-            {STATUS_FILTERS.map((opt) => (
-              <option key={opt.label} value={opt.value}>
-                {opt.label}
+            <option value="">{t('common.allStatuses')}</option>
+            {MEMBERSHIP_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
               </option>
             ))}
           </select>
         </label>
         <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
-          Apply filter
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No memberships for this filter."
+        empty={t('memberships.empty')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -148,7 +150,10 @@ export default function AdminMembershipsPage() {
           />
         }
       >
-        <AdminTable caption="Memberships" headers={['Status', 'User', 'Joined', '']}>
+        <AdminTable
+          caption={t('memberships.title')}
+          headers={[t('common.status'), t('users.user'), 'Joined', '']}
+        >
           {rows.map((m) => (
             <tr key={m.id}>
               <td>
@@ -165,7 +170,7 @@ export default function AdminMembershipsPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/users/${m.userId}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

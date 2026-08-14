@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { readSession } from '@/lib/auth/session';
@@ -32,6 +33,7 @@ export default function GuardianStudentInvoicesPage() {
     studentId: string;
   }>();
   const { tenantId, guardianId, studentId } = params;
+  const { t } = useAppPreferences();
 
   const [studentName, setStudentName] = useState<string | null>(null);
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
@@ -86,9 +88,9 @@ export default function GuardianStudentInvoicesPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`${base}/fees`}>← Guardian fees</Link>
+        <Link href={`${base}/fees`}>← {t('guardians.fees')}</Link>
       </p>
-      <AdminPageHeader title={`Invoices — ${studentName ?? 'Student'}`} />
+      <AdminPageHeader title={`${t('fees.invoicesTitle')} — ${studentName ?? t('students.student')}`} />
       <Banner tone="info">
         Pay at the school office (cash, bank, or cheque). Mobile money is not enabled (PAY-007 /
         PAY-PROVIDER-001).
@@ -100,10 +102,10 @@ export default function GuardianStudentInvoicesPage() {
         <Banner tone="error">This student is not actively linked to this guardian.</Banner>
       ) : null}
 
-      {loading && !forbiddenStudent ? <p className="muted">Loading…</p> : null}
+      {loading && !forbiddenStudent ? <p className="muted">{t('common.loading')}</p> : null}
 
       {!loading && !forbiddenStudent && error === null && invoices.length === 0 ? (
-        <Banner tone="info">No invoices for this student yet.</Banner>
+        <Banner tone="info">{t('students.noInvoices')}</Banner>
       ) : null}
 
       {!loading && !forbiddenStudent && invoices.length > 0 ? (
@@ -113,7 +115,7 @@ export default function GuardianStudentInvoicesPage() {
               <Link className="card" href={`${base}/fees/invoices/${inv.id}`}>
                 <span className="chip">{invoiceStatusLabel(inv.status)}</span>
                 <div>
-                  Balance {formatTzsMinor(inv.balanceMinor)} · Total{' '}
+                  {t('fees.balance')} {formatTzsMinor(inv.balanceMinor)} · {t('fees.total')}{' '}
                   {formatTzsMinor(inv.totalMinor)}
                 </div>
                 <div className="muted">{inv.id}</div>

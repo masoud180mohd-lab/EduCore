@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { readSession } from '@/lib/auth/session';
@@ -28,6 +29,7 @@ type LinkRow = GuardianStudentLink & {
 export default function GuardianFeesEntryPage() {
   const params = useParams<{ tenantId: string; guardianId: string }>();
   const { tenantId, guardianId } = params;
+  const { t } = useAppPreferences();
 
   const [guardian, setGuardian] = useState<Guardian | null>(null);
   const [links, setLinks] = useState<LinkRow[]>([]);
@@ -82,9 +84,9 @@ export default function GuardianFeesEntryPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`${base}`}>← Guardian</Link>
+        <Link href={`${base}`}>← {t('guardians.guardian')}</Link>
       </p>
-      <AdminPageHeader title={`Fees — ${guardian?.displayName ?? 'Guardian'}`}>
+      <AdminPageHeader title={`${t('guardians.fees')} — ${guardian?.displayName ?? t('guardians.guardian')}`}>
         <p className="muted">
           Read-only invoices and balances for linked students (DSF-005 / IMP-011).
         </p>
@@ -96,17 +98,17 @@ export default function GuardianFeesEntryPage() {
 
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
-      {loading ? <p className="muted">Loading…</p> : null}
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
 
       {!loading && error === null && activeLinks.length === 0 ? (
         <Banner tone="info">
-          Link a student to this guardian first, then return here to view fees.
+          {t('guardians.linkStudentFirst')}
         </Banner>
       ) : null}
 
       {!loading && activeLinks.length > 0 ? (
         <>
-          <h2 style={{ fontSize: '1.1rem' }}>Linked students</h2>
+          <h2 style={{ fontSize: '1.1rem' }}>{t('guardians.linkedStudents')}</h2>
           <ul className="list">
             {activeLinks.map((link) => (
               <li key={link.id}>
@@ -114,7 +116,7 @@ export default function GuardianFeesEntryPage() {
                   <strong>{names[link.studentId] ?? link.studentId}</strong>
                   <div className="muted">
                     {link.relationshipType}
-                    {link.isPrimary ? ' · primary' : ''} · View invoices
+                    {link.isPrimary ? ` · ${t('common.primary')}` : ''} · {t('parent.viewInvoices')}
                   </div>
                 </Link>
               </li>

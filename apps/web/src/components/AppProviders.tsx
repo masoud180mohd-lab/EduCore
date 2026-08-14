@@ -5,6 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import {
   MESSAGES,
+  formatMessage,
   resolveUiLocale,
   type MessageKey,
   type UiLocale,
@@ -22,7 +23,7 @@ type AppPreferencesContextValue = {
   readonly theme: UiTheme;
   readonly setLocale: (locale: UiLocale) => void;
   readonly setTheme: (theme: UiTheme) => void;
-  readonly t: (key: MessageKey) => string;
+  readonly t: (key: MessageKey, vars?: Readonly<Record<string, string | number>>) => string;
 };
 
 const AppPreferencesContext = createContext<AppPreferencesContextValue | null>(null);
@@ -57,7 +58,8 @@ export function AppProviders({ children }: { readonly children: ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: MessageKey) => MESSAGES[locale][key] ?? MESSAGES.en[key] ?? key,
+    (key: MessageKey, vars?: Readonly<Record<string, string | number>>) =>
+      formatMessage(MESSAGES[locale][key] ?? MESSAGES.en[key] ?? key, vars),
     [locale],
   );
 

@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -40,6 +41,7 @@ export default function AdminGuardiansPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<GuardianRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export default function AdminGuardiansPage() {
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'guardians'));
-      else setError('Could not load guardians.');
+      else setError(t('guardians.loadError'));
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -118,7 +120,7 @@ export default function AdminGuardiansPage() {
       router.push(`/t/${tenantId}/admin/guardians/${created.data.id}`);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'guardians'));
-      else setError('Could not create guardian.');
+      else setError(t('guardians.createError'));
     } finally {
       setBusy(false);
     }
@@ -126,16 +128,13 @@ export default function AdminGuardiansPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="Guardians"
-        description="Parent/guardian directory and student links (ACF-010)."
-      />
+      <AdminPageHeader title={t('guardians.title')} description={t('guardians.description')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Add guardian</h2>
+        <h2 className="section-title">{t('guardians.add')}</h2>
         <div className="field">
-          <label htmlFor="displayName">Display name</label>
+          <label htmlFor="displayName">{t('common.displayName')}</label>
           <input
             id="displayName"
             required
@@ -144,15 +143,15 @@ export default function AdminGuardiansPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="phone">Phone (optional)</label>
+          <label htmlFor="phone">{t('common.phoneOptional')}</label>
           <input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="email">Email (optional)</label>
+          <label htmlFor="email">{t('common.emailOptional')}</label>
           <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy}>
-          {busy ? 'Saving…' : 'Create'}
+          {busy ? t('common.saving') : t('common.create')}
         </button>
       </form>
 
@@ -172,7 +171,7 @@ export default function AdminGuardiansPage() {
         }}
       >
         <div className="field">
-          <label htmlFor="search">Search</label>
+          <label htmlFor="search">{t('common.search')}</label>
           <input
             id="search"
             value={search}
@@ -181,13 +180,13 @@ export default function AdminGuardiansPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="list-status">Status</label>
+          <label htmlFor="list-status">{t('common.status')}</label>
           <select
             id="list-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as '' | GuardianStatus)}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('common.allStatuses')}</option>
             {GUARDIAN_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -196,13 +195,13 @@ export default function AdminGuardiansPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          Apply filters
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No guardians yet."
+        empty={t('guardians.empty')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -220,7 +219,10 @@ export default function AdminGuardiansPage() {
           />
         }
       >
-        <AdminTable caption="Guardians" headers={['Name', 'Contact', 'Status', '']}>
+        <AdminTable
+          caption={t('guardians.title')}
+          headers={[t('common.name'), t('common.phone'), t('common.status'), '']}
+        >
           {rows.map((g) => (
             <tr key={g.id}>
               <td>
@@ -235,7 +237,7 @@ export default function AdminGuardiansPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/guardians/${g.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

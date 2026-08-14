@@ -12,6 +12,7 @@ import {
   ResourceListPagination,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -29,6 +30,7 @@ export default function AdminRolesPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<RoleRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -97,16 +99,13 @@ export default function AdminRolesPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="Roles"
-        description="Tenant roles and permission sets. System roles cannot be deleted."
-      />
+      <AdminPageHeader title={t('roles.title')} description={t('roles.description')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Create custom role</h2>
+        <h2 className="section-title">{t('roles.create')}</h2>
         <label className="field">
-          <span>Code</span>
+          <span>{t('common.code')}</span>
           <input
             value={code}
             onChange={(e) => setCode(e.target.value)}
@@ -117,17 +116,17 @@ export default function AdminRolesPage() {
           />
         </label>
         <label className="field">
-          <span>Name</span>
+          <span>{t('common.name')}</span>
           <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} />
         </label>
         <button className="btn btn-primary" type="submit" disabled={busy}>
-          {busy ? 'Creating…' : 'Create role'}
+          {busy ? t('common.saving') : t('common.create')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No roles found."
+        empty={t('roles.empty')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -140,21 +139,24 @@ export default function AdminRolesPage() {
           />
         }
       >
-        <AdminTable caption="Roles" headers={['Name', 'Code', 'Kind', 'Permissions', '']}>
+        <AdminTable
+          caption={t('roles.title')}
+          headers={[t('common.name'), t('common.code'), t('roles.kind'), t('roles.permissions'), '']}
+        >
           {rows.map((role) => (
             <tr key={role.id}>
               <td>
                 <Link href={`/t/${tenantId}/admin/roles/${role.id}`}>{role.name}</Link>
               </td>
               <td className="muted">{role.code}</td>
-              <td className="muted">{role.isSystem ? 'system' : 'custom'}</td>
+              <td className="muted">{role.isSystem ? t('roles.system') : t('roles.custom')}</td>
               <td className="muted">{role.permissions.length}</td>
               <td className="admin-table-actions">
                 <Link
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/roles/${role.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

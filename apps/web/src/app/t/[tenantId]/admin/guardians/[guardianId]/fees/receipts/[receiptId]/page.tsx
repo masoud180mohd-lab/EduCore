@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { readSession } from '@/lib/auth/session';
@@ -46,6 +47,7 @@ export default function GuardianFeesReceiptDetailPage() {
     receiptId: string;
   }>();
   const { tenantId, guardianId, receiptId } = params;
+  const { t } = useAppPreferences();
 
   const [receipt, setReceipt] = useState<ReceiptDetail | null>(null);
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
@@ -105,12 +107,12 @@ export default function GuardianFeesReceiptDetailPage() {
     <AdminShell tenantId={tenantId}>
       <p className="muted">
         {payment !== null ? (
-          <Link href={`${base}/fees/invoices/${payment.invoiceId}`}>← Invoice</Link>
+          <Link href={`${base}/fees/invoices/${payment.invoiceId}`}>← {t('invoice.title')}</Link>
         ) : (
-          <Link href={`${base}/fees`}>← Guardian fees</Link>
+          <Link href={`${base}/fees`}>← {t('guardians.fees')}</Link>
         )}
       </p>
-      <AdminPageHeader title="Receipt (read-only)" />
+      <AdminPageHeader title={t('parent.readOnlyReceipt')} />
       <Banner tone="info">
         Pay at the school office (cash, bank, or cheque). Mobile money is not enabled (PAY-007 /
         PAY-PROVIDER-001).
@@ -124,12 +126,12 @@ export default function GuardianFeesReceiptDetailPage() {
         </Banner>
       ) : null}
 
-      {loading && !isolationBlocked ? <p className="muted">Loading…</p> : null}
+      {loading && !isolationBlocked ? <p className="muted">{t('common.loading')}</p> : null}
 
       {!loading && receipt !== null && !isolationBlocked ? (
         <div className="card stack">
           <div>
-            <strong>Receipt</strong> {receipt.receiptNumber}
+            <strong>{t('receipt.title')}</strong> {receipt.receiptNumber}
           </div>
           <div className="muted">
             {receipt.status} · Issued {receipt.issuedAt}

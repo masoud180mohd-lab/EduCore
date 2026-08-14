@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { type PermissionRow, type RoleRow } from '@/lib/roles/types';
@@ -14,6 +15,7 @@ import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/
 export default function AdminRoleDetailPage() {
   const params = useParams<{ tenantId: string; roleId: string }>();
   const { tenantId, roleId } = params;
+  const { t } = useAppPreferences();
   const [row, setRow] = useState<RoleRow | null>(null);
   const [catalog, setCatalog] = useState<PermissionRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -99,7 +101,7 @@ export default function AdminRoleDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
-      setInfo('Permissions updated.');
+      setInfo(t('roles.permissionsUpdated'));
       await load();
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'roles'));
@@ -112,9 +114,9 @@ export default function AdminRoleDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/roles`}>← Roles</Link>
+        <Link href={`/t/${tenantId}/admin/roles`}>← {t('roles.title')}</Link>
       </p>
-      <AdminPageHeader title={row?.name || 'Role'}>
+      <AdminPageHeader title={row?.name || t('roles.role')}>
         {row !== null ? (
           <p className="muted">
             Code: {row.code} · {row.isSystem ? 'System' : 'Custom'}
@@ -128,7 +130,7 @@ export default function AdminRoleDetailPage() {
         <div className="stack">
           <form className="card stack" onSubmit={(e) => void onRename(e)}>
             <label className="field">
-              <span>Display name</span>
+              <span>{t('common.displayName')}</span>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -137,14 +139,14 @@ export default function AdminRoleDetailPage() {
               />
             </label>
             <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Save name'}
+              {busy ? t('common.saving') : t('common.save')}
             </button>
           </form>
 
           {row.isSystem ? (
             <div className="stack">
-              <h2>Permissions</h2>
-              <p className="muted">System role grants are read-only (reconcile via ops).</p>
+              <h2>{t('roles.permissions')}</h2>
+              <p className="muted">{t('roles.systemReadOnly')}</p>
               <ul className="list">
                 {row.permissions.map((code) => (
                   <li key={code} className="muted">
@@ -155,7 +157,7 @@ export default function AdminRoleDetailPage() {
             </div>
           ) : (
             <form className="card stack" onSubmit={(e) => void onSavePermissions(e)}>
-              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Permissions</h2>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('roles.permissions')}</h2>
               <div className="stack">
                 {catalog.map((perm) => (
                   <label
@@ -176,13 +178,13 @@ export default function AdminRoleDetailPage() {
                 ))}
               </div>
               <button className="btn btn-primary" type="submit" disabled={busy}>
-                {busy ? 'Saving…' : 'Save permissions'}
+                {busy ? t('common.saving') : t('common.save')}
               </button>
             </form>
           )}
         </div>
       ) : error === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : null}
     </AdminShell>
   );

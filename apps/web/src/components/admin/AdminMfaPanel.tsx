@@ -3,6 +3,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { Banner, ConfirmDialog } from '@/components/admin';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -31,6 +32,7 @@ type EnrollmentPending = {
  * Self-service TOTP enroll / disable (ACF-001 §4.8) — Settings security section.
  */
 export function AdminMfaPanel() {
+  const { t } = useAppPreferences();
   const [factors, setFactors] = useState<ReadonlyArray<MfaFactor>>([]);
   const [me, setMe] = useState<MeMfa | null>(null);
   const [pending, setPending] = useState<EnrollmentPending | null>(null);
@@ -58,11 +60,11 @@ export function AdminMfaPanel() {
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'settings'));
-      else setError('Could not load MFA status.');
+      else setError(t('mfa.loadError'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -83,7 +85,7 @@ export function AdminMfaPanel() {
         method: 'POST',
         auth,
         requireTenant: false,
-        body: { factorType: 'totp', label: 'Authenticator' },
+        body: { factorType: 'totp', label: t('mfa.authenticator') },
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
@@ -93,10 +95,10 @@ export function AdminMfaPanel() {
         otpauthUri: result.data.otpauthUri,
       });
       setConfirmCode('');
-      setInfo('Scan or enter the secret in your authenticator, then confirm with a code.');
+      setInfo(t('mfa.scanInfo'));
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'settings'));
-      else setError('Could not start MFA enrollment.');
+      else setError(t('mfa.startError'));
     } finally {
       setBusy(false);
     }
@@ -109,7 +111,7 @@ export function AdminMfaPanel() {
     if (auth === null) return;
     const code = confirmCode.trim();
     if (!/^\d{6}$/.test(code)) {
-      setError('Enter a 6-digit authenticator code.');
+      setError(t('mfa.enterCode'));
       return;
     }
     setBusy(true);
@@ -124,13 +126,13 @@ export function AdminMfaPanel() {
       });
       setPending(null);
       setConfirmCode('');
-      setInfo('Authenticator enrolled. You will need a code at the next sign-in.');
+      setInfo(t('mfa.enrolled'));
       await load();
     } catch (err) {
       if (err instanceof ApiClientError) {
-        if (err.code === 'MFA_INVALID') setError('Invalid authenticator code. Try again.');
+        if (err.code === 'MFA_INVALID') setError(t('mfa.invalidCode'));
         else setError(adminFriendlyMessage(err, 'settings'));
-      } else setError('Could not confirm MFA enrollment.');
+      } else setError(t('mfa.confirmError'));
     } finally {
       setBusy(false);
     }
@@ -150,11 +152,11 @@ export function AdminMfaPanel() {
         body: {},
       });
       setDisableId(null);
-      setInfo('Authenticator disabled.');
+      setInfo(t('mfa.disabled'));
       await load();
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'settings'));
-      else setError('Could not disable MFA.');
+      else setError(t('mfa.disableError'));
     } finally {
       setBusy(false);
     }
@@ -165,38 +167,34 @@ export function AdminMfaPanel() {
 
   return (
     <section className="stack card" style={{ marginTop: '1.5rem' }}>
-      <h2 style={{ margin: 0, fontSize: '1.125rem' }}>Security — authenticator</h2>
+      <h2 style={{ margin: 0, fontSize: '1.125rem' }}>{t('mfa.title')}</h2>
       <p className="muted" style={{ margin: 0 }}>
-        Add an authenticator app for privileged accounts before the school turns on required
-        two-step sign-in.
+        {t('mfa.description')}
       </p>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      {loading ? <p className="muted">Loading security…</p> : null}
+      {loading ? <p className="muted">{t('mfa.loading')}</p> : null}
 
       {!loading && me !== null ? (
         <p className="muted" style={{ margin: 0 }}>
-          Enforcement:{' '}
-          <strong>{me.mfaEnforced === 'hard' ? 'required' : 'optional (lab)'}</strong>
-          {me.mfaEnrollmentRequired ? ' — enroll recommended for your role.' : null}
-          {hasActive ? ' — authenticator active.' : ' — no active authenticator.'}
+          {t('mfa.enforcement')}{' '}
+          <strong>{me.mfaEnforced === 'hard' ? t('mfa.enforcedHard') : t('mfa.enforcedSoft')}</strong>
+          {me.mfaEnrollmentRequired ? t('mfa.enrollRecommended') : null}
+          {hasActive ? t('mfa.activeNow') : t('mfa.noneActive')}
         </p>
       ) : null}
 
       {!loading && pending === null && !hasActive ? (
         <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void beginEnroll()}>
-          {busy ? 'Starting…' : 'Enroll authenticator'}
+          {busy ? t('common.starting') : t('mfa.enroll')}
         </button>
       ) : null}
 
       {!loading && pending !== null ? (
         <form className="stack" onSubmit={(e) => void confirmEnroll(e)}>
-          <p>
-            Add this account in your authenticator app. Prefer opening the setup link on your phone,
-            or enter the secret manually.
-          </p>
+          <p>{t('mfa.setupHint')}</p>
           <div className="field">
-            <label htmlFor="otpauthUri">Setup link</label>
+            <label htmlFor="otpauthUri">{t('mfa.setupLink')}</label>
             <textarea
               id="otpauthUri"
               readOnly
@@ -205,11 +203,11 @@ export function AdminMfaPanel() {
               style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.75rem' }}
             />
             <p style={{ margin: '0.5rem 0 0' }}>
-              <a href={pending.otpauthUri}>Open in authenticator</a>
+              <a href={pending.otpauthUri}>{t('mfa.openAuthenticator')}</a>
             </p>
           </div>
           <div className="field">
-            <label htmlFor="totpSecret">Manual secret</label>
+            <label htmlFor="totpSecret">{t('mfa.manualSecret')}</label>
             <input
               id="totpSecret"
               readOnly
@@ -218,7 +216,7 @@ export function AdminMfaPanel() {
             />
           </div>
           <div className="field">
-            <label htmlFor="confirmMfa">Confirm with 6-digit code</label>
+            <label htmlFor="confirmMfa">{t('mfa.confirmCode')}</label>
             <input
               id="confirmMfa"
               inputMode="numeric"
@@ -235,7 +233,7 @@ export function AdminMfaPanel() {
             className="btn btn-primary"
             disabled={busy || confirmCode.trim().length !== 6}
           >
-            {busy ? 'Confirming…' : 'Confirm enrollment'}
+            {busy ? t('common.confirming') : t('mfa.confirmEnroll')}
           </button>
           <button
             type="button"
@@ -246,7 +244,7 @@ export function AdminMfaPanel() {
               setConfirmCode('');
             }}
           >
-            Cancel
+            {t('common.cancel')}
           </button>
         </form>
       ) : null}
@@ -257,9 +255,9 @@ export function AdminMfaPanel() {
             <li key={f.id}>
               <div className="stack" style={{ gap: '0.5rem' }}>
                 <span>
-                  {f.label ?? 'Authenticator'} — active
+                  {t('mfa.factorActive', { label: f.label ?? t('mfa.authenticator') })}
                   {f.confirmedAt !== null
-                    ? ` since ${new Date(f.confirmedAt).toLocaleDateString()}`
+                    ? ` ${t('mfa.since', { date: new Date(f.confirmedAt).toLocaleDateString() })}`
                     : ''}
                 </span>
                 <button
@@ -268,7 +266,7 @@ export function AdminMfaPanel() {
                   disabled={busy}
                   onClick={() => setDisableId(f.id)}
                 >
-                  Disable authenticator
+                  {t('mfa.disable')}
                 </button>
               </div>
             </li>
@@ -278,9 +276,9 @@ export function AdminMfaPanel() {
 
       <ConfirmDialog
         open={disableId !== null}
-        title="Disable authenticator?"
-        body="You will no longer be asked for a code at sign-in. Re-enroll before required two-step sign-in is turned on if you are an admin."
-        confirmLabel="Disable"
+        title={t('mfa.disableTitle')}
+        body={t('mfa.disableBody')}
+        confirmLabel={t('common.disable')}
         danger
         busy={busy}
         onCancel={() => {

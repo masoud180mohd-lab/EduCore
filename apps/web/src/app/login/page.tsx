@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
+import { useAppPreferences } from '@/components/AppProviders';
 import { MfaChallengeForm } from '@/components/MfaChallengeForm';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { beginAuth0Login, isAuth0Configured } from '@/lib/auth/auth0-pkce';
@@ -24,6 +25,7 @@ type LoginResponse = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [tenantId, setTenantId] = useState('');
@@ -51,7 +53,7 @@ export default function LoginPage() {
       setPendingToken(outcome.accessToken);
       setTenants(outcome.tenants);
       setMfaChallengeToken(null);
-      setError('Select a school to continue.');
+      setError(t('login.selectSchool'));
       return;
     }
     if (outcome.kind === 'mfa_required') {
@@ -87,7 +89,7 @@ export default function LoginPage() {
       );
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
-      else setError('Sign-in failed.');
+      else setError(t('login.failed'));
     } finally {
       setBusy(false);
     }
@@ -99,7 +101,7 @@ export default function LoginPage() {
     try {
       await beginAuth0Login();
     } catch {
-      setError('Auth0 is not configured for this web build.');
+      setError(t('login.auth0Missing'));
       setAuth0Busy(false);
     }
   }
@@ -114,7 +116,7 @@ export default function LoginPage() {
       if (err instanceof ApiClientError) {
         setError(teacherFriendlyMessage(err));
         if (/challenge/i.test(err.message)) setMfaChallengeToken(null);
-      } else setError('MFA verification failed.');
+      } else setError(t('login.mfaFailed'));
     } finally {
       setBusy(false);
     }
@@ -129,7 +131,7 @@ export default function LoginPage() {
       router.replace(path);
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
-      else setError('Could not select school.');
+      else setError(t('login.selectFailed'));
     } finally {
       setBusy(false);
     }
@@ -138,8 +140,8 @@ export default function LoginPage() {
   return (
     <div className="app-shell">
       <AdminPageHeader
-        title="Sign in"
-        description="EduCore — staff, admin, and parent accounts."
+        title={t('login.title')}
+        description={t('login.description')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
@@ -154,18 +156,18 @@ export default function LoginPage() {
         />
       ) : tenants !== null ? (
         <div className="stack">
-          <p>Choose your school:</p>
+          <p>{t('login.chooseSchool')}</p>
           <ul className="list">
-            {tenants.map((t) => (
-              <li key={t.id}>
+            {tenants.map((school) => (
+              <li key={school.id}>
                 <button
                   type="button"
                   className="card"
                   style={{ width: '100%', textAlign: 'left' }}
-                  onClick={() => void bindTenant(t.id)}
+                  onClick={() => void bindTenant(school.id)}
                   disabled={busy}
                 >
-                  {t.name ?? t.code ?? t.id}
+                  {school.name ?? school.code ?? school.id}
                 </button>
               </li>
             ))}
@@ -181,17 +183,17 @@ export default function LoginPage() {
                 disabled={busy || auth0Busy}
                 onClick={() => void onAuth0Click()}
               >
-                {auth0Busy ? 'Redirecting…' : 'Ingia na Auth0'}
+                {auth0Busy ? t('login.auth0Busy') : t('login.auth0')}
               </button>
               <p className="muted" style={{ textAlign: 'center', margin: 0 }}>
-                or email / password
+                {t('login.orPassword')}
               </p>
             </>
           ) : null}
 
           <form className="stack" onSubmit={(e) => void onSubmit(e)}>
             <div className="field">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">{t('common.email')}</label>
               <input
                 id="email"
                 name="email"
@@ -203,7 +205,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="field">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password">{t('common.password')}</label>
               <input
                 id="password"
                 name="password"
@@ -215,12 +217,12 @@ export default function LoginPage() {
               />
             </div>
             <div className="field">
-              <label htmlFor="tenantId">School id (optional)</label>
+              <label htmlFor="tenantId">{t('login.schoolIdOptional')}</label>
               <input
                 id="tenantId"
                 name="tenantId"
                 type="text"
-                placeholder="UUID if you know it"
+                placeholder={t('login.schoolIdPlaceholder')}
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value)}
               />
@@ -230,7 +232,7 @@ export default function LoginPage() {
               className={auth0Ready ? 'btn btn-secondary' : 'btn btn-primary'}
               disabled={busy || auth0Busy}
             >
-              {busy ? 'Signing in…' : 'Sign in'}
+              {busy ? t('login.signingIn') : t('login.signIn')}
             </button>
           </form>
         </div>

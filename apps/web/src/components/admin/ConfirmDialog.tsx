@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef } from 'react';
 
+import { useAppPreferences } from '@/components/AppProviders';
+
 /**
  * Accessible confirm dialog (IMP-027 / IMP-034) — replaces `window.confirm` for admin destructive actions.
  * Focuses Cancel on open; Esc / backdrop cancel when not busy; restores focus to opener on close.
@@ -11,8 +13,8 @@ export function ConfirmDialog({
   open,
   title,
   body,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   danger = false,
   busy = false,
   onConfirm,
@@ -31,6 +33,9 @@ export function ConfirmDialog({
   const titleId = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  const { t } = useAppPreferences();
+  const resolvedConfirm = confirmLabel ?? t('common.confirm');
+  const resolvedCancel = cancelLabel ?? t('common.cancel');
 
   useEffect(() => {
     if (!open) return;
@@ -68,7 +73,7 @@ export function ConfirmDialog({
       <button
         type="button"
         className="confirm-dialog-backdrop"
-        aria-label="Dismiss"
+        aria-label={t('common.dismiss')}
         disabled={busy}
         onClick={() => {
           if (!busy) onCancel();
@@ -92,7 +97,7 @@ export function ConfirmDialog({
             disabled={busy}
             onClick={onCancel}
           >
-            {cancelLabel}
+            {resolvedCancel}
           </button>
           <button
             type="button"
@@ -100,7 +105,7 @@ export function ConfirmDialog({
             disabled={busy}
             onClick={onConfirm}
           >
-            {busy ? 'Working…' : confirmLabel}
+            {busy ? t('common.working') : resolvedConfirm}
           </button>
         </div>
       </div>

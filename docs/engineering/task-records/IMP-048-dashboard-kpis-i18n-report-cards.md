@@ -24,8 +24,6 @@ Ship honest Admin dashboard figures, full EN/SW chrome on Students and Fees, and
 
 ## Honesty limits
 
-- Overdue invoices: issued/partially_paid with `issued_at` older than **30 UTC days** (no `due_date` column).
-- Letter grade is **derived**, not stored.
 - Announcements and analytics Reports pages remain placeholders.
-- Domain pages beyond Students/Fees are still mostly English.
-- TeacherShell / ParentShell i18n+theme deferred.
+- Letter grade is **derived**, not stored.
+- Overdue invoices: issued/partially_paid with `issued_at` older than **30 UTC days** (no `due_date` column).

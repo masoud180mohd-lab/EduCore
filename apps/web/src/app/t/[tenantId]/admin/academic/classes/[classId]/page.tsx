@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner, ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -32,6 +33,7 @@ export default function AdminClassDetailPage() {
   const params = useParams<{ tenantId: string; classId: string }>();
   const { tenantId, classId } = params;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [row, setRow] = useState<ClassRow | null>(null);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
   const [yearsCursor, setYearsCursor] = useState<string | null>(null);
@@ -240,9 +242,9 @@ export default function AdminClassDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic/classes`}>← Classes</Link>
+        <Link href={`/t/${tenantId}/admin/academic/classes`}>← {t('academic.classes')}</Link>
       </p>
-      <AdminPageHeader title={row?.name ?? 'Class'} />
+      <AdminPageHeader title={row?.name ?? t('academic.class')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {deleteDependents !== null ? (
         <DeleteDependentsBanner tenantId={tenantId} groups={deleteDependents} />
@@ -252,7 +254,7 @@ export default function AdminClassDetailPage() {
         <div className="stack">
           <form className="card stack" onSubmit={onSave}>
             <label className="field">
-              <span>Academic year</span>
+              <span>{t('academic.year')}</span>
               <select
                 value={academicYearId}
                 onChange={(e) => {
@@ -274,12 +276,12 @@ export default function AdminClassDetailPage() {
               />
             </label>
             <label className="field">
-              <span>Term (optional)</span>
+              <span>{t('common.term')}</span>
               <select value={termId} onChange={(e) => setTermId(e.target.value)}>
                 <option value="">None</option>
-                {terms.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
+                {terms.map((term) => (
+                  <option key={term.id} value={term.id}>
+                    {term.name}
                   </option>
                 ))}
               </select>
@@ -296,7 +298,7 @@ export default function AdminClassDetailPage() {
               />
             </label>
             <label className="field">
-              <span>Name</span>
+              <span>{t('common.name')}</span>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -305,11 +307,11 @@ export default function AdminClassDetailPage() {
               />
             </label>
             <label className="field">
-              <span>Code (optional)</span>
+              <span>{t('common.codeOptional')}</span>
               <input value={code} onChange={(e) => setCode(e.target.value)} />
             </label>
             <label className="field">
-              <span>Status</span>
+              <span>{t('common.status')}</span>
               <select value={status} onChange={(e) => setStatus(e.target.value as LifecycleStatus)}>
                 {LIFECYCLE_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -319,7 +321,7 @@ export default function AdminClassDetailPage() {
               </select>
             </label>
             <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Save changes'}
+              {busy ? t('common.saving') : t('common.save')}
             </button>
             <button
               className="btn btn-secondary"
@@ -327,7 +329,7 @@ export default function AdminClassDetailPage() {
               onClick={() => setConfirm('delete')}
               disabled={busy}
             >
-              Delete
+              {t('common.delete')}
             </button>
           </form>
           <p>
@@ -335,17 +337,17 @@ export default function AdminClassDetailPage() {
               Manage streams
             </Link>{' '}
             <Link className="btn btn-secondary" href={`/t/${tenantId}/admin/academic/enrollments`}>
-              Enrollments
+              {t('academic.enrollments')}
             </Link>
           </p>
         </div>
       ) : error === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : null}
 
       <ConfirmDialog
         open={confirm === 'close'}
-        title="Mark class as closed?"
+        title={t('academic.closeClass')}
         body="Mark this class as closed?"
         confirmLabel="Mark closed"
         danger
@@ -359,9 +361,9 @@ export default function AdminClassDetailPage() {
       />
       <ConfirmDialog
         open={confirm === 'delete'}
-        title="Delete class?"
+        title={t('academic.deleteClass')}
         body="Delete this class? This only works if nothing depends on it."
-        confirmLabel="Delete"
+        confirmLabel={t('common.delete')}
         danger
         busy={busy}
         onCancel={() => {

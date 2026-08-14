@@ -11,6 +11,7 @@ import {
   ResourceListPagination,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -52,6 +53,7 @@ const GUARDIAN_STATUSES: ReadonlyArray<GuardianStatus> = ['active', 'inactive'];
 export default function AdminGuardianDetailPage() {
   const params = useParams<{ tenantId: string; guardianId: string }>();
   const { tenantId, guardianId } = params;
+  const { t } = useAppPreferences();
   const [guardian, setGuardian] = useState<Guardian | null>(null);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
@@ -106,7 +108,7 @@ export default function AdminGuardianDetailPage() {
           } else if (err instanceof ApiClientError) {
             setUsersError(adminFriendlyMessage(err, 'users'));
           } else {
-            setUsersError('Could not load users.');
+            setUsersError(t('users.loadError'));
           }
         }
       } finally {
@@ -114,7 +116,7 @@ export default function AdminGuardianDetailPage() {
         setLoadingMoreUsers(false);
       }
     },
-    [],
+    [t],
   );
 
   const loadStudentPicker = useCallback(
@@ -260,7 +262,7 @@ export default function AdminGuardianDetailPage() {
         auth,
       });
       setConfirm(null);
-      setInfo('Link ended.');
+      setInfo(t('guardians.linkEnded'));
       await load();
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'guardians'));
@@ -343,15 +345,15 @@ export default function AdminGuardianDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/guardians`}>← Guardians</Link>
+        <Link href={`/t/${tenantId}/admin/guardians`}>← {t('guardians.title')}</Link>
       </p>
-      <AdminPageHeader title={guardian?.displayName ?? 'Guardian'} />
+      <AdminPageHeader title={guardian?.displayName ?? t('guardians.guardian')} />
       <p>
         <Link
           className="btn btn-secondary"
           href={`/t/${tenantId}/admin/guardians/${guardianId}/fees`}
         >
-          View fees (read-only)
+          {t('guardians.fees')}
         </Link>
       </p>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
@@ -359,9 +361,9 @@ export default function AdminGuardianDetailPage() {
 
       {guardian !== null ? (
         <form className="stack card" onSubmit={(e) => void onSaveProfile(e)}>
-          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Profile</h2>
+          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('common.profile')}</h2>
           <div className="field">
-            <label htmlFor="displayName">Display name</label>
+            <label htmlFor="displayName">{t('common.displayName')}</label>
             <input
               id="displayName"
               required
@@ -371,7 +373,7 @@ export default function AdminGuardianDetailPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="phone">Phone (optional)</label>
+            <label htmlFor="phone">{t('common.phoneOptional')}</label>
             <input
               id="phone"
               maxLength={32}
@@ -380,7 +382,7 @@ export default function AdminGuardianDetailPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="email">Email (optional)</label>
+            <label htmlFor="email">{t('common.emailOptional')}</label>
             <input
               id="email"
               type="email"
@@ -390,7 +392,7 @@ export default function AdminGuardianDetailPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="status">Status</label>
+            <label htmlFor="status">{t('common.status')}</label>
             <select
               id="status"
               value={status}
@@ -404,22 +406,22 @@ export default function AdminGuardianDetailPage() {
             </select>
           </div>
           <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy ? 'Saving…' : 'Save profile'}
+            {busy ? t('common.saving') : t('common.save')}
           </button>
         </form>
       ) : error === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : null}
 
-      <h2 style={{ fontSize: '1.1rem' }}>Portal bind</h2>
+      <h2 style={{ fontSize: '1.1rem' }}>{t('guardians.portalBind')}</h2>
       <p className="muted">
-        Bind an existing school user (active membership) so they can open the parent fees portal.
+        {t('guardians.portalBindDesc')}
       </p>
       {usersError !== null ? <Banner tone="error">{usersError}</Banner> : null}
       {guardian?.userId !== null && guardian?.userId !== undefined ? (
         <div className="card stack">
           <div>
-            <strong>{boundLabel ?? 'Bound user'}</strong>
+            <strong>{boundLabel ?? t('guardians.boundUser')}</strong>
             <div className="muted">{guardian.userId}</div>
           </div>
           <button
@@ -428,19 +430,18 @@ export default function AdminGuardianDetailPage() {
             disabled={busy}
             onClick={() => setConfirm({ kind: 'unbind' })}
           >
-            Unbind user
+            {t('guardians.unbindUser')}
           </button>
         </div>
       ) : (
         <form className="stack card" onSubmit={(e) => void onBind(e)}>
           {!usersLoading && usersError === null && users.length === 0 ? (
             <Banner tone="info">
-              No users returned for this school. Create a membership first, or use advanced UUID
-              paste.
+              {t('guardians.noUsers')}
             </Banner>
           ) : null}
           <div className="field">
-            <label htmlFor="bindUserSelect">School user</label>
+            <label htmlFor="bindUserSelect">{t('guardians.schoolUser')}</label>
             <select
               id="bindUserSelect"
               value={showAdvancedUuid ? '' : bindUserId}
@@ -448,7 +449,7 @@ export default function AdminGuardianDetailPage() {
               onChange={(e) => setBindUserId(e.target.value)}
               required={!showAdvancedUuid}
             >
-              <option value="">{usersLoading ? 'Loading users…' : 'Select user to bind'}</option>
+              <option value="">{usersLoading ? t('guardians.loadingUsers') : t('guardians.selectUser')}</option>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
                   {formatUserBindLabel(u)}
@@ -473,36 +474,36 @@ export default function AdminGuardianDetailPage() {
                 setBindUserId('');
               }}
             >
-              {showAdvancedUuid ? 'Hide advanced UUID' : 'Advanced: paste user UUID'}
+              {showAdvancedUuid ? t('guardians.hideUuid') : t('guardians.showUuid')}
             </button>
           </div>
           {showAdvancedUuid ? (
             <div className="field">
-              <label htmlFor="bindUserId">User ID (UUID)</label>
+              <label htmlFor="bindUserId">{t('guardians.userId')}</label>
               <input
                 id="bindUserId"
                 required
                 value={bindUserId}
                 onChange={(e) => setBindUserId(e.target.value)}
-                placeholder="User UUID with active membership"
+                placeholder={t('guardians.userIdPlaceholder')}
               />
             </div>
           ) : null}
           <button type="submit" className="btn btn-primary" disabled={busy || bindUserId === ''}>
-            {busy ? 'Saving…' : 'Bind portal user'}
+            {busy ? t('common.saving') : t('guardians.bindUser')}
           </button>
         </form>
       )}
 
-      <h2 style={{ fontSize: '1.1rem' }}>Linked students</h2>
-      {links.length === 0 ? <Banner tone="info">No links yet.</Banner> : null}
+      <h2 style={{ fontSize: '1.1rem' }}>{t('guardians.linkedStudents')}</h2>
+      {links.length === 0 ? <Banner tone="info">{t('guardians.noLinks')}</Banner> : null}
       <ul className="list">
         {links.map((link) => (
           <li key={link.id} className="card">
             <strong>{names[link.studentId] ?? link.studentId}</strong>
             <div className="muted">
               {link.relationshipType} · {link.status}
-              {link.isPrimary ? ' · primary' : ''}
+              {link.isPrimary ? ` · ${t('common.primary')}` : ''}
             </div>
             {link.status === 'active' ? (
               <button
@@ -511,7 +512,7 @@ export default function AdminGuardianDetailPage() {
                 disabled={busy}
                 onClick={() => setConfirm({ kind: 'end-link', linkId: link.id })}
               >
-                End link
+                {t('guardians.endLink')}
               </button>
             ) : null}
           </li>
@@ -519,16 +520,16 @@ export default function AdminGuardianDetailPage() {
       </ul>
 
       <form className="stack card" onSubmit={(e) => void onLink(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Link student</h2>
+        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('guardians.linkStudent')}</h2>
         <div className="field">
-          <label htmlFor="studentId">Student</label>
+          <label htmlFor="studentId">{t('students.student')}</label>
           <select
             id="studentId"
             required
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
           >
-            <option value="">Select student</option>
+            <option value="">{t('common.selectStudent')}</option>
             {students.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.displayName}
@@ -544,32 +545,30 @@ export default function AdminGuardianDetailPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="relationshipType">Relationship</label>
+          <label htmlFor="relationshipType">{t('common.relationship')}</label>
           <select
             id="relationshipType"
             value={relationshipType}
             onChange={(e) => setRelationshipType(e.target.value)}
           >
-            <option value="mother">Mother</option>
-            <option value="father">Father</option>
-            <option value="guardian">Guardian</option>
-            <option value="other">Other</option>
+            <option value="mother">{t('rel.mother')}</option>
+            <option value="father">{t('rel.father')}</option>
+            <option value="guardian">{t('rel.guardian')}</option>
+            <option value="other">{t('rel.other')}</option>
           </select>
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy || studentId === ''}>
-          {busy ? 'Saving…' : 'Link'}
+          {busy ? t('common.saving') : t('guardians.link')}
         </button>
       </form>
 
       <ConfirmDialog
         open={confirm !== null}
-        title={confirm?.kind === 'unbind' ? 'Unbind portal user?' : 'End guardian link?'}
+        title={confirm?.kind === 'unbind' ? t('guardians.unbindTitle') : t('guardians.endLinkTitle')}
         body={
-          confirm?.kind === 'unbind'
-            ? 'Unbind portal user from this guardian? They will lose Parent portal access for this guardian.'
-            : 'End this guardian link? The student will no longer be linked to this guardian.'
+          confirm?.kind === 'unbind' ? t('guardians.unbindBody') : t('guardians.endLinkBody')
         }
-        confirmLabel={confirm?.kind === 'unbind' ? 'Unbind' : 'End link'}
+        confirmLabel={confirm?.kind === 'unbind' ? t('guardians.unbindUser') : t('guardians.endLink')}
         danger
         busy={busy}
         onCancel={() => {

@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
@@ -54,6 +55,7 @@ const GUARDIAN_PICKER_LIMIT = 100;
 export default function AdminNotificationsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
+  const { t } = useAppPreferences();
 
   const [canRead, setCanRead] = useState(false);
   const [canManage, setCanManage] = useState(false);
@@ -281,10 +283,7 @@ export default function AdminNotificationsPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="SMS notifications"
-        description="Delivery ledger, daily usage, and manual test SMS (ACF-014). Full phone numbers are never shown."
-      />
+      <AdminPageHeader title={t('sms.title')} description={t('sms.description')} />
 
       {!gateReady ? <p className="muted">Checking access…</p> : null}
 
@@ -295,8 +294,8 @@ export default function AdminNotificationsPage() {
       {gateReady && canRead ? (
         <div className="stack">
           <section className="card stack">
-            <h2 className="section-title">Usage today (UTC)</h2>
-            {usageLoading ? <p className="muted">Loading…</p> : null}
+            <h2 className="section-title">{t('sms.usage')}</h2>
+            {usageLoading ? <p className="muted">{t('common.loading')}</p> : null}
             {usageError !== null ? <Banner tone="error">{usageError}</Banner> : null}
             {usage !== null ? (
               <p className="muted">
@@ -312,7 +311,7 @@ export default function AdminNotificationsPage() {
 
           {canManage ? (
             <section className="card stack">
-              <h2 className="section-title">Send test SMS</h2>
+              <h2 className="section-title">{t('sms.test')}</h2>
               <p className="muted">
                 Recipient type is guardian (v1). Prefer template <code>comms_test_sms</code>.
                 Payload keys must match the template allowlist.
@@ -339,7 +338,7 @@ export default function AdminNotificationsPage() {
               </div>
 
               <div className="field">
-                <label htmlFor="tpl-locale">Locale</label>
+                <label htmlFor="tpl-locale">{t('settings.locale')}</label>
                 <select
                   id="tpl-locale"
                   value={locale}
@@ -354,18 +353,18 @@ export default function AdminNotificationsPage() {
               </div>
 
               <div className="field">
-                <label htmlFor="tpl-guardian">Guardian</label>
+                <label htmlFor="tpl-guardian">{t('guardians.guardian')}</label>
                 <select
                   id="tpl-guardian"
                   required
                   value={guardianId}
                   onChange={(e) => setGuardianId(e.target.value)}
                 >
-                  <option value="">Select guardian</option>
+                  <option value="">{t('sms.selectGuardian')}</option>
                   {guardians.map((g) => (
                     <option key={g.id} value={g.id}>
                       {g.displayName}
-                      {g.phone !== null && g.phone !== '' ? ' · has phone' : ' · no phone'}
+                      {g.phone !== null && g.phone !== '' ? ` · ${t('sms.hasPhone')}` : ` · ${t('sms.noPhone')}`}
                     </option>
                   ))}
                 </select>
@@ -411,10 +410,10 @@ export default function AdminNotificationsPage() {
           )}
 
           <section className="stack">
-            <h2 className="section-title">Deliveries</h2>
+            <h2 className="section-title">{t('sms.deliveries')}</h2>
             <form className="stack" onSubmit={onFilter}>
               <div className="field">
-                <label htmlFor="del-status">Status</label>
+                <label htmlFor="del-status">{t('common.status')}</label>
                 <select
                   id="del-status"
                   value={statusFilter}
@@ -422,7 +421,7 @@ export default function AdminNotificationsPage() {
                 >
                   {DELIVERY_STATUS_FILTERS.map((opt) => (
                     <option key={opt.label} value={opt.value}>
-                      {opt.label}
+                      {opt.value === '' ? t('common.allStatuses') : opt.label}
                     </option>
                   ))}
                 </select>
@@ -441,7 +440,7 @@ export default function AdminNotificationsPage() {
                 className="btn btn-secondary"
                 disabled={listLoading || loadingMore}
               >
-                Apply filters
+                {t('common.applyFilters')}
               </button>
             </form>
 
@@ -449,7 +448,7 @@ export default function AdminNotificationsPage() {
 
             <ResourceList
               loading={listLoading}
-              empty="No deliveries yet."
+              empty={t('sms.empty')}
               isEmpty={deliveries.length === 0}
               variant="table"
               footer={
@@ -468,8 +467,16 @@ export default function AdminNotificationsPage() {
               }
             >
               <AdminTable
-                caption="SMS deliveries"
-                headers={['Created', 'Status', 'Request', 'Provider', 'Phone', 'Segments', 'Error']}
+                caption={t('sms.deliveries')}
+                headers={[
+                  t('common.created'),
+                  t('common.status'),
+                  'Request',
+                  'Provider',
+                  t('common.phone'),
+                  'Segments',
+                  'Error',
+                ]}
               >
                 {deliveries.map((d) => (
                   <tr key={d.id}>
@@ -494,7 +501,7 @@ export default function AdminNotificationsPage() {
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Send SMS?"
+        title={t('sms.confirm')}
         body={
           selectedGuardian !== null
             ? `Send template “${templateCode}” (${locale}) to guardian “${selectedGuardian.displayName}”? If they have no phone, the request will be skipped (no_phone).`

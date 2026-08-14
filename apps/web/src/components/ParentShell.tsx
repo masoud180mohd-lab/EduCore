@@ -5,6 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
+import { AdminChromeControls } from '@/components/chrome/AdminChromeControls';
+import { useAppPreferences } from '@/components/AppProviders';
 import { clearSession, readSession } from '@/lib/auth/session';
 
 export function ParentShell({
@@ -16,6 +18,7 @@ export function ParentShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useAppPreferences();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -30,7 +33,7 @@ export function ParentShell({
   if (!ready) {
     return (
       <div className="app-shell">
-        <p className="muted">Checking session…</p>
+        <p className="muted">{t('parent.checking')}</p>
       </div>
     );
   }
@@ -41,11 +44,12 @@ export function ParentShell({
     <div className="app-shell">
       <header className="top-nav">
         <strong>EduCore</strong>
-        <nav aria-label="Parent">
+        <nav aria-label={t('parent.nav')}>
           <Link href={homeHref} aria-current={pathname === homeHref ? 'page' : undefined}>
-            Home
+            {t('parent.home')}
           </Link>
         </nav>
+        <AdminChromeControls />
         <button
           type="button"
           className="btn btn-secondary"
@@ -54,7 +58,7 @@ export function ParentShell({
             router.replace('/login');
           }}
         >
-          Log out
+          {t('shell.logout')}
         </button>
       </header>
       <main className="page" style={{ maxWidth: '56rem' }}>

@@ -92,7 +92,7 @@ export default function AdminFeesHubPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin`}>← Admin</Link>
+        <Link href={`/t/${tenantId}/admin`}>← {t('common.admin')}</Link>
       </p>
       <AdminPageHeader
         title={t('fees.title')}
@@ -108,9 +108,9 @@ export default function AdminFeesHubPage() {
             className="btn btn-secondary"
             disabled={busy}
             onClick={() => void onSyncPending()}
-            title="Query ClickPesa for up to 25 pending mobile-money attempts in this school."
+            title={t('fees.syncTitle')}
           >
-            {busy ? 'Syncing…' : 'Sync pending (tenant)'}
+            {busy ? t('fees.syncing') : t('fees.syncPending')}
           </button>
         </div>
       ) : null}

@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -29,6 +30,7 @@ export default function AdminOrganizationsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<OrganizationRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -150,14 +152,11 @@ export default function AdminOrganizationsPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="Organizations"
-        description="Campuses and organizational units. Create, edit, or deactivate."
-      />
+      <AdminPageHeader title={t('orgs.title')} description={t('orgs.description')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Add organization</h2>
+        <h2 className="section-title">{t('orgs.add')}</h2>
         <div className="field">
           <label htmlFor="orgType">Type</label>
           <select
@@ -165,15 +164,15 @@ export default function AdminOrganizationsPage() {
             value={orgType}
             onChange={(e) => setOrgType(e.target.value as OrgType)}
           >
-            {ORG_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
+            {ORG_TYPES.map((code) => (
+              <option key={code} value={code}>
+                {code}
               </option>
             ))}
           </select>
         </div>
         <div className="field">
-          <label htmlFor="name">Name</label>
+          <label htmlFor="name">{t('common.name')}</label>
           <input
             id="name"
             required
@@ -183,13 +182,13 @@ export default function AdminOrganizationsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="code">Code (optional)</label>
+          <label htmlFor="code">{t('common.codeOptional')}</label>
           <input
             id="code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             pattern="[a-z0-9-]{2,64}"
-            title="Lowercase letters, numbers, hyphens; 2–64 characters"
+            title={t('orgs.codeHint')}
           />
         </div>
         <div className="field">
@@ -216,7 +215,7 @@ export default function AdminOrganizationsPage() {
           />
         </div>
         <button className="btn btn-primary" type="submit" disabled={busy || name.trim() === ''}>
-          {busy ? 'Creating…' : 'Create organization'}
+          {busy ? t('common.saving') : t('common.create')}
         </button>
       </form>
 
@@ -230,7 +229,7 @@ export default function AdminOrganizationsPage() {
         }}
       >
         <div className="field">
-          <label htmlFor="search">Search</label>
+          <label htmlFor="search">{t('common.search')}</label>
           <input
             id="search"
             value={search}
@@ -239,13 +238,13 @@ export default function AdminOrganizationsPage() {
           />
         </div>
         <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
-          Search
+          {t('common.search')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No organizations yet."
+        empty={t('orgs.empty')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -258,7 +257,10 @@ export default function AdminOrganizationsPage() {
           />
         }
       >
-        <AdminTable caption="Organizations" headers={['Name', 'Code', 'Type', 'Status', '']}>
+        <AdminTable
+          caption={t('orgs.title')}
+          headers={[t('common.name'), t('common.code'), 'Type', t('common.status'), '']}
+        >
           {rows.map((o) => (
             <tr key={o.id}>
               <td>
@@ -274,7 +276,7 @@ export default function AdminOrganizationsPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/organizations/${o.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

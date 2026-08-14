@@ -11,6 +11,7 @@ import {
   ResourceListPagination,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -24,6 +25,7 @@ import { type RoleRow, type UserRoleRow } from '@/lib/roles/types';
 import { type OrganizationRow } from '@/lib/organizations/types';
 import { type UserRow } from '@/lib/users/types';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+import type { MessageKey } from '@/lib/i18n/messages';
 
 type MembershipRow = {
   readonly id: string;
@@ -47,29 +49,29 @@ type ConfirmState =
 const MEMBERSHIP_COPY: Record<
   LifecycleAction,
   {
-    readonly title: string;
-    readonly body: string;
-    readonly confirmLabel: string;
-    readonly done: string;
+    readonly title: MessageKey;
+    readonly body: MessageKey;
+    readonly confirmLabel: MessageKey;
+    readonly done: MessageKey;
   }
 > = {
   suspend: {
-    title: 'Suspend membership?',
-    body: 'Suspend this membership? They will lose access to this school until reactivated.',
-    confirmLabel: 'Suspend',
-    done: 'Membership suspended.',
+    title: 'users.suspendTitle',
+    body: 'users.suspendBody',
+    confirmLabel: 'users.suspend',
+    done: 'users.suspendDone',
   },
   reactivate: {
-    title: 'Reactivate membership?',
-    body: 'Reactivate this membership? They will regain active access to this school.',
-    confirmLabel: 'Reactivate',
-    done: 'Membership reactivated.',
+    title: 'users.reactivateTitle',
+    body: 'users.reactivateBody',
+    confirmLabel: 'users.reactivate',
+    done: 'users.reactivateDone',
   },
   remove: {
-    title: 'Remove membership?',
-    body: 'Remove this membership? Access ends. You can invite them again later (status becomes invited).',
-    confirmLabel: 'Remove',
-    done: 'Membership removed.',
+    title: 'users.removeTitle',
+    body: 'users.removeBody',
+    confirmLabel: 'common.remove',
+    done: 'users.removeDone',
   },
 };
 
@@ -77,14 +79,19 @@ function assignmentKey(roleId: string, organizationId: string | null): string {
   return `${roleId}:${organizationId ?? ''}`;
 }
 
-function scopeLabel(organizationId: string | null, orgNames: Record<string, string>): string {
-  if (organizationId === null) return 'Entire tenant';
+function scopeLabel(
+  organizationId: string | null,
+  orgNames: Record<string, string>,
+  entireTenant: string,
+): string {
+  if (organizationId === null) return entireTenant;
   return orgNames[organizationId] ?? organizationId;
 }
 
 export default function AdminUserDetailPage() {
   const params = useParams<{ tenantId: string; userId: string }>();
   const { tenantId, userId } = params;
+  const { t } = useAppPreferences();
   const [row, setRow] = useState<UserRow | null>(null);
   const [membership, setMembership] = useState<MembershipRow | null>(null);
   const [userRoles, setUserRoles] = useState<UserRoleRow[]>([]);
@@ -354,7 +361,7 @@ export default function AdminUserDetailPage() {
       clearIdempotencyKey(actionKey);
       setMembership(result.data);
       setConfirm(null);
-      setInfo(MEMBERSHIP_COPY[action].done);
+      setInfo(t(MEMBERSHIP_COPY[action].done));
       if (action === 'reactivate') {
         await load();
       }
@@ -445,16 +452,16 @@ export default function AdminUserDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/users`}>← Users</Link>
+        <Link href={`/t/${tenantId}/admin/users`}>← {t('users.title')}</Link>
       </p>
-      <AdminPageHeader title={row?.displayName || row?.email || 'User'} />
+      <AdminPageHeader title={row?.displayName || row?.email || t('users.user')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {showUserForm ? (
         <div className="stack">
           <form className="card stack" onSubmit={(e) => void onSave(e)}>
             <label className="field">
-              <span>Display name</span>
+              <span>{t('common.displayName')}</span>
               <input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -463,10 +470,10 @@ export default function AdminUserDetailPage() {
               />
             </label>
             <div className="muted">
-              Email: {row.email} · Status: {row.status}
+              {t('common.email')}: {row.email} · {t('common.status')}: {row.status}
             </div>
             <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Save changes'}
+              {busy ? t('common.saving') : t('common.save')}
             </button>
           </form>
           {row.status !== 'disabled' ? (
@@ -476,18 +483,18 @@ export default function AdminUserDetailPage() {
               disabled={busy}
               onClick={() => setConfirm({ kind: 'disable' })}
             >
-              Disable user
+              {t('users.disableUser')}
             </button>
           ) : (
             <div className="stack">
-              <p className="muted">This user is disabled.</p>
+              <p className="muted">{t('users.disabledHint')}</p>
               <button
                 className="btn btn-primary"
                 type="button"
                 disabled={busy || isSelf}
                 onClick={() => setConfirm({ kind: 'enable' })}
               >
-                Enable user
+                {t('users.enableUser')}
               </button>
             </div>
           )}
@@ -496,9 +503,9 @@ export default function AdminUserDetailPage() {
 
       {membership !== null ? (
         <div className="stack" style={{ marginTop: '1.5rem' }}>
-          <h2>Membership</h2>
+          <h2>{t('memberships.title')}</h2>
           <p className="muted">
-            Status: <strong>{membership.status}</strong>
+            {t('common.status')}: <strong>{membership.status}</strong>
             {membership.joinedAt !== null ? ` · Joined: ${membership.joinedAt}` : null}
           </p>
           {isSelf ? (
@@ -548,7 +555,7 @@ export default function AdminUserDetailPage() {
 
       {(showUserForm || membership !== null) && rolesCatalog.length > 0 ? (
         <div className="stack" style={{ marginTop: '1.5rem' }}>
-          <h2>Roles</h2>
+          <h2>{t('roles.title')}</h2>
           <p className="muted" style={{ marginTop: 0 }}>
             Organization scope is stored on the assignment only; permissions still apply tenant-wide
             until org AuthZ ships.
@@ -566,7 +573,7 @@ export default function AdminUserDetailPage() {
                   <span style={{ flex: 1 }}>
                     <strong>{ur.roleCode}</strong>
                     <div className="muted">
-                      Scope: {scopeLabel(ur.organizationId, orgNames)} · Assignment {ur.id}
+                      {t('users.scope')}: {scopeLabel(ur.organizationId, orgNames, t('users.entireTenant'))} · {t('users.assignment', { id: ur.id })}
                     </div>
                   </span>
                   <button
@@ -577,7 +584,7 @@ export default function AdminUserDetailPage() {
                       setConfirm({ kind: 'unassign', assignmentId: ur.id, roleCode: ur.roleCode })
                     }
                   >
-                    Remove
+                    {t('common.remove')}
                   </button>
                 </li>
               ))}
@@ -586,13 +593,13 @@ export default function AdminUserDetailPage() {
           {rolesCatalog.length > 0 || rolesCursor !== null ? (
             <form className="stack" onSubmit={(e) => void onAssignRole(e)}>
               <label className="field">
-                <span>Assign role</span>
+                <span>{t('users.assignRole')}</span>
                 <select
                   value={assignRoleId}
                   onChange={(e) => setAssignRoleId(e.target.value)}
                   required
                 >
-                  <option value="">Select a role…</option>
+                  <option value="">{t('common.selectRole')}</option>
                   {rolesCatalog.map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.name} ({r.code})
@@ -608,9 +615,9 @@ export default function AdminUserDetailPage() {
                 />
               </label>
               <label className="field">
-                <span>Scope</span>
+                <span>{t('common.scope')}</span>
                 <select value={assignOrgId} onChange={(e) => setAssignOrgId(e.target.value)}>
-                  <option value="">Entire tenant</option>
+                  <option value="">{t('users.entireTenant')}</option>
                   {organizations.map((org) => (
                     <option key={org.id} value={org.id}>
                       {org.name}
@@ -630,53 +637,53 @@ export default function AdminUserDetailPage() {
                 type="submit"
                 disabled={busy || assignRoleId === '' || assignDuplicate}
               >
-                {busy ? 'Assigning…' : 'Assign role'}
+                {busy ? t('common.assigning') : t('users.assignRole')}
               </button>
             </form>
           ) : (
-            <p className="muted">No roles available in this tenant.</p>
+            <p className="muted">{t('users.noRoles')}</p>
           )}
         </div>
       ) : null}
 
       {!showUserForm && membership === null && error === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : null}
 
       <ConfirmDialog
         open={confirm !== null}
         title={
           confirm?.kind === 'disable'
-            ? 'Disable user?'
+            ? t('users.disableConfirm')
             : confirm?.kind === 'enable'
-              ? 'Enable user?'
+              ? t('users.enableConfirm')
               : confirm?.kind === 'membership'
-                ? MEMBERSHIP_COPY[confirm.action].title
+                ? t(MEMBERSHIP_COPY[confirm.action].title)
                 : confirm?.kind === 'unassign'
-                  ? 'Remove role?'
-                  : 'Confirm'
+                  ? t('users.removeRole')
+                  : t('common.confirm')
         }
         body={
           confirm?.kind === 'disable' && row !== null
-            ? `Disable “${row.displayName || row.email}”? They will not be able to sign in.`
+            ? t('users.disableBody', { name: row.displayName || row.email })
             : confirm?.kind === 'enable' && row !== null
-              ? `Enable “${row.displayName || row.email}”? They will be able to sign in again.`
+              ? t('users.enableBody', { name: row.displayName || row.email })
               : confirm?.kind === 'membership'
-                ? MEMBERSHIP_COPY[confirm.action].body
+                ? t(MEMBERSHIP_COPY[confirm.action].body)
                 : confirm?.kind === 'unassign'
-                  ? `Remove role “${confirm.roleCode}” from this user?`
+                  ? t('users.removeRoleBody', { code: confirm.roleCode })
                   : ''
         }
         confirmLabel={
           confirm?.kind === 'disable'
-            ? 'Disable'
+            ? t('common.disable')
             : confirm?.kind === 'enable'
-              ? 'Enable'
+              ? t('common.enable')
               : confirm?.kind === 'membership'
-                ? MEMBERSHIP_COPY[confirm.action].confirmLabel
+                ? t(MEMBERSHIP_COPY[confirm.action].confirmLabel)
                 : confirm?.kind === 'unassign'
-                  ? 'Remove'
-                  : 'Confirm'
+                  ? t('common.remove')
+                  : t('common.confirm')
         }
         danger={
           confirm?.kind === 'disable' ||

@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner, ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -31,6 +32,7 @@ export default function AdminTermDetailPage() {
   const params = useParams<{ tenantId: string; termId: string }>();
   const { tenantId, termId } = params;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [row, setRow] = useState<TermRow | null>(null);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
   const [yearsCursor, setYearsCursor] = useState<string | null>(null);
@@ -177,9 +179,9 @@ export default function AdminTermDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic/terms`}>← Terms</Link>
+        <Link href={`/t/${tenantId}/admin/academic/terms`}>← {t('academic.terms')}</Link>
       </p>
-      <AdminPageHeader title={row?.name ?? 'Term'} />
+      <AdminPageHeader title={row?.name ?? t('academic.term')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {deleteDependents !== null ? (
         <DeleteDependentsBanner tenantId={tenantId} groups={deleteDependents} />
@@ -188,7 +190,7 @@ export default function AdminTermDetailPage() {
       {row !== null ? (
         <form className="card stack" onSubmit={onSave}>
           <label className="field">
-            <span>Academic year</span>
+            <span>{t('academic.year')}</span>
             <select value={academicYearId} onChange={(e) => setAcademicYearId(e.target.value)}>
               {years.map((y) => (
                 <option key={y.id} value={y.id}>
@@ -205,7 +207,7 @@ export default function AdminTermDetailPage() {
             />
           </label>
           <label className="field">
-            <span>Name</span>
+            <span>{t('common.name')}</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -214,19 +216,19 @@ export default function AdminTermDetailPage() {
             />
           </label>
           <label className="field">
-            <span>Code (optional)</span>
+            <span>{t('common.codeOptional')}</span>
             <input value={code} onChange={(e) => setCode(e.target.value)} />
           </label>
           <label className="field">
-            <span>Starts on</span>
+            <span>{t('common.startsOn')}</span>
             <input type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />
           </label>
           <label className="field">
-            <span>Ends on</span>
+            <span>{t('common.endsOn')}</span>
             <input type="date" value={endsOn} onChange={(e) => setEndsOn(e.target.value)} />
           </label>
           <label className="field">
-            <span>Status</span>
+            <span>{t('common.status')}</span>
             <select value={status} onChange={(e) => setStatus(e.target.value as LifecycleStatus)}>
               {LIFECYCLE_STATUSES.map((s) => (
                 <option key={s} value={s}>
@@ -236,7 +238,7 @@ export default function AdminTermDetailPage() {
             </select>
           </label>
           <button className="btn btn-primary" type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save changes'}
+            {busy ? t('common.saving') : t('common.save')}
           </button>
           <button
             className="btn btn-secondary"
@@ -244,16 +246,16 @@ export default function AdminTermDetailPage() {
             onClick={() => setConfirm('delete')}
             disabled={busy}
           >
-            Delete
+            {t('common.delete')}
           </button>
         </form>
       ) : error === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : null}
 
       <ConfirmDialog
         open={confirm === 'close'}
-        title="Mark term as closed?"
+        title={t('academic.closeTerm')}
         body="Mark this term as closed?"
         confirmLabel="Mark closed"
         danger
@@ -267,9 +269,9 @@ export default function AdminTermDetailPage() {
       />
       <ConfirmDialog
         open={confirm === 'delete'}
-        title="Delete term?"
+        title={t('academic.deleteTerm')}
         body="Delete this term? This only works if nothing depends on it."
-        confirmLabel="Delete"
+        confirmLabel={t('common.delete')}
         danger
         busy={busy}
         onCancel={() => {

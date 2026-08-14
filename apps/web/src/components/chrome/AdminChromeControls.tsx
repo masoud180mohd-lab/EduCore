@@ -21,7 +21,7 @@ export function AdminChromeControls() {
           <option value="sw">Kiswahili</option>
         </select>
       </label>
-      <div className="admin-console-pref admin-console-theme" role="group" aria-label="Theme">
+      <div className="admin-console-pref admin-console-theme" role="group" aria-label={t('common.theme')}>
         <button
           type="button"
           className={theme === 'light' ? 'admin-console-chip is-active' : 'admin-console-chip'}

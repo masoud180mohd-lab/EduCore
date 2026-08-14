@@ -62,10 +62,13 @@ export default function AdminExamsPage() {
       <ResourceList
         loading={loading}
         isEmpty={!loading && rows.length === 0}
-        empty="No exams yet."
+        empty={t('exams.empty')}
         variant="table"
       >
-        <AdminTable caption="Exams" headers={['Name', 'Class', 'Status', '']}>
+        <AdminTable
+          caption={t('exams.caption')}
+          headers={[t('common.name'), t('common.class'), t('common.status'), '']}
+        >
           {rows.map((row) => (
             <tr key={row.id}>
               <td>{row.name}</td>

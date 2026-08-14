@@ -1,9 +1,9 @@
-# DSF-KIT-001 — Kit-wide Design System Freeze v1.3
+# DSF-KIT-001 — Kit-wide Design System Freeze v1.4
 
 | Field       | Value                                                                 |
 | ----------- | --------------------------------------------------------------------- |
 | Freeze ID   | `DSF-KIT-001`                                                         |
-| Version     | `1.3`                                                                 |
+| Version     | `1.4`                                                                 |
 | Date        | 2026-08-14                                                            |
 | Status      | **Accepted (solo-operator)** — 2026-08-08 (`GO DSF-KIT`)              |
 | Authority   | Solo-operator provisional (SOLO-GOV-001)                              |
@@ -177,13 +177,15 @@ v1 SPA: opaque Bearer in **sessionStorage** (not `localStorage`). Residual XSS �
 
 Layouts must not break for Kiswahili labels (wrap / allow slightly longer strings). String catalogs may land incrementally; freeze requires **no hard-coded English-only width assumptions** on primary buttons.
 
+**IMP-049:** Admin, Teacher, Parent, and login chrome use the EN/SW catalog (extra keys in `messages-extra.ts`). Status chips translate known tokens. API error mapper copy may remain English.
+
 **IMP-048:** Admin home KPI tiles (`.kpi-grid`) stack below 768px. Students and Fees chrome translated. Report-card print hides rail/top bar.
 
 **IMP-047:** Admin chrome (nav groups, utility bar, hub home) ships EN/SW toggle via session preference; remaining domain screens may remain English until translated incrementally.
 
 ## 11. Theme
 
-**IMP-047:** Light tokens remain default (`:root`). Dark palette under `[data-theme="dark"]` on `<html>`. User preference stored in sessionStorage; Admin utility bar provides toggle. Teacher/parent shells may adopt later.
+**IMP-047:** Light tokens remain default (`:root`). Dark palette under `[data-theme="dark"]` on `<html>`. User preference stored in sessionStorage; Admin, Teacher, and Parent shells provide the toggle.
 
 ## Slice inventory (still governing screens)
 
@@ -221,6 +223,7 @@ Layouts must not break for Kiswahili labels (wrap / allow slightly longer string
 | 1.1 | 2026-08-14 | IMP-046 AdminShell office console: left rail + utility bar; rail tokens; admin content max 72rem |
 | 1.2 | 2026-08-14 | IMP-047 dark theme tokens + EN/SW UI locale preference in Admin chrome |
 | 1.3 | 2026-08-14 | IMP-048 KPI grid, Students/Fees i18n, report-card print CSS |
+| 1.4 | 2026-08-14 | IMP-049 remaining Admin/Teacher/Parent/login chrome i18n |
 
 ## Related
 

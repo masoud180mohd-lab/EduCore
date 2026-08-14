@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -30,6 +31,7 @@ export default function AdminSubjectsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<SubjectRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -116,18 +118,15 @@ export default function AdminSubjectsPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic`}>← Academic</Link>
+        <Link href={`/t/${tenantId}/admin/academic`}>← {t('academic.back')}</Link>
       </p>
-      <AdminPageHeader
-        title="Subjects"
-        description="Tenant-wide subject catalog. Search and filter the list below."
-      />
+      <AdminPageHeader title={t('academic.subjects')} description={t('academic.subjectsDesc')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Create subject</h2>
+        <h2 className="section-title">{t('academic.createSubject')}</h2>
         <div className="field">
-          <label htmlFor="subject-name">Name</label>
+          <label htmlFor="subject-name">{t('common.name')}</label>
           <input
             id="subject-name"
             required
@@ -137,11 +136,11 @@ export default function AdminSubjectsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="subject-code">Code (optional)</label>
+          <label htmlFor="subject-code">{t('common.codeOptional')}</label>
           <input id="subject-code" value={code} onChange={(e) => setCode(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="subject-create-status">Status</label>
+          <label htmlFor="subject-create-status">{t('common.status')}</label>
           <select
             id="subject-create-status"
             value={createStatus}
@@ -155,7 +154,7 @@ export default function AdminSubjectsPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy}>
-          {busy ? 'Saving…' : 'Create subject'}
+          {busy ? t('common.saving') : t('common.create')}
         </button>
       </form>
 
@@ -175,7 +174,7 @@ export default function AdminSubjectsPage() {
         }}
       >
         <div className="field">
-          <label htmlFor="subject-search">Search</label>
+          <label htmlFor="subject-search">{t('common.search')}</label>
           <input
             id="subject-search"
             value={search}
@@ -184,13 +183,13 @@ export default function AdminSubjectsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="subject-list-status">Status</label>
+          <label htmlFor="subject-list-status">{t('common.status')}</label>
           <select
             id="subject-list-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as '' | LifecycleStatus)}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('common.allStatuses')}</option>
             {LIFECYCLE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -199,13 +198,13 @@ export default function AdminSubjectsPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          Apply filters
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No subjects yet."
+        empty={t('academic.emptySubjects')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -223,7 +222,10 @@ export default function AdminSubjectsPage() {
           />
         }
       >
-        <AdminTable caption="Subjects" headers={['Name', 'Code', 'Status', '']}>
+        <AdminTable
+          caption={t('academic.subjects')}
+          headers={[t('common.name'), t('common.code'), t('common.status'), '']}
+        >
           {rows.map((row) => (
             <tr key={row.id}>
               <td>
@@ -238,7 +240,7 @@ export default function AdminSubjectsPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/academic/subjects/${row.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

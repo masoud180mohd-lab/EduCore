@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
+import { useAppPreferences } from '@/components/AppProviders';
 import { MfaChallengeForm } from '@/components/MfaChallengeForm';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearPkcePending, PKCE_MAX_AGE_MS, readPkcePending } from '@/lib/auth/auth0-pkce';
@@ -29,6 +30,7 @@ type LoginResponse = {
 
 export default function Auth0CallbackPage() {
   const router = useRouter();
+  const { t } = useAppPreferences();
   const started = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(true);
@@ -177,16 +179,14 @@ export default function Auth0CallbackPage() {
   return (
     <div className="app-shell">
       <AdminPageHeader
-        title="Auth0 sign-in"
+        title={t('login.auth0Title')}
         description={
-          mfaChallengeToken !== null
-            ? 'Authenticator required to finish EduCore session.'
-            : 'Completing EduCore session after Auth0…'
+          mfaChallengeToken !== null ? t('login.auth0Mfa') : t('login.auth0Wait')
         }
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {busy && tenants === null && mfaChallengeToken === null ? (
-        <p className="muted">Please wait…</p>
+        <p className="muted">{t('login.pleaseWait')}</p>
       ) : null}
 
       {mfaChallengeToken !== null ? (
@@ -195,7 +195,7 @@ export default function Auth0CallbackPage() {
 
       {tenants !== null ? (
         <div className="stack">
-          <p>Choose your school:</p>
+          <p>{t('login.chooseSchool')}</p>
           <ul className="list">
             {tenants.map((t) => (
               <li key={t.id}>
@@ -217,7 +217,7 @@ export default function Auth0CallbackPage() {
       {!busy && mfaChallengeToken === null ? (
         <p style={{ marginTop: '1.5rem' }}>
           <Link className="btn btn-secondary" href="/login">
-            Back to sign in
+            {t('login.backToLogin')}
           </Link>
         </p>
       ) : null}

@@ -20,25 +20,25 @@ export default function AdminStaffPage() {
         <li>
           <Link className="card" href={`${base}/users`}>
             <strong>{t('nav.users')}</strong>
-            <div className="muted">Invite staff, edit profiles, suspend or enable accounts</div>
+            <div className="muted">{t('staff.usersHint')}</div>
           </Link>
         </li>
         <li>
           <Link className="card" href={`${base}/memberships`}>
             <strong>{t('nav.memberships')}</strong>
-            <div className="muted">Roster by invited / active / suspended / removed</div>
+            <div className="muted">{t('staff.membershipsHint')}</div>
           </Link>
         </li>
         <li>
           <Link className="card" href={`${base}/roles`}>
             <strong>{t('nav.roles')}</strong>
-            <div className="muted">Custom roles and permission checklists</div>
+            <div className="muted">{t('staff.rolesHint')}</div>
           </Link>
         </li>
         <li>
           <Link className="card" href={`/t/${tenantId}/teacher`}>
             <strong>{t('shell.teacherAttendance')}</strong>
-            <div className="muted">Teachers mark attendance and enter marks from the teacher workspace</div>
+            <div className="muted">{t('staff.teacherHint')}</div>
           </Link>
         </li>
       </ul>

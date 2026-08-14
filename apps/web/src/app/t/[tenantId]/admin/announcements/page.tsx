@@ -24,7 +24,7 @@ export default function AdminAnnouncementsPage() {
         <li>
           <Link className="card" href={`${base}/notifications`}>
             <strong>{t('nav.notifications')}</strong>
-            <div className="muted">SMS deliveries, usage, and test send</div>
+            <div className="muted">{t('announcements.smsHint')}</div>
           </Link>
         </li>
       </ul>

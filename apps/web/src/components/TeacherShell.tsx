@@ -5,6 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
+import { AdminChromeControls } from '@/components/chrome/AdminChromeControls';
+import { useAppPreferences } from '@/components/AppProviders';
 import { clearSession, readSession } from '@/lib/auth/session';
 
 export function TeacherShell({
@@ -16,6 +18,7 @@ export function TeacherShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useAppPreferences();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -30,7 +33,7 @@ export function TeacherShell({
   if (!ready) {
     return (
       <div className="app-shell">
-        <p className="muted">Checking session…</p>
+        <p className="muted">{t('teacher.checking')}</p>
       </div>
     );
   }
@@ -43,20 +46,21 @@ export function TeacherShell({
     <div className="app-shell">
       <header className="top-nav">
         <strong>EduCore</strong>
-        <nav aria-label="Teacher">
+        <nav aria-label={t('teacher.nav')}>
           <Link href={homeHref} aria-current={pathname === homeHref ? 'page' : undefined}>
-            Sessions
+            {t('teacher.sessions')}
           </Link>
           <Link
             href={attendHref}
             aria-current={pathname?.includes('/attendance') ? 'page' : undefined}
           >
-            Attend
+            {t('teacher.attend')}
           </Link>
           <Link href={marksHref} aria-current={pathname?.includes('/marks') ? 'page' : undefined}>
-            Marks
+            {t('teacher.marks')}
           </Link>
         </nav>
+        <AdminChromeControls />
         <button
           type="button"
           className="btn btn-secondary"
@@ -65,7 +69,7 @@ export function TeacherShell({
             router.replace('/login');
           }}
         >
-          Log out
+          {t('shell.logout')}
         </button>
       </header>
       {children}

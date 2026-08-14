@@ -16,30 +16,30 @@ export default function AdminReportsPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <AdminPageHeader title={t('page.reports.title')} description={t('page.reports.description')} />
-      <Banner tone="info">{t('common.comingSoon')} — analytics dashboard</Banner>
+      <Banner tone="info">{t('reports.soonHint')}</Banner>
       <ul className="list" style={{ marginTop: 'var(--space-4)' }}>
         <li>
           <Link className="card" href={`${base}/students`}>
             <strong>{t('nav.students')}</strong>
-            <div className="muted">Search, filter, export from the students registry</div>
+            <div className="muted">{t('reports.studentsHint')}</div>
           </Link>
         </li>
         <li>
           <Link className="card" href={`${base}/attendance`}>
             <strong>{t('nav.attendance')}</strong>
-            <div className="muted">Session list — class and date filters</div>
+            <div className="muted">{t('reports.attendanceHint')}</div>
           </Link>
         </li>
         <li>
           <Link className="card" href={`${base}/fees/invoices`}>
             <strong>{t('nav.fees')}</strong>
-            <div className="muted">Invoices, payments, receipts, outstanding balances</div>
+            <div className="muted">{t('reports.feesHint')}</div>
           </Link>
         </li>
         <li>
           <Link className="card" href={`${base}/exams`}>
             <strong>{t('nav.exams')}</strong>
-            <div className="muted">Exam list and marks entry progress</div>
+            <div className="muted">{t('reports.examsHint')}</div>
           </Link>
         </li>
       </ul>

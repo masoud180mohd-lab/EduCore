@@ -86,7 +86,7 @@ export default function AdminAttendancePage() {
       <ResourceList
         loading={loading}
         isEmpty={!loading && rows.length === 0}
-        empty="No attendance sessions yet."
+        empty={t('attendance.empty')}
         variant="table"
         footer={
           nextCursor !== null ? (
@@ -97,13 +97,16 @@ export default function AdminAttendancePage() {
                 disabled={loadingMore}
                 onClick={() => void load(nextCursor, true)}
               >
-                {loadingMore ? 'Loading more…' : 'Load more'}
+                {loadingMore ? t('common.loadingMore') : t('common.loadMore')}
               </button>
             </p>
           ) : undefined
         }
       >
-        <AdminTable caption="Attendance sessions" headers={['Date', 'Class', 'Status']}>
+        <AdminTable
+          caption={t('attendance.sessions')}
+          headers={[t('common.date'), t('common.class'), t('common.status')]}
+        >
           {rows.map((row) => (
             <tr key={row.id}>
               <td>{row.sessionDate}</td>

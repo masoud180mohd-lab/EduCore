@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { ParentShell } from '@/components/ParentShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { readSession } from '@/lib/auth/session';
 import { paymentStatusLabel } from '@/lib/finance/invoice-actions';
@@ -27,9 +28,9 @@ type ReceiptPayload = {
   };
 };
 
-function accessMessage(err: ApiClientError): string {
+function accessMessage(err: ApiClientError, noAccess: string): string {
   if (err.status === 403) {
-    return 'You do not have parent portal access.';
+    return noAccess;
   }
   return teacherFriendlyMessage(err);
 }
@@ -37,6 +38,7 @@ function accessMessage(err: ApiClientError): string {
 export default function ParentReceiptDetailPage() {
   const params = useParams<{ tenantId: string; receiptId: string }>();
   const { tenantId, receiptId } = params;
+  const { t } = useAppPreferences();
   const [receipt, setReceipt] = useState<ReceiptPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,12 +55,12 @@ export default function ParentReceiptDetailPage() {
       setReceipt(receiptRes.data);
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(accessMessage(err));
+      if (err instanceof ApiClientError) setError(accessMessage(err, t('parent.noAccess')));
       else setError('Could not load receipt.');
     } finally {
       setLoading(false);
     }
-  }, [receiptId]);
+  }, [receiptId, t]);
 
   useEffect(() => {
     void load();
@@ -70,22 +72,19 @@ export default function ParentReceiptDetailPage() {
     <ParentShell tenantId={tenantId}>
       <p className="muted">
         {payment !== undefined ? (
-          <Link href={`/t/${tenantId}/parent/fees/invoices/${payment.invoiceId}`}>← Invoice</Link>
+          <Link href={`/t/${tenantId}/parent/fees/invoices/${payment.invoiceId}`}>← {t('invoice.title')}</Link>
         ) : (
-          <Link href={`/t/${tenantId}/parent`}>← Fees</Link>
+          <Link href={`/t/${tenantId}/parent`}>← {t('fees.back')}</Link>
         )}
       </p>
-      <AdminPageHeader title="Receipt (read-only)" />
-      <Banner tone="info">
-        Pay at the school office (cash, bank, or cheque). Mobile money is not enabled (PAY-007 /
-        PAY-PROVIDER-001).
-      </Banner>
+      <AdminPageHeader title={t('parent.readOnlyReceipt')} />
+      <Banner tone="info">{t('parent.officePay')}</Banner>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {loading ? <p className="muted">Loading…</p> : null}
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {!loading && receipt !== null ? (
         <div className="card stack">
           <div>
-            <strong>Receipt</strong> {receipt.receiptNumber}
+            <strong>{t('receipt.title')}</strong> {receipt.receiptNumber}
           </div>
           <div className="muted">
             {receipt.status} · Issued {receipt.issuedAt}

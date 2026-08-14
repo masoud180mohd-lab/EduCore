@@ -291,7 +291,7 @@ export default function AdminStudentDetailPage() {
                 value={studentCode}
                 onChange={(e) => setStudentCode(e.target.value)}
                 pattern="[A-Za-z0-9._-]{0,64}"
-                title="Letters, numbers, . _ - up to 64 characters"
+                title={t('students.codeHint')}
               />
             </label>
             <label className="field">

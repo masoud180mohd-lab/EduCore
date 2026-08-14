@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
+import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -25,6 +26,7 @@ export default function AttendancePickerPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [streams, setStreams] = useState<StreamRow[]>([]);
   const [classId, setClassId] = useState('');
@@ -127,17 +129,17 @@ export default function AttendancePickerPage() {
   return (
     <TeacherShell tenantId={tenantId}>
       <AdminPageHeader
-        title="Take attendance"
-        description="Pick class and date to open or resume a session."
+        title={t('teacher.takeAttendance')}
+        description={t('teacher.takeDesc')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {loadingClasses ? <p className="muted">Loading classes…</p> : null}
+      {loadingClasses ? <p className="muted">{t('common.loading')}</p> : null}
       {!loadingClasses && classes.length === 0 ? (
-        <Banner tone="info">No active classes yet. Ask an admin to create one.</Banner>
+        <Banner tone="info">{t('teacher.noClasses')}</Banner>
       ) : null}
       <form className="stack" onSubmit={(e) => void onOpen(e)}>
         <div className="field">
-          <label htmlFor="classId">Class</label>
+          <label htmlFor="classId">{t('common.class')}</label>
           <select
             id="classId"
             required
@@ -148,7 +150,7 @@ export default function AttendancePickerPage() {
               setStreamId('');
             }}
           >
-            <option value="">Select class</option>
+            <option value="">{t('common.selectClass')}</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -158,9 +160,9 @@ export default function AttendancePickerPage() {
           </select>
         </div>
         <div className="field">
-          <label htmlFor="streamId">Stream (optional)</label>
+          <label htmlFor="streamId">{t('common.streamOptional')}</label>
           <select id="streamId" value={streamId} onChange={(e) => setStreamId(e.target.value)}>
-            <option value="">Whole class</option>
+            <option value="">{t('teacher.wholeClass')}</option>
             {streams.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -169,7 +171,7 @@ export default function AttendancePickerPage() {
           </select>
         </div>
         <div className="field">
-          <label htmlFor="sessionDate">Date</label>
+          <label htmlFor="sessionDate">{t('common.date')}</label>
           <input
             id="sessionDate"
             type="date"
@@ -179,7 +181,7 @@ export default function AttendancePickerPage() {
           />
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy || classId === ''}>
-          {busy ? 'Opening…' : 'Open session'}
+          {busy ? t('common.loading') : t('common.open')}
         </button>
       </form>
     </TeacherShell>

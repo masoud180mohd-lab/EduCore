@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -34,6 +35,7 @@ import {
 export default function AdminUsersPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<UserRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +79,7 @@ export default function AdminUsersPage() {
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'users'));
-      else setError('Could not load users.');
+      else setError(t('users.loadError'));
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -115,7 +117,7 @@ export default function AdminUsersPage() {
       setEmail('');
       setDisplayName('');
       setRoleCode('staff');
-      setInfo('Invitation sent. User appears when membership is active (or filter status = invited).');
+      setInfo(t('users.invited'));
       setAppliedSearch(search);
       setAppliedStatus(statusFilter);
       await loadPage({
@@ -126,7 +128,7 @@ export default function AdminUsersPage() {
       });
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'users'));
-      else setError('Could not invite user.');
+      else setError(t('users.inviteError'));
     } finally {
       setBusy(false);
     }
@@ -134,17 +136,14 @@ export default function AdminUsersPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="Users"
-        description="Staff directory. Invite by email (membership); edit display name or disable on detail."
-      />
+      <AdminPageHeader title={t('users.title')} description={t('users.description')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onInvite(e)}>
-        <h2 className="section-title">Invite staff</h2>
+        <h2 className="section-title">{t('users.invite')}</h2>
         <div className="field">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email">{t('common.email')}</label>
           <input
             id="email"
             type="email"
@@ -155,7 +154,7 @@ export default function AdminUsersPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="displayName">Display name (optional)</label>
+          <label htmlFor="displayName">{t('common.displayNameOptional')}</label>
           <input
             id="displayName"
             maxLength={200}
@@ -164,7 +163,7 @@ export default function AdminUsersPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="roleCode">Role</label>
+          <label htmlFor="roleCode">{t('users.role')}</label>
           <select
             id="roleCode"
             value={roleCode}
@@ -179,7 +178,7 @@ export default function AdminUsersPage() {
           </select>
         </div>
         <button className="btn btn-primary" type="submit" disabled={busy || email.trim() === ''}>
-          {busy ? 'Inviting…' : 'Send invite'}
+          {busy ? t('common.saving') : t('common.invite')}
         </button>
       </form>
 
@@ -199,7 +198,7 @@ export default function AdminUsersPage() {
         }}
       >
         <div className="field">
-          <label htmlFor="search">Search</label>
+          <label htmlFor="search">{t('common.search')}</label>
           <input
             id="search"
             value={search}
@@ -208,13 +207,13 @@ export default function AdminUsersPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="list-status">Status</label>
+          <label htmlFor="list-status">{t('common.status')}</label>
           <select
             id="list-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as '' | UserStatus)}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('common.allStatuses')}</option>
             {USER_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -223,13 +222,13 @@ export default function AdminUsersPage() {
           </select>
         </div>
         <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
-          Apply filters
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No users returned."
+        empty={t('users.empty')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -247,7 +246,10 @@ export default function AdminUsersPage() {
           />
         }
       >
-        <AdminTable caption="Users" headers={['Name', 'Email', 'Status', '']}>
+        <AdminTable
+          caption={t('users.title')}
+          headers={[t('common.name'), t('common.email'), t('common.status'), '']}
+        >
           {rows.map((u) => (
             <tr key={u.id}>
               <td>
@@ -260,7 +262,7 @@ export default function AdminUsersPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/users/${u.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

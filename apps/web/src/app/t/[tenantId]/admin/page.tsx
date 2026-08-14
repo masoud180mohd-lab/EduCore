@@ -18,7 +18,7 @@ import { groupAdminNav, visibleAdminNavIds, type AdminNavId } from '@/lib/auth/a
 import type { MeLike } from '@/lib/auth/home-preference';
 import { readSession } from '@/lib/auth/session';
 import { formatTzsMinor } from '@/lib/finance/money';
-import { groupMessageKey, navMessageKey } from '@/lib/i18n/messages';
+import { groupMessageKey, hubBlurbKey, navMessageKey, quickHintKey, quickLabelKey } from '@/lib/i18n/messages';
 
 type TenantCurrent = {
   readonly data: { readonly id: string; readonly name?: string; readonly code?: string };
@@ -145,7 +145,7 @@ export default function AdminHomePage() {
       {emptyAreas ? <Banner tone="info">{t('hub.emptyAreas')}</Banner> : null}
 
       {showKpis ? (
-        <ul className="kpi-grid" aria-label="Dashboard">
+        <ul className="kpi-grid" aria-label={t('common.dashboard')}>
           {students !== null ? (
             <li className="kpi-tile">
               <div className="kpi-tile-label">{t('kpi.students')}</div>
@@ -191,8 +191,8 @@ export default function AdminHomePage() {
             {quickStarts.map((item) => (
               <li key={item.id}>
                 <Link className="card" href={`${base}${item.hrefSuffix}`}>
-                  <strong>{item.label}</strong>
-                  <div className="muted">{item.hint}</div>
+                  <strong>{t(quickLabelKey(item.id))}</strong>
+                  <div className="muted">{t(quickHintKey(item.id))}</div>
                 </Link>
               </li>
             ))}
@@ -215,13 +215,7 @@ export default function AdminHomePage() {
                     <li key={card.id}>
                       <Link className="card" href={`${base}${card.hrefSuffix}`}>
                         <strong>{t(navMessageKey(card.id))}</strong>
-                        <div className="muted">
-                          {card.id === 'students'
-                            ? t('students.description')
-                            : card.id === 'fees'
-                              ? t('fees.description')
-                              : card.blurb}
-                        </div>
+                        <div className="muted">{t(hubBlurbKey(card.id))}</div>
                       </Link>
                     </li>
                   ))}

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -41,6 +42,7 @@ type ReconciliationRow = {
 export default function AdminReceiptDetailPage() {
   const params = useParams<{ tenantId: string; receiptId: string }>();
   const { tenantId, receiptId } = params;
+  const { t } = useAppPreferences();
   const [receipt, setReceipt] = useState<ReceiptDetail | null>(null);
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -120,16 +122,16 @@ export default function AdminReceiptDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/fees/receipts`}>← Receipts</Link>
+        <Link href={`/t/${tenantId}/admin/fees/receipts`}>← {t('fees.receipts')}</Link>
       </p>
-      <AdminPageHeader title={receipt?.receiptNumber ?? 'Receipt'} />
-      {loading ? <p className="muted">Loading…</p> : null}
+      <AdminPageHeader title={receipt?.receiptNumber ?? t('receipt.title')} />
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {receipt !== null ? (
         <div className="card stack">
           <div>
-            <strong>Status</strong> <span className="chip">{receipt.status}</span>
+            <strong>{t('common.status')}</strong> <span className="chip">{receipt.status}</span>
           </div>
           <div className="muted">Issued {new Date(receipt.issuedAt).toLocaleString()}</div>
           {payment !== null ? (
@@ -143,7 +145,7 @@ export default function AdminReceiptDetailPage() {
               <div className="muted">Payment status: {payment.status}</div>
               <p>
                 <Link href={`/t/${tenantId}/admin/fees/invoices/${payment.invoiceId}`}>
-                  Open invoice
+                  {t('invoice.title')}
                 </Link>
               </p>
               {canReconcilePayment(payment.status) ? (
@@ -152,18 +154,17 @@ export default function AdminReceiptDetailPage() {
                   className="btn btn-secondary"
                   disabled={busy}
                   onClick={() => void onReconcile()}
-                  title="Compare payment to last gateway event. Does not change ledger or balances."
+                  title={t('invoice.reconcileTitle')}
                 >
-                  {busy ? 'Reconciling…' : 'Reconcile payment'}
+                  {busy ? t('receipt.reconciling') : t('receipt.reconcilePayment')}
                 </button>
               ) : null}
               <p className="muted" style={{ fontSize: '0.875rem' }}>
-                Reconcile records a compare-only outcome (matched / mismatch / missing event). It
-                does not post journals or change balances.
+                {t('receipt.reconcileHint')}
               </p>
             </>
           ) : (
-            <p className="muted">Payment attempt: {receipt.paymentAttemptId}</p>
+            <p className="muted">{t('receipt.paymentAttempt', { id: receipt.paymentAttemptId })}</p>
           )}
         </div>
       ) : null}

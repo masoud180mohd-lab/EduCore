@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
+import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -35,6 +36,7 @@ type Draft = {
 export default function MarkEntryPage() {
   const params = useParams<{ tenantId: string; examSubjectId: string }>();
   const { tenantId, examSubjectId } = params;
+  const { t } = useAppPreferences();
   const [subject, setSubject] = useState<ExamSubject | null>(null);
   const [examName, setExamName] = useState('');
   const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -127,7 +129,7 @@ export default function MarkEntryPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
-      setInfo('Marks saved.');
+      setInfo(t('teacher.marksSaved'));
       await load();
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
@@ -148,7 +150,7 @@ export default function MarkEntryPage() {
         auth,
       });
       setConfirmSubmit(false);
-      setInfo('Submitted for approval.');
+      setInfo(t('teacher.submitted'));
       await load();
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
@@ -168,7 +170,7 @@ export default function MarkEntryPage() {
         method: 'POST',
         auth,
       });
-      setInfo('Marks approved.');
+      setInfo(t('teacher.approved'));
       await load();
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
@@ -181,15 +183,15 @@ export default function MarkEntryPage() {
   return (
     <TeacherShell tenantId={tenantId}>
       <p>
-        <Link href={`/t/${tenantId}/teacher/marks`}>← Marks</Link>
+        <Link href={`/t/${tenantId}/teacher/marks`}>← {t('teacher.marksTitle')}</Link>
       </p>
-      <AdminPageHeader title="Enter marks">
+      <AdminPageHeader title={t('teacher.enterMarks')}>
         <p className="muted">
           {examName}
           {subject !== null ? (
             <>
               {' '}
-              · max {String(subject.maxScore)} ·{' '}
+              · {t('teacher.maxLabel', { score: String(subject.maxScore) })} ·{' '}
               <span className={`chip chip-${subject.status === 'draft' ? 'open' : 'closed'}`}>
                 {subject.status}
               </span>
@@ -199,9 +201,9 @@ export default function MarkEntryPage() {
       </AdminPageHeader>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      {loading ? <p className="muted">Loading roster…</p> : null}
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {!loading && drafts.length === 0 ? (
-        <Banner tone="warn">No active enrollments for this class.</Banner>
+        <Banner tone="warn">{t('teacher.noEnrollments')}</Banner>
       ) : null}
 
       <ul className="list">
@@ -212,7 +214,7 @@ export default function MarkEntryPage() {
               <div className="muted">{d.studentId}</div>
             </div>
             <div className="field" style={{ margin: 0, minWidth: '6rem' }}>
-              <label htmlFor={`score-${d.studentId}`}>Score</label>
+              <label htmlFor={`score-${d.studentId}`}>{t('teacher.score')}</label>
               <input
                 id={`score-${d.studentId}`}
                 type="number"
@@ -241,7 +243,7 @@ export default function MarkEntryPage() {
           disabled={locked || busy || drafts.length === 0}
           onClick={() => void onSave()}
         >
-          Save marks
+          {busy ? t('common.saving') : t('common.save')}
         </button>
         <button
           type="button"
@@ -249,7 +251,7 @@ export default function MarkEntryPage() {
           disabled={locked || busy}
           onClick={() => setConfirmSubmit(true)}
         >
-          Submit
+          {t('common.submit')}
         </button>
         {canApprove ? (
           <button
@@ -258,16 +260,16 @@ export default function MarkEntryPage() {
             disabled={busy}
             onClick={() => void onApprove()}
           >
-            Approve
+            {t('common.approve')}
           </button>
         ) : null}
       </div>
 
       <ConfirmDialog
         open={confirmSubmit}
-        title="Submit marks?"
-        body="You will not be able to edit after submit."
-        confirmLabel="Submit"
+        title={t('teacher.submitMarks')}
+        body={t('teacher.submitBody')}
+        confirmLabel={t('common.submit')}
         danger
         busy={busy}
         onCancel={() => {

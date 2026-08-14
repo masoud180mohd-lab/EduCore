@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { ParentShell } from '@/components/ParentShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { readSession } from '@/lib/auth/session';
 import { invoiceStatusLabel, paymentStatusLabel } from '@/lib/finance/invoice-actions';
@@ -35,9 +36,9 @@ type PaymentRow = {
   readonly receiptId: string | null;
 };
 
-function accessMessage(err: ApiClientError): string {
+function accessMessage(err: ApiClientError, noAccess: string): string {
   if (err.status === 403) {
-    return 'You do not have parent portal access.';
+    return noAccess;
   }
   return teacherFriendlyMessage(err);
 }
@@ -45,6 +46,7 @@ function accessMessage(err: ApiClientError): string {
 export default function ParentInvoiceDetailPage() {
   const params = useParams<{ tenantId: string; invoiceId: string }>();
   const { tenantId, invoiceId } = params;
+  const { t } = useAppPreferences();
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -71,12 +73,12 @@ export default function ParentInvoiceDetailPage() {
       }
       setError(null);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(accessMessage(err));
+      if (err instanceof ApiClientError) setError(accessMessage(err, t('parent.noAccess')));
       else setError('Could not load invoice.');
     } finally {
       setLoading(false);
     }
-  }, [invoiceId]);
+  }, [invoiceId, t]);
 
   useEffect(() => {
     void load();
@@ -87,31 +89,28 @@ export default function ParentInvoiceDetailPage() {
       <p className="muted">
         {invoice !== null ? (
           <Link href={`/t/${tenantId}/parent/fees/students/${invoice.studentId}`}>
-            ← Student invoices
+            ← {t('fees.invoicesTitle')}
           </Link>
         ) : (
-          <Link href={`/t/${tenantId}/parent`}>← Fees</Link>
+          <Link href={`/t/${tenantId}/parent`}>← {t('fees.back')}</Link>
         )}
       </p>
-      <AdminPageHeader title="Invoice (read-only)" />
-      <Banner tone="info">
-        Pay at the school office (cash, bank, or cheque). Mobile money is not enabled (PAY-007 /
-        PAY-PROVIDER-001).
-      </Banner>
+      <AdminPageHeader title={t('parent.readOnlyInvoice')} />
+      <Banner tone="info">{t('parent.officePay')}</Banner>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {loading ? <p className="muted">Loading…</p> : null}
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {!loading && invoice !== null ? (
         <>
           <div className="card stack">
             <span className="chip">{invoiceStatusLabel(invoice.status)}</span>
             <div>
-              <strong>Total</strong> {formatTzsMinor(invoice.totalMinor)}
+              <strong>{t('fees.total')}</strong> {formatTzsMinor(invoice.totalMinor)}
             </div>
             <div>
-              <strong>Balance</strong> {formatTzsMinor(invoice.balanceMinor)}
+              <strong>{t('fees.balance')}</strong> {formatTzsMinor(invoice.balanceMinor)}
             </div>
           </div>
-          <h2 style={{ fontSize: '1.1rem' }}>Lines</h2>
+          <h2 style={{ fontSize: '1.1rem' }}>{t('invoice.lines')}</h2>
           <ul className="list">
             {invoice.lines.map((line) => (
               <li key={line.id} className="card">
@@ -120,7 +119,7 @@ export default function ParentInvoiceDetailPage() {
               </li>
             ))}
           </ul>
-          <h2 style={{ fontSize: '1.1rem' }}>Payments</h2>
+          <h2 style={{ fontSize: '1.1rem' }}>{t('invoice.payments')}</h2>
           {payments.length === 0 ? (
             <Banner tone="info">No payments recorded yet.</Banner>
           ) : (
@@ -135,7 +134,7 @@ export default function ParentInvoiceDetailPage() {
                   </div>
                   {p.receiptId !== null ? (
                     <Link href={`/t/${tenantId}/parent/fees/receipts/${p.receiptId}`}>
-                      View receipt
+                      {t('receipt.title')}
                     </Link>
                   ) : null}
                 </li>

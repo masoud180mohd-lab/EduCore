@@ -12,6 +12,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -27,6 +28,7 @@ import { type OrganizationRow } from '@/lib/organizations/types';
 export default function AdminOrganizationDetailPage() {
   const params = useParams<{ tenantId: string; organizationId: string }>();
   const { tenantId, organizationId } = params;
+  const { t } = useAppPreferences();
   const [row, setRow] = useState<OrganizationRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -177,9 +179,9 @@ export default function AdminOrganizationDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/organizations`}>← Organizations</Link>
+        <Link href={`/t/${tenantId}/admin/organizations`}>← {t('orgs.title')}</Link>
       </p>
-      <AdminPageHeader title={row?.name ?? 'Organization'}>
+      <AdminPageHeader title={row?.name ?? t('orgs.organization')}>
         {row !== null ? (
           <p className="muted">
             Type: {row.orgType} ·{' '}
@@ -193,7 +195,7 @@ export default function AdminOrganizationDetailPage() {
         <div className="stack">
           <form className="card stack" onSubmit={(e) => void onSave(e)}>
             <label className="field">
-              <span>Name</span>
+              <span>{t('common.name')}</span>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -202,12 +204,12 @@ export default function AdminOrganizationDetailPage() {
               />
             </label>
             <label className="field">
-              <span>Code (optional)</span>
+              <span>{t('common.codeOptional')}</span>
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 pattern="[a-z0-9-]{0,64}"
-                title="Lowercase letters, numbers, hyphens"
+                title={t('orgs.codeHint')}
               />
             </label>
             <div className="field">
@@ -234,7 +236,7 @@ export default function AdminOrganizationDetailPage() {
               />
             </div>
             <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Save changes'}
+              {busy ? t('common.saving') : t('common.save')}
             </button>
           </form>
           {row.status !== 'inactive' ? (
@@ -251,12 +253,12 @@ export default function AdminOrganizationDetailPage() {
           )}
         </div>
       ) : error === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : null}
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Deactivate organization?"
+        title={t('orgs.deactivate')}
         body={
           row !== null
             ? `Deactivate “${row.name}”? It will become inactive.`

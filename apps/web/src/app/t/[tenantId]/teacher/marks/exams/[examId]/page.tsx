@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
+import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -28,6 +29,7 @@ type SubjectRow = { readonly id: string; readonly name: string };
 export default function ExamDetailPage() {
   const params = useParams<{ tenantId: string; examId: string }>();
   const { tenantId, examId } = params;
+  const { t } = useAppPreferences();
   const [exam, setExam] = useState<Exam | null>(null);
   const [subjects, setSubjects] = useState<ExamSubject[]>([]);
   const [catalog, setCatalog] = useState<SubjectRow[]>([]);
@@ -92,24 +94,28 @@ export default function ExamDetailPage() {
   return (
     <TeacherShell tenantId={tenantId}>
       <p>
-        <Link href={`/t/${tenantId}/teacher/marks`}>← Marks</Link>
+        <Link href={`/t/${tenantId}/teacher/marks`}>← {t('teacher.marksTitle')}</Link>
       </p>
-      <AdminPageHeader title={exam?.name ?? 'Exam'}>
-        {exam !== null ? <p className="muted">Status {exam.status}</p> : null}
+      <AdminPageHeader title={exam?.name ?? t('teacher.exam')}>
+        {exam !== null ? (
+          <p className="muted">
+            {t('common.status')} {exam.status}
+          </p>
+        ) : null}
       </AdminPageHeader>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onAddSubject(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Add subject</h2>
+        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('teacher.addSubject')}</h2>
         <div className="field">
-          <label htmlFor="subjectId">Subject</label>
+          <label htmlFor="subjectId">{t('common.subject')}</label>
           <select
             id="subjectId"
             required
             value={subjectId}
             onChange={(e) => setSubjectId(e.target.value)}
           >
-            <option value="">Select subject</option>
+            <option value="">{t('common.selectSubject')}</option>
             {catalog.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -118,7 +124,7 @@ export default function ExamDetailPage() {
           </select>
         </div>
         <div className="field">
-          <label htmlFor="maxScore">Max score</label>
+          <label htmlFor="maxScore">{t('common.maxScore')}</label>
           <input
             id="maxScore"
             type="number"
@@ -130,12 +136,12 @@ export default function ExamDetailPage() {
           />
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy || subjectId === ''}>
-          {busy ? 'Adding…' : 'Add subject'}
+          {busy ? t('common.adding') : t('teacher.addSubject')}
         </button>
       </form>
 
-      <h2 style={{ fontSize: '1.1rem' }}>Subjects</h2>
-      {subjects.length === 0 ? <Banner tone="info">No subjects yet.</Banner> : null}
+      <h2 style={{ fontSize: '1.1rem' }}>{t('teacher.subjects')}</h2>
+      {subjects.length === 0 ? <Banner tone="info">{t('teacher.noSubjects')}</Banner> : null}
       <ul className="list">
         {subjects.map((s) => (
           <li key={s.id}>
@@ -144,7 +150,7 @@ export default function ExamDetailPage() {
               <span className={`chip chip-${s.status === 'draft' ? 'open' : 'closed'}`}>
                 {s.status}
               </span>
-              <div className="muted">Max {String(s.maxScore)}</div>
+              <div className="muted">{t('teacher.maxLabel', { score: String(s.maxScore) })}</div>
             </Link>
           </li>
         ))}
