@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 
+import { AppProviders } from '@/components/AppProviders';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { ThemeBootScript } from '@/components/ThemeBootScript';
 
 import '@/styles/tokens.css';
 
@@ -15,6 +17,7 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
     // attributes on <html>/<body> before React hydrates; that is not app state.
     <html lang="en" suppressHydrationWarning>
       <head>
+        <ThemeBootScript />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="stylesheet"
@@ -22,8 +25,10 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
         />
       </head>
       <body suppressHydrationWarning>
-        <OfflineBanner />
-        {children}
+        <AppProviders>
+          <OfflineBanner />
+          {children}
+        </AppProviders>
       </body>
     </html>
   );

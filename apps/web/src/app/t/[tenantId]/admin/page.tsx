@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import {
   ADMIN_HUB_BY_ID,
   visibleAdminHubQuickStarts,
@@ -16,6 +17,7 @@ import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { groupAdminNav, visibleAdminNavIds, type AdminNavId } from '@/lib/auth/admin-access';
 import type { MeLike } from '@/lib/auth/home-preference';
 import { readSession } from '@/lib/auth/session';
+import { groupMessageKey } from '@/lib/i18n/messages';
 
 type TenantCurrent = {
   readonly data: { readonly id: string; readonly name?: string; readonly code?: string };
@@ -28,6 +30,7 @@ type MeEnvelope = {
 export default function AdminHomePage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
+  const { t } = useAppPreferences();
   const [school, setSchool] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [navIds, setNavIds] = useState<ReadonlySet<AdminNavId> | null>(null);
@@ -64,26 +67,19 @@ export default function AdminHomePage() {
   return (
     <AdminShell tenantId={tenantId}>
       <AdminPageHeader
-        title="Office"
+        title={t('hub.title')}
         description={
-          school !== null
-            ? `${school} — pick a registry, fees, or settings job.`
-            : 'Loading school…'
+          school !== null ? `${school} — ${t('hub.description')}` : t('hub.loadingSchool')
         }
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {loading ? <p className="muted">Loading admin areas…</p> : null}
-      {emptyAreas ? (
-        <Banner tone="info">
-          No admin areas are available for your permissions. Ask an owner to grant access, or use
-          Teacher / Parent from the school switcher if those roles apply.
-        </Banner>
-      ) : null}
+      {loading ? <p className="muted">{t('hub.loadingAreas')}</p> : null}
+      {emptyAreas ? <Banner tone="info">{t('hub.emptyAreas')}</Banner> : null}
 
       {quickStarts.length > 0 ? (
         <section className="admin-hub-quick" aria-labelledby="admin-hub-quick-heading">
           <h2 id="admin-hub-quick-heading" className="admin-hub-group-label">
-            Common next steps
+            {t('hub.quickStarts')}
           </h2>
           <ul className="list admin-hub-quick-list">
             {quickStarts.map((item) => (
@@ -107,7 +103,7 @@ export default function AdminHomePage() {
             if (cards.length === 0) return null;
             return (
               <li key={group.id} className="admin-hub-group">
-                <h2 className="admin-hub-group-label">{group.label}</h2>
+                <h2 className="admin-hub-group-label">{t(groupMessageKey(group.id))}</h2>
                 <ul className="list">
                   {cards.map((card) => (
                     <li key={card.id}>

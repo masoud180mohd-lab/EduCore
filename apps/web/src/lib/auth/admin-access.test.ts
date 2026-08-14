@@ -167,7 +167,8 @@ describe('groupAdminNav (IMP-029)', () => {
       'access',
       'academic',
       'fees',
-      'notifications',
+      'communications',
+      'insights',
       'settings',
     ]);
     expect(groups.find((g) => g.id === 'registry')?.items).toEqual([
@@ -175,7 +176,18 @@ describe('groupAdminNav (IMP-029)', () => {
       'guardians',
       'organizations',
     ]);
-    expect(groups.find((g) => g.id === 'access')?.items).toEqual(['users', 'memberships', 'roles']);
+    expect(groups.find((g) => g.id === 'access')?.items).toEqual([
+      'users',
+      'staff',
+      'memberships',
+      'roles',
+    ]);
+    expect(groups.find((g) => g.id === 'academic')?.items).toEqual([
+      'academic',
+      'attendance',
+      'exams',
+      'reportCards',
+    ]);
   });
 
   it('omits empty groups; finance-only sees Fees not Access', () => {
@@ -184,7 +196,8 @@ describe('groupAdminNav (IMP-029)', () => {
       permissions: ['finance.manage', 'attendance.manage'],
     });
     const groups = groupAdminNav(ids);
-    expect(groups.map((g) => g.id)).toEqual(['home', 'fees']);
+    expect(groups.map((g) => g.id)).toEqual(['home', 'academic', 'fees', 'insights']);
+    expect(groups.find((g) => g.id === 'academic')?.items).toEqual(['attendance']);
     expect(groups.some((g) => g.id === 'access')).toBe(false);
     expect(groups.some((g) => g.id === 'registry')).toBe(false);
   });

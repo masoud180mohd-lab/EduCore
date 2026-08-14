@@ -55,6 +55,30 @@ export const ADMIN_HUB_CARDS: ReadonlyArray<AdminHubCard> = [
     blurb: 'Years through enrollments — filters on every list',
   },
   {
+    id: 'staff',
+    hrefSuffix: '/staff',
+    title: 'Staff',
+    blurb: 'Invite teachers and office staff; assign roles',
+  },
+  {
+    id: 'attendance',
+    hrefSuffix: '/attendance',
+    title: 'Attendance',
+    blurb: 'School-wide session list — open teacher workspace to mark',
+  },
+  {
+    id: 'exams',
+    hrefSuffix: '/exams',
+    title: 'Exams & marks',
+    blurb: 'Exam registry and marks entry oversight',
+  },
+  {
+    id: 'reportCards',
+    hrefSuffix: '/report-cards',
+    title: 'Report cards',
+    blurb: 'Printable report cards from approved marks (coming soon)',
+  },
+  {
     id: 'fees',
     hrefSuffix: '/fees',
     title: 'Fees',
@@ -65,6 +89,18 @@ export const ADMIN_HUB_CARDS: ReadonlyArray<AdminHubCard> = [
     hrefSuffix: '/notifications',
     title: 'SMS',
     blurb: 'Deliveries, usage, and test send',
+  },
+  {
+    id: 'announcements',
+    hrefSuffix: '/announcements',
+    title: 'Announcements',
+    blurb: 'In-app notices (coming soon); SMS available today',
+  },
+  {
+    id: 'reports',
+    hrefSuffix: '/reports',
+    title: 'Reports',
+    blurb: 'Operational summaries — registry, fees, attendance, exams',
   },
   {
     id: 'settings',
@@ -109,6 +145,20 @@ export const ADMIN_HUB_QUICK_STARTS: ReadonlyArray<AdminHubQuickStart> = [
     hrefSuffix: '/academic/enrollments',
     label: 'Enroll a student',
     hint: 'Filter by year, student, class, stream, or status',
+  },
+  {
+    id: 'attendance',
+    requires: 'attendance',
+    hrefSuffix: '/attendance',
+    label: 'Review attendance',
+    hint: 'Sessions recorded by teachers',
+  },
+  {
+    id: 'exams',
+    requires: 'exams',
+    hrefSuffix: '/exams',
+    label: 'Open exams',
+    hint: 'Marks entry and approval status',
   },
   {
     id: 'invoices',

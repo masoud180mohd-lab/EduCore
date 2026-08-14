@@ -5,6 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useEffect, useId, useState } from 'react';
 
+import { useAppPreferences, useTenantLocaleHint } from '@/components/AppProviders';
+import { AdminChromeControls } from '@/components/chrome/AdminChromeControls';
 import { apiRequest } from '@/lib/api/client';
 import {
   adminDeniedFallback,
@@ -15,11 +17,17 @@ import {
 } from '@/lib/auth/admin-access';
 import type { MeLike } from '@/lib/auth/home-preference';
 import { clearSession, readSession } from '@/lib/auth/session';
+import { groupMessageKey, navMessageKey } from '@/lib/i18n/messages';
 
 const BRAND_FALLBACK = 'EduCore Admin';
 
 type TenantCurrent = {
-  readonly data: { readonly id: string; readonly name?: string; readonly code?: string };
+  readonly data: {
+    readonly id: string;
+    readonly name?: string;
+    readonly code?: string;
+    readonly primaryLocale?: string;
+  };
 };
 
 type MeEnvelope = {
@@ -29,7 +37,6 @@ type MeEnvelope = {
 type NavLink = {
   readonly id: AdminNavId;
   readonly href: (base: string) => string;
-  readonly label: string;
 };
 
 type GateState =
@@ -40,19 +47,24 @@ type GateState =
       readonly fallback: 'teacher' | 'parent';
     };
 
-/** Flat catalog — presentation is grouped via `groupAdminNav` (IMP-029). Routes unchanged. */
 const NAV_LINKS: ReadonlyArray<NavLink> = [
-  { id: 'home', href: (base) => base, label: 'Home' },
-  { id: 'users', href: (base) => `${base}/users`, label: 'Users' },
-  { id: 'memberships', href: (base) => `${base}/memberships`, label: 'Memberships' },
-  { id: 'organizations', href: (base) => `${base}/organizations`, label: 'Organizations' },
-  { id: 'students', href: (base) => `${base}/students`, label: 'Students' },
-  { id: 'guardians', href: (base) => `${base}/guardians`, label: 'Guardians' },
-  { id: 'roles', href: (base) => `${base}/roles`, label: 'Roles' },
-  { id: 'academic', href: (base) => `${base}/academic`, label: 'Academic' },
-  { id: 'fees', href: (base) => `${base}/fees`, label: 'Fees' },
-  { id: 'notifications', href: (base) => `${base}/notifications`, label: 'SMS' },
-  { id: 'settings', href: (base) => `${base}/settings`, label: 'Settings' },
+  { id: 'home', href: (base) => base },
+  { id: 'users', href: (base) => `${base}/users` },
+  { id: 'staff', href: (base) => `${base}/staff` },
+  { id: 'memberships', href: (base) => `${base}/memberships` },
+  { id: 'organizations', href: (base) => `${base}/organizations` },
+  { id: 'students', href: (base) => `${base}/students` },
+  { id: 'guardians', href: (base) => `${base}/guardians` },
+  { id: 'roles', href: (base) => `${base}/roles` },
+  { id: 'academic', href: (base) => `${base}/academic` },
+  { id: 'attendance', href: (base) => `${base}/attendance` },
+  { id: 'exams', href: (base) => `${base}/exams` },
+  { id: 'reportCards', href: (base) => `${base}/report-cards` },
+  { id: 'fees', href: (base) => `${base}/fees` },
+  { id: 'notifications', href: (base) => `${base}/notifications` },
+  { id: 'announcements', href: (base) => `${base}/announcements` },
+  { id: 'reports', href: (base) => `${base}/reports` },
+  { id: 'settings', href: (base) => `${base}/settings` },
 ];
 
 const NAV_BY_ID = Object.fromEntries(NAV_LINKS.map((l) => [l.id, l])) as Record<
@@ -60,12 +72,6 @@ const NAV_BY_ID = Object.fromEntries(NAV_LINKS.map((l) => [l.id, l])) as Record<
   NavLink
 >;
 
-/**
- * Admin chrome (DSF-002 / DSF-KIT-001 / IMP-033 / IMP-029 / IMP-046).
- * Session + tenant bind first; then /auth/me capability gate.
- * Nav is permission-filtered and grouped — API remains AuthZ truth.
- * Layout is a left rail + utility bar (office console), not a wrapped top strip.
- */
 export function AdminShell({
   tenantId,
   children,
@@ -76,9 +82,13 @@ export function AdminShell({
   const router = useRouter();
   const pathname = usePathname();
   const menuId = useId();
+  const { t } = useAppPreferences();
   const [gate, setGate] = useState<GateState>({ kind: 'loading' });
   const [brand, setBrand] = useState(BRAND_FALLBACK);
+  const [tenantLocale, setTenantLocale] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+
+  useTenantLocaleHint(tenantLocale);
 
   useEffect(() => {
     const session = readSession();
@@ -110,6 +120,7 @@ export function AdminShell({
         });
         if (!cancelled) {
           setBrand(result.data.name ?? result.data.code ?? BRAND_FALLBACK);
+          setTenantLocale(result.data.primaryLocale ?? null);
         }
       } catch {
         if (!cancelled) setBrand(BRAND_FALLBACK);
@@ -146,7 +157,7 @@ export function AdminShell({
   if (gate.kind === 'loading') {
     return (
       <div className="admin-console-plain">
-        <p className="muted">Checking access…</p>
+        <p className="muted">{t('shell.checkingAccess')}</p>
       </div>
     );
   }
@@ -156,14 +167,13 @@ export function AdminShell({
       gate.fallback === 'parent' ? `/t/${tenantId}/parent` : `/t/${tenantId}/teacher`;
     return (
       <div className="admin-console-plain">
-        <h1>Admin unavailable</h1>
+        <h1>{t('shell.adminUnavailable')}</h1>
         <div className="banner banner-error" role="alert">
-          You do not have access to Admin for this school. Sign in with an admin account, or open
-          your teacher/parent workspace.
+          {t('shell.adminUnavailableBody')}
         </div>
         <p className="stack">
           <Link className="btn btn-primary" href={fallbackHref}>
-            {gate.fallback === 'parent' ? 'Open parent portal' : 'Open teacher workspace'}
+            {gate.fallback === 'parent' ? t('shell.openParent') : t('shell.openTeacher')}
           </Link>
           <button
             type="button"
@@ -173,7 +183,7 @@ export function AdminShell({
               router.replace('/login');
             }}
           >
-            Log out
+            {t('shell.logout')}
           </button>
         </p>
       </div>
@@ -199,20 +209,20 @@ export function AdminShell({
         <button
           type="button"
           className="admin-console-scrim"
-          aria-label="Close menu"
+          aria-label={t('shell.closeMenu')}
           onClick={() => setNavOpen(false)}
         />
       ) : null}
       <aside className="admin-console-rail" aria-label="Office navigation">
         <div className="admin-console-brand">
           <span className="admin-console-product">EduCore</span>
-          <span className="admin-console-product-meta">Office</span>
+          <span className="admin-console-product-meta">{t('shell.office')}</span>
         </div>
         <nav aria-label="Admin" className="admin-nav-groups" id={menuId}>
           {groups.map((group) => (
             <div key={group.id} className="admin-nav-group">
               <span className="admin-nav-group-label" id={`admin-nav-${group.id}`}>
-                {group.label}
+                {t(groupMessageKey(group.id))}
               </span>
               <ul className="admin-nav-group-links" aria-labelledby={`admin-nav-${group.id}`}>
                 {group.items.map((id) => {
@@ -226,7 +236,7 @@ export function AdminShell({
                         aria-current={current ? 'page' : undefined}
                         onClick={() => setNavOpen(false)}
                       >
-                        {link.label}
+                        {t(navMessageKey(id))}
                       </Link>
                     </li>
                   );
@@ -236,7 +246,7 @@ export function AdminShell({
           ))}
         </nav>
         <p className="admin-console-rail-foot">
-          <Link href={`/t/${tenantId}/teacher`}>Teacher attendance</Link>
+          <Link href={`/t/${tenantId}/teacher`}>{t('shell.teacherAttendance')}</Link>
         </p>
       </aside>
       <div className="admin-console-workspace">
@@ -248,11 +258,12 @@ export function AdminShell({
             aria-controls={menuId}
             onClick={() => setNavOpen((open) => !open)}
           >
-            Menu
+            {t('shell.menu')}
           </button>
           <strong className="admin-console-school">{brand}</strong>
+          <AdminChromeControls />
           <button type="button" className="btn btn-secondary" onClick={logOut}>
-            Log out
+            {t('shell.logout')}
           </button>
         </header>
         <main className="admin-console-main">{children}</main>

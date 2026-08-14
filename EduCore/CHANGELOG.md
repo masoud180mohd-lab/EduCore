@@ -2,6 +2,10 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-14 - Admin EN/SW + dark mode + MVP nav modules
+
+- Admin utility bar: English/Kiswahili toggle and light/dark theme. New nav: Staff, Attendance, Exams, Report cards, Reports, Announcements. DSF-KIT-001 v1.2.
+
 ## 2026-08-14 - Admin office console layout
 
 - AdminShell is a left-rail office console (grouped nav + school name / Log out bar). DSF-KIT-001 v1.1 and DSF-002 v1.28. Teacher and parent shells unchanged.

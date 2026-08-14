@@ -1,9 +1,9 @@
-# DSF-KIT-001 — Kit-wide Design System Freeze v1.1
+# DSF-KIT-001 — Kit-wide Design System Freeze v1.2
 
 | Field       | Value                                                                 |
 | ----------- | --------------------------------------------------------------------- |
 | Freeze ID   | `DSF-KIT-001`                                                         |
-| Version     | `1.1`                                                                 |
+| Version     | `1.2`                                                                 |
 | Date        | 2026-08-14                                                            |
 | Status      | **Accepted (solo-operator)** — 2026-08-08 (`GO DSF-KIT`)              |
 | Authority   | Solo-operator provisional (SOLO-GOV-001)                              |
@@ -177,6 +177,12 @@ v1 SPA: opaque Bearer in **sessionStorage** (not `localStorage`). Residual XSS �
 
 Layouts must not break for Kiswahili labels (wrap / allow slightly longer strings). String catalogs may land incrementally; freeze requires **no hard-coded English-only width assumptions** on primary buttons.
 
+**IMP-047:** Admin chrome (nav groups, utility bar, hub home) ships EN/SW toggle via session preference; domain screens may remain English until translated incrementally.
+
+## 11. Theme
+
+**IMP-047:** Light tokens remain default (`:root`). Dark palette under `[data-theme="dark"]` on `<html>`. User preference stored in sessionStorage; Admin utility bar provides toggle. Teacher/parent shells may adopt later.
+
 ## Slice inventory (still governing screens)
 
 | ID | Scope |
@@ -211,6 +217,7 @@ Layouts must not break for Kiswahili labels (wrap / allow slightly longer string
 | --- | --- | --- |
 | 1.0 | 2026-08-08 | Initial kit-wide freeze from DSF-001…006 synthesis |
 | 1.1 | 2026-08-14 | IMP-046 AdminShell office console: left rail + utility bar; rail tokens; admin content max 72rem |
+| 1.2 | 2026-08-14 | IMP-047 dark theme tokens + EN/SW UI locale preference in Admin chrome |
 
 ## Related
 

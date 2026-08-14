@@ -31,7 +31,7 @@ describe('COMMS-006 notifications admin UI', () => {
     expect(access).toContain('canNotificationManage');
     const shell = readFileSync(path.join(root, 'apps/web/src/components/AdminShell.tsx'), 'utf8');
     expect(shell).toContain('/notifications');
-    expect(shell).toContain("label: 'SMS'");
+    expect(shell).toContain("id: 'notifications'");
   });
 
   it('has task record and never documents full MSISDN in UI', () => {
