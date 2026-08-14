@@ -209,4 +209,32 @@ describe('MarksService', () => {
       ),
     ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
+
+  it('composes derived report-card grades without storing them', async () => {
+    const studentId = '01900000-0000-7000-8000-0000000000s1';
+    const service = makeService({
+      isAvailable: () => true,
+      getExam: vi.fn().mockResolvedValue({
+        id: examId,
+        name: 'Midterm',
+        classId,
+        academicYearId,
+        status: 'open',
+      }),
+      listReportLinesForExam: vi.fn().mockResolvedValue([
+        {
+          studentId,
+          examSubjectId,
+          subjectId,
+          maxScore: 100,
+          examSubjectStatus: 'approved',
+          score: 81,
+        },
+      ]),
+    });
+    const result = await service.listReportCardsForExam(actorUserId, tenantId, examId);
+    expect(result.data.students).toHaveLength(1);
+    expect(result.data.students[0]?.overallGrade).toBe('A');
+    expect(result.data.students[0]?.averagePercent).toBe(81);
+  });
 });

@@ -89,6 +89,19 @@ export class StudentsService {
     return { data: student };
   }
 
+  async summarizeForTenant(
+    actorUserId: string,
+    tenantId: string,
+  ): Promise<{ readonly data: { readonly total: number; readonly byStatus: Readonly<Record<string, number>> } }> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    if (!this.students.isAvailable()) {
+      return { data: { total: 0, byStatus: {} } };
+    }
+    const summary = await this.students.summarizeForTenant(actorUserId, tenantId);
+    return { data: summary };
+  }
+
   /**
    * Cursor list with optional filters.
    * Query: limit (1–100, default 25), cursor, status, search.

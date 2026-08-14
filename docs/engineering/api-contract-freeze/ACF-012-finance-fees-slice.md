@@ -3,8 +3,8 @@
 | Field     | Value                                                  |
 | --------- | ------------------------------------------------------ |
 | Freeze ID | `ACF-012`                                              |
-| Version   | `1.7`                                                  |
-| Date      | 2026-08-02 (rev 1.7 sync-provider; 1.6 ClickPesa HTTP) |
+| Version   | `1.8`                                                  |
+| Date      | 2026-08-14 (rev 1.8 invoice summary; 1.7 sync-provider) |
 | Companion | DBF-012                                                |
 | Program   | **IMP-009** (prompt IMP-007 ID collision)              |
 | Authority | Solo-operator provisional (SOLO-GOV-001)               |
@@ -37,6 +37,7 @@
 | POST   | `/api/v1/fee-structures`                 | finance.manage + Idempotency-Key                                         |
 | PATCH  | `/api/v1/fee-structures/{id}`            | finance.manage + optional Idempotency-Key                                |
 | GET    | `/api/v1/invoices`                       | finance.read                                                             |
+| GET    | `/api/v1/invoices/summary`               | finance.read — KPI: collectedMinor, outstandingMinor, overdueCount (issued/partially_paid with `issued_at` older than 30 UTC days; no due_date column) |
 | GET    | `/api/v1/invoices/{id}`                  | finance.read                                                             |
 | POST   | `/api/v1/invoices`                       | finance.manage + Idempotency-Key                                         |
 | POST   | `/api/v1/invoices/{id}/issue`            | finance.manage + Idempotency-Key                                         |

@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -29,6 +30,7 @@ export default function AdminStudentsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<StudentRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export default function AdminStudentsPage() {
       setError(null);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'students'));
-      else setError('Could not load students.');
+      else setError(t('students.loadError'));
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -109,7 +111,7 @@ export default function AdminStudentsPage() {
       router.push(`/t/${tenantId}/admin/students/${created.data.id}`);
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'students'));
-      else setError('Could not create student.');
+      else setError(t('students.createError'));
     } finally {
       setBusy(false);
     }
@@ -118,15 +120,15 @@ export default function AdminStudentsPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <AdminPageHeader
-        title="Students"
-        description="Student registry (ACF-002). Create and edit names, codes, and status."
+        title={t('students.title')}
+        description={t('students.description')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Add student</h2>
+        <h2 className="section-title">{t('students.add')}</h2>
         <div className="field">
-          <label htmlFor="displayName">Display name</label>
+          <label htmlFor="displayName">{t('students.displayName')}</label>
           <input
             id="displayName"
             required
@@ -136,7 +138,7 @@ export default function AdminStudentsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="studentCode">Student code (optional)</label>
+          <label htmlFor="studentCode">{t('students.studentCode')}</label>
           <input
             id="studentCode"
             value={studentCode}
@@ -146,7 +148,7 @@ export default function AdminStudentsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="create-status">Status</label>
+          <label htmlFor="create-status">{t('common.status')}</label>
           <select
             id="create-status"
             value={createStatus}
@@ -160,7 +162,7 @@ export default function AdminStudentsPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy}>
-          {busy ? 'Saving…' : 'Create'}
+          {busy ? t('common.saving') : t('common.create')}
         </button>
       </form>
 
@@ -180,22 +182,22 @@ export default function AdminStudentsPage() {
         }}
       >
         <div className="field">
-          <label htmlFor="search">Search</label>
+          <label htmlFor="search">{t('common.search')}</label>
           <input
             id="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Name or code"
+            placeholder={t('students.searchPlaceholder')}
           />
         </div>
         <div className="field">
-          <label htmlFor="list-status">Status</label>
+          <label htmlFor="list-status">{t('common.status')}</label>
           <select
             id="list-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as '' | StudentStatus)}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('common.allStatuses')}</option>
             {STUDENT_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -204,13 +206,13 @@ export default function AdminStudentsPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          Apply filters
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No students yet."
+        empty={t('students.empty')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -228,7 +230,10 @@ export default function AdminStudentsPage() {
           />
         }
       >
-        <AdminTable caption="Students" headers={['Name', 'Code', 'Status', '']}>
+        <AdminTable
+          caption={t('students.title')}
+          headers={[t('common.name'), t('common.code'), t('common.status'), '']}
+        >
           {rows.map((s) => (
             <tr key={s.id}>
               <td>
@@ -243,7 +248,7 @@ export default function AdminStudentsPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/students/${s.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

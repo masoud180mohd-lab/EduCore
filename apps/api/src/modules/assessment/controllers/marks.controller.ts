@@ -3,12 +3,14 @@ import {
   Controller,
   Get,
   Headers,
+  Header,
   HttpCode,
   Param,
   Post,
   Put,
   Query,
   Req,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
@@ -180,6 +182,54 @@ export class MarksController {
       idempotencyKey,
       resolveCorrelationId(request),
     );
+  }
+
+  @Get('api/v1/exams/:examId/report-cards')
+  @UseGuards(RequirePermission('marks.read'))
+  async listReportCards(
+    @Req() request: AuthedRequest,
+    @Param('examId') examId: string,
+  ): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.marksService.listReportCardsForExam(auth.userId, tenant.tenantId, examId);
+  }
+
+  @Get('api/v1/exams/:examId/report-cards/:studentId')
+  @UseGuards(RequirePermission('marks.read'))
+  async getReportCard(
+    @Req() request: AuthedRequest,
+    @Param('examId') examId: string,
+    @Param('studentId') studentId: string,
+  ): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.marksService.getReportCardForStudent(
+      auth.userId,
+      tenant.tenantId,
+      examId,
+      studentId,
+    );
+  }
+
+  @Get('api/v1/exams/:examId/report-cards/:studentId/pdf')
+  @UseGuards(RequirePermission('marks.read'))
+  @Header('Content-Type', 'application/pdf')
+  async getReportCardPdf(
+    @Req() request: AuthedRequest,
+    @Param('examId') examId: string,
+    @Param('studentId') studentId: string,
+  ): Promise<StreamableFile> {
+    const { auth, tenant } = requireAuthTenant(request);
+    const pdf = await this.marksService.getReportCardPdfForStudent(
+      auth.userId,
+      tenant.tenantId,
+      examId,
+      studentId,
+      'EduCore',
+    );
+    return new StreamableFile(pdf, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="report-card-${studentId.slice(0, 8)}.pdf"`,
+    });
   }
 
   @Post('api/v1/exam-subjects/:examSubjectId/approve')

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { canFinanceReconcile } from '@/lib/auth/admin-access';
@@ -31,6 +32,7 @@ const FAKE_PROVIDER_BANNER =
 export default function AdminFeesHubPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
+  const { t } = useAppPreferences();
   const base = `/t/${tenantId}/admin/fees`;
 
   const [canReconcile, setCanReconcile] = useState(false);
@@ -93,12 +95,12 @@ export default function AdminFeesHubPage() {
         <Link href={`/t/${tenantId}/admin`}>← Admin</Link>
       </p>
       <AdminPageHeader
-        title="Fees"
-        description="Bursar path: structures → invoices → office payment (cash/bank/cheque) → receipts. Mobile money later (PAY-007)."
+        title={t('fees.title')}
+        description={t('fees.description')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      <Banner tone="info">{FAKE_PROVIDER_BANNER}</Banner>
+      <Banner tone="info">{t('fees.officeBanner')}</Banner>
       {canReconcile ? (
         <div className="actions" style={{ marginBottom: '1rem' }}>
           <button
@@ -115,20 +117,20 @@ export default function AdminFeesHubPage() {
       <ul className="list">
         <li>
           <Link className="card" href={`${base}/structures`}>
-            <strong>Fee structures</strong>
-            <div className="muted">Named fee items by academic year</div>
+            <strong>{t('fees.structures')}</strong>
+            <div className="muted">{t('fees.structuresHint')}</div>
           </Link>
         </li>
         <li>
           <Link className="card" href={`${base}/invoices`}>
-            <strong>Invoices</strong>
-            <div className="muted">Draft, issue, void, filter, office pay</div>
+            <strong>{t('fees.invoices')}</strong>
+            <div className="muted">{t('fees.invoicesHint')}</div>
           </Link>
         </li>
         <li>
           <Link className="card" href={`${base}/receipts`}>
-            <strong>Receipts</strong>
-            <div className="muted">Payment receipts by number and status (no list filters yet)</div>
+            <strong>{t('fees.receipts')}</strong>
+            <div className="muted">{t('fees.receiptsHint')}</div>
           </Link>
         </li>
       </ul>

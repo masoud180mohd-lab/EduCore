@@ -298,6 +298,42 @@ export class StudentsRepository {
       throw error;
     }
   }
+
+  async summarizeForTenant(
+    actorUserId: string,
+    tenantId: string,
+  ): Promise<{ readonly total: number; readonly byStatus: Readonly<Record<string, number>> }> {
+    const empty = { total: 0, byStatus: {} };
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) {
+      return empty;
+    }
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{ status: string; n: string }>(
+            `SELECT s.status, COUNT(*)::text AS n
+             FROM students s
+             WHERE s.tenant_id = $1::uuid
+             GROUP BY s.status`,
+            [tenantId],
+          );
+          const byStatus: Record<string, number> = {};
+          let total = 0;
+          for (const row of result.rows) {
+            const n = Number(row.n);
+            byStatus[row.status] = n;
+            total += n;
+          }
+          return { total, byStatus };
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'StudentsRepository', error, { operation: 'summarize' });
+      return empty;
+    }
+  }
 }
 
 function mapStudentRow(row: {

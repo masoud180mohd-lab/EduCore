@@ -65,6 +65,13 @@ export class InvoicesController {
     });
   }
 
+  @Get('api/v1/invoices/summary')
+  @UseGuards(RequirePermission('finance.read'))
+  async summarizeInvoices(@Req() request: AuthedRequest): Promise<unknown> {
+    const { auth, tenant } = requireAuthTenant(request);
+    return this.invoicesService.summarizeForTenant(auth.userId, tenant.tenantId);
+  }
+
   @Post('api/v1/invoices')
   @HttpCode(201)
   @UseGuards(RequirePermission('finance.manage'))

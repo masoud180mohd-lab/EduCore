@@ -49,6 +49,15 @@ export type MarkRow = {
   readonly updatedAt: string;
 };
 
+export type ExamReportLine = {
+  readonly studentId: string;
+  readonly examSubjectId: string;
+  readonly subjectId: string;
+  readonly maxScore: number;
+  readonly examSubjectStatus: string;
+  readonly score: number | null;
+};
+
 type ExamDbRow = {
   id: string;
   tenant_id: string;
@@ -388,6 +397,53 @@ export class MarksRepository {
       if (row === undefined) throw new Error('set_exam_subject_status returned no row');
       return mapExamSubject(row);
     });
+  }
+
+  async listReportLinesForExam(
+    actorUserId: string,
+    tenantId: string,
+    examId: string,
+  ): Promise<ReadonlyArray<ExamReportLine>> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(examId) || this.pool === null) {
+      return [];
+    }
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            student_id: string;
+            exam_subject_id: string;
+            subject_id: string;
+            max_score: string | number;
+            exam_subject_status: string;
+            score: string | number | null;
+          }>(
+            `SELECT m.student_id, m.exam_subject_id, es.subject_id, es.max_score,
+                    es.status AS exam_subject_status, m.score
+             FROM marks m
+             JOIN exam_subjects es ON es.id = m.exam_subject_id AND es.tenant_id = m.tenant_id
+             WHERE m.tenant_id = $1::uuid AND es.exam_id = $2::uuid
+             ORDER BY m.student_id ASC, es.subject_id ASC`,
+            [tenantId, examId],
+          );
+          return result.rows.map((row) => ({
+            studentId: row.student_id,
+            examSubjectId: row.exam_subject_id,
+            subjectId: row.subject_id,
+            maxScore: Number(row.max_score),
+            examSubjectStatus: row.exam_subject_status,
+            score: row.score === null ? null : Number(row.score),
+          }));
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'MarksRepository', error, {
+        operation: 'listReportLinesForExam',
+      });
+      return [];
+    }
   }
 }
 

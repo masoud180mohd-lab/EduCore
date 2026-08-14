@@ -12,6 +12,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import {
   adminEnrollmentsCreatePath,
   adminEnrollmentPath,
@@ -59,6 +60,7 @@ type MeEnvelope = { readonly data: MeLike };
 export default function AdminStudentDetailPage() {
   const params = useParams<{ tenantId: string; studentId: string }>();
   const { tenantId, studentId } = params;
+  const { t } = useAppPreferences();
   const [row, setRow] = useState<StudentRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -253,7 +255,7 @@ export default function AdminStudentDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
-      setInfo('Student updated.');
+      setInfo(t('students.updated'));
       await load();
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'students'));
@@ -266,16 +268,16 @@ export default function AdminStudentDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/students`}>← Students</Link>
+        <Link href={`/t/${tenantId}/admin/students`}>← {t('students.back')}</Link>
       </p>
-      <AdminPageHeader title={row?.displayName ?? 'Student'} />
+      <AdminPageHeader title={row?.displayName ?? t('students.student')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {row !== null ? (
         <div className="stack">
           <form className="card stack" onSubmit={(e) => void onSave(e)}>
             <label className="field">
-              <span>Display name</span>
+              <span>{t('students.displayName')}</span>
               <input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -284,7 +286,7 @@ export default function AdminStudentDetailPage() {
               />
             </label>
             <label className="field">
-              <span>Student code (optional)</span>
+              <span>{t('students.studentCode')}</span>
               <input
                 value={studentCode}
                 onChange={(e) => setStudentCode(e.target.value)}
@@ -293,7 +295,7 @@ export default function AdminStudentDetailPage() {
               />
             </label>
             <label className="field">
-              <span>Status</span>
+              <span>{t('common.status')}</span>
               <select value={status} onChange={(e) => setStatus(e.target.value as StudentStatus)}>
                 {STUDENT_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -303,19 +305,19 @@ export default function AdminStudentDetailPage() {
               </select>
             </label>
             <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Save changes'}
+              {busy ? t('common.saving') : t('students.saveChanges')}
             </button>
           </form>
 
           {showAcademic ? (
             <RelatedRecordsSection
-              title="Enrollments"
+              title={t('students.enrollments')}
               loading={enrollmentLoading}
               error={enrollmentError}
-              emptyMessage="No enrollments yet for this student."
+              emptyMessage={t('students.noEnrollments')}
               isEmpty={enrollments.length === 0}
               createHref={adminEnrollmentsCreatePath(tenantId, studentId)}
-              createLabel="Create enrollment"
+              createLabel={t('students.createEnrollment')}
               footer={
                 <ResourceListPagination
                   nextCursor={enrollmentCursor}
@@ -346,13 +348,13 @@ export default function AdminStudentDetailPage() {
 
           {showFees ? (
             <RelatedRecordsSection
-              title="Fees"
+              title={t('students.fees')}
               loading={invoiceLoading}
               error={invoiceError}
-              emptyMessage="No invoices yet for this student."
+              emptyMessage={t('students.noInvoices')}
               isEmpty={invoices.length === 0}
               createHref={adminInvoicesCreatePath(tenantId, studentId)}
-              createLabel="Create invoice"
+              createLabel={t('students.createInvoice')}
               footer={
                 <ResourceListPagination
                   nextCursor={invoiceCursor}
@@ -370,7 +372,7 @@ export default function AdminStudentDetailPage() {
                       <strong>{invoiceStatusLabel(inv.status)}</strong>
                     </Link>
                     <div className="muted">
-                      Balance {formatTzsMinor(inv.balanceMinor)} · Total{' '}
+                      {t('students.balance')} {formatTzsMinor(inv.balanceMinor)} · {t('students.total')}{' '}
                       {formatTzsMinor(inv.totalMinor)}
                     </div>
                   </li>
@@ -381,13 +383,13 @@ export default function AdminStudentDetailPage() {
 
           {showGuardians ? (
             <RelatedRecordsSection
-              title="Guardians"
+              title={t('students.guardians')}
               loading={guardianLoading}
               error={guardianError}
-              emptyMessage="No active guardian links for this student."
+              emptyMessage={t('students.noGuardians')}
               isEmpty={guardianLinks.length === 0}
               createHref={`/t/${tenantId}/admin/guardians`}
-              createLabel="Guardians directory"
+              createLabel={t('students.guardiansDirectory')}
             >
               <ul className="list">
                 {guardianLinks.map((link) => (
@@ -406,7 +408,7 @@ export default function AdminStudentDetailPage() {
           ) : null}
         </div>
       ) : error === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : null}
     </AdminShell>
   );

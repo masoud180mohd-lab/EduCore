@@ -70,6 +70,19 @@ export class AttendanceController {
     });
   }
 
+  @Get('summary')
+  @UseGuards(RequirePermission('attendance.read'))
+  async summary(
+    @Req() request: AuthedRequest,
+    @Query('sessionDate') sessionDate?: string,
+  ): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) throw AppError.unauthorized();
+    if (tenant === undefined) throw AppError.tenantContextRequired();
+    return this.sessionsService.summarizeForTenant(auth.userId, tenant.tenantId, { sessionDate });
+  }
+
   @Post()
   @HttpCode(201)
   @UseGuards(RequirePermission('attendance.manage'))

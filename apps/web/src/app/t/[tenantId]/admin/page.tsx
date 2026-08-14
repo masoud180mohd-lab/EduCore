@@ -17,7 +17,8 @@ import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { groupAdminNav, visibleAdminNavIds, type AdminNavId } from '@/lib/auth/admin-access';
 import type { MeLike } from '@/lib/auth/home-preference';
 import { readSession } from '@/lib/auth/session';
-import { groupMessageKey } from '@/lib/i18n/messages';
+import { formatTzsMinor } from '@/lib/finance/money';
+import { groupMessageKey, navMessageKey } from '@/lib/i18n/messages';
 
 type TenantCurrent = {
   readonly data: { readonly id: string; readonly name?: string; readonly code?: string };
@@ -27,13 +28,51 @@ type MeEnvelope = {
   readonly data: MeLike;
 };
 
+type StudentSummary = {
+  readonly total: number;
+  readonly byStatus: Readonly<Record<string, number>>;
+};
+
+type InvoiceSummary = {
+  readonly collectedMinor: number;
+  readonly outstandingMinor: number;
+  readonly overdueCount: number;
+};
+
+type AttendanceSummary = {
+  readonly sessionDate: string;
+  readonly sessionCount: number;
+  readonly present: number;
+  readonly absent: number;
+  readonly late: number;
+  readonly excused: number;
+};
+
+async function loadOptionalSummary<T>(path: string): Promise<T | null> {
+  const auth = readSession();
+  if (auth === null) return null;
+  try {
+    const result = await apiRequest<{ data: T }>(path, { auth });
+    return result.data;
+  } catch (err) {
+    if (err instanceof ApiClientError && (err.status === 403 || err.status === 404)) {
+      return null;
+    }
+    throw err;
+  }
+}
+
 export default function AdminHomePage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const { t } = useAppPreferences();
   const [school, setSchool] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [kpiError, setKpiError] = useState(false);
   const [navIds, setNavIds] = useState<ReadonlySet<AdminNavId> | null>(null);
+  const [students, setStudents] = useState<StudentSummary | null>(null);
+  const [invoices, setInvoices] = useState<InvoiceSummary | null>(null);
+  const [attendance, setAttendance] = useState<AttendanceSummary | null>(null);
 
   useEffect(() => {
     const auth = readSession();
@@ -45,7 +84,34 @@ export default function AdminHomePage() {
           apiRequest<MeEnvelope>('/api/v1/auth/me', { auth }),
         ]);
         setSchool(tenant.data.name ?? tenant.data.code ?? tenant.data.id);
-        setNavIds(visibleAdminNavIds(me.data));
+        const ids = visibleAdminNavIds(me.data);
+        setNavIds(ids);
+        const jobs: Array<Promise<void>> = [];
+        if (ids.has('students')) {
+          jobs.push(
+            loadOptionalSummary<StudentSummary>('/api/v1/students/summary').then((row) => {
+              setStudents(row);
+            }),
+          );
+        }
+        if (ids.has('fees')) {
+          jobs.push(
+            loadOptionalSummary<InvoiceSummary>('/api/v1/invoices/summary').then((row) => {
+              setInvoices(row);
+            }),
+          );
+        }
+        if (ids.has('attendance')) {
+          jobs.push(
+            loadOptionalSummary<AttendanceSummary>('/api/v1/attendance-sessions/summary').then(
+              (row) => {
+                setAttendance(row);
+              },
+            ),
+          );
+        }
+        const settled = await Promise.allSettled(jobs);
+        setKpiError(settled.some((item) => item.status === 'rejected'));
       } catch (err) {
         if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'tenant'));
         else setError('Could not load school.');
@@ -63,6 +129,7 @@ export default function AdminHomePage() {
   );
   const quickStarts = navIds === null ? [] : visibleAdminHubQuickStarts(navIds);
   const emptyAreas = !loading && error === null && areaCards.length === 0;
+  const showKpis = students !== null || invoices !== null || attendance !== null;
 
   return (
     <AdminShell tenantId={tenantId}>
@@ -73,8 +140,47 @@ export default function AdminHomePage() {
         }
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      {kpiError ? <Banner tone="error">{t('kpi.loadError')}</Banner> : null}
       {loading ? <p className="muted">{t('hub.loadingAreas')}</p> : null}
       {emptyAreas ? <Banner tone="info">{t('hub.emptyAreas')}</Banner> : null}
+
+      {showKpis ? (
+        <ul className="kpi-grid" aria-label="Dashboard">
+          {students !== null ? (
+            <li className="kpi-tile">
+              <div className="kpi-tile-label">{t('kpi.students')}</div>
+              <div className="kpi-tile-value">{students.total}</div>
+              <div className="kpi-tile-meta">{t('kpi.staffHint')}</div>
+            </li>
+          ) : null}
+          {invoices !== null ? (
+            <>
+              <li className="kpi-tile">
+                <div className="kpi-tile-label">{t('kpi.collected')}</div>
+                <div className="kpi-tile-value">{formatTzsMinor(invoices.collectedMinor)}</div>
+              </li>
+              <li className="kpi-tile">
+                <div className="kpi-tile-label">{t('kpi.outstanding')}</div>
+                <div className="kpi-tile-value">{formatTzsMinor(invoices.outstandingMinor)}</div>
+              </li>
+              <li className="kpi-tile">
+                <div className="kpi-tile-label">{t('kpi.overdue')}</div>
+                <div className="kpi-tile-value">{invoices.overdueCount}</div>
+              </li>
+            </>
+          ) : null}
+          {attendance !== null ? (
+            <li className="kpi-tile">
+              <div className="kpi-tile-label">{t('kpi.attendanceToday')}</div>
+              <div className="kpi-tile-value">{attendance.present}</div>
+              <div className="kpi-tile-meta">
+                {t('kpi.present')} {attendance.present} · {t('kpi.absent')} {attendance.absent} ·{' '}
+                {t('kpi.late')} {attendance.late} · {t('kpi.excused')} {attendance.excused}
+              </div>
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
 
       {quickStarts.length > 0 ? (
         <section className="admin-hub-quick" aria-labelledby="admin-hub-quick-heading">
@@ -108,8 +214,14 @@ export default function AdminHomePage() {
                   {cards.map((card) => (
                     <li key={card.id}>
                       <Link className="card" href={`${base}${card.hrefSuffix}`}>
-                        <strong>{card.title}</strong>
-                        <div className="muted">{card.blurb}</div>
+                        <strong>{t(navMessageKey(card.id))}</strong>
+                        <div className="muted">
+                          {card.id === 'students'
+                            ? t('students.description')
+                            : card.id === 'fees'
+                              ? t('fees.description')
+                              : card.blurb}
+                        </div>
                       </Link>
                     </li>
                   ))}

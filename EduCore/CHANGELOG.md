@@ -2,6 +2,10 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-14 - Dashboard KPIs, Students/Fees i18n, report-card PDF
+
+- Admin home KPI tiles from owning-module summaries (students, invoices, attendance). Students and Fees chrome EN/SW. Report cards JSON + PDF (derived letter grade). ACF-002/009/011/012 and DSF-KIT-001 v1.3 / DSF-002 v1.29.
+
 ## 2026-08-14 - Admin EN/SW + dark mode + MVP nav modules
 
 - Admin utility bar: English/Kiswahili toggle and light/dark theme. New nav: Staff, Attendance, Exams, Report cards, Reports, Announcements. DSF-KIT-001 v1.2.

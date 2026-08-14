@@ -3,13 +3,13 @@
 | Field     | Value                     |
 | --------- | ------------------------- |
 | Freeze ID | `ACF-009`                 |
-| Version   | `1.3`                     |
-| Date      | 2026-07-21                |
+| Version   | `1.4`                     |
+| Date      | 2026-08-14                |
 | Authority | Solo-operator provisional |
 
 ## History
 
-1.0 sessions list · 1.1 get · 1.2 create/close · **1.3 records get/put**
+1.0 sessions list · 1.1 get · 1.2 create/close · 1.3 records get/put · **1.4** `GET /attendance-sessions/summary` (IMP-048; register before `:id`)
 
 ## Permissions
 
@@ -23,6 +23,7 @@
 | Method | Path                                       | AuthZ             | Notes                                                                      |
 | ------ | ------------------------------------------ | ----------------- | -------------------------------------------------------------------------- |
 | GET    | `/api/v1/attendance-sessions`              | attendance.read   | filters: classId, sessionDate, status, limit, cursor                       |
+| GET    | `/api/v1/attendance-sessions/summary`      | attendance.read   | KPI for a UTC date (default today). `{ sessionDate, sessionCount, present, absent, late, excused }` |
 | GET    | `/api/v1/attendance-sessions/{id}`         | attendance.read   | 404 Session not found.                                                     |
 | POST   | `/api/v1/attendance-sessions`              | attendance.manage | Idempotency required; body classId, streamId?, sessionDate, notes?         |
 | POST   | `/api/v1/attendance-sessions/{id}/close`   | attendance.manage | Idempotency recommended                                                    |

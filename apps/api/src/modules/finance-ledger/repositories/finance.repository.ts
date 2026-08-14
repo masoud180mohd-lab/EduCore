@@ -551,6 +551,88 @@ export class FinanceRepository {
     });
   }
 
+  async summarizeInvoices(
+    actorUserId: string,
+    tenantId: string,
+  ): Promise<{
+    readonly issuedCount: number;
+    readonly paidCount: number;
+    readonly partiallyPaidCount: number;
+    readonly outstandingMinor: number;
+    readonly collectedMinor: number;
+    readonly overdueCount: number;
+  }> {
+    const empty = {
+      issuedCount: 0,
+      paidCount: 0,
+      partiallyPaidCount: 0,
+      outstandingMinor: 0,
+      collectedMinor: 0,
+      overdueCount: 0,
+    };
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) return empty;
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const counts = await client.query<{ status: string; n: string }>(
+            `SELECT i.status, COUNT(*)::text AS n
+             FROM invoices i
+             WHERE i.tenant_id = $1::uuid AND i.status IN ('issued', 'partially_paid', 'paid')
+             GROUP BY i.status`,
+            [tenantId],
+          );
+          let issuedCount = 0;
+          let paidCount = 0;
+          let partiallyPaidCount = 0;
+          for (const row of counts.rows) {
+            const n = Number(row.n);
+            if (row.status === 'issued') issuedCount = n;
+            if (row.status === 'paid') paidCount = n;
+            if (row.status === 'partially_paid') partiallyPaidCount = n;
+          }
+          const money = await client.query<{ outstanding: string; collected: string }>(
+            `SELECT
+               COALESCE(SUM(CASE WHEN i.status IN ('issued', 'partially_paid') THEN
+                 COALESCE((SELECT SUM(il.amount_minor) FROM invoice_lines il
+                   WHERE il.invoice_id = i.id AND il.tenant_id = i.tenant_id), 0)
+                 - COALESCE((SELECT SUM(pal.amount_minor) FROM payment_allocations pal
+                   WHERE pal.invoice_id = i.id AND pal.tenant_id = i.tenant_id AND pal.status = 'active'), 0)
+               ELSE 0 END), 0)::text AS outstanding,
+               COALESCE((
+                 SELECT SUM(pal.amount_minor) FROM payment_allocations pal
+                 WHERE pal.tenant_id = $1::uuid AND pal.status = 'active'
+               ), 0)::text AS collected
+             FROM invoices i
+             WHERE i.tenant_id = $1::uuid`,
+            [tenantId],
+          );
+          const overdue = await client.query<{ n: string }>(
+            `SELECT COUNT(*)::text AS n
+             FROM invoices i
+             WHERE i.tenant_id = $1::uuid
+               AND i.status IN ('issued', 'partially_paid')
+               AND i.issued_at IS NOT NULL
+               AND i.issued_at < (NOW() AT TIME ZONE 'UTC') - INTERVAL '30 days'`,
+            [tenantId],
+          );
+          return {
+            issuedCount,
+            paidCount,
+            partiallyPaidCount,
+            outstandingMinor: Number(money.rows[0]?.outstanding ?? 0),
+            collectedMinor: Number(money.rows[0]?.collected ?? 0),
+            overdueCount: Number(overdue.rows[0]?.n ?? 0),
+          };
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'FinanceRepository', error, { operation: 'summarize' });
+      return empty;
+    }
+  }
+
   private async fetchComputedInvoice(
     client: PoolClient,
     tenantId: string,

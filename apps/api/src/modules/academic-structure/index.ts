@@ -6,6 +6,8 @@
  */
 export { AcademicStructureModule } from './academic-structure.module.js';
 export { AcademicStructureApplicationService } from './application/academic-structure.application-service.js';
+export { SubjectsService } from './application/subjects.service.js';
+export { ClassesService } from './application/classes.service.js';
 export { AcademicStructureEventNames } from './events/academic-structure.events.js';
 export type { AcademicStructureSkeletonRegisteredEvent } from './events/academic-structure.events.js';
 export { ACADEMIC_STRUCTURE_SKELETON_DTO } from './dto/academic-structure.dto.js';

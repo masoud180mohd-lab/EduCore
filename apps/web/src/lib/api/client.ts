@@ -110,6 +110,25 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   return json as T;
 }
 
+export async function apiDownload(path: string, options: RequestOptions = {}): Promise<Blob> {
+  const headers: Record<string, string> = { Accept: 'application/pdf' };
+  if (options.auth !== undefined && options.auth !== null) {
+    headers['Authorization'] = `Bearer ${options.auth.accessToken}`;
+    if (options.requireTenant !== false) {
+      headers['X-Tenant-Id'] = options.auth.tenantId;
+    }
+  }
+  const response = await fetch(`${apiBase()}${path}`, { method: 'GET', headers });
+  if (!response.ok) {
+    throw new ApiClientError({
+      status: response.status,
+      code: 'HTTP_ERROR',
+      message: `Download failed (${String(response.status)}).`,
+    });
+  }
+  return response.blob();
+}
+
 export function newIdempotencyKey(): string {
   return crypto.randomUUID();
 }

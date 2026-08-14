@@ -329,6 +329,66 @@ export class AttendanceSessionsRepository {
       throw error;
     }
   }
+
+  async summarizeForDate(
+    actorUserId: string,
+    tenantId: string,
+    sessionDate: string,
+  ): Promise<{
+    readonly sessionDate: string;
+    readonly sessionCount: number;
+    readonly present: number;
+    readonly absent: number;
+    readonly late: number;
+    readonly excused: number;
+  }> {
+    const empty = {
+      sessionDate,
+      sessionCount: 0,
+      present: 0,
+      absent: 0,
+      late: 0,
+      excused: 0,
+    };
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) return empty;
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const sessions = await client.query<{ n: string }>(
+            `SELECT COUNT(*)::text AS n
+             FROM attendance_sessions s
+             WHERE s.tenant_id = $1::uuid AND s.session_date = $2::date`,
+            [tenantId, sessionDate],
+          );
+          const records = await client.query<{ status: string; n: string }>(
+            `SELECT r.status, COUNT(*)::text AS n
+             FROM attendance_records r
+             JOIN attendance_sessions s ON s.id = r.session_id AND s.tenant_id = r.tenant_id
+             WHERE r.tenant_id = $1::uuid AND s.session_date = $2::date
+             GROUP BY r.status`,
+            [tenantId, sessionDate],
+          );
+          const by: Record<string, number> = {};
+          for (const row of records.rows) by[row.status] = Number(row.n);
+          return {
+            sessionDate,
+            sessionCount: Number(sessions.rows[0]?.n ?? 0),
+            present: by['present'] ?? 0,
+            absent: by['absent'] ?? 0,
+            late: by['late'] ?? 0,
+            excused: by['excused'] ?? 0,
+          };
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'AttendanceSessionsRepository', error, {
+        operation: 'summarizeForDate',
+      });
+      return empty;
+    }
+  }
 }
 
 function formatDate(value: Date | string): string {

@@ -77,6 +77,16 @@ export class StudentsController {
     });
   }
 
+  @Get('summary')
+  @UseGuards(RequirePermission('student.read'))
+  async summary(@Req() request: AuthedRequest): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) throw AppError.unauthorized();
+    if (tenant === undefined) throw AppError.tenantContextRequired();
+    return this.studentsService.summarizeForTenant(auth.userId, tenant.tenantId);
+  }
+
   @Post()
   @HttpCode(201)
   @UseGuards(RequirePermission('student.manage'))

@@ -3,7 +3,7 @@
 | Field     | Value                                                       |
 | --------- | ----------------------------------------------------------- |
 | Freeze ID | `DSF-002`                                                   |
-| Version   | `1.28`                                                      |
+| Version   | `1.29`                                                      |
 | Date      | 2026-08-14                                                  |
 | Audience  | School admin / headmaster (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                    |
@@ -31,7 +31,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 ## Screens in scope
 
 1. **Login routing** — after bind, `/auth/me` decides admin vs teacher home
-2. **Admin home** — school name + **grouped** short links (Registry / Access / Academic / Fees / Notifications / Settings) mirroring shell IA (IMP-029 + COMMS-006)
+2. **Admin home** — school name + **KPI tiles** (students, fees collected/outstanding/overdue, attendance today) + grouped short links (Registry / Access / Academic / Fees / Communications / Insights / Settings)
 3. **Users list + invite + edit detail** — `GET /users` (search optional); invite via `POST /memberships`; detail `PATCH` displayName + `POST …/disable` + **`POST …/enable`** + **membership suspend / reactivate / remove** via `POST /memberships/{id}/…` (ACF-001; resolve membership with `GET /memberships?userId=`). **User-role assign/unassign** on detail (`GET/POST /user-roles`, `DELETE /user-roles/{id}`) with optional **organization scope** (IMP-026).
 4. **Memberships list** — `GET /memberships` with optional status filter; row links to user detail for lifecycle actions (IMP-023).
 5. **Roles list + create + edit detail** — `GET/POST /roles`; detail rename (`PATCH`) + permission replace for **custom** roles (`PUT …/permissions`); system roles read-only grants (ACF-001 §4.7). No role DELETE.
@@ -43,6 +43,7 @@ Avoid purple-on-white AI defaults and marketing hero chrome.
 11. **Academic hub** — `/admin/academic` short links (Years, Terms, Classes, Streams, Subjects, Enrollments) — **IMP-012**
 12. **Academic entity list + create + edit detail** — years / terms / classes / streams / subjects (ACF-003…007 rev 1.4). Structure PATCH for rename/code/dates/status; **edit + delete (confirm)**; reparent on term/class/stream (`academicYearId` on terms/classes, `termId` on classes, `classId` on streams) via detail edit form.
 13. **Enrollments** — list + create + detail + **status PATCH** + **placement transfer** (`classId` / `streamId`, ACF-008 rev 1.4)
+14. **Report cards** — pick exam, list students with derived average/grade, printable detail + PDF download (ACF-011 v1.2 / IMP-048)
 
 ## Component inventory (this slice)
 
@@ -232,10 +233,10 @@ All routes under `apps/web/src/app/t/[tenantId]/admin/**` MUST map `ApiClientErr
 - Marks / AI
 - Fees / bursar chrome — **DSF-004** (IMP-010)
 - MoMo / mobile money payment UX (PAY-PROVIDER-001) — out of scope
-- Bulk enroll / bulk transfer / timetable / report cards
+- Bulk enroll / bulk transfer / timetable
 - MFA enrollment
 - Full offline sync
-- Marketing dashboards / charts
+- Marketing dashboards / charts (KPI tiles are COUNT/SUM summaries, not analytics)
 - Org-scoped **permission enforcement** (assignment storage only in IMP-026; AuthZ union unchanged)
 - DELETE role / mutate system role permission grants via product API
 - Offset pagination / invented list totals (IMP-030)
@@ -279,6 +280,8 @@ Accepted under acting seats only; revise when a second review seat exists.
 | IMP-034x  | Wave X: teacher marks submit + attendance close ConfirmDialog  |
 | IMP-031x  | Wave X: create enrollment/invoice `?studentId=` prefill        |
 | COMMS-006 | Notifications admin UI (deliveries / usage / test SMS)         |
+| IMP-047   | Admin EN/SW + dark mode + MVP nav modules                      |
+| IMP-048   | Dashboard KPIs + Students/Fees i18n + report-card PDF          |
 
 ## Revisions
 
@@ -300,3 +303,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.26 | 2026-07-31 | IMP-028 residual: Guardians/Orgs/Memberships/Roles/Academic tables  |
 | 1.27 | 2026-08-03 | COMMS-006 SMS notifications admin (deliveries / test send / usage)  |
 | 1.28 | 2026-08-14 | IMP-046 AdminShell left rail + utility bar (Option A groups kept)   |
+| 1.29 | 2026-08-14 | IMP-048 KPI tiles, Students/Fees i18n, report-card PDF UI           |

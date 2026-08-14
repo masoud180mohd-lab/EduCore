@@ -61,7 +61,107 @@ export type MessageKey =
   | 'page.announcements.soon'
   | 'common.open'
   | 'common.loading'
-  | 'common.comingSoon';
+  | 'common.comingSoon'
+  | 'common.create'
+  | 'common.save'
+  | 'common.saving'
+  | 'common.search'
+  | 'common.applyFilters'
+  | 'common.allStatuses'
+  | 'common.status'
+  | 'common.name'
+  | 'common.code'
+  | 'kpi.students'
+  | 'kpi.staffHint'
+  | 'kpi.attendanceToday'
+  | 'kpi.present'
+  | 'kpi.absent'
+  | 'kpi.collected'
+  | 'kpi.outstanding'
+  | 'kpi.overdue'
+  | 'kpi.late'
+  | 'kpi.excused'
+  | 'kpi.loadError'
+  | 'students.title'
+  | 'students.description'
+  | 'students.add'
+  | 'students.displayName'
+  | 'students.studentCode'
+  | 'students.empty'
+  | 'students.loadError'
+  | 'students.createError'
+  | 'students.searchPlaceholder'
+  | 'students.back'
+  | 'students.updated'
+  | 'students.saveChanges'
+  | 'students.enrollments'
+  | 'students.noEnrollments'
+  | 'students.createEnrollment'
+  | 'students.fees'
+  | 'students.guardians'
+  | 'students.student'
+  | 'students.noInvoices'
+  | 'students.createInvoice'
+  | 'students.noGuardians'
+  | 'students.guardiansDirectory'
+  | 'students.balance'
+  | 'students.total'
+  | 'fees.title'
+  | 'fees.description'
+  | 'fees.officeBanner'
+  | 'fees.structures'
+  | 'fees.structuresHint'
+  | 'fees.invoices'
+  | 'fees.invoicesHint'
+  | 'fees.receipts'
+  | 'fees.receiptsHint'
+  | 'fees.back'
+  | 'fees.invoicesTitle'
+  | 'fees.invoicesDescription'
+  | 'fees.createDraft'
+  | 'fees.student'
+  | 'fees.selectStudent'
+  | 'fees.academicYear'
+  | 'fees.selectYear'
+  | 'fees.feeStructure'
+  | 'fees.manualLine'
+  | 'fees.lineDescription'
+  | 'fees.amountTzs'
+  | 'fees.filterInvoices'
+  | 'fees.allStudents'
+  | 'fees.allYears'
+  | 'fees.structuresTitle'
+  | 'fees.structuresDescription'
+  | 'fees.createStructure'
+  | 'fees.receiptsTitle'
+  | 'fees.receiptsDescription'
+  | 'fees.emptyInvoices'
+  | 'fees.emptyStructures'
+  | 'fees.emptyReceipts'
+  | 'fees.receiptNumber'
+  | 'fees.issued'
+  | 'fees.total'
+  | 'fees.balance'
+  | 'fees.currency'
+  | 'fees.year'
+  | 'fees.addItem'
+  | 'fees.itemName'
+  | 'fees.itemsLegend'
+  | 'fees.linesFromStructure'
+  | 'fees.createDraftBtn'
+  | 'reportCards.pickExam'
+  | 'reportCards.empty'
+  | 'reportCards.downloadPdf'
+  | 'reportCards.print'
+  | 'reportCards.average'
+  | 'reportCards.grade'
+  | 'reportCards.subject'
+  | 'reportCards.score'
+  | 'reportCards.max'
+  | 'reportCards.percent'
+  | 'reportCards.noMarks'
+  | 'reportCards.class'
+  | 'reportCards.exam';
 
 const EN: Record<MessageKey, string> = {
   'shell.menu': 'Menu',
@@ -129,6 +229,108 @@ const EN: Record<MessageKey, string> = {
   'common.open': 'Open',
   'common.loading': 'Loading…',
   'common.comingSoon': 'Coming soon',
+  'common.create': 'Create',
+  'common.save': 'Save',
+  'common.saving': 'Saving…',
+  'common.search': 'Search',
+  'common.applyFilters': 'Apply filters',
+  'common.allStatuses': 'All statuses',
+  'common.status': 'Status',
+  'common.name': 'Name',
+  'common.code': 'Code',
+  'kpi.students': 'Students',
+  'kpi.staffHint': 'Active registry count',
+  'kpi.attendanceToday': 'Attendance today',
+  'kpi.present': 'Present',
+  'kpi.absent': 'Absent',
+  'kpi.collected': 'Fees collected',
+  'kpi.outstanding': 'Outstanding',
+  'kpi.overdue': 'Overdue invoices',
+  'kpi.late': 'Late',
+  'kpi.excused': 'Excused',
+  'kpi.loadError': 'Could not load one or more dashboard figures.',
+  'students.title': 'Students',
+  'students.description': 'Student registry. Create and edit names, codes, and status.',
+  'students.add': 'Add student',
+  'students.displayName': 'Display name',
+  'students.studentCode': 'Student code (optional)',
+  'students.empty': 'No students yet.',
+  'students.loadError': 'Could not load students.',
+  'students.createError': 'Could not create student.',
+  'students.searchPlaceholder': 'Name or code',
+  'students.back': 'Students',
+  'students.updated': 'Student updated.',
+  'students.saveChanges': 'Save changes',
+  'students.enrollments': 'Enrollments',
+  'students.noEnrollments': 'No enrollments yet for this student.',
+  'students.createEnrollment': 'Create enrollment',
+  'students.fees': 'Fees',
+  'students.guardians': 'Guardians',
+  'students.student': 'Student',
+  'students.noInvoices': 'No invoices yet for this student.',
+  'students.createInvoice': 'Create invoice',
+  'students.noGuardians': 'No active guardian links for this student.',
+  'students.guardiansDirectory': 'Guardians directory',
+  'students.balance': 'Balance',
+  'students.total': 'Total',
+  'fees.title': 'Fees',
+  'fees.description':
+    'Bursar path: structures → invoices → office payment (cash/bank/cheque) → receipts.',
+  'fees.officeBanner':
+    'Collect fees at the office (cash, bank, or cheque). Mobile money waits until a ClickPesa account exists (PAY-007).',
+  'fees.structures': 'Fee structures',
+  'fees.structuresHint': 'Named fee items by academic year',
+  'fees.invoices': 'Invoices',
+  'fees.invoicesHint': 'Draft, issue, void, filter, office pay',
+  'fees.receipts': 'Receipts',
+  'fees.receiptsHint': 'Payment receipts by number and status',
+  'fees.back': 'Fees',
+  'fees.invoicesTitle': 'Invoices',
+  'fees.invoicesDescription': 'Draft and issued student invoices. Balance is derived (read-only).',
+  'fees.createDraft': 'Create draft invoice',
+  'fees.student': 'Student',
+  'fees.selectStudent': 'Select student',
+  'fees.academicYear': 'Academic year',
+  'fees.selectYear': 'Select year',
+  'fees.feeStructure': 'Fee structure (optional)',
+  'fees.manualLine': 'Manual line only',
+  'fees.lineDescription': 'Line description',
+  'fees.amountTzs': 'Amount (TZS major)',
+  'fees.filterInvoices': 'Filter invoices',
+  'fees.allStudents': 'All students',
+  'fees.allYears': 'All years',
+  'fees.structuresTitle': 'Fee structures',
+  'fees.structuresDescription': 'Named fee packages by academic year. Filter the list by year and status.',
+  'fees.createStructure': 'Create structure',
+  'fees.receiptsTitle': 'Receipts',
+  'fees.receiptsDescription': 'Issued after succeeded office payments.',
+  'fees.emptyInvoices': 'No invoices yet.',
+  'fees.emptyStructures': 'No fee structures yet.',
+  'fees.emptyReceipts': 'No receipts yet.',
+  'fees.receiptNumber': 'Receipt #',
+  'fees.issued': 'Issued',
+  'fees.total': 'Total',
+  'fees.balance': 'Balance',
+  'fees.currency': 'Currency',
+  'fees.year': 'Year',
+  'fees.addItem': 'Add item',
+  'fees.itemName': 'Item name',
+  'fees.itemsLegend': 'Items (TZS major)',
+  'fees.linesFromStructure': 'Lines will be copied from the selected structure items.',
+  'fees.createDraftBtn': 'Create draft',
+  'reportCards.pickExam': 'Select an exam with approved marks',
+  'reportCards.empty': 'No report cards for this exam yet. Approve subject marks first.',
+  'reportCards.downloadPdf': 'Download PDF',
+  'reportCards.print': 'Print',
+  'reportCards.average': 'Average',
+  'reportCards.grade': 'Grade',
+  'reportCards.subject': 'Subject',
+  'reportCards.score': 'Score',
+  'reportCards.max': 'Max',
+  'reportCards.percent': '%',
+  'reportCards.noMarks': 'No marks found for this student.',
+  'reportCards.class': 'Class',
+  'reportCards.exam': 'Exam',
 };
 
 const SW: Record<MessageKey, string> = {
@@ -198,6 +400,108 @@ const SW: Record<MessageKey, string> = {
   'common.open': 'Fungua',
   'common.loading': 'Inapakia…',
   'common.comingSoon': 'Inakuja hivi karibuni',
+  'common.create': 'Unda',
+  'common.save': 'Hifadhi',
+  'common.saving': 'Inahifadhi…',
+  'common.search': 'Tafuta',
+  'common.applyFilters': 'Tumia vichujio',
+  'common.allStatuses': 'Hali zote',
+  'common.status': 'Hali',
+  'common.name': 'Jina',
+  'common.code': 'Nambari',
+  'kpi.students': 'Wanafunzi',
+  'kpi.staffHint': 'Idadi katika daftari',
+  'kpi.attendanceToday': 'Mahudhurio leo',
+  'kpi.present': 'Waliopo',
+  'kpi.absent': 'Wasiohudhuria',
+  'kpi.collected': 'Ada zilizokusanywa',
+  'kpi.outstanding': 'Deni',
+  'kpi.overdue': 'Ankara zilizochelewa',
+  'kpi.late': 'Waliochelewa',
+  'kpi.excused': 'Waliokosa kwa ruhusa',
+  'kpi.loadError': 'Imeshindikana kupakia baadhi ya takwimu za dashibodi.',
+  'students.title': 'Wanafunzi',
+  'students.description': 'Daftari la wanafunzi. Unda na hariri majina, nambari, na hali.',
+  'students.add': 'Ongeza mwanafunzi',
+  'students.displayName': 'Jina la kuonyesha',
+  'students.studentCode': 'Nambari ya mwanafunzi (si lazima)',
+  'students.empty': 'Hakuna wanafunzi bado.',
+  'students.loadError': 'Imeshindikana kupakia wanafunzi.',
+  'students.createError': 'Imeshindikana kuunda mwanafunzi.',
+  'students.searchPlaceholder': 'Jina au nambari',
+  'students.back': 'Wanafunzi',
+  'students.updated': 'Mwanafunzi amesasishwa.',
+  'students.saveChanges': 'Hifadhi mabadiliko',
+  'students.enrollments': 'Usajili wa madarasa',
+  'students.noEnrollments': 'Hakuna usajili bado kwa mwanafunzi huyu.',
+  'students.createEnrollment': 'Unda usajili',
+  'students.fees': 'Ada',
+  'students.guardians': 'Walezi',
+  'students.student': 'Mwanafunzi',
+  'students.noInvoices': 'Hakuna ankara bado kwa mwanafunzi huyu.',
+  'students.createInvoice': 'Unda ankara',
+  'students.noGuardians': 'Hakuna walezi waliohusishwa na mwanafunzi huyu.',
+  'students.guardiansDirectory': 'Orodha ya walezi',
+  'students.balance': 'Salio',
+  'students.total': 'Jumla',
+  'fees.title': 'Ada',
+  'fees.description':
+    'Njia ya mhasibu: miundo → ankara → malipo ofisini (pesa taslimu/benki/hundi) → risiti.',
+  'fees.officeBanner':
+    'Kusanya ada ofisini (pesa taslimu, benki, au hundi). Simu-pesa itakuja baada ya akaunti ya ClickPesa (PAY-007).',
+  'fees.structures': 'Miundo ya ada',
+  'fees.structuresHint': 'Vipengele vya ada kwa mwaka wa masomo',
+  'fees.invoices': 'Ankara',
+  'fees.invoicesHint': 'Andika rasimu, toa, batilisha, chuja, lipa ofisini',
+  'fees.receipts': 'Risiti',
+  'fees.receiptsHint': 'Risiti kwa nambari na hali',
+  'fees.back': 'Ada',
+  'fees.invoicesTitle': 'Ankara',
+  'fees.invoicesDescription': 'Ankara za rasimu na zilizotolewa. Salio linatokana na mahesabu (soma tu).',
+  'fees.createDraft': 'Unda rasimu ya ankara',
+  'fees.student': 'Mwanafunzi',
+  'fees.selectStudent': 'Chagua mwanafunzi',
+  'fees.academicYear': 'Mwaka wa masomo',
+  'fees.selectYear': 'Chagua mwaka',
+  'fees.feeStructure': 'Muundo wa ada (si lazima)',
+  'fees.manualLine': 'Mstari wa mkono tu',
+  'fees.lineDescription': 'Maelezo ya mstari',
+  'fees.amountTzs': 'Kiasi (TZS)',
+  'fees.filterInvoices': 'Chuja ankara',
+  'fees.allStudents': 'Wanafunzi wote',
+  'fees.allYears': 'Miaka yote',
+  'fees.structuresTitle': 'Miundo ya ada',
+  'fees.structuresDescription': 'Vifurushi vya ada kwa mwaka. Chuja orodha kwa mwaka na hali.',
+  'fees.createStructure': 'Unda muundo',
+  'fees.receiptsTitle': 'Risiti',
+  'fees.receiptsDescription': 'Hutolewa baada ya malipo ya ofisi kufanikiwa.',
+  'fees.emptyInvoices': 'Hakuna ankara bado.',
+  'fees.emptyStructures': 'Hakuna miundo ya ada bado.',
+  'fees.emptyReceipts': 'Hakuna risiti bado.',
+  'fees.receiptNumber': 'Namba ya risiti',
+  'fees.issued': 'Imetolewa',
+  'fees.total': 'Jumla',
+  'fees.balance': 'Salio',
+  'fees.currency': 'Sarafu',
+  'fees.year': 'Mwaka',
+  'fees.addItem': 'Ongeza kipengele',
+  'fees.itemName': 'Jina la kipengele',
+  'fees.itemsLegend': 'Vipengele (TZS)',
+  'fees.linesFromStructure': 'Mistari itanakiliwa kutoka vipengele vya muundo uliochaguliwa.',
+  'fees.createDraftBtn': 'Unda rasimu',
+  'reportCards.pickExam': 'Chagua mtihani wenye alama zilizoidhinishwa',
+  'reportCards.empty': 'Hakuna ripoti kwa mtihani huu bado. Idhinisha alama za masomo kwanza.',
+  'reportCards.downloadPdf': 'Pakua PDF',
+  'reportCards.print': 'Chapisha',
+  'reportCards.average': 'Wastani',
+  'reportCards.grade': 'Daraja',
+  'reportCards.subject': 'Somo',
+  'reportCards.score': 'Alama',
+  'reportCards.max': 'Upeo',
+  'reportCards.percent': '%',
+  'reportCards.noMarks': 'Hakuna alama kwa mwanafunzi huyu.',
+  'reportCards.class': 'Darasa',
+  'reportCards.exam': 'Mtihani',
 };
 
 export const MESSAGES: Record<UiLocale, Record<MessageKey, string>> = { en: EN, sw: SW };
