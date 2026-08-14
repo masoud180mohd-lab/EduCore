@@ -111,8 +111,10 @@ export default function LoginPage() {
     try {
       await handleOutcome(await verifyMfaAndComplete({ mfaChallengeToken, code }));
     } catch (err) {
-      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
-      else setError('MFA verification failed.');
+      if (err instanceof ApiClientError) {
+        setError(teacherFriendlyMessage(err));
+        if (/challenge/i.test(err.message)) setMfaChallengeToken(null);
+      } else setError('MFA verification failed.');
     } finally {
       setBusy(false);
     }

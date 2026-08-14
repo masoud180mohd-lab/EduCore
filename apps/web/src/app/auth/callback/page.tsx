@@ -152,8 +152,10 @@ export default function Auth0CallbackPage() {
       setError(outcome.message);
       setBusy(false);
     } catch (err) {
-      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
-      else setError('MFA verification failed.');
+      if (err instanceof ApiClientError) {
+        setError(teacherFriendlyMessage(err));
+        if (/challenge/i.test(err.message)) setMfaChallengeToken(null);
+      } else setError('MFA verification failed.');
       setBusy(false);
     }
   }

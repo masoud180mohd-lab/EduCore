@@ -17,7 +17,10 @@ export function apiFriendlyMessage(
   const forbiddenCopy = options.forbiddenCopy ?? 'You do not have access for this school.';
 
   if (error.code === 'MFA_INVALID') {
-    return 'Invalid or expired authenticator code. Try again.';
+    if (/challenge/i.test(error.message)) {
+      return 'That sign-in step expired. Sign in again, then enter a fresh authenticator code.';
+    }
+    return 'That authenticator code did not match. Wait for a new 6-digit code, or scan the latest EduCore QR and try again.';
   }
   if (error.code === 'MFA_REQUIRED') {
     return 'Authenticator enrollment is required for this account. Ask an admin to keep soft enforce until you enroll under Settings → Security, or enroll before hard enforce is enabled.';

@@ -49,8 +49,17 @@ describe('teacherFriendlyMessage', () => {
     ).toMatch(/Authenticator enrollment is required/i);
     expect(
       teacherFriendlyMessage(
-        new ApiClientError({ status: 401, code: 'MFA_INVALID', message: 'bad' }),
+        new ApiClientError({ status: 401, code: 'MFA_INVALID', message: 'Invalid MFA code.' }),
       ),
-    ).toMatch(/authenticator code/i);
+    ).toMatch(/authenticator code did not match/i);
+    expect(
+      teacherFriendlyMessage(
+        new ApiClientError({
+          status: 401,
+          code: 'MFA_INVALID',
+          message: 'Invalid or expired MFA challenge.',
+        }),
+      ),
+    ).toMatch(/sign in again/i);
   });
 });

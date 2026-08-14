@@ -179,11 +179,11 @@ export class MfaService {
       });
     }
     const code = parseCode({ code: input.code });
-    const consumed = await this.mfa.consumeChallenge(hashToken(token));
-    if (consumed === null) {
+    const pending = await this.mfa.getPendingChallenge(hashToken(token));
+    if (pending === null) {
       throw new AppError('MFA_INVALID', 'Invalid or expired MFA challenge.');
     }
-    const active = await this.mfa.getActiveTotpSecret(consumed.userId);
+    const active = await this.mfa.getActiveTotpSecret(pending.userId);
     if (active === null) {
       throw new AppError('MFA_INVALID', 'No active MFA factor.');
     }
@@ -195,6 +195,10 @@ export class MfaService {
     }
     if (!verifyTotpCode(secret, code)) {
       throw new AppError('MFA_INVALID', 'Invalid MFA code.');
+    }
+    const consumed = await this.mfa.consumeChallenge(hashToken(token));
+    if (consumed === null) {
+      throw new AppError('MFA_INVALID', 'Invalid or expired MFA challenge.');
     }
     return { userId: consumed.userId, tenantId: consumed.tenantId };
   }
