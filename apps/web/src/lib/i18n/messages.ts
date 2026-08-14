@@ -1,4 +1,4 @@
-import { EXTRA_EN, EXTRA_SW } from './messages-extra.js';
+import { EXTRA_EN, EXTRA_SW } from './messages-extra';
 
 export type UiLocale = 'en' | 'sw';
 
