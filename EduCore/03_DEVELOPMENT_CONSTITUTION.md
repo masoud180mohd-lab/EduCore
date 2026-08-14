@@ -4,7 +4,7 @@ This file defines how all AI agents and developers must work on EduCore.
 
 ## Who builds EduCore
 
-**Project Owner + AI only.** Kit documents that name an Independent Board, separate architects, or countersigners (PM Master, Masoud Salum, Rashid Mohammed as distinct humans) are **retired as people-gates** ([SOLO-GOV-002](../docs/engineering/governance/SOLO-GOV-002-owner-plus-ai.md)). Do not wait for those people. Do not invent them. Technical rules below still bind.
+**Project Owner + AI only.** Kit documents that name an Independent Board, separate architects, or countersigners (PM Master, Masoud Salum, Rashid Mohammed as distinct humans) are **retired as people-gates** ([SOLO-GOV-002](../docs/engineering/governance/SOLO-GOV-002-owner-plus-ai.md)). Human-signature blocks, countersignature emails, and video/meeting steps are **retired as gates kit-wide** ([SOLO-GOV-003](../docs/engineering/governance/SOLO-GOV-003-signature-video-gates-retired.md)) — the only human gate is Owner GO stated in session and recorded in the document. Do not wait for those people. Do not invent them. Technical rules below still bind.
 
 ## Prime Directive
 

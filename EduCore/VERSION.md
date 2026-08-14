@@ -40,6 +40,6 @@ This version expands the original AI Development Kit from a strong starter pack 
 
 Architecture is frozen for downstream planning.
 
-Slice Database / API / Design freezes exist under `docs/engineering/` and are Owner-accepted (SOLO-GOV-002). Independent countersign is **retired**.
+Slice Database / API / Design freezes exist under `docs/engineering/` and are Owner-accepted (SOLO-GOV-002). Independent countersign is **retired**. Signature blocks and video/meeting steps are retired as gates kit-wide (SOLO-GOV-003); Owner GO in session is the only human gate.
 
 Staging lab MVP is live on Frankfurt (Fly + Neon). Production Fly `educore-api` is infra-live. Public-school cutover is Owner’s call with remaining technical residuals (`43_PROJECT_STATUS.md`).

@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-15 - Multi-portal spec accepted + portal chrome freeze + governance cleanup
+
+- SPEC-PORTALS-001 v1.0 accepted (Owner GO; all 10 defaults): portal map (Platform / Office / Teacher-modes / Head / Student / Parent), capability-based routing, phased plan. DSF-KIT-002 v1.0 (portal shells, identity tints, routing rule, portal switcher) supersedes DSF-KIT-001 §4 rule 2 + IMP-050 note (v1.6).
+- SOLO-GOV-003: human-signature and video/meeting gates retired kit-wide; Owner GO in session is the only human gate. Fictional governance outbox deleted; countersignature packet banner-retired; freeze template approval block replaced.
+- No feature code. Phase 1 still gated on SRS amendments (platform billing, student portal, timetable) + ACF-PLAT/DBF-PLAT/DSF-007.
+
 ## 2026-08-14 - Workspace switcher (office / teacher / parent)
 
 - Owner/admin can open Ofisi, Mwalimu, and Mzazi from the top bar. Student has no login portal (registry + parent fees). DSF-KIT-001 v1.5.

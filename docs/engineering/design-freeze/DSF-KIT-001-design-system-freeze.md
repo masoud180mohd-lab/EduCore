@@ -3,8 +3,8 @@
 | Field       | Value                                                                 |
 | ----------- | --------------------------------------------------------------------- |
 | Freeze ID   | `DSF-KIT-001`                                                         |
-| Version     | `1.5`                                                                 |
-| Date        | 2026-08-14                                                            |
+| Version     | `1.6`                                                                 |
+| Date        | 2026-08-15                                                            |
 | Status      | **Accepted (solo-operator)** — 2026-08-08 (`GO DSF-KIT`)              |
 | Authority   | Solo-operator provisional (SOLO-GOV-001)                              |
 | Governing   | `07_DESIGN_SYSTEM.md` · Architecture Freeze Gate 3 · B-03 · DSF-001…006 |
@@ -103,7 +103,7 @@ Changing tokens requires **DSF-KIT amend** (not silent Tailwind/shadcn swap).
 | **Bursar** | AdminShell | Fees-focused; same shell; nav filtered by `finance.*` |
 | **Parent / guardian** | ParentShell | Home (fees) · Sign out (DSF-006) |
 
-**IMP-050:** Owner/admin chrome includes a workspace switcher (Ofisi / Mwalimu / Mzazi). Student is a disabled hint — no student login. API remains AuthZ truth.
+**IMP-050:** Owner/admin chrome includes a workspace switcher (Ofisi / Mwalimu / Mzazi). Student is a disabled hint — no student login. API remains AuthZ truth. **[Superseded by DSF-KIT-002 §5 — capability-based portal switcher; enact on Phase 1b/2 implementation.]**
 
 Rules:
 
@@ -227,6 +227,7 @@ Layouts must not break for Kiswahili labels (wrap / allow slightly longer string
 | 1.3 | 2026-08-14 | IMP-048 KPI grid, Students/Fees i18n, report-card print CSS |
 | 1.4 | 2026-08-14 | IMP-049 remaining Admin/Teacher/Parent/login chrome i18n |
 | 1.5 | 2026-08-14 | IMP-050 workspace switcher (office / teacher / parent) |
+| 1.6 | 2026-08-15 | DSF-KIT-002 accepted: §4 rule 2 (post-login routing) and IMP-050 switcher superseded by portal chrome freeze; tokens/components unchanged |
 
 ## Related
 
