@@ -25,6 +25,8 @@ describe('seed-local-admin config', () => {
     expect(config.email).toBe('admin@educore.local');
     expect(config.tenantCode).toBe('demo-school');
     expect(config.connectionString).toContain('educore_platform');
+    expect(config.migratorConnectionString).toContain('educore');
+    expect(config.migratorConnectionString).not.toContain('educore_platform');
     expect(config.resetPassword).toBe(false);
   });
 
@@ -43,6 +45,7 @@ describe('seed-local-admin config', () => {
         tenantCode: 'demo-school',
         tenantName: 'Demo',
         connectionString: 'postgresql://x',
+        migratorConnectionString: 'postgresql://y',
         resetPassword: false,
         allowProduction: false,
         nodeEnv: 'production',

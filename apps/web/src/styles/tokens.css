@@ -214,6 +214,58 @@ h1 {
   gap: var(--space-4);
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.stack label,
+.filters label,
+.confirm-dialog-reason {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.stack input,
+.stack select,
+.stack textarea,
+.filters input,
+.filters select,
+.confirm-dialog-reason textarea {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font: inherit;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.confirm-dialog-reason textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.definition-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.definition-list dt {
+  color: var(--color-muted);
+}
+
+.definition-list dd {
+  margin: 0;
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -663,6 +715,30 @@ h1 {
   padding: 0 var(--space-5);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
+}
+
+.admin-console[data-portal='platform'] {
+  --portal-accent: #134a6d;
+}
+
+.admin-console[data-portal='platform'] .admin-console-top {
+  border-top: 3px solid var(--portal-accent);
+}
+
+.admin-console[data-portal='platform'] .admin-nav-group-links a[aria-current='page'] {
+  border-left-color: var(--portal-accent);
+}
+
+.portal-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--portal-accent, #134a6d);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .admin-console-school {

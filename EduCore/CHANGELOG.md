@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-15 - IMP-051 Platform Operations Phase 1a (API + /platform UI)
+
+- Platform Super Admin product path: `/api/v1/platform/*` (list/register/suspend/reinstate/plan/entitlements/audit) on the `educore_platform` pool. `/auth/me` returns `platformOperator`; login lands `/platform` first (D2).
+- Web: `PlatformShell` + schools list/register/detail + audit (DSF-007). Local seed grants `platform_operators` via migrator/ops URL.
+- Not production GO. Support sessions, metering, invoicing, and portal-preference persistence are out of this slice.
+
 ## 2026-08-15 - Phase 1 gates: SRS amendment + platform freezes (ACF/DBF-PLAT-001, DSF-007) + DSF-002 v1.31
 
 - SRS AMEND-2026-08-15: platform tenant lifecycle admin, manual plans, entitlement flags, and platform audit view enter MVP scope; Student portal is Phase 4; timetable excluded from v1. Access Control Bible: self-approval marks deny + platform-operator no-tenant-data deny.

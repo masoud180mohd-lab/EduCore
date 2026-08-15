@@ -17,6 +17,10 @@ export function ConfirmDialog({
   cancelLabel,
   danger = false,
   busy = false,
+  reasonRequired = false,
+  reasonLabel,
+  reasonValue = '',
+  onReasonChange,
   onConfirm,
   onCancel,
 }: {
@@ -27,6 +31,10 @@ export function ConfirmDialog({
   readonly cancelLabel?: string;
   readonly danger?: boolean;
   readonly busy?: boolean;
+  readonly reasonRequired?: boolean;
+  readonly reasonLabel?: string;
+  readonly reasonValue?: string;
+  readonly onReasonChange?: (value: string) => void;
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
 }) {
@@ -89,6 +97,19 @@ export function ConfirmDialog({
           {title}
         </h2>
         <p className="muted">{body}</p>
+        {reasonRequired ? (
+          <label className="confirm-dialog-reason">
+            <span>{reasonLabel ?? t('common.reason')}</span>
+            <textarea
+              value={reasonValue}
+              minLength={5}
+              maxLength={500}
+              required
+              disabled={busy}
+              onChange={(event) => onReasonChange?.(event.target.value)}
+            />
+          </label>
+        ) : null}
         <div className="actions">
           <button
             ref={cancelRef}
@@ -102,7 +123,7 @@ export function ConfirmDialog({
           <button
             type="button"
             className={danger ? 'btn btn-danger' : 'btn btn-primary'}
-            disabled={busy}
+            disabled={busy || (reasonRequired && reasonValue.trim().length < 5)}
             onClick={onConfirm}
           >
             {busy ? t('common.working') : resolvedConfirm}

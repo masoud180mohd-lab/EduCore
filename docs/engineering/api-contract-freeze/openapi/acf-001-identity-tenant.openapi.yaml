@@ -2334,6 +2334,11 @@ components:
                 - string
                 - 'null'
               format: uuid
+            platformOperator:
+              type: boolean
+              description: >-
+                True when the user has an active platform_operators super_admin
+                grant (ACF-PLAT-001). Not a tenant role.
     SelectTenantResponseEnvelope:
       type: object
       required:

@@ -1,6 +1,7 @@
 export type MeLike = {
   readonly roles?: ReadonlyArray<{ readonly code: string }>;
   readonly permissions?: ReadonlyArray<string>;
+  readonly platformOperator?: boolean;
 };
 
 /** Admin home if owner/admin/bursar or tenant/user/org manage surface. */

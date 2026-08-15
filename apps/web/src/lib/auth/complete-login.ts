@@ -2,6 +2,7 @@
  * Shared post-login tenant bind (password + Auth0 + MFA verify).
  */
 import { ApiClientError, apiRequest, type SessionAuth } from '@/lib/api/client';
+import type { MeLike } from '@/lib/auth/home-preference';
 import { resolvePostLoginPath } from '@/lib/auth/routing';
 import { writeSession } from '@/lib/auth/session';
 
@@ -34,6 +35,25 @@ export type CompleteLoginOutcome =
 type TenantList = {
   readonly data: ReadonlyArray<TenantChoice>;
 };
+
+type MeEnvelope = {
+  readonly data: MeLike;
+};
+
+async function fetchMe(
+  accessToken: string,
+  tenantId: string | null,
+): Promise<MeLike | null> {
+  try {
+    const result = await apiRequest<MeEnvelope>('/api/v1/auth/me', {
+      auth: { accessToken, tenantId: tenantId ?? '' },
+      requireTenant: false,
+    });
+    return result.data;
+  } catch {
+    return null;
+  }
+}
 
 type MfaVerifyResponse = {
   readonly data?: {
@@ -89,6 +109,12 @@ export async function completeLoginFromTokens(tokens: LoginTokens): Promise<Comp
   const accessToken = tokens.accessToken;
   if (accessToken === '') {
     return { kind: 'error', message: 'Login failed — no access token returned.' };
+  }
+
+  const me = await fetchMe(accessToken, tokens.tenantId);
+  if (me?.platformOperator === true) {
+    writeSession({ accessToken, tenantId: tokens.tenantId ?? '' });
+    return { kind: 'routed', path: '/platform' };
   }
 
   let boundTenant = tokens.tenantId;

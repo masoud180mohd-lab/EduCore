@@ -103,6 +103,8 @@ export type MeResult = {
   /** MFA-005: soft | hard from MFA_ENFORCE. */
   readonly mfaEnforced: 'soft' | 'hard';
   readonly mfaActive: boolean;
+  /** ACF-PLAT-001 / D2: active platform super_admin (not a tenant role). */
+  readonly platformOperator: boolean;
 };
 
 @Injectable()
@@ -619,6 +621,7 @@ export class AuthService {
       privileged = await this.mfaRepo.isPrivileged(input.userId, activeTenantId);
     }
     const mfaEnrollmentRequired = privileged && !mfaActive;
+    const platformOperator = await this.sessions.isActivePlatformSuperAdmin(input.userId);
 
     return {
       user: {
@@ -635,6 +638,7 @@ export class AuthService {
       mfaEnrollmentRequired,
       mfaEnforced: resolveMfaEnforceMode(),
       mfaActive,
+      platformOperator,
     };
   }
 

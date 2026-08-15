@@ -18,6 +18,9 @@ const DEFAULT_LOCAL_APP_URL =
 const DEFAULT_LOCAL_WEBHOOK_URL =
   'postgresql://educore_webhook:educore_webhook_local_only@127.0.0.1:5432/educore';
 
+const DEFAULT_LOCAL_PLATFORM_URL =
+  'postgresql://educore_platform:educore_platform_local_only@127.0.0.1:5432/educore';
+
 /**
  * Resolves optional `educore_app` connectivity.
  *
@@ -78,6 +81,37 @@ export function loadWebhookDatabaseConfig(
     enabled: true,
     connectionString,
     maxConnections: parsePositiveInt(environment['EDUCORE_WEBHOOK_DB_POOL_MAX'], 5),
+    idleTimeoutMillis: parsePositiveInt(environment['EDUCORE_APP_DB_IDLE_MS'], 10_000),
+    connectionTimeoutMillis: parsePositiveInt(environment['EDUCORE_APP_DB_CONNECT_MS'], 2_000),
+  };
+}
+
+/**
+ * Optional Nest pool for Platform Operations (`educore_platform` only).
+ * Do **not** fall back to `EDUCORE_APP_DATABASE_URL` (AUDIT-R2).
+ */
+export function loadPlatformDatabaseConfig(
+  environment: NodeJS.ProcessEnv = process.env,
+): DatabaseConfig {
+  const explicit = environment['EDUCORE_PLATFORM_DATABASE_URL']?.trim();
+  const enableFlag = environment['EDUCORE_ENABLE_APP_DB'] === '1';
+
+  if ((explicit === undefined || explicit === '') && !enableFlag) {
+    return {
+      enabled: false,
+      maxConnections: 5,
+      idleTimeoutMillis: 10_000,
+      connectionTimeoutMillis: 2_000,
+    };
+  }
+
+  const connectionString =
+    explicit !== undefined && explicit !== '' ? explicit : DEFAULT_LOCAL_PLATFORM_URL;
+
+  return {
+    enabled: true,
+    connectionString,
+    maxConnections: parsePositiveInt(environment['EDUCORE_PLATFORM_DB_POOL_MAX'], 5),
     idleTimeoutMillis: parsePositiveInt(environment['EDUCORE_APP_DB_IDLE_MS'], 10_000),
     connectionTimeoutMillis: parsePositiveInt(environment['EDUCORE_APP_DB_CONNECT_MS'], 2_000),
   };
