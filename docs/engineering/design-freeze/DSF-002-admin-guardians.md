@@ -3,8 +3,8 @@
 | Field     | Value                                                       |
 | --------- | ----------------------------------------------------------- |
 | Freeze ID | `DSF-002`                                                   |
-| Version   | `1.30`                                                      |
-| Date      | 2026-08-14                                                  |
+| Version   | `1.31`                                                      |
+| Date      | 2026-08-15                                                  |
 | Audience  | School admin / headmaster (desktop-first, usable on tablet) |
 | Authority | Solo-operator provisional (SOLO-GOV-001)                    |
 | Program   | IMP-007 · … · IMP-032 · **COMMS-006**                       |
@@ -306,3 +306,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.28 | 2026-08-14 | IMP-046 AdminShell left rail + utility bar (Option A groups kept)   |
 | 1.29 | 2026-08-14 | IMP-048 KPI tiles, Students/Fees i18n, report-card PDF UI           |
 | 1.30 | 2026-08-14 | IMP-049 remaining Admin/Teacher/Parent/login chrome i18n            |
+| 1.31 | 2026-08-15 | **Phase 1b redesign scope (SPEC-PORTALS-001 / DSF-KIT-002):** visual/density polish of AdminShell within DSF-KIT-002 portal chrome (Office identity tint + portal chip, top-bar wordmark, table density pass, dashboard layout polish). **IA groups and screen inventory unchanged.** Screen 1 "login routing" is superseded by DSF-KIT-002 §4 when the routing slice ships. |

@@ -243,6 +243,20 @@ A feature is not complete until:
 - privacy impact is reviewed.
 - rollback or recovery path exists for risky changes.
 
+## Amendments
+
+### AMEND-2026-08-15 (Owner GO in session, SOLO-GOV-003 gate form; source: SPEC-PORTALS-001 v1.0)
+
+1. **MVP In Scope additions (platform layer):**
+   - Platform tenant lifecycle administration by Super Admin: register, list, view health/status, suspend, reinstate.
+   - Manual subscription plan assignment per tenant (existing `plans` catalog; no automated invoicing in MVP).
+   - Tenant entitlement/feature flags managed by Super Admin.
+   - Platform audit trail view for privileged platform actions.
+   - Full subscription **invoicing/charging remains out of MVP scope** (later phase).
+2. **Student portal:** added as **later-phase scope (SPEC-PORTALS-001 Phase 4)** — read-only (attendance, published results, fee balance/receipts, messages). Student identity/credential design is a Phase 4 gate. Not MVP.
+3. **Timetable module:** explicitly **excluded** from v1 (Owner decision Q3). Student portal v1 ships without timetable.
+4. **Explicit deny addition:** an approver must not approve marks they themselves submitted as a teacher (see `32_ACCESS_CONTROL_BIBLE.md`).
+
 ## Related Documents
 
 - `02_PRODUCT_REQUIREMENTS.md`

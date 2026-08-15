@@ -2,6 +2,12 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-15 - Phase 1 gates: SRS amendment + platform freezes (ACF/DBF-PLAT-001, DSF-007) + DSF-002 v1.31
+
+- SRS AMEND-2026-08-15: platform tenant lifecycle admin, manual plans, entitlement flags, and platform audit view enter MVP scope; Student portal is Phase 4; timetable excluded from v1. Access Control Bible: self-approval marks deny + platform-operator no-tenant-data deny.
+- ACF-PLAT-001 (platform endpoints under `/api/v1/platform/*`), DBF-PLAT-001 (`platform_operators`, `tenant_plan_assignments`, `tenant_entitlements`, `audit_events`), DSF-007 (Platform portal screens). DSF-002 v1.31 scopes Phase 1b Admin visual polish (IA unchanged).
+- Phase 1a coding unlocked by these freezes.
+
 ## 2026-08-15 - Multi-portal spec accepted + portal chrome freeze + governance cleanup
 
 - SPEC-PORTALS-001 v1.0 accepted (Owner GO; all 10 defaults): portal map (Platform / Office / Teacher-modes / Head / Student / Parent), capability-based routing, phased plan. DSF-KIT-002 v1.0 (portal shells, identity tints, routing rule, portal switcher) supersedes DSF-KIT-001 §4 rule 2 + IMP-050 note (v1.6).
