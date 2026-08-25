@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { AdminPageHeader, Banner } from '@/components/admin';
+import { Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ADMIN_HUB_BY_ID,
   visibleAdminHubQuickStarts,
@@ -133,98 +134,137 @@ export default function AdminHomePage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader
-        title={t('hub.title')}
-        description={
-          school !== null ? `${school} — ${t('hub.description')}` : t('hub.loadingSchool')
-        }
-      />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {kpiError ? <Banner tone="error">{t('kpi.loadError')}</Banner> : null}
-      {loading ? <p className="muted">{t('hub.loadingAreas')}</p> : null}
-      {emptyAreas ? <Banner tone="info">{t('hub.emptyAreas')}</Banner> : null}
+      <div className="flex flex-col gap-5">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">{t('hub.title')}</h1>
+          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+            {school !== null ? `${school} — ${t('hub.description')}` : t('hub.loadingSchool')}
+          </p>
+        </div>
 
-      {showKpis ? (
-        <ul className="kpi-grid" aria-label={t('common.dashboard')}>
-          {students !== null ? (
-            <li className="kpi-tile">
-              <div className="kpi-tile-label">{t('kpi.students')}</div>
-              <div className="kpi-tile-value">{students.total}</div>
-              <div className="kpi-tile-meta">{t('kpi.staffHint')}</div>
-            </li>
-          ) : null}
-          {invoices !== null ? (
-            <>
-              <li className="kpi-tile">
-                <div className="kpi-tile-label">{t('kpi.collected')}</div>
-                <div className="kpi-tile-value">{formatTzsMinor(invoices.collectedMinor)}</div>
-              </li>
-              <li className="kpi-tile">
-                <div className="kpi-tile-label">{t('kpi.outstanding')}</div>
-                <div className="kpi-tile-value">{formatTzsMinor(invoices.outstandingMinor)}</div>
-              </li>
-              <li className="kpi-tile">
-                <div className="kpi-tile-label">{t('kpi.overdue')}</div>
-                <div className="kpi-tile-value">{invoices.overdueCount}</div>
-              </li>
-            </>
-          ) : null}
-          {attendance !== null ? (
-            <li className="kpi-tile">
-              <div className="kpi-tile-label">{t('kpi.attendanceToday')}</div>
-              <div className="kpi-tile-value">{attendance.present}</div>
-              <div className="kpi-tile-meta">
-                {t('kpi.present')} {attendance.present} · {t('kpi.absent')} {attendance.absent} ·{' '}
-                {t('kpi.late')} {attendance.late} · {t('kpi.excused')} {attendance.excused}
-              </div>
-            </li>
-          ) : null}
-        </ul>
-      ) : null}
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {kpiError ? <Banner tone="error">{t('kpi.loadError')}</Banner> : null}
+        {loading ? <p className="text-sm text-[var(--muted-foreground)]">{t('hub.loadingAreas')}</p> : null}
+        {emptyAreas ? <Banner tone="info">{t('hub.emptyAreas')}</Banner> : null}
 
-      {quickStarts.length > 0 ? (
-        <section className="admin-hub-quick" aria-labelledby="admin-hub-quick-heading">
-          <h2 id="admin-hub-quick-heading" className="admin-hub-group-label">
-            {t('hub.quickStarts')}
-          </h2>
-          <ul className="list admin-hub-quick-list">
-            {quickStarts.map((item) => (
-              <li key={item.id}>
-                <Link className="card" href={`${base}${item.hrefSuffix}`}>
-                  <strong>{t(quickLabelKey(item.id))}</strong>
-                  <div className="muted">{t(quickHintKey(item.id))}</div>
-                </Link>
+        {showKpis ? (
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('common.dashboard')}>
+            {students !== null ? (
+              <li>
+                <Card>
+                  <CardHeader className="p-4 pb-2">
+                    <CardDescription>{t('kpi.students')}</CardDescription>
+                    <CardTitle className="text-2xl tabular-nums">{students.total}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0 text-xs text-[var(--muted-foreground)]">
+                    {t('kpi.staffHint')}
+                  </CardContent>
+                </Card>
               </li>
-            ))}
+            ) : null}
+            {invoices !== null ? (
+              <>
+                <li>
+                  <Card>
+                    <CardHeader className="p-4 pb-2">
+                      <CardDescription>{t('kpi.collected')}</CardDescription>
+                      <CardTitle className="text-2xl tabular-nums">
+                        {formatTzsMinor(invoices.collectedMinor)}
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                </li>
+                <li>
+                  <Card>
+                    <CardHeader className="p-4 pb-2">
+                      <CardDescription>{t('kpi.outstanding')}</CardDescription>
+                      <CardTitle className="text-2xl tabular-nums">
+                        {formatTzsMinor(invoices.outstandingMinor)}
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                </li>
+                <li>
+                  <Card>
+                    <CardHeader className="p-4 pb-2">
+                      <CardDescription>{t('kpi.overdue')}</CardDescription>
+                      <CardTitle className="text-2xl tabular-nums">{invoices.overdueCount}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                </li>
+              </>
+            ) : null}
+            {attendance !== null ? (
+              <li className="sm:col-span-2 xl:col-span-1">
+                <Card>
+                  <CardHeader className="p-4 pb-2">
+                    <CardDescription>{t('kpi.attendanceToday')}</CardDescription>
+                    <CardTitle className="text-2xl tabular-nums">{attendance.present}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0 text-xs text-[var(--muted-foreground)]">
+                    {t('kpi.present')} {attendance.present} · {t('kpi.absent')} {attendance.absent} ·{' '}
+                    {t('kpi.late')} {attendance.late} · {t('kpi.excused')} {attendance.excused}
+                  </CardContent>
+                </Card>
+              </li>
+            ) : null}
           </ul>
-        </section>
-      ) : null}
+        ) : null}
 
-      {!loading && !emptyAreas ? (
-        <ul className="admin-hub-groups">
-          {groups.map((group) => {
-            const cards = group.items
-              .map((id) => ADMIN_HUB_BY_ID[id])
-              .filter((card): card is AdminHubCard => card !== undefined);
-            if (cards.length === 0) return null;
-            return (
-              <li key={group.id} className="admin-hub-group">
-                <h2 className="admin-hub-group-label">{t(groupMessageKey(group.id))}</h2>
-                <ul className="list">
-                  {cards.map((card) => (
-                    <li key={card.id}>
-                      <Link className="card" href={`${base}${card.hrefSuffix}`}>
-                        <strong>{t(navMessageKey(card.id))}</strong>
-                        <div className="muted">{t(hubBlurbKey(card.id))}</div>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+        {quickStarts.length > 0 ? (
+          <section className="flex flex-col gap-3" aria-labelledby="admin-hub-quick-heading">
+            <h2 id="admin-hub-quick-heading" className="text-sm font-semibold">
+              {t('hub.quickStarts')}
+            </h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {quickStarts.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    href={`${base}${item.hrefSuffix}`}
+                    className="block rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition-colors hover:border-[var(--primary)]/40"
+                  >
+                    <strong className="text-sm">{t(quickLabelKey(item.id))}</strong>
+                    <div className="mt-1 text-sm text-[var(--muted-foreground)]">
+                      {t(quickHintKey(item.id))}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {!loading && !emptyAreas ? (
+          <div className="flex flex-col gap-6">
+            {groups.map((group) => {
+              const cards = group.items
+                .map((id) => ADMIN_HUB_BY_ID[id])
+                .filter((card): card is AdminHubCard => card !== undefined);
+              if (cards.length === 0) return null;
+              return (
+                <section key={group.id} className="flex flex-col gap-3">
+                  <h2 className="text-sm font-semibold">{t(groupMessageKey(group.id))}</h2>
+                  <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {cards.map((card) => (
+                      <li key={card.id}>
+                        <Link
+                          href={`${base}${card.hrefSuffix}`}
+                          className="block h-full rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition-colors hover:border-[var(--primary)]/40"
+                        >
+                          <strong className="text-sm">{t(navMessageKey(card.id))}</strong>
+                          <div className="mt-1 text-sm text-[var(--muted-foreground)]">
+                            {t(hubBlurbKey(card.id))}
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
     </AdminShell>
   );
 }

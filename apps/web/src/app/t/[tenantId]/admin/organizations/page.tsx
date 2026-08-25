@@ -14,6 +14,10 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -84,7 +88,7 @@ export default function AdminOrganizationsPage() {
   }) {
     const auth = readSession();
     if (auth === null) return;
-    if (opts.append) setLoadingMore(true);
+    if (opts.append) setLoadingMoreParents(true);
     else setLoading(true);
     try {
       const q = buildListQuery('/api/v1/organizations', {
@@ -152,137 +156,165 @@ export default function AdminOrganizationsPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader title={t('orgs.title')} description={t('orgs.description')} />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      <div className="flex flex-col gap-6">
+        <AdminPageHeader title={t('orgs.title')} description={t('orgs.description')} />
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
-      <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">{t('orgs.add')}</h2>
-        <div className="field">
-          <label htmlFor="orgType">Type</label>
-          <select
-            id="orgType"
-            value={orgType}
-            onChange={(e) => setOrgType(e.target.value as OrgType)}
-          >
-            {ORG_TYPES.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="name">{t('common.name')}</label>
-          <input
-            id="name"
-            required
-            maxLength={200}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="code">{t('common.codeOptional')}</label>
-          <input
-            id="code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            pattern="[a-z0-9-]{2,64}"
-            title={t('orgs.codeHint')}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="parentOrganizationId">Parent organization (optional)</label>
-          <select
-            id="parentOrganizationId"
-            value={parentOrganizationId}
-            onChange={(e) => setParentOrganizationId(e.target.value)}
-          >
-            <option value="">None</option>
-            {parentOptions.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.name}
-                {o.code !== null && o.code !== '' ? ` (${o.code})` : ''}
-              </option>
-            ))}
-          </select>
-          <ResourceListPagination
-            nextCursor={parentsCursor}
-            loadingMore={loadingMoreParents}
-            onLoadMore={() => {
-              void loadParentPicker({ cursor: parentsCursor, append: true });
-            }}
-          />
-        </div>
-        <button className="btn btn-primary" type="submit" disabled={busy || name.trim() === ''}>
-          {busy ? t('common.saving') : t('common.create')}
-        </button>
-      </form>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('orgs.add')}</CardTitle>
+            <CardDescription>{t('orgs.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="flex flex-col gap-4" onSubmit={(e) => void onCreate(e)}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="name">{t('common.name')}</Label>
+                  <Input
+                    id="name"
+                    required
+                    maxLength={200}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Campus / Branch Name"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="code">{t('common.codeOptional')}</Label>
+                  <Input
+                    id="code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    pattern="[a-z0-9-]{2,64}"
+                    title={t('orgs.codeHint')}
+                    placeholder="branch-main"
+                  />
+                </div>
+              </div>
 
-      <form
-        className="stack"
-        style={{ marginTop: '1.5rem' }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          setAppliedSearch(search);
-          void loadPage({ searchQ: search, cursor: null, append: false });
-        }}
-      >
-        <div className="field">
-          <label htmlFor="search">{t('common.search')}</label>
-          <input
-            id="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Name or code"
-          />
-        </div>
-        <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
-          {t('common.search')}
-        </button>
-      </form>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="orgType">Type</Label>
+                  <select
+                    id="orgType"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={orgType}
+                    onChange={(e) => setOrgType(e.target.value as OrgType)}
+                  >
+                    {ORG_TYPES.map((typeCode) => (
+                      <option key={typeCode} value={typeCode}>
+                        {typeCode}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="parentOrganizationId">Parent organization (optional)</Label>
+                  <select
+                    id="parentOrganizationId"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={parentOrganizationId}
+                    onChange={(e) => setParentOrganizationId(e.target.value)}
+                  >
+                    <option value="">None</option>
+                    {parentOptions.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.name}
+                        {o.code !== null && o.code !== '' ? ` (${o.code})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <ResourceListPagination
+                    nextCursor={parentsCursor}
+                    loadingMore={loadingMoreParents}
+                    onLoadMore={() => {
+                      void loadParentPicker({ cursor: parentsCursor, append: true });
+                    }}
+                  />
+                </div>
+              </div>
 
-      <ResourceList
-        loading={loading}
-        empty={t('orgs.empty')}
-        isEmpty={rows.length === 0}
-        variant="table"
-        footer={
-          <ResourceListPagination
-            nextCursor={nextCursor}
-            loadingMore={loadingMore}
-            onLoadMore={() => {
-              void loadPage({ searchQ: appliedSearch, cursor: nextCursor, append: true });
-            }}
-          />
-        }
-      >
-        <AdminTable
-          caption={t('orgs.title')}
-          headers={[t('common.name'), t('common.code'), 'Type', t('common.status'), '']}
+              <div>
+                <Button type="submit" disabled={busy || name.trim() === ''}>
+                  {busy ? t('common.saving') : t('common.create')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <form
+              className="flex flex-wrap items-end gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setAppliedSearch(search);
+                void loadPage({ searchQ: search, cursor: null, append: false });
+              }}
+            >
+              <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
+                <Label htmlFor="search">{t('common.search')}</Label>
+                <Input
+                  id="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Name or code"
+                />
+              </div>
+              <Button variant="secondary" type="submit" disabled={loading || loadingMore}>
+                {t('common.search')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <ResourceList
+          loading={loading}
+          empty={t('orgs.empty')}
+          isEmpty={rows.length === 0}
+          variant="table"
+          footer={
+            <ResourceListPagination
+              nextCursor={nextCursor}
+              loadingMore={loadingMore}
+              onLoadMore={() => {
+                void loadPage({ searchQ: appliedSearch, cursor: nextCursor, append: true });
+              }}
+            />
+          }
         >
-          {rows.map((o) => (
-            <tr key={o.id}>
-              <td>
-                <Link href={`/t/${tenantId}/admin/organizations/${o.id}`}>{o.name}</Link>
-              </td>
-              <td className="muted">{o.code ?? '—'}</td>
-              <td className="muted">{o.orgType ?? '—'}</td>
-              <td>
-                <StatusChip label={o.status} tone={o.status === 'active' ? 'ok' : 'muted'} />
-              </td>
-              <td className="admin-table-actions">
-                <Link
-                  className="btn btn-secondary admin-table-open"
-                  href={`/t/${tenantId}/admin/organizations/${o.id}`}
-                >
-                  {t('common.open')}
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </AdminTable>
-      </ResourceList>
+          <AdminTable
+            caption={t('orgs.title')}
+            headers={[t('common.name'), t('common.code'), 'Type', t('common.status'), '']}
+          >
+            {rows.map((o) => (
+              <tr key={o.id}>
+                <td className="font-medium">
+                  <Link
+                    href={`/t/${tenantId}/admin/organizations/${o.id}`}
+                    className="hover:underline text-primary"
+                  >
+                    {o.name}
+                  </Link>
+                </td>
+                <td className="text-muted-foreground">{o.code ?? '—'}</td>
+                <td className="text-muted-foreground">{o.orgType ?? '—'}</td>
+                <td>
+                  <StatusChip label={o.status} tone={o.status === 'active' ? 'ok' : 'muted'} />
+                </td>
+                <td className="admin-table-actions">
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href={`/t/${tenantId}/admin/organizations/${o.id}`}>
+                      {t('common.open')}
+                    </Link>
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </AdminTable>
+        </ResourceList>
+      </div>
     </AdminShell>
   );
 }

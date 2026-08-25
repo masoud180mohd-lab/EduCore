@@ -7,6 +7,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
 import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   type AttendanceRecordStatus,
   buildUpsertPayload,
@@ -16,6 +19,7 @@ import {
 } from '@/lib/attendance/mark-state';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+import { cn } from '@/lib/utils';
 
 type Session = {
   readonly id: string;
@@ -177,90 +181,129 @@ export default function MarkSessionPage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
-      <p>
-        <Link href={`/t/${tenantId}/teacher/attendance`}>← {t('teacher.takeAttendance')}</Link>
-      </p>
-      <AdminPageHeader title={t('teacher.markAttendance')}>
-        {session !== null ? (
-          <p className="muted">
-            {session.sessionDate} · {classLabel ?? t('common.class')} ·{' '}
-            <span className={`chip chip-${session.status === 'open' ? 'open' : 'closed'}`}>
-              {session.status}
-            </span>
-          </p>
+      <div className="flex flex-col gap-6">
+        <div>
+          <Link
+            className="text-xs font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            href={`/t/${tenantId}/teacher/attendance`}
+          >
+            ← {t('teacher.takeAttendance')}
+          </Link>
+        </div>
+
+        <AdminPageHeader title={t('teacher.markAttendance')}>
+          {session !== null ? (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
+              <span>{session.sessionDate}</span>
+              <span>·</span>
+              <span>{classLabel ?? t('common.class')}</span>
+              <span>·</span>
+              <Badge variant={session.status === 'open' ? 'default' : 'secondary'}>
+                {session.status}
+              </Badge>
+            </div>
+          ) : null}
+        </AdminPageHeader>
+
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {info !== null ? <Banner tone="info">{info}</Banner> : null}
+        {loading ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p> : null}
+        {!loading && drafts.length === 0 ? (
+          <Banner tone="warn">No active enrollments for this class.</Banner>
         ) : null}
-      </AdminPageHeader>
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      {loading ? <p className="muted">{t('common.loading')}</p> : null}
-      {!loading && drafts.length === 0 ? (
-        <Banner tone="warn">No active enrollments for this class.</Banner>
-      ) : null}
 
-      <ul className="list">
-        {drafts.map((d) => (
-          <li key={d.studentId} className="mark-row">
-            <div>
-              <strong>{d.displayName}</strong>
-            </div>
-            <div
-              className="status-group"
-              role="radiogroup"
-              aria-label={`${t('common.status')} ${d.displayName}`}
-            >
-              {STATUSES.map((status) => (
-                <label key={status}>
-                  <input
-                    type="radio"
-                    name={`status-${d.studentId}`}
-                    value={status}
-                    checked={d.status === status}
-                    disabled={closed || busy}
-                    onChange={() =>
-                      setDrafts((prev) => setStudentStatus(prev, d.studentId, status))
-                    }
-                  />
-                  <span>{status}</span>
-                </label>
-              ))}
-            </div>
-          </li>
-        ))}
-      </ul>
+        <div className="flex flex-col gap-2.5">
+          {drafts.map((d) => (
+            <Card key={d.studentId} className="transition-colors hover:bg-muted/30">
+              <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col">
+                  <span className="font-semibold text-sm sm:text-base text-foreground">
+                    {d.displayName}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{d.studentId}</span>
+                </div>
 
-      <div className="bottom-bar actions">
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={closed || busy || drafts.length === 0}
-          onClick={() => void onSave()}
-        >
-          {busy ? t('common.saving') : t('common.save')}
-        </button>
-        <button
-          type="button"
-          className="btn btn-danger"
-          disabled={closed || busy}
-          onClick={() => setConfirmClose(true)}
-        >
-          {t('common.close')}
-        </button>
+                <div
+                  className="flex flex-wrap gap-1.5"
+                  role="radiogroup"
+                  aria-label={`${t('common.status')} ${d.displayName}`}
+                >
+                  {STATUSES.map((status) => {
+                    const isSelected = d.status === status;
+                    return (
+                      <label
+                        key={status}
+                        className={cn(
+                          'flex items-center justify-center cursor-pointer rounded-md border px-2.5 py-1 text-xs font-medium uppercase tracking-wider transition-all',
+                          isSelected
+                            ? status === 'present'
+                              ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs'
+                              : status === 'absent'
+                                ? 'border-red-600 bg-red-600 text-white shadow-xs'
+                                : status === 'late'
+                                  ? 'border-amber-500 bg-amber-500 text-white shadow-xs'
+                                  : 'border-blue-600 bg-blue-600 text-white shadow-xs'
+                            : 'border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
+                          (closed || busy) && 'pointer-events-none opacity-50',
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          className="sr-only"
+                          name={`status-${d.studentId}`}
+                          value={status}
+                          checked={isSelected}
+                          disabled={closed || busy}
+                          onChange={() =>
+                            setDrafts((prev) => setStudentStatus(prev, d.studentId, status))
+                          }
+                        />
+                        <span>{status}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="sticky bottom-4 z-10 flex items-center gap-3 rounded-xl border border-border bg-card/95 p-3 shadow-md backdrop-blur-sm">
+          <Button
+            type="button"
+            className="flex-1 sm:flex-none"
+            disabled={closed || busy || drafts.length === 0}
+            onClick={() => void onSave()}
+          >
+            {busy ? t('common.saving') : t('common.save')}
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            className="flex-1 sm:flex-none"
+            disabled={closed || busy}
+            onClick={() => setConfirmClose(true)}
+          >
+            {t('common.close')}
+          </Button>
+        </div>
+
+        <ConfirmDialog
+          open={confirmClose}
+          title={t('teacher.closeSession')}
+          body="Marks cannot be edited after closing."
+          confirmLabel={t('common.close')}
+          danger
+          busy={busy}
+          onCancel={() => {
+            if (!busy) setConfirmClose(false);
+          }}
+          onConfirm={() => {
+            void runClose();
+          }}
+        />
       </div>
-
-      <ConfirmDialog
-        open={confirmClose}
-        title={t('teacher.closeSession')}
-        body="Marks cannot be edited after closing."
-        confirmLabel={t('common.close')}
-        danger
-        busy={busy}
-        onCancel={() => {
-          if (!busy) setConfirmClose(false);
-        }}
-        onConfirm={() => {
-          void runClose();
-        }}
-      />
     </TeacherShell>
   );
 }
+

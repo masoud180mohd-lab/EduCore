@@ -158,6 +158,10 @@ export const EXTRA_EN = {
   'teacher.closeSession': 'Close this session?',
   'teacher.noExams': 'No exams yet.',
   'teacher.exam': 'Exam',
+  'teacher.modeClass': 'Class',
+  'teacher.modeSubject': 'Subject',
+  'teacher.modeNav': 'Teacher workspace mode',
+  'teacher.leo': 'Today',
 
   'parent.nav': 'Parent',
   'parent.home': 'Home',
@@ -173,6 +177,22 @@ export const EXTRA_EN = {
   'parent.noAccess': 'You do not have parent portal access.',
   'parent.loadError': 'Could not load your linked students.',
   'parent.parent': 'Parent',
+
+  'student.nav': 'Student',
+  'student.home': 'Home',
+  'student.checking': 'Checking session…',
+  'student.homeTitle': 'My profile',
+  'student.homeDesc': 'Your school record. More learner tools arrive in later phases.',
+  'student.profileHint': 'This is your bound student profile for this school.',
+  'student.comingSoon': 'Coming soon',
+  'student.soonAttendance': 'Attendance',
+  'student.soonAttendanceDesc': 'Coming soon',
+  'student.soonResults': 'Results',
+  'student.soonResultsDesc': 'Coming soon',
+  'student.soonFees': 'Fees',
+  'student.soonFeesDesc': 'Coming soon',
+  'student.noAccess': 'You do not have student portal access, or no student is bound to this account.',
+  'student.loadError': 'Could not load your student profile.',
 
   'academic.title': 'Academic',
   'academic.description':
@@ -602,6 +622,25 @@ export const EXTRA_EN = {
   'shell.student': 'Student',
   'shell.studentPortalHint':
     'Students do not sign in. The office keeps the registry; parents see linked fees.',
+  'head.nav': 'Head',
+  'head.chip': 'Head',
+  'head.dashboard': 'Dashboard',
+  'head.approvals': 'Approvals',
+  'head.dashboardTitle': 'School health',
+  'head.dashboardDesc': 'Decision KPIs from live summaries (not a dedicated Head BFF yet).',
+  'head.openApprovals': 'Open approvals',
+  'head.noKpis': 'No KPI summaries available for your permissions.',
+  'head.approvalsTitle': 'Marks approvals',
+  'head.approvalsDesc':
+    'Exam subjects waiting for approval. Do not approve marks you submitted yourself as a teacher.',
+  'head.noApprovals': 'No submitted marks waiting for approval.',
+  'head.approve': 'Approve',
+  'head.approveConfirmTitle': 'Approve marks?',
+  'head.approveConfirmBody': 'Approve {subject} for {exam}? This locks the scores.',
+  'head.approveSuccess': 'Marks approved.',
+  'head.approveFailed': 'Could not approve marks.',
+  'head.forbiddenTitle': 'Head portal unavailable',
+  'head.forbidden': 'You do not have Head access for this school.',
 } as const;
 
 export const EXTRA_SW: { readonly [K in keyof typeof EXTRA_EN]: string } = {
@@ -763,6 +802,10 @@ export const EXTRA_SW: { readonly [K in keyof typeof EXTRA_EN]: string } = {
   'teacher.closeSession': 'Funga kipindi hiki?',
   'teacher.noExams': 'Hakuna mitihani bado.',
   'teacher.exam': 'Mtihani',
+  'teacher.modeClass': 'Darasa',
+  'teacher.modeSubject': 'Somo',
+  'teacher.modeNav': 'Hali ya eneo la mwalimu',
+  'teacher.leo': 'Leo',
 
   'parent.nav': 'Mzazi',
   'parent.home': 'Nyumbani',
@@ -778,6 +821,23 @@ export const EXTRA_SW: { readonly [K in keyof typeof EXTRA_EN]: string } = {
   'parent.noAccess': 'Huna ruhusa ya portal ya mzazi.',
   'parent.loadError': 'Imeshindikana kupakia wanafunzi wako.',
   'parent.parent': 'Mzazi',
+
+  'student.nav': 'Mwanafunzi',
+  'student.home': 'Nyumbani',
+  'student.checking': 'Inakagua kipindi…',
+  'student.homeTitle': 'Wasifu wangu',
+  'student.homeDesc': 'Rekodi yako ya shule. Zana zaidi za mwanafunzi zitakuja baadaye.',
+  'student.profileHint': 'Huu ni wasifu wako wa mwanafunzi uliounganishwa na shule hii.',
+  'student.comingSoon': 'Inakuja hivi karibuni',
+  'student.soonAttendance': 'Mahudhurio',
+  'student.soonAttendanceDesc': 'Inakuja hivi karibuni',
+  'student.soonResults': 'Matokeo',
+  'student.soonResultsDesc': 'Inakuja hivi karibuni',
+  'student.soonFees': 'Ada',
+  'student.soonFeesDesc': 'Inakuja hivi karibuni',
+  'student.noAccess':
+    'Huna ruhusa ya portal ya mwanafunzi, au hakuna mwanafunzi aliyeunganishwa na akaunti hii.',
+  'student.loadError': 'Imeshindikana kupakia wasifu wako wa mwanafunzi.',
 
   'academic.title': 'Masomo',
   'academic.description':
@@ -1206,4 +1266,23 @@ export const EXTRA_SW: { readonly [K in keyof typeof EXTRA_EN]: string } = {
   'shell.student': 'Mwanafunzi',
   'shell.studentPortalHint':
     'Wanafunzi hawaingii. Ofisi ina daftari; mzazi anaona ada za mwanafunzi aliyeunganishwa.',
+  'head.nav': 'Mwalimu Mkuu',
+  'head.chip': 'Mwalimu Mkuu',
+  'head.dashboard': 'Dashibodi',
+  'head.approvals': 'Vibali',
+  'head.dashboardTitle': 'Afya ya shule',
+  'head.dashboardDesc': 'KPI kutoka muhtasari wa sasa (si BFF maalum ya Head bado).',
+  'head.openApprovals': 'Fungua vibali',
+  'head.noKpis': 'Hakuna muhtasari wa KPI kwa ruhusa zako.',
+  'head.approvalsTitle': 'Vibali vya alama',
+  'head.approvalsDesc':
+    'Masomo yaliyowasilishwa yanayosubiri kibali. Usithibitishe alama ulizowasilisha mwenyewe kama mwalimu.',
+  'head.noApprovals': 'Hakuna alama zilizowasilishwa zinazosubiri kibali.',
+  'head.approve': 'Thibitisha',
+  'head.approveConfirmTitle': 'Thibitisha alama?',
+  'head.approveConfirmBody': 'Thibitisha {subject} kwa {exam}? Hii itafunga alama.',
+  'head.approveSuccess': 'Alama zimethibitishwa.',
+  'head.approveFailed': 'Imeshindwa kuthibitisha alama.',
+  'head.forbiddenTitle': 'Portal ya Mwalimu Mkuu haipatikani',
+  'head.forbidden': 'Huna ruhusa ya portal ya Mwalimu Mkuu kwa shule hii.',
 };

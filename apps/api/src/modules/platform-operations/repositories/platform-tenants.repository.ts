@@ -8,6 +8,7 @@ import type { AppLogger } from '../../../common/logging/logger.js';
 import { APP_LOGGER } from '../../../common/logging/logger.tokens.js';
 import { PG_PLATFORM_POOL, PG_POOL } from '../../../common/persistence/pg.tokens.js';
 import { withPlatformTransaction } from '../../../common/persistence/platform-transaction.js';
+import { bootstrapSystemRolesForTenant } from '../../../common/rbac/system-role-bootstrap.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
 export const ENTITLEMENT_CODES = ['sms', 'ai', 'payments.momo', 'student_portal'] as const;
 export type EntitlementCode = (typeof ENTITLEMENT_CODES)[number];
@@ -107,7 +108,10 @@ export class PlatformTenantsRepository {
       readonly cursor: string | undefined;
       readonly status: string | undefined;
     },
-  ): Promise<{ readonly rows: ReadonlyArray<PlatformTenantListRow>; readonly nextCursor: string | null }> {
+  ): Promise<{
+    readonly rows: ReadonlyArray<PlatformTenantListRow>;
+    readonly nextCursor: string | null;
+  }> {
     if (this.platformPool === null) {
       return { rows: [], nextCursor: null };
     }
@@ -211,8 +215,6 @@ export class PlatformTenantsRepository {
         [randomUUID(), tenantId, ownerUserId],
       );
 
-      // Dynamic import avoids an init cycle: identity barrel → AuthService → platform barrel → this module.
-      const { bootstrapSystemRolesForTenant } = await import('../../identity-and-access/index.js');
       await bootstrapSystemRolesForTenant(client, {
         tenantId,
         assignUserId: ownerUserId,
@@ -263,12 +265,13 @@ export class PlatformTenantsRepository {
         throw err;
       }
 
-      await client.query(
-        `UPDATE tenants SET status = $2, updated_at = now() WHERE id = $1::uuid`,
-        [tenantId, nextStatus],
-      );
+      await client.query(`UPDATE tenants SET status = $2, updated_at = now() WHERE id = $1::uuid`, [
+        tenantId,
+        nextStatus,
+      ]);
       await insertAudit(client, {
-        action: nextStatus === 'suspended' ? 'platform.tenant.suspend' : 'platform.tenant.reinstate',
+        action:
+          nextStatus === 'suspended' ? 'platform.tenant.suspend' : 'platform.tenant.reinstate',
         actorUserId,
         tenantId,
         resourceId: tenantId,
@@ -307,7 +310,9 @@ export class PlatformTenantsRepository {
       return null;
     }
     return withPlatformTransaction(this.platformPool, { userId: actorUserId }, async (client) => {
-      const tenant = await client.query(`SELECT id FROM tenants WHERE id = $1::uuid LIMIT 1`, [tenantId]);
+      const tenant = await client.query(`SELECT id FROM tenants WHERE id = $1::uuid LIMIT 1`, [
+        tenantId,
+      ]);
       if (tenant.rows[0] === undefined) {
         return null;
       }
@@ -359,7 +364,9 @@ export class PlatformTenantsRepository {
       return null;
     }
     return withPlatformTransaction(this.platformPool, { userId: actorUserId }, async (client) => {
-      const tenant = await client.query(`SELECT id FROM tenants WHERE id = $1::uuid LIMIT 1`, [tenantId]);
+      const tenant = await client.query(`SELECT id FROM tenants WHERE id = $1::uuid LIMIT 1`, [
+        tenantId,
+      ]);
       if (tenant.rows[0] === undefined) {
         return null;
       }
@@ -394,7 +401,10 @@ export class PlatformTenantsRepository {
       readonly tenantId: string | undefined;
       readonly action: string | undefined;
     },
-  ): Promise<{ readonly rows: ReadonlyArray<PlatformAuditRow>; readonly nextCursor: string | null }> {
+  ): Promise<{
+    readonly rows: ReadonlyArray<PlatformAuditRow>;
+    readonly nextCursor: string | null;
+  }> {
     if (this.platformPool === null) {
       return { rows: [], nextCursor: null };
     }
@@ -431,7 +441,10 @@ export class PlatformTenantsRepository {
   }
 }
 
-async function loadDetail(client: PoolClient, tenantId: string): Promise<PlatformTenantDetail | null> {
+async function loadDetail(
+  client: PoolClient,
+  tenantId: string,
+): Promise<PlatformTenantDetail | null> {
   const tenant = await client.query<{
     id: string;
     code: string;

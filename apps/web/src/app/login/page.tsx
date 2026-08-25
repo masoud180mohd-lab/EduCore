@@ -1,11 +1,15 @@
 'use client';
 
+import { GraduationCap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { AdminPageHeader, Banner } from '@/components/admin';
 import { useAppPreferences } from '@/components/AppProviders';
 import { MfaChallengeForm } from '@/components/MfaChallengeForm';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { beginAuth0Login, isAuth0Configured } from '@/lib/auth/auth0-pkce';
 import {
@@ -25,7 +29,7 @@ type LoginResponse = {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t } = useAppPreferences();
+  const { t, locale, setLocale, theme, setTheme } = useAppPreferences();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [tenantId, setTenantId] = useState('');
@@ -35,7 +39,6 @@ export default function LoginPage() {
   const [tenants, setTenants] = useState<ReadonlyArray<TenantChoice> | null>(null);
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [mfaChallengeToken, setMfaChallengeToken] = useState<string | null>(null);
-  // Defer Auth0 UI until after mount so SSR HTML matches the first client paint.
   const [auth0Ready, setAuth0Ready] = useState(false);
 
   useEffect(() => {
@@ -138,105 +141,147 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="app-shell">
-      <AdminPageHeader
-        title={t('login.title')}
-        description={t('login.description')}
+    <div className="relative flex min-h-dvh items-center justify-center px-4 py-10">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,color-mix(in_srgb,var(--color-accent)_22%,transparent),transparent_45%),radial-gradient(circle_at_80%_0%,color-mix(in_srgb,var(--color-accent)_12%,transparent),transparent_40%)]"
       />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      <div className="absolute right-4 top-4 z-10 flex items-center gap-2 md:right-8 md:top-6">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setLocale(locale === 'en' ? 'sw' : 'en')}
+        >
+          <span suppressHydrationWarning>{locale === 'en' ? 'SW' : 'EN'}</span>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        >
+          <span suppressHydrationWarning>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+        </Button>
+      </div>
 
-      {mfaChallengeToken !== null ? (
-        <MfaChallengeForm
-          busy={busy}
-          onSubmit={onMfaVerify}
-          onCancel={() => {
-            setMfaChallengeToken(null);
-            setError(null);
-          }}
-        />
-      ) : tenants !== null ? (
-        <div className="stack">
-          <p>{t('login.chooseSchool')}</p>
-          <ul className="list">
-            {tenants.map((school) => (
-              <li key={school.id}>
-                <button
-                  type="button"
-                  className="card"
-                  style={{ width: '100%', textAlign: 'left' }}
-                  onClick={() => void bindTenant(school.id)}
-                  disabled={busy}
-                >
-                  {school.name ?? school.code ?? school.id}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="stack">
-          {auth0Ready ? (
-            <>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={busy || auth0Busy}
-                onClick={() => void onAuth0Click()}
-              >
-                {auth0Busy ? t('login.auth0Busy') : t('login.auth0')}
-              </button>
-              <p className="muted" style={{ textAlign: 'center', margin: 0 }}>
-                {t('login.orPassword')}
-              </p>
-            </>
+      <Card className="relative z-10 w-full max-w-md animate-rise shadow-[0_24px_60px_-40px_color-mix(in_srgb,var(--color-ink)_45%,transparent)]">
+        <CardHeader>
+          <div className="mb-2 flex items-center gap-2">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)]">
+              <GraduationCap aria-hidden className="size-4" />
+            </span>
+            <span className="text-xl font-semibold tracking-tight">EduCore</span>
+          </div>
+          <CardTitle>{t('login.title')}</CardTitle>
+          <CardDescription>{t('login.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {error !== null ? (
+            <div
+              className="rounded-lg border border-[var(--color-danger)]/35 bg-[color-mix(in_srgb,var(--color-danger)_10%,var(--card))] px-3 py-2 text-sm text-[var(--color-danger)]"
+              role="alert"
+            >
+              {error}
+            </div>
           ) : null}
 
-          <form className="stack" onSubmit={(e) => void onSubmit(e)}>
-            <div className="field">
-              <label htmlFor="email">{t('common.email')}</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="username"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+          {mfaChallengeToken !== null ? (
+            <MfaChallengeForm
+              busy={busy}
+              onSubmit={onMfaVerify}
+              onCancel={() => {
+                setMfaChallengeToken(null);
+                setError(null);
+              }}
+            />
+          ) : tenants !== null ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-[var(--muted-foreground)]">{t('login.chooseSchool')}</p>
+              <ul className="flex flex-col gap-2">
+                {tenants.map((school) => (
+                  <li key={school.id}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-auto w-full justify-start px-4 py-3 text-left"
+                      onClick={() => void bindTenant(school.id)}
+                      disabled={busy}
+                    >
+                      {school.name ?? school.code ?? school.id}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="field">
-              <label htmlFor="password">{t('common.password')}</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+          ) : (
+            <div className="flex flex-col gap-4">
+              {auth0Ready ? (
+                <>
+                  <Button
+                    type="button"
+                    size="lg"
+                    disabled={busy || auth0Busy}
+                    onClick={() => void onAuth0Click()}
+                  >
+                    {auth0Busy ? t('login.auth0Busy') : t('login.auth0')}
+                  </Button>
+                  <p className="text-center text-sm text-[var(--muted-foreground)]">
+                    {t('login.orPassword')}
+                  </p>
+                </>
+              ) : null}
+
+              <form className="flex flex-col gap-4" onSubmit={(e) => void onSubmit(e)}>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="email">{t('common.email')}</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="username"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="password">{t('common.password')}</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="tenantId">{t('login.schoolIdOptional')}</Label>
+                  <Input
+                    id="tenantId"
+                    name="tenantId"
+                    type="text"
+                    placeholder={t('login.schoolIdPlaceholder')}
+                    value={tenantId}
+                    onChange={(e) => setTenantId(e.target.value)}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  size="lg"
+                  variant={auth0Ready ? 'secondary' : 'default'}
+                  disabled={busy || auth0Busy}
+                  className="w-full"
+                >
+                  {busy ? t('login.signingIn') : t('login.signIn')}
+                </Button>
+              </form>
             </div>
-            <div className="field">
-              <label htmlFor="tenantId">{t('login.schoolIdOptional')}</label>
-              <input
-                id="tenantId"
-                name="tenantId"
-                type="text"
-                placeholder={t('login.schoolIdPlaceholder')}
-                value={tenantId}
-                onChange={(e) => setTenantId(e.target.value)}
-              />
-            </div>
-            <button
-              type="submit"
-              className={auth0Ready ? 'btn btn-secondary' : 'btn btn-primary'}
-              disabled={busy || auth0Busy}
-            >
-              {busy ? t('login.signingIn') : t('login.signIn')}
-            </button>
-          </form>
-        </div>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

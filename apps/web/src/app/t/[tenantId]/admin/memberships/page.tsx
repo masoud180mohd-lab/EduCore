@@ -14,6 +14,9 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -105,78 +108,88 @@ export default function AdminMembershipsPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader
-        title={t('memberships.title')}
-        description={t('memberships.description')}
-      />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      <div className="flex flex-col gap-6">
+        <AdminPageHeader
+          title={t('memberships.title')}
+          description={t('memberships.description')}
+        />
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
-      <form className="stack" onSubmit={onFilter} style={{ marginBottom: '1rem' }}>
-        <label className="field">
-          <span>{t('common.status')}</span>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as '' | MembershipStatus)}
-          >
-            <option value="">{t('common.allStatuses')}</option>
-            {MEMBERSHIP_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
-          {t('common.applyFilters')}
-        </button>
-      </form>
-
-      <ResourceList
-        loading={loading}
-        empty={t('memberships.empty')}
-        isEmpty={rows.length === 0}
-        variant="table"
-        footer={
-          <ResourceListPagination
-            nextCursor={nextCursor}
-            loadingMore={loadingMore}
-            onLoadMore={() => {
-              void loadPage({
-                statusFilter: appliedStatus,
-                cursor: nextCursor,
-                append: true,
-              });
-            }}
-          />
-        }
-      >
-        <AdminTable
-          caption={t('memberships.title')}
-          headers={[t('common.status'), t('users.user'), 'Joined', '']}
-        >
-          {rows.map((m) => (
-            <tr key={m.id}>
-              <td>
-                <StatusChip label={m.status} />
-              </td>
-              <td>
-                <Link href={`/t/${tenantId}/admin/users/${m.userId}`}>
-                  {userNames[m.userId] ?? m.userId}
-                </Link>
-              </td>
-              <td className="muted">{m.joinedAt ?? '—'}</td>
-              <td className="admin-table-actions">
-                <Link
-                  className="btn btn-secondary admin-table-open"
-                  href={`/t/${tenantId}/admin/users/${m.userId}`}
+        <Card>
+          <CardContent className="pt-6">
+            <form className="flex flex-wrap items-end gap-3" onSubmit={onFilter}>
+              <div className="flex flex-col gap-2 min-w-[180px]">
+                <Label htmlFor="status">{t('common.status')}</Label>
+                <select
+                  id="status"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as '' | MembershipStatus)}
                 >
-                  {t('common.open')}
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </AdminTable>
-      </ResourceList>
+                  <option value="">{t('common.allStatuses')}</option>
+                  {MEMBERSHIP_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button variant="secondary" type="submit" disabled={loading || loadingMore}>
+                {t('common.applyFilters')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <ResourceList
+          loading={loading}
+          empty={t('memberships.empty')}
+          isEmpty={rows.length === 0}
+          variant="table"
+          footer={
+            <ResourceListPagination
+              nextCursor={nextCursor}
+              loadingMore={loadingMore}
+              onLoadMore={() => {
+                void loadPage({
+                  statusFilter: appliedStatus,
+                  cursor: nextCursor,
+                  append: true,
+                });
+              }}
+            />
+          }
+        >
+          <AdminTable
+            caption={t('memberships.title')}
+            headers={[t('common.status'), t('users.user'), 'Joined', '']}
+          >
+            {rows.map((m) => (
+              <tr key={m.id}>
+                <td>
+                  <StatusChip label={m.status} />
+                </td>
+                <td className="font-medium">
+                  <Link
+                    href={`/t/${tenantId}/admin/users/${m.userId}`}
+                    className="hover:underline text-primary"
+                  >
+                    {userNames[m.userId] ?? m.userId}
+                  </Link>
+                </td>
+                <td className="text-muted-foreground">{m.joinedAt ?? '—'}</td>
+                <td className="admin-table-actions">
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href={`/t/${tenantId}/admin/users/${m.userId}`}>
+                      {t('common.open')}
+                    </Link>
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </AdminTable>
+        </ResourceList>
+      </div>
     </AdminShell>
   );
 }

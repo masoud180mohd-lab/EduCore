@@ -7,6 +7,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { ParentShell } from '@/components/ParentShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { readSession } from '@/lib/auth/session';
 import { paymentStatusLabel } from '@/lib/finance/invoice-actions';
@@ -70,38 +72,70 @@ export default function ParentReceiptDetailPage() {
 
   return (
     <ParentShell tenantId={tenantId}>
-      <p className="muted">
-        {payment !== undefined ? (
-          <Link href={`/t/${tenantId}/parent/fees/invoices/${payment.invoiceId}`}>← {t('invoice.title')}</Link>
-        ) : (
-          <Link href={`/t/${tenantId}/parent`}>← {t('fees.back')}</Link>
-        )}
-      </p>
-      <AdminPageHeader title={t('parent.readOnlyReceipt')} />
-      <Banner tone="info">{t('parent.officePay')}</Banner>
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {loading ? <p className="muted">{t('common.loading')}</p> : null}
-      {!loading && receipt !== null ? (
-        <div className="card stack">
-          <div>
-            <strong>{t('receipt.title')}</strong> {receipt.receiptNumber}
-          </div>
-          <div className="muted">
-            {receipt.status} · Issued {receipt.issuedAt}
-          </div>
+      <div className="flex flex-col gap-6">
+        <div>
           {payment !== undefined ? (
-            <>
-              <div>
-                <strong>Amount</strong> {formatTzsMinor(payment.amountMinor)} {payment.currency}
-              </div>
-              <div className="muted">
-                {payment.method} ·{' '}
-                <span className="chip">{paymentStatusLabel(payment.status)}</span>
-              </div>
-            </>
-          ) : null}
+            <Link
+              className="text-xs font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+              href={`/t/${tenantId}/parent/fees/invoices/${payment.invoiceId}`}
+            >
+              ← {t('invoice.title')}
+            </Link>
+          ) : (
+            <Link
+              className="text-xs font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+              href={`/t/${tenantId}/parent`}
+            >
+              ← {t('fees.back')}
+            </Link>
+          )}
         </div>
-      ) : null}
+
+        <AdminPageHeader title={t('parent.readOnlyReceipt')} />
+        <Banner tone="info">{t('parent.officePay')}</Banner>
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {loading ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p> : null}
+
+        {!loading && receipt !== null ? (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <CardTitle className="text-lg">
+                  {t('receipt.title')} {receipt.receiptNumber}
+                </CardTitle>
+                <Badge variant={receipt.status === 'issued' ? 'default' : 'secondary'}>
+                  {receipt.status}
+                </Badge>
+              </div>
+              <CardDescription>
+                Issued {new Date(receipt.issuedAt).toLocaleDateString()}
+              </CardDescription>
+            </CardHeader>
+            {payment !== undefined ? (
+              <CardContent className="grid gap-4 sm:grid-cols-2 pt-2">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Amount Paid
+                  </span>
+                  <span className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                    {formatTzsMinor(payment.amountMinor)}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Payment Method & Status
+                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm font-semibold">{payment.method}</span>
+                    <Badge variant="secondary">{paymentStatusLabel(payment.status)}</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            ) : null}
+          </Card>
+        ) : null}
+      </div>
     </ParentShell>
   );
 }
+

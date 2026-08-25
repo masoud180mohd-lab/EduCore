@@ -36,7 +36,8 @@ describe('IMP-019 admin settings + guardian profile edit', () => {
     );
     expect(page).toContain("method: 'PATCH'");
     expect(page).toContain('/api/v1/guardians/');
-    expect(page).toContain('Save profile');
+    expect(page).toContain("t('common.profile')");
+    expect(page).toContain("t('common.save')");
     expect(page).toContain('displayName');
   });
 

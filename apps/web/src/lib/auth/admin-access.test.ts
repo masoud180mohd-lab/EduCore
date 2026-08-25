@@ -10,7 +10,7 @@ import {
   groupAdminNav,
   visibleAdminNavIds,
   type AdminNavId,
-} from './admin-access.js';
+} from './admin-access';
 
 describe('canAccessAdminShell', () => {
   it('allows owner/admin roles', () => {

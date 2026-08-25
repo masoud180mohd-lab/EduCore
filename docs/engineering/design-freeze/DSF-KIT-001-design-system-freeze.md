@@ -3,8 +3,8 @@
 | Field       | Value                                                                 |
 | ----------- | --------------------------------------------------------------------- |
 | Freeze ID   | `DSF-KIT-001`                                                         |
-| Version     | `1.6`                                                                 |
-| Date        | 2026-08-15                                                            |
+| Version     | `1.7`                                                                 |
+| Date        | 2026-08-20                                                            |
 | Status      | **Accepted (solo-operator)** — 2026-08-08 (`GO DSF-KIT`)              |
 | Authority   | Solo-operator provisional (SOLO-GOV-001)                              |
 | Governing   | `07_DESIGN_SYSTEM.md` · Architecture Freeze Gate 3 · B-03 · DSF-001…006 |
@@ -79,7 +79,21 @@ Canonical CSS variables (from DSF-001; all slices reuse):
 | Meta | 0.875rem / 400 |
 | Touch target | **≥ 44×44 px** for primary actions / toggles |
 
-Changing tokens requires **DSF-KIT amend** (not silent Tailwind/shadcn swap).
+Changing tokens requires **DSF-KIT amend**. Tailwind utility classes and shadcn primitives must map to these CSS variables (see §2.1 / v1.7).
+
+### 2.1 Approved frontend stack (v1.7)
+
+Per `EduCore/09_FRONTEND_GUIDELINES.md` and Owner GO 2026-08-20 (EduNexus visual reference):
+
+| Layer | Choice | Notes |
+| --- | --- | --- |
+| CSS | **Tailwind CSS v4** | Utilities map to kit CSS variables; no parallel color inventing |
+| Components | **shadcn/ui** (Radix) | Button, Input, Card, Table, Badge, Sheet, Tabs, Dialog, etc. |
+| Icons | **Lucide** | Prefer over emoji / ad-hoc SVGs |
+| Server state | **TanStack Query** | Adopt incrementally; no optimistic updates for payments/marks/roles |
+| Legacy | `tokens.css` classnames | Coexist until pages migrate; do not delete mid-migration |
+
+Token values in §2 remain the semantic source of truth. shadcn theme aliases (`--primary` ↔ `--color-accent`, `--background` ↔ `--color-bg`, etc.) are allowed when they preserve teal/ink identity. Digii-style chrome layout is governed by **DSF-KIT-002 v1.1**, not by inventing a second brand.
 
 ## 3. Layout rules
 
@@ -204,9 +218,9 @@ Layouts must not break for Kiswahili labels (wrap / allow slightly longer string
 
 - Redesigning all screens in this freeze document  
 - Marketing site / brand landing  
-- New component library (shadcn/MUI) adoption  
 - Claiming independent design countersign  
 - Production GO  
+- Silent token drift outside this amend  
 
 ## Acceptance
 
@@ -216,6 +230,7 @@ Layouts must not break for Kiswahili labels (wrap / allow slightly longer string
 - [x] A11y + offline baselines  
 - [x] Slice DSFs retained for screen scope  
 - [x] B-03 kit-wide residual closed **provisionally** under SOLO-GOV-001  
+- [x] v1.7 stack (Tailwind + shadcn + Lucide + TanStack Query) Owner-authorized  
 
 ## Amendments
 
@@ -228,6 +243,7 @@ Layouts must not break for Kiswahili labels (wrap / allow slightly longer string
 | 1.4 | 2026-08-14 | IMP-049 remaining Admin/Teacher/Parent/login chrome i18n |
 | 1.5 | 2026-08-14 | IMP-050 workspace switcher (office / teacher / parent) |
 | 1.6 | 2026-08-15 | DSF-KIT-002 accepted: §4 rule 2 (post-login routing) and IMP-050 switcher superseded by portal chrome freeze; tokens/components unchanged |
+| 1.7 | 2026-08-20 | Owner GO: adopt Tailwind v4 + shadcn/ui + Lucide + TanStack Query (§2.1); remove shadcn non-goal; EduNexus Digii chrome via DSF-KIT-002 v1.1 |
 
 ## Related
 

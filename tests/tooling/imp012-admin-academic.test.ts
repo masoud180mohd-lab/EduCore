@@ -22,7 +22,7 @@ describe('IMP-012 admin academic UI', () => {
   it('AdminShell and home include Academic nav', () => {
     const shell = readFileSync(path.join(root, 'apps/web/src/components/AdminShell.tsx'), 'utf8');
     expect(shell).toContain('${base}/academic');
-    expect(shell).toContain("label: 'Academic'");
+    expect(shell).toContain('groupMessageKey');
     const home = readFileSync(
       path.join(root, 'apps/web/src/app/t/[tenantId]/admin/page.tsx'),
       'utf8',
@@ -45,7 +45,7 @@ describe('IMP-012 admin academic UI', () => {
       'utf8',
     );
     expect(enrollDetail).toContain("method: 'PATCH'");
-    expect(enrollDetail).toContain('Update status');
+    expect(enrollDetail).toContain("t('common.updateStatus')");
   });
 
   it('has task record and manual QA checklist', () => {

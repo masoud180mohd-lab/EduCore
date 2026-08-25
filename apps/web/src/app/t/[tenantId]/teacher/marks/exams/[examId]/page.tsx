@@ -7,6 +7,11 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -93,68 +98,112 @@ export default function ExamDetailPage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
-      <p>
-        <Link href={`/t/${tenantId}/teacher/marks`}>← {t('teacher.marksTitle')}</Link>
-      </p>
-      <AdminPageHeader title={exam?.name ?? t('teacher.exam')}>
-        {exam !== null ? (
-          <p className="muted">
-            {t('common.status')} {exam.status}
-          </p>
-        ) : null}
-      </AdminPageHeader>
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-
-      <form className="stack card" onSubmit={(e) => void onAddSubject(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('teacher.addSubject')}</h2>
-        <div className="field">
-          <label htmlFor="subjectId">{t('common.subject')}</label>
-          <select
-            id="subjectId"
-            required
-            value={subjectId}
-            onChange={(e) => setSubjectId(e.target.value)}
+      <div className="flex flex-col gap-6">
+        <div>
+          <Link
+            className="text-xs font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            href={`/t/${tenantId}/teacher/marks`}
           >
-            <option value="">{t('common.selectSubject')}</option>
-            {catalog.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            ← {t('teacher.marksTitle')}
+          </Link>
         </div>
-        <div className="field">
-          <label htmlFor="maxScore">{t('common.maxScore')}</label>
-          <input
-            id="maxScore"
-            type="number"
-            min={1}
-            step="0.01"
-            required
-            value={maxScore}
-            onChange={(e) => setMaxScore(e.target.value)}
-          />
-        </div>
-        <button type="submit" className="btn btn-primary" disabled={busy || subjectId === ''}>
-          {busy ? t('common.adding') : t('teacher.addSubject')}
-        </button>
-      </form>
 
-      <h2 style={{ fontSize: '1.1rem' }}>{t('teacher.subjects')}</h2>
-      {subjects.length === 0 ? <Banner tone="info">{t('teacher.noSubjects')}</Banner> : null}
-      <ul className="list">
-        {subjects.map((s) => (
-          <li key={s.id}>
-            <Link className="card" href={`/t/${tenantId}/teacher/marks/subjects/${s.id}`}>
-              <strong>{names[s.subjectId] ?? s.subjectId}</strong>{' '}
-              <span className={`chip chip-${s.status === 'draft' ? 'open' : 'closed'}`}>
-                {s.status}
-              </span>
-              <div className="muted">{t('teacher.maxLabel', { score: String(s.maxScore) })}</div>
-            </Link>
-          </li>
-        ))}
-      </ul>
+        <AdminPageHeader title={exam?.name ?? t('teacher.exam')}>
+          {exam !== null ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+              <span>{t('common.status')}:</span>
+              <Badge variant={exam.status === 'open' ? 'default' : 'secondary'}>
+                {exam.status}
+              </Badge>
+            </div>
+          ) : null}
+        </AdminPageHeader>
+
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('teacher.addSubject')}</CardTitle>
+            <CardDescription>{t('teacher.marksDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="flex flex-col gap-4" onSubmit={(e) => void onAddSubject(e)}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="subjectId">{t('common.subject')}</Label>
+                  <select
+                    id="subjectId"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    required
+                    value={subjectId}
+                    onChange={(e) => setSubjectId(e.target.value)}
+                  >
+                    <option value="">{t('common.selectSubject')}</option>
+                    {catalog.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="maxScore">{t('common.maxScore')}</Label>
+                  <Input
+                    id="maxScore"
+                    type="number"
+                    min={1}
+                    step="0.01"
+                    required
+                    value={maxScore}
+                    onChange={(e) => setMaxScore(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="mt-2 w-full sm:w-auto self-start"
+                disabled={busy || subjectId === ''}
+              >
+                {busy ? t('common.adding') : t('teacher.addSubject')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-col gap-3">
+          <h2 className="text-base font-semibold">{t('teacher.subjects')}</h2>
+          {subjects.length === 0 ? <Banner tone="info">{t('teacher.noSubjects')}</Banner> : null}
+
+          <div className="flex flex-col gap-2.5">
+            {subjects.map((s) => (
+              <Card key={s.id} className="transition-colors hover:bg-muted/40">
+                <CardContent className="p-4">
+                  <Link
+                    className="flex items-center justify-between gap-3 text-foreground"
+                    href={`/t/${tenantId}/teacher/marks/subjects/${s.id}`}
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{names[s.subjectId] ?? s.subjectId}</span>
+                        <Badge variant={s.status === 'draft' ? 'secondary' : 'default'}>
+                          {s.status}
+                        </Badge>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {t('teacher.maxLabel', { score: String(s.maxScore) })}
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-primary">→</span>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
     </TeacherShell>
   );
 }
+

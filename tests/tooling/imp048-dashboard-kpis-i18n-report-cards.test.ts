@@ -34,9 +34,7 @@ describe('IMP-048 dashboard KPIs, Students/Fees i18n, report-card PDF', () => {
     expect(marks).toContain("Get('api/v1/exams/:examId/report-cards')");
     expect(marks).toContain("Get('api/v1/exams/:examId/report-cards/:studentId/pdf')");
     expect(
-      existsSync(
-        path.join(root, 'apps/api/src/modules/assessment/application/report-card-pdf.ts'),
-      ),
+      existsSync(path.join(root, 'apps/api/src/modules/assessment/application/report-card-pdf.ts')),
     ).toBe(true);
   });
 
@@ -45,7 +43,8 @@ describe('IMP-048 dashboard KPIs, Students/Fees i18n, report-card PDF', () => {
       path.join(root, 'apps/web/src/app/t/[tenantId]/admin/page.tsx'),
       'utf8',
     );
-    expect(home).toContain('kpi-grid');
+    expect(home).toContain("aria-label={t('common.dashboard')}");
+    expect(home).toContain('grid gap-3 sm:grid-cols-2 xl:grid-cols-4');
     expect(home).toContain('/api/v1/students/summary');
     expect(home).toContain('/api/v1/invoices/summary');
     expect(home).toContain('/api/v1/attendance-sessions/summary');
@@ -86,7 +85,12 @@ describe('IMP-048 dashboard KPIs, Students/Fees i18n, report-card PDF', () => {
 
   it('has task record', () => {
     expect(
-      existsSync(path.join(root, 'docs/engineering/task-records/IMP-048-dashboard-kpis-i18n-report-cards.md')),
+      existsSync(
+        path.join(
+          root,
+          'docs/engineering/task-records/IMP-048-dashboard-kpis-i18n-report-cards.md',
+        ),
+      ),
     ).toBe(true);
   });
 });

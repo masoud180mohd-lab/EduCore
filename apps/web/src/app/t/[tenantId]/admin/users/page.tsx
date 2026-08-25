@@ -14,6 +14,10 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -136,139 +140,161 @@ export default function AdminUsersPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader title={t('users.title')} description={t('users.description')} />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {info !== null ? <Banner tone="info">{info}</Banner> : null}
+      <div className="flex flex-col gap-6">
+        <AdminPageHeader title={t('users.title')} description={t('users.description')} />
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {info !== null ? <Banner tone="info">{info}</Banner> : null}
 
-      <form className="stack card" onSubmit={(e) => void onInvite(e)}>
-        <h2 className="section-title">{t('users.invite')}</h2>
-        <div className="field">
-          <label htmlFor="email">{t('common.email')}</label>
-          <input
-            id="email"
-            type="email"
-            required
-            maxLength={320}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="displayName">{t('common.displayNameOptional')}</label>
-          <input
-            id="displayName"
-            maxLength={200}
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="roleCode">{t('users.role')}</label>
-          <select
-            id="roleCode"
-            value={roleCode}
-            onChange={(e) => setRoleCode(e.target.value as InviteRoleCode | '')}
-          >
-            <option value="">None</option>
-            {INVITE_ROLE_CODES.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button className="btn btn-primary" type="submit" disabled={busy || email.trim() === ''}>
-          {busy ? t('common.saving') : t('common.invite')}
-        </button>
-      </form>
-
-      <form
-        className="stack"
-        style={{ marginTop: '1.5rem' }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          setAppliedSearch(search);
-          setAppliedStatus(statusFilter);
-          void loadPage({
-            searchQ: search,
-            statusQ: statusFilter,
-            cursor: null,
-            append: false,
-          });
-        }}
-      >
-        <div className="field">
-          <label htmlFor="search">{t('common.search')}</label>
-          <input
-            id="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Name or email"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="list-status">{t('common.status')}</label>
-          <select
-            id="list-status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as '' | UserStatus)}
-          >
-            <option value="">{t('common.allStatuses')}</option>
-            {USER_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
-          {t('common.applyFilters')}
-        </button>
-      </form>
-
-      <ResourceList
-        loading={loading}
-        empty={t('users.empty')}
-        isEmpty={rows.length === 0}
-        variant="table"
-        footer={
-          <ResourceListPagination
-            nextCursor={nextCursor}
-            loadingMore={loadingMore}
-            onLoadMore={() => {
-              void loadPage({
-                searchQ: appliedSearch,
-                statusQ: appliedStatus,
-                cursor: nextCursor,
-                append: true,
-              });
-            }}
-          />
-        }
-      >
-        <AdminTable
-          caption={t('users.title')}
-          headers={[t('common.name'), t('common.email'), t('common.status'), '']}
-        >
-          {rows.map((u) => (
-            <tr key={u.id}>
-              <td>
-                <Link href={`/t/${tenantId}/admin/users/${u.id}`}>{u.displayName || u.email}</Link>
-              </td>
-              <td className="muted">{u.email}</td>
-              <td>{u.status !== undefined ? <StatusChip label={u.status} /> : '—'}</td>
-              <td className="admin-table-actions">
-                <Link
-                  className="btn btn-secondary admin-table-open"
-                  href={`/t/${tenantId}/admin/users/${u.id}`}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('users.invite')}</CardTitle>
+            <CardDescription>{t('users.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="flex flex-col gap-4" onSubmit={(e) => void onInvite(e)}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="email">{t('common.email')}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    maxLength={320}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@school.ac.tz"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="displayName">{t('common.displayNameOptional')}</Label>
+                  <Input
+                    id="displayName"
+                    maxLength={200}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Mwalimu Juma"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 max-w-xs">
+                <Label htmlFor="roleCode">{t('users.role')}</Label>
+                <select
+                  id="roleCode"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={roleCode}
+                  onChange={(e) => setRoleCode(e.target.value as InviteRoleCode | '')}
                 >
-                  {t('common.open')}
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </AdminTable>
-      </ResourceList>
+                  <option value="">None</option>
+                  {INVITE_ROLE_CODES.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Button type="submit" disabled={busy || email.trim() === ''}>
+                  {busy ? t('common.saving') : t('common.invite')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <form
+              className="flex flex-wrap items-end gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setAppliedSearch(search);
+                setAppliedStatus(statusFilter);
+                void loadPage({
+                  searchQ: search,
+                  statusQ: statusFilter,
+                  cursor: null,
+                  append: false,
+                });
+              }}
+            >
+              <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
+                <Label htmlFor="search">{t('common.search')}</Label>
+                <Input
+                  id="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Name or email"
+                />
+              </div>
+              <div className="flex flex-col gap-2 min-w-[150px]">
+                <Label htmlFor="list-status">{t('common.status')}</Label>
+                <select
+                  id="list-status"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as '' | UserStatus)}
+                >
+                  <option value="">{t('common.allStatuses')}</option>
+                  {USER_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button variant="secondary" type="submit" disabled={loading || loadingMore}>
+                {t('common.applyFilters')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <ResourceList
+          loading={loading}
+          empty={t('users.empty')}
+          isEmpty={rows.length === 0}
+          variant="table"
+          footer={
+            <ResourceListPagination
+              nextCursor={nextCursor}
+              loadingMore={loadingMore}
+              onLoadMore={() => {
+                void loadPage({
+                  searchQ: appliedSearch,
+                  statusQ: appliedStatus,
+                  cursor: nextCursor,
+                  append: true,
+                });
+              }}
+            />
+          }
+        >
+          <AdminTable
+            caption={t('users.title')}
+            headers={[t('common.name'), t('common.email'), t('common.status'), '']}
+          >
+            {rows.map((u) => (
+              <tr key={u.id}>
+                <td className="font-medium">
+                  <Link
+                    href={`/t/${tenantId}/admin/users/${u.id}`}
+                    className="hover:underline text-primary"
+                  >
+                    {u.displayName || u.email}
+                  </Link>
+                </td>
+                <td className="text-muted-foreground">{u.email}</td>
+                <td>{u.status !== undefined ? <StatusChip label={u.status} /> : '—'}</td>
+                <td className="admin-table-actions">
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href={`/t/${tenantId}/admin/users/${u.id}`}>{t('common.open')}</Link>
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </AdminTable>
+        </ResourceList>
+      </div>
     </AdminShell>
   );
 }

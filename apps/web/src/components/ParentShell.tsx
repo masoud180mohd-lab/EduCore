@@ -1,13 +1,14 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
-import { AdminChromeControls } from '@/components/chrome/AdminChromeControls';
-import { WorkspaceSwitcher } from '@/components/chrome/WorkspaceSwitcher';
 import { useAppPreferences } from '@/components/AppProviders';
+import { AdminChromeControls } from '@/components/chrome/AdminChromeControls';
+import { DigiiShell } from '@/components/chrome/DigiiShell';
+import { DIGII_TOP_ACTIONS_CLASS } from '@/components/chrome/digii-top-actions';
+import { WorkspaceSwitcher } from '@/components/chrome/WorkspaceSwitcher';
 import { clearSession, readSession } from '@/lib/auth/session';
 
 export function ParentShell({
@@ -18,7 +19,6 @@ export function ParentShell({
   readonly children: ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const { t } = useAppPreferences();
   const [ready, setReady] = useState(false);
 
@@ -33,8 +33,8 @@ export function ParentShell({
 
   if (!ready) {
     return (
-      <div className="app-shell">
-        <p className="muted">{t('parent.checking')}</p>
+      <div className="flex min-h-dvh items-center justify-center bg-[var(--muted)] text-sm text-[var(--muted-foreground)]">
+        {t('parent.checking')}
       </div>
     );
   }
@@ -42,30 +42,29 @@ export function ParentShell({
   const homeHref = `/t/${tenantId}/parent`;
 
   return (
-    <div className="app-shell">
-      <header className="top-nav">
-        <strong>EduCore</strong>
-        <WorkspaceSwitcher tenantId={tenantId} />
-        <nav aria-label={t('parent.nav')}>
-          <Link href={homeHref} aria-current={pathname === homeHref ? 'page' : undefined}>
-            {t('parent.home')}
-          </Link>
-        </nav>
-        <AdminChromeControls />
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => {
-            clearSession();
-            router.replace('/login');
-          }}
-        >
-          {t('shell.logout')}
-        </button>
-      </header>
-      <main className="page" style={{ maxWidth: '56rem' }}>
-        {children}
-      </main>
-    </div>
+    <DigiiShell
+      brand="EduCore"
+      brandMeta={t('parent.nav')}
+      brandHref={homeHref}
+      chipLabel={t('parent.nav')}
+      navLabel={t('parent.nav')}
+      portalAccent="#6b0f3f"
+      menuLabel={t('shell.menu')}
+      closeMenuLabel={t('shell.closeMenu')}
+      logoutLabel={t('shell.logout')}
+      onLogout={() => {
+        clearSession();
+        router.replace('/login');
+      }}
+      navItems={[{ id: 'home', href: homeHref, label: t('parent.home'), match: 'exact' }]}
+      topActions={
+        <div className={DIGII_TOP_ACTIONS_CLASS}>
+          <WorkspaceSwitcher tenantId={tenantId} />
+          <AdminChromeControls />
+        </div>
+      }
+    >
+      <div className="mx-auto w-full max-w-[56rem]">{children}</div>
+    </DigiiShell>
   );
 }

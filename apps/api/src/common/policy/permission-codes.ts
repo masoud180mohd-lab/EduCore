@@ -36,6 +36,7 @@ export const PERMISSION_CODES = [
   'ai.manage',
   'parent.guardian.read',
   'parent.finance.read',
+  'student.self.read',
 ] as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[number];

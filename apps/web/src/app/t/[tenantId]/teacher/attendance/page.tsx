@@ -6,6 +6,10 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -128,62 +132,87 @@ export default function AttendancePickerPage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
-      <AdminPageHeader
-        title={t('teacher.takeAttendance')}
-        description={t('teacher.takeDesc')}
-      />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {loadingClasses ? <p className="muted">{t('common.loading')}</p> : null}
-      {!loadingClasses && classes.length === 0 ? (
-        <Banner tone="info">{t('teacher.noClasses')}</Banner>
-      ) : null}
-      <form className="stack" onSubmit={(e) => void onOpen(e)}>
-        <div className="field">
-          <label htmlFor="classId">{t('common.class')}</label>
-          <select
-            id="classId"
-            required
-            disabled={loadingClasses || classes.length === 0}
-            value={classId}
-            onChange={(e) => {
-              setClassId(e.target.value);
-              setStreamId('');
-            }}
-          >
-            <option value="">{t('common.selectClass')}</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-                {c.code !== null ? ` (${c.code})` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="streamId">{t('common.streamOptional')}</label>
-          <select id="streamId" value={streamId} onChange={(e) => setStreamId(e.target.value)}>
-            <option value="">{t('teacher.wholeClass')}</option>
-            {streams.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="sessionDate">{t('common.date')}</label>
-          <input
-            id="sessionDate"
-            type="date"
-            required
-            value={sessionDate}
-            onChange={(e) => setSessionDate(e.target.value)}
-          />
-        </div>
-        <button type="submit" className="btn btn-primary" disabled={busy || classId === ''}>
-          {busy ? t('common.loading') : t('common.open')}
-        </button>
-      </form>
+      <div className="flex flex-col gap-6">
+        <AdminPageHeader
+          title={t('teacher.takeAttendance')}
+          description={t('teacher.takeDesc')}
+        />
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {loadingClasses ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p> : null}
+        {!loadingClasses && classes.length === 0 ? (
+          <Banner tone="info">{t('teacher.noClasses')}</Banner>
+        ) : null}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('teacher.takeAttendance')}</CardTitle>
+            <CardDescription>{t('teacher.takeDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="flex flex-col gap-4" onSubmit={(e) => void onOpen(e)}>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="classId">{t('common.class')}</Label>
+                <select
+                  id="classId"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                  disabled={loadingClasses || classes.length === 0}
+                  value={classId}
+                  onChange={(e) => {
+                    setClassId(e.target.value);
+                    setStreamId('');
+                  }}
+                >
+                  <option value="">{t('common.selectClass')}</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                      {c.code !== null ? ` (${c.code})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="streamId">{t('common.streamOptional')}</Label>
+                <select
+                  id="streamId"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={streamId}
+                  onChange={(e) => setStreamId(e.target.value)}
+                >
+                  <option value="">{t('teacher.wholeClass')}</option>
+                  {streams.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="sessionDate">{t('common.date')}</Label>
+                <Input
+                  id="sessionDate"
+                  type="date"
+                  required
+                  value={sessionDate}
+                  onChange={(e) => setSessionDate(e.target.value)}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="mt-2 w-full sm:w-auto self-start"
+                disabled={busy || classId === ''}
+              >
+                {busy ? t('common.loading') : t('common.open')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </TeacherShell>
   );
 }
+

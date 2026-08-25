@@ -37,11 +37,11 @@ describe('IMP-011-PX1 parent demo path', () => {
     expect(page).toContain("buildListQuery('/api/v1/users'");
     expect(page).toContain('bindUserSelect');
     expect(page).toContain('formatUserBindLabel');
-    expect(page).toContain('Advanced: paste user UUID');
+    expect(page).toContain("t('guardians.showUuid')");
     expect(page).toContain('showAdvancedUuid');
     // Primary label is School user + select, not UUID-only primary
     expect(page).toContain('htmlFor="bindUserSelect"');
-    expect(page).toMatch(/label htmlFor="bindUserSelect">School user<\/label>/);
+    expect(page).toContain("t('guardians.schoolUser')");
   });
 
   it('has manual QA checklist', () => {

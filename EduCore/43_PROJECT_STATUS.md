@@ -8,13 +8,13 @@ This is the canonical status page for EduCore. It answers what is complete, what
 
 ## Current Phase
 
-**Staging lab MVP live (Frankfurt). Owner + AI. No Independent Board.**
+**Staging lab MVP live (Frankfurt). M9 pilot hardening in progress. Owner + AI. No Independent Board.**
 
 - Architecture Freeze v1.0 remains the kit baseline (`38_ARCHITECTURE_FREEZE_RECORD.md`).
 - `42_ENGINEERING_READINESS_REVIEW.md` is a **historical checklist** (Board wrapper retired). Do not wait for re-review.
 - Domain work proceeds behind **Owner-accepted** slice Database / API / Design freezes and IMP gates — not as invent-anything production.
 
-Last status sync: **2026-08-13**.
+Last status sync: **2026-08-21**.
 
 ## Completed And Approved
 
@@ -99,9 +99,17 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**Lab/staging MVP** — **Done (Owner + AI).** Public-school cutover is Owner’s call with residuals below.
+**M9 Pilot hardening** — **In progress (Owner + AI).** Lab/staging MVP remains Done. Public-school cutover is Owner’s call using M9 checklists — not a Board stamp.
 
-Closed:
+### M9 progress
+
+1. ~~**M9-001**~~ Pilot readiness pack — cutover checklist, solo incident runbook, core UAT script (`docs/engineering/task-records/M9-001-pilot-readiness-pack.md`).
+2. **M9-002** Owner executes UAT on staging (evidence task-record).
+3. **M9-003** B-07 D3 secrets rotate rehearsal (staging).
+4. **M9-004** p95 latency baseline sample (SLO-3).
+5. **M9-005** WEB-MFA-UI residual polish if still needed after UAT.
+
+### Closed (MVP / ops)
 
 1. ~~B-05~~ Fly.io + Neon + Doppler; RPO≤24h; RTO≤8h.
 2. ~~B-04~~ Lite threat model.
@@ -121,6 +129,7 @@ Owner residuals (not Board):
 7. ~~**F-002**~~ Prod MFA hard. **F-005** withdrawn.
 8. ~~**F-004 / F-016 / F-017 live**~~ Prod migrated; staging + prod Fly images 2026-08-13.
 9. ~~**FLY-WEB**~~ `educore-web-staging` + `educore-web` live 2026-08-14.
+10. **Gated school cutover** — use `docs/engineering/runbooks/M9-pilot-cutover-checklist.md` after M9-002 UAT Pass.
 
 **Governance:** Owner + AI. `42` is a checklist, not a people-gate.
 
@@ -129,7 +138,7 @@ Owner residuals (not Board):
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — exit note `SPRINT0_ENGINEERING_EXIT_NOTE.md`.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: use live web for office-fees school workflows; ClickPesa later; Neon plan upgrade if a 24h PITR window is required.
+- **Next epic focus**: **M9** pilot hardening (UAT → optional D3/p95 → gated school cutover). Office-fees remains live path; ClickPesa later; Neon plan upgrade if a 24h PITR window is required.
 
 ## Status Update Rules
 

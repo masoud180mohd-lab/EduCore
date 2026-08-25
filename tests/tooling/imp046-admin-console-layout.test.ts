@@ -31,14 +31,12 @@ describe('IMP-046 AdminShell office console', () => {
 
   it('AdminShell renders console chrome and keeps IMP-029/033 contracts', () => {
     const shell = readFileSync(path.join(root, 'apps/web/src/components/AdminShell.tsx'), 'utf8');
-    expect(shell).toContain('admin-console');
-    expect(shell).toContain('admin-console-rail');
-    expect(shell).toContain('admin-console-top');
+    expect(shell).toContain('DigiiShell');
+    expect(shell).toContain('navGroups');
     expect(shell).toContain('groupAdminNav');
     expect(shell).toContain('visibleAdminNavIds');
     expect(shell).toContain('canAccessAdminShell');
-    expect(shell).toContain('admin-nav-groups');
-    expect(shell).toContain('aria-label="Admin"');
+    expect(shell).toContain('groupMessageKey');
     expect(shell).not.toContain('top-nav-grouped');
   });
 

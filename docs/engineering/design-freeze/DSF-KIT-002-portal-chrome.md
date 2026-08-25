@@ -3,8 +3,8 @@
 | Field       | Value                                                                  |
 | ----------- | ---------------------------------------------------------------------- |
 | Freeze ID   | `DSF-KIT-002`                                                          |
-| Version     | `1.0`                                                                  |
-| Date        | 2026-08-15                                                             |
+| Version     | `1.1`                                                                  |
+| Date        | 2026-08-20                                                             |
 | Status      | **Accepted — Owner GO in session 2026-08-15** (gate form per SOLO-GOV-003) |
 | Authority   | Owner + AI (SOLO-GOV-002/003)                                          |
 | Governing   | SPEC-PORTALS-001 v1.0 · DSF-KIT-001 v1.5 · 07_DESIGN_SYSTEM · 32_ACCESS_CONTROL_BIBLE |
@@ -16,15 +16,26 @@
 
 | Shell | Route namespace | Users | Nav pattern | Density |
 | --- | --- | --- | --- | --- |
-| `PlatformShell` | `/platform` | Super Admin (Support later) | Left rail | Dense tables |
-| `AdminShell` *(existing)* | `/t/:id/admin` | Office staff | Left rail (frozen IA unchanged) | Dense tables |
-| `HeadShell` | `/t/:id/head` | Headmaster, Deputy (delegated) | Left rail, decision-first | Medium — KPIs + lists |
+| `PlatformShell` | `/platform` | Super Admin (Support later) | Digii hybrid (v1.1) | Dense tables |
+| `AdminShell` *(existing)* | `/t/:id/admin` | Office staff | Digii hybrid (v1.1); IA groups unchanged | Dense tables |
+| `HeadShell` | `/t/:id/head` | Headmaster, Deputy (delegated) | Digii hybrid, decision-first | Medium — KPIs + lists |
 | `TeacherShell` *(reshaped)* | `/t/:id/teacher` | Teachers | Mode tabs (Darasa/Somo) + bottom-safe mobile column | Mobile-first, max `--content-max-teacher` |
 | `StudentShell` | `/t/:id/student` | Students (Phase 4) | Bottom tabs | Mobile-first, simple |
 | `ParentShell` *(existing)* | `/t/:id/parent` | Parents | Header + child switcher + tabs | Mobile-first, simple |
-| Auth chrome | `/login`, tenant picker, portal chooser | All | Centered narrow forms; no marketing hero | — |
+| Auth chrome | `/login`, tenant picker, portal chooser | All | Centered card form; subtle atmosphere OK; no marketing hero collage | — |
 
-New shells reuse DSF-KIT-001 tokens, primitives, and operational states (§5–§8 of that freeze) unchanged.
+New shells reuse DSF-KIT-001 tokens (§2 / §2.1), primitives, and operational states (§5–§8 of that freeze). Implementation stack: Tailwind + shadcn per DSF-KIT-001 v1.7.
+
+### 1.1 Digii hybrid chrome (v1.1 — Owner GO 2026-08-20)
+
+Reference: EduNexus `PortalShell` (institutional Digii-style). Binding for Platform / Admin / Head rail portals:
+
+1. **Sticky top institutional bar** — filled with `--color-accent` (or `--portal-accent` for the thin identity strip only); brand mark + wordmark; optional search on md+; locale/theme/logout controls on primary-foreground.
+2. **Content grid** — `max-w-7xl`, left column (~260px) + main. Left column: profile/context **card** + nav links (active = primary fill). Not the legacy full-height dark `#12202b` rail as the only chrome.
+3. **Mobile** — hamburger / Sheet for left column; top bar remains.
+4. **Legacy** `.admin-console*` dark-rail CSS may remain until a page migrates; new work targets Digii hybrid.
+
+Teacher / Student / Parent keep mobile patterns in §3; they may share the top institutional bar where it aids brand consistency without mixing capture chrome into rail portals.
 
 ## 2. Portal identity model
 
@@ -47,7 +58,7 @@ All six pass ≥4.5:1 on `--color-surface` white for text-size usage. Banned loo
 
 ## 3. Nav patterns (binding)
 
-- **Rail portals** (Platform/Admin/Head): grouped left rail per DSF-KIT-001 AdminShell rules; mobile <768px = hamburger + overlay rail. Rail groups come from SPEC-PORTALS-001 §3 nav trees; screen-level items land in slice DSFs.
+- **Rail portals** (Platform/Admin/Head): Digii hybrid (§1.1) — top institutional bar + left nav card column; grouped nav IA unchanged. Mobile <768px = Sheet/hamburger for left column. Nav groups come from SPEC-PORTALS-001 §3; screen-level items land in slice DSFs.
 - **Mobile portals** (Teacher/Student/Parent): single column; Teacher gets persistent mode tabs (Darasa/Somo) directly under the top bar; Student gets bottom tab bar (`Leo · Mahudhurio · Matokeo · Ada · Ujumbe`); Parent keeps header + child switcher.
 - Offline/sync strip (TeacherShell) is always visible during capture flows.
 - Never mix capture chrome into rail portals or rail chrome into mobile portals (carries over from DSF-KIT-001 §4 rule 3).
@@ -90,3 +101,4 @@ Username-pattern routing is forbidden. API stays AuthZ truth; nav renders only r
 | Ver | Date | Notes |
 | --- | --- | --- |
 | 1.0 | 2026-08-15 | Initial portal chrome freeze from SPEC-PORTALS-001 Phase 0 |
+| 1.1 | 2026-08-20 | Owner GO: Digii hybrid chrome (EduNexus reference) for Platform/Admin/Head; pairs with DSF-KIT-001 v1.7 Tailwind/shadcn stack |

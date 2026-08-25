@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { prefersAdminHome, prefersParentHome, prefersStaffHome } from './home-preference.js';
+import {
+  prefersAdminHome,
+  prefersParentHome,
+  prefersStaffHome,
+  prefersStudentHome,
+} from './home-preference';
 
 describe('prefersAdminHome', () => {
   it('routes owner/admin roles to admin', () => {
@@ -23,7 +28,7 @@ describe('prefersAdminHome', () => {
   });
 });
 
-describe('prefersStaffHome / prefersParentHome', () => {
+describe('prefersStaffHome / prefersParentHome / prefersStudentHome', () => {
   it('routes bursar / finance.manage to admin, not teacher', () => {
     expect(prefersAdminHome({ roles: [{ code: 'bursar' }], permissions: [] })).toBe(true);
     expect(prefersAdminHome({ roles: [], permissions: ['finance.manage'] })).toBe(true);
@@ -37,5 +42,11 @@ describe('prefersStaffHome / prefersParentHome', () => {
     expect(prefersParentHome({ roles: [{ code: 'parent' }], permissions: [] })).toBe(true);
     expect(prefersParentHome({ roles: [], permissions: ['parent.guardian.read'] })).toBe(true);
     expect(prefersParentHome({ roles: [{ code: 'staff' }], permissions: [] })).toBe(false);
+  });
+
+  it('detects student role and student.self.read', () => {
+    expect(prefersStudentHome({ roles: [{ code: 'student' }], permissions: [] })).toBe(true);
+    expect(prefersStudentHome({ roles: [], permissions: ['student.self.read'] })).toBe(true);
+    expect(prefersStudentHome({ roles: [{ code: 'parent' }], permissions: [] })).toBe(false);
   });
 });

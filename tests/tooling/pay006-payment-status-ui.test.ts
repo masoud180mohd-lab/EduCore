@@ -28,10 +28,10 @@ describe('PAY-006 payment status UI', () => {
     );
     expect(page).toContain('/api/v1/payments/${paymentId}/sync-provider');
     expect(page).toContain('/api/v1/payments/mobile-money');
-    expect(page).toContain('Refresh from provider');
-    expect(page).toContain('Request mobile money');
+    expect(page).toContain("t('invoice.refreshProvider')");
+    expect(page).toContain("t('invoice.requestMoMo')");
     expect(page).toContain('canSyncProviderPayment');
-    expect(page).toContain('Reconcile');
+    expect(page).toContain("t('invoice.reconcile')");
   });
 
   it('fees hub can batch sync-provider-pending', () => {
@@ -40,6 +40,6 @@ describe('PAY-006 payment status UI', () => {
       'utf8',
     );
     expect(hub).toContain('/api/v1/payments/sync-provider-pending');
-    expect(hub).toContain('Sync pending (tenant)');
+    expect(hub).toContain("t('fees.syncPending')");
   });
 });

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { type FormEvent, useEffect, useState } from 'react';
 
 import {
-  AdminPageHeader,
   AdminTable,
   ResourceList,
   ResourceListPagination,
@@ -87,13 +86,25 @@ export default function PlatformSchoolsPage() {
   }
 
   return (
-    <div className="stack">
-      <AdminPageHeader title={t('platform.schoolsTitle')} description={t('platform.schoolsDescription')}>
-        <Link className="btn btn-primary" href="/platform/tenants/new">
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">
+            {t('platform.schoolsTitle')}
+          </h1>
+          <p className="mt-1 text-sm text-[var(--muted-foreground)]">{t('platform.schoolsDescription')}</p>
+        </div>
+        <Link
+          className="inline-flex h-10 min-h-11 items-center justify-center rounded-md bg-[var(--primary)] px-4 text-sm font-medium text-[var(--primary-foreground)] hover:opacity-90"
+          href="/platform/tenants/new"
+        >
           {t('platform.register')}
         </Link>
-      </AdminPageHeader>
-      <form className="filters" onSubmit={onFilter}>
+      </div>
+      <form
+        className="flex flex-wrap items-end gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm"
+        onSubmit={onFilter}
+      >
         <label>
           {t('platform.filterStatus')}
           <select

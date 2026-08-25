@@ -40,7 +40,7 @@ describe('IMP-026 org-scoped user roles', () => {
       path.join(root, 'apps/web/src/app/t/[tenantId]/admin/users/[userId]/page.tsx'),
       'utf8',
     );
-    expect(page).toContain('Entire tenant');
+    expect(page).toContain("t('users.entireTenant')");
     expect(page).toContain('/api/v1/organizations');
     expect(page).toContain('organizationId');
     expect(page).toMatch(/tenant-wide/i);

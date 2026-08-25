@@ -89,6 +89,24 @@ export class StudentsService {
     return { data: student };
   }
 
+  /** GET /me/student — bound learner profile (DSF-009). */
+  async getMeStudent(actorUserId: string, tenantId: string): Promise<GetStudentResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!this.students.isAvailable()) {
+      throw AppError.notFound('Student not found.');
+    }
+    const row = await this.students.getByUserIdForTenant(actorUserId, tenantId, actorUserId);
+    if (row === null) {
+      throw AppError.notFound('Student not found.');
+    }
+    return { data: row };
+  }
+
   async summarizeForTenant(
     actorUserId: string,
     tenantId: string,

@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { QueryProvider } from '@/components/QueryProvider';
 import {
   MESSAGES,
   formatMessage,
@@ -28,18 +29,25 @@ type AppPreferencesContextValue = {
 
 const AppPreferencesContext = createContext<AppPreferencesContextValue | null>(null);
 
-function initialTheme(): UiTheme {
-  const stored = readStoredTheme();
-  if (stored !== null) return stored;
-  if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
-  }
-  return 'light';
-}
+/** SSR-safe defaults — real prefs sync after mount (ThemeBootScript already painted DOM). */
+const SSR_THEME: UiTheme = 'light';
+const SSR_LOCALE: UiLocale = 'en';
 
 export function AppProviders({ children }: { readonly children: ReactNode }) {
-  const [locale, setLocaleState] = useState<UiLocale>(() => readStoredLocale() ?? 'en');
-  const [theme, setThemeState] = useState<UiTheme>(() => initialTheme());
+  const [locale, setLocaleState] = useState<UiLocale>(SSR_LOCALE);
+  const [theme, setThemeState] = useState<UiTheme>(SSR_THEME);
+
+  useEffect(() => {
+    const storedTheme = readStoredTheme();
+    const nextTheme: UiTheme =
+      storedTheme ??
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const nextLocale = readStoredLocale() ?? 'en';
+    setThemeState(nextTheme);
+    setLocaleState(nextLocale);
+    applyThemeToDocument(nextTheme);
+    document.documentElement.lang = nextLocale;
+  }, []);
 
   useEffect(() => {
     applyThemeToDocument(theme);
@@ -68,7 +76,11 @@ export function AppProviders({ children }: { readonly children: ReactNode }) {
     [locale, theme, setLocale, setTheme, t],
   );
 
-  return <AppPreferencesContext.Provider value={value}>{children}</AppPreferencesContext.Provider>;
+  return (
+    <QueryProvider>
+      <AppPreferencesContext.Provider value={value}>{children}</AppPreferencesContext.Provider>
+    </QueryProvider>
+  );
 }
 
 export function useAppPreferences(): AppPreferencesContextValue {

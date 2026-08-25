@@ -17,14 +17,15 @@ import {
 import type { MessageKey } from '@/lib/i18n/messages';
 
 const LABELS: Record<WorkspaceId, MessageKey> = {
+  head: 'head.chip',
   office: 'shell.office',
   teacher: 'teacher.nav',
   parent: 'parent.nav',
+  student: 'student.nav',
 };
 
 /**
- * Jump between office / teacher / parent shells (owner/admin preview all three).
- * Student is shown disabled — there is no student login portal.
+ * Jump between office / teacher / parent / student shells (owner/admin may preview).
  */
 export function WorkspaceSwitcher({ tenantId }: { readonly tenantId: string }) {
   const pathname = usePathname();
@@ -63,13 +64,6 @@ export function WorkspaceSwitcher({ tenantId }: { readonly tenantId: string }) {
           </Link>
         );
       })}
-      <span
-        className="admin-console-chip is-disabled"
-        title={t('shell.studentPortalHint')}
-        aria-disabled="true"
-      >
-        {t('shell.student')}
-      </span>
     </nav>
   );
 }

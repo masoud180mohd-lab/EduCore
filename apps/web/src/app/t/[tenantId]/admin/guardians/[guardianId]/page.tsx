@@ -12,6 +12,10 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -344,241 +348,277 @@ export default function AdminGuardianDetailPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <p className="muted">
-        <Link href={`/t/${tenantId}/admin/guardians`}>← {t('guardians.title')}</Link>
-      </p>
-      <AdminPageHeader title={guardian?.displayName ?? t('guardians.guardian')} />
-      <p>
-        <Link
-          className="btn btn-secondary"
-          href={`/t/${tenantId}/admin/guardians/${guardianId}/fees`}
-        >
-          {t('guardians.fees')}
-        </Link>
-      </p>
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {info !== null ? <Banner tone="info">{info}</Banner> : null}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <Link
+            href={`/t/${tenantId}/admin/guardians`}
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+          >
+            ← {t('guardians.title')}
+          </Link>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <AdminPageHeader title={guardian?.displayName ?? t('guardians.guardian')} />
+            <Button asChild variant="secondary">
+              <Link href={`/t/${tenantId}/admin/guardians/${guardianId}/fees`}>
+                {t('guardians.fees')}
+              </Link>
+            </Button>
+          </div>
+        </div>
 
-      {guardian !== null ? (
-        <form className="stack card" onSubmit={(e) => void onSaveProfile(e)}>
-          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('common.profile')}</h2>
-          <div className="field">
-            <label htmlFor="displayName">{t('common.displayName')}</label>
-            <input
-              id="displayName"
-              required
-              maxLength={200}
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="phone">{t('common.phoneOptional')}</label>
-            <input
-              id="phone"
-              maxLength={32}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="email">{t('common.emailOptional')}</label>
-            <input
-              id="email"
-              type="email"
-              maxLength={320}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="status">{t('common.status')}</label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as GuardianStatus)}
-            >
-              {GUARDIAN_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {info !== null ? <Banner tone="info">{info}</Banner> : null}
+
+        {guardian !== null ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('common.profile')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="flex flex-col gap-4 max-w-md" onSubmit={(e) => void onSaveProfile(e)}>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="displayName">{t('common.displayName')}</Label>
+                  <Input
+                    id="displayName"
+                    required
+                    maxLength={200}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="phone">{t('common.phoneOptional')}</Label>
+                  <Input
+                    id="phone"
+                    maxLength={32}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="email">{t('common.emailOptional')}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    maxLength={320}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="status">{t('common.status')}</Label>
+                  <select
+                    id="status"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as GuardianStatus)}
+                  >
+                    {GUARDIAN_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Button type="submit" disabled={busy}>
+                    {busy ? t('common.saving') : t('common.save')}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        ) : error === null ? (
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+        ) : null}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('guardians.portalBind')}</CardTitle>
+            <CardDescription>{t('guardians.portalBindDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {usersError !== null ? <Banner tone="error">{usersError}</Banner> : null}
+            {guardian?.userId !== null && guardian?.userId !== undefined ? (
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div>
+                  <strong className="text-sm font-semibold">{boundLabel ?? t('guardians.boundUser')}</strong>
+                  <div className="text-xs text-muted-foreground">{guardian.userId}</div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => setConfirm({ kind: 'unbind' })}
+                >
+                  {t('guardians.unbindUser')}
+                </Button>
+              </div>
+            ) : (
+              <form className="flex flex-col gap-4 max-w-md" onSubmit={(e) => void onBind(e)}>
+                {!usersLoading && usersError === null && users.length === 0 ? (
+                  <Banner tone="info">{t('guardians.noUsers')}</Banner>
+                ) : null}
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="bindUserSelect">{t('guardians.schoolUser')}</Label>
+                  <select
+                    id="bindUserSelect"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={showAdvancedUuid ? '' : bindUserId}
+                    disabled={usersLoading || users.length === 0 || showAdvancedUuid}
+                    onChange={(e) => setBindUserId(e.target.value)}
+                    required={!showAdvancedUuid}
+                  >
+                    <option value="">
+                      {usersLoading ? t('guardians.loadingUsers') : t('guardians.selectUser')}
+                    </option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {formatUserBindLabel(u)}
+                      </option>
+                    ))}
+                  </select>
+                  <ResourceListPagination
+                    nextCursor={usersCursor}
+                    loadingMore={loadingMoreUsers}
+                    disabled={showAdvancedUuid}
+                    onLoadMore={() => {
+                      void loadUsers({ cursor: usersCursor, append: true });
+                    }}
+                  />
+                </div>
+                <div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowAdvancedUuid((v) => !v);
+                      setBindUserId('');
+                    }}
+                  >
+                    {showAdvancedUuid ? t('guardians.hideUuid') : t('guardians.showUuid')}
+                  </Button>
+                </div>
+                {showAdvancedUuid ? (
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="bindUserId">{t('guardians.userId')}</Label>
+                    <Input
+                      id="bindUserId"
+                      required
+                      value={bindUserId}
+                      onChange={(e) => setBindUserId(e.target.value)}
+                      placeholder={t('guardians.userIdPlaceholder')}
+                    />
+                  </div>
+                ) : null}
+                <div>
+                  <Button type="submit" disabled={busy || bindUserId === ''}>
+                    {busy ? t('common.saving') : t('guardians.bindUser')}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('guardians.linkedStudents')}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {links.length === 0 ? <Banner tone="info">{t('guardians.noLinks')}</Banner> : null}
+            <ul className="flex flex-col gap-2">
+              {links.map((link) => (
+                <li key={link.id} className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <strong className="text-sm font-semibold">{names[link.studentId] ?? link.studentId}</strong>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {link.relationshipType} · {link.status}
+                      {link.isPrimary ? ` · ${t('common.primary')}` : ''}
+                    </div>
+                  </div>
+                  {link.status === 'active' ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => setConfirm({ kind: 'end-link', linkId: link.id })}
+                    >
+                      {t('guardians.endLink')}
+                    </Button>
+                  ) : null}
+                </li>
               ))}
-            </select>
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy ? t('common.saving') : t('common.save')}
-          </button>
-        </form>
-      ) : error === null ? (
-        <p className="muted">{t('common.loading')}</p>
-      ) : null}
+            </ul>
 
-      <h2 style={{ fontSize: '1.1rem' }}>{t('guardians.portalBind')}</h2>
-      <p className="muted">
-        {t('guardians.portalBindDesc')}
-      </p>
-      {usersError !== null ? <Banner tone="error">{usersError}</Banner> : null}
-      {guardian?.userId !== null && guardian?.userId !== undefined ? (
-        <div className="card stack">
-          <div>
-            <strong>{boundLabel ?? t('guardians.boundUser')}</strong>
-            <div className="muted">{guardian.userId}</div>
-          </div>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            disabled={busy}
-            onClick={() => setConfirm({ kind: 'unbind' })}
-          >
-            {t('guardians.unbindUser')}
-          </button>
-        </div>
-      ) : (
-        <form className="stack card" onSubmit={(e) => void onBind(e)}>
-          {!usersLoading && usersError === null && users.length === 0 ? (
-            <Banner tone="info">
-              {t('guardians.noUsers')}
-            </Banner>
-          ) : null}
-          <div className="field">
-            <label htmlFor="bindUserSelect">{t('guardians.schoolUser')}</label>
-            <select
-              id="bindUserSelect"
-              value={showAdvancedUuid ? '' : bindUserId}
-              disabled={usersLoading || users.length === 0 || showAdvancedUuid}
-              onChange={(e) => setBindUserId(e.target.value)}
-              required={!showAdvancedUuid}
-            >
-              <option value="">{usersLoading ? t('guardians.loadingUsers') : t('guardians.selectUser')}</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {formatUserBindLabel(u)}
-                </option>
-              ))}
-            </select>
-            <ResourceListPagination
-              nextCursor={usersCursor}
-              loadingMore={loadingMoreUsers}
-              disabled={showAdvancedUuid}
-              onLoadMore={() => {
-                void loadUsers({ cursor: usersCursor, append: true });
-              }}
-            />
-          </div>
-          <div>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                setShowAdvancedUuid((v) => !v);
-                setBindUserId('');
-              }}
-            >
-              {showAdvancedUuid ? t('guardians.hideUuid') : t('guardians.showUuid')}
-            </button>
-          </div>
-          {showAdvancedUuid ? (
-            <div className="field">
-              <label htmlFor="bindUserId">{t('guardians.userId')}</label>
-              <input
-                id="bindUserId"
-                required
-                value={bindUserId}
-                onChange={(e) => setBindUserId(e.target.value)}
-                placeholder={t('guardians.userIdPlaceholder')}
-              />
-            </div>
-          ) : null}
-          <button type="submit" className="btn btn-primary" disabled={busy || bindUserId === ''}>
-            {busy ? t('common.saving') : t('guardians.bindUser')}
-          </button>
-        </form>
-      )}
+            <form className="flex flex-col gap-4 border-t pt-4 max-w-md" onSubmit={(e) => void onLink(e)}>
+              <h3 className="text-sm font-semibold">{t('guardians.linkStudent')}</h3>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="studentId">{t('students.student')}</Label>
+                <select
+                  id="studentId"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                  value={studentId}
+                  onChange={(e) => setStudentId(e.target.value)}
+                >
+                  <option value="">{t('common.selectStudent')}</option>
+                  {students.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.displayName}
+                    </option>
+                  ))}
+                </select>
+                <ResourceListPagination
+                  nextCursor={studentsCursor}
+                  loadingMore={loadingMoreStudents}
+                  onLoadMore={() => {
+                    void loadStudentPicker({ cursor: studentsCursor, append: true });
+                  }}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="relationshipType">{t('common.relationship')}</Label>
+                <select
+                  id="relationshipType"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={relationshipType}
+                  onChange={(e) => setRelationshipType(e.target.value)}
+                >
+                  <option value="mother">{t('rel.mother')}</option>
+                  <option value="father">{t('rel.father')}</option>
+                  <option value="guardian">{t('rel.guardian')}</option>
+                  <option value="other">{t('rel.other')}</option>
+                </select>
+              </div>
+              <div>
+                <Button type="submit" disabled={busy || studentId === ''}>
+                  {busy ? t('common.saving') : t('guardians.link')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
-      <h2 style={{ fontSize: '1.1rem' }}>{t('guardians.linkedStudents')}</h2>
-      {links.length === 0 ? <Banner tone="info">{t('guardians.noLinks')}</Banner> : null}
-      <ul className="list">
-        {links.map((link) => (
-          <li key={link.id} className="card">
-            <strong>{names[link.studentId] ?? link.studentId}</strong>
-            <div className="muted">
-              {link.relationshipType} · {link.status}
-              {link.isPrimary ? ` · ${t('common.primary')}` : ''}
-            </div>
-            {link.status === 'active' ? (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                disabled={busy}
-                onClick={() => setConfirm({ kind: 'end-link', linkId: link.id })}
-              >
-                {t('guardians.endLink')}
-              </button>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-
-      <form className="stack card" onSubmit={(e) => void onLink(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('guardians.linkStudent')}</h2>
-        <div className="field">
-          <label htmlFor="studentId">{t('students.student')}</label>
-          <select
-            id="studentId"
-            required
-            value={studentId}
-            onChange={(e) => setStudentId(e.target.value)}
-          >
-            <option value="">{t('common.selectStudent')}</option>
-            {students.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.displayName}
-              </option>
-            ))}
-          </select>
-          <ResourceListPagination
-            nextCursor={studentsCursor}
-            loadingMore={loadingMoreStudents}
-            onLoadMore={() => {
-              void loadStudentPicker({ cursor: studentsCursor, append: true });
-            }}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="relationshipType">{t('common.relationship')}</label>
-          <select
-            id="relationshipType"
-            value={relationshipType}
-            onChange={(e) => setRelationshipType(e.target.value)}
-          >
-            <option value="mother">{t('rel.mother')}</option>
-            <option value="father">{t('rel.father')}</option>
-            <option value="guardian">{t('rel.guardian')}</option>
-            <option value="other">{t('rel.other')}</option>
-          </select>
-        </div>
-        <button type="submit" className="btn btn-primary" disabled={busy || studentId === ''}>
-          {busy ? t('common.saving') : t('guardians.link')}
-        </button>
-      </form>
-
-      <ConfirmDialog
-        open={confirm !== null}
-        title={confirm?.kind === 'unbind' ? t('guardians.unbindTitle') : t('guardians.endLinkTitle')}
-        body={
-          confirm?.kind === 'unbind' ? t('guardians.unbindBody') : t('guardians.endLinkBody')
-        }
-        confirmLabel={confirm?.kind === 'unbind' ? t('guardians.unbindUser') : t('guardians.endLink')}
-        danger
-        busy={busy}
-        onCancel={() => {
-          if (!busy) setConfirm(null);
-        }}
-        onConfirm={() => {
-          if (confirm?.kind === 'unbind') void runUnbind();
-          else if (confirm?.kind === 'end-link') void runEnd(confirm.linkId);
-        }}
-      />
+        <ConfirmDialog
+          open={confirm !== null}
+          title={confirm?.kind === 'unbind' ? t('guardians.unbindTitle') : t('guardians.endLinkTitle')}
+          body={
+            confirm?.kind === 'unbind' ? t('guardians.unbindBody') : t('guardians.endLinkBody')
+          }
+          confirmLabel={confirm?.kind === 'unbind' ? t('guardians.unbindUser') : t('guardians.endLink')}
+          danger
+          busy={busy}
+          onCancel={() => {
+            if (!busy) setConfirm(null);
+          }}
+          onConfirm={() => {
+            if (confirm?.kind === 'unbind') void runUnbind();
+            else if (confirm?.kind === 'end-link') void runEnd(confirm.linkId);
+          }}
+        />
+      </div>
     </AdminShell>
   );
 }

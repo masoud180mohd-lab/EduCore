@@ -8,7 +8,7 @@ This document prevents engineers and AI agents from mistaking intentional deferr
 
 | Area | Current Limitation Or Deferral | Rule |
 |---|---|---|
-| Production readiness | Staging lab MVP live (FRA). Prod Fly `educore-api` + `educore-web` infra-live. Public-school cutover is **Owner** decision. `42` is a historical checklist (SOLO-GOV-002). | Do not claim Mixx/M-Pesa works; office collection is the live path (PAY-007); `/health` NODE_ENV is not a cutover |
+| Production readiness | Staging lab MVP live (FRA). Prod Fly `educore-api` + `educore-web` infra-live. **M9** hardening in progress (M9-001 pack Done). Gated-school cutover is **Owner** decision via `docs/engineering/runbooks/M9-pilot-cutover-checklist.md`. `42` is a historical checklist (SOLO-GOV-002). | Do not claim Mixx/M-Pesa works; office collection is the live path (PAY-007); `/health` NODE_ENV is not a cutover |
 | Freeze authority | Slice freezes are **Owner-accepted** (SOLO-GOV-002). Independent Board / named architect seats are retired | Do not invent three independent signers; do not wait for them |
 | Database | Slice DBF artifacts exist under `docs/engineering/database-freeze/`; **kit-wide** ERD/index/RLS pack is not a single Accepted Freeze v1.0 document | New tables require a DBF revision for that slice before persistence work |
 | API | Slice ACF / OpenAPI baselines exist; not every future product route is open | New endpoints require ACF revision + IMP gate |

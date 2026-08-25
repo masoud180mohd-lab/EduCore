@@ -1,13 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useAppPreferences, useTenantLocaleHint } from '@/components/AppProviders';
 import { AdminChromeControls } from '@/components/chrome/AdminChromeControls';
+import { DigiiShell, type DigiiNavGroup } from '@/components/chrome/DigiiShell';
+import { DIGII_TOP_ACTIONS_CLASS } from '@/components/chrome/digii-top-actions';
 import { WorkspaceSwitcher } from '@/components/chrome/WorkspaceSwitcher';
+import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/api/client';
 import {
   adminDeniedFallback,
@@ -81,13 +84,10 @@ export function AdminShell({
   readonly children: ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const menuId = useId();
   const { t } = useAppPreferences();
   const [gate, setGate] = useState<GateState>({ kind: 'loading' });
   const [brand, setBrand] = useState(BRAND_FALLBACK);
   const [tenantLocale, setTenantLocale] = useState<string | null>(null);
-  const [navOpen, setNavOpen] = useState(false);
 
   useTenantLocaleHint(tenantLocale);
 
@@ -133,32 +133,10 @@ export function AdminShell({
     };
   }, [router, tenantId]);
 
-  useEffect(() => {
-    setNavOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!navOpen) return;
-    function onKey(event: KeyboardEvent): void {
-      if (event.key === 'Escape') setNavOpen(false);
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [navOpen]);
-
-  useEffect(() => {
-    if (!navOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [navOpen]);
-
   if (gate.kind === 'loading') {
     return (
-      <div className="admin-console-plain">
-        <p className="muted">{t('shell.checkingAccess')}</p>
+      <div className="flex min-h-dvh items-center justify-center bg-[var(--muted)] text-sm text-[var(--muted-foreground)]">
+        {t('shell.checkingAccess')}
       </div>
     );
   }
@@ -167,106 +145,74 @@ export function AdminShell({
     const fallbackHref =
       gate.fallback === 'parent' ? `/t/${tenantId}/parent` : `/t/${tenantId}/teacher`;
     return (
-      <div className="admin-console-plain">
-        <h1>{t('shell.adminUnavailable')}</h1>
-        <div className="banner banner-error" role="alert">
+      <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-4 px-4">
+        <h1 className="text-xl font-semibold">{t('shell.adminUnavailable')}</h1>
+        <div
+          className="rounded-lg border border-[var(--color-danger)]/40 bg-[color-mix(in_srgb,var(--color-danger)_10%,white)] px-4 py-3 text-sm"
+          role="alert"
+        >
           {t('shell.adminUnavailableBody')}
         </div>
-        <p className="stack">
-          <Link className="btn btn-primary" href={fallbackHref}>
-            {gate.fallback === 'parent' ? t('shell.openParent') : t('shell.openTeacher')}
-          </Link>
-          <button
+        <div className="flex flex-wrap gap-2">
+          <Button asChild>
+            <Link href={fallbackHref}>
+              {gate.fallback === 'parent' ? t('shell.openParent') : t('shell.openTeacher')}
+            </Link>
+          </Button>
+          <Button
             type="button"
-            className="btn btn-secondary"
+            variant="secondary"
             onClick={() => {
               clearSession();
               router.replace('/login');
             }}
           >
             {t('shell.logout')}
-          </button>
-        </p>
+          </Button>
+        </div>
       </div>
     );
   }
 
   const base = `/t/${tenantId}/admin`;
-  const groups = groupAdminNav(gate.navIds);
-
-  function isCurrent(href: string): boolean {
-    if (href === base) return pathname === base;
-    return pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
-  }
-
-  function logOut(): void {
-    clearSession();
-    router.replace('/login');
-  }
+  const navGroups: DigiiNavGroup[] = groupAdminNav(gate.navIds).map((group) => ({
+    id: group.id,
+    label: t(groupMessageKey(group.id)),
+    items: group.items.map((id) => {
+      const href = NAV_BY_ID[id].href(base);
+      return {
+        id,
+        href,
+        label: t(navMessageKey(id)),
+        match: id === 'home' ? ('exact' as const) : ('prefix' as const),
+      };
+    }),
+  }));
 
   return (
-    <div className={navOpen ? 'admin-console admin-console-nav-open' : 'admin-console'}>
-      {navOpen ? (
-        <button
-          type="button"
-          className="admin-console-scrim"
-          aria-label={t('shell.closeMenu')}
-          onClick={() => setNavOpen(false)}
-        />
-      ) : null}
-      <aside className="admin-console-rail" aria-label={t('common.navOffice')}>
-        <div className="admin-console-brand">
-          <span className="admin-console-product">EduCore</span>
-          <span className="admin-console-product-meta">{t('shell.office')}</span>
-        </div>
-        <nav aria-label={t('common.navAdmin')} className="admin-nav-groups" id={menuId}>
-          {groups.map((group) => (
-            <div key={group.id} className="admin-nav-group">
-              <span className="admin-nav-group-label" id={`admin-nav-${group.id}`}>
-                {t(groupMessageKey(group.id))}
-              </span>
-              <ul className="admin-nav-group-links" aria-labelledby={`admin-nav-${group.id}`}>
-                {group.items.map((id) => {
-                  const link = NAV_BY_ID[id];
-                  const href = link.href(base);
-                  const current = isCurrent(href);
-                  return (
-                    <li key={id}>
-                      <Link
-                        href={href}
-                        aria-current={current ? 'page' : undefined}
-                        onClick={() => setNavOpen(false)}
-                      >
-                        {t(navMessageKey(id))}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </nav>
-      </aside>
-      <div className="admin-console-workspace">
-        <header className="admin-console-top">
-          <button
-            type="button"
-            className="btn btn-secondary admin-console-menu"
-            aria-expanded={navOpen}
-            aria-controls={menuId}
-            onClick={() => setNavOpen((open) => !open)}
-          >
-            {t('shell.menu')}
-          </button>
-          <strong className="admin-console-school">{brand}</strong>
+    <DigiiShell
+      brand={brand}
+      brandMeta={t('shell.office')}
+      brandHref={base}
+      chipLabel={t('shell.office')}
+      navLabel={t('common.navAdmin')}
+      navGroups={navGroups}
+      portalAccent="#0f6b5c"
+      menuLabel={t('shell.menu')}
+      closeMenuLabel={t('shell.closeMenu')}
+      logoutLabel={t('shell.logout')}
+      onLogout={() => {
+        clearSession();
+        router.replace('/login');
+      }}
+      topActions={
+        <div className={DIGII_TOP_ACTIONS_CLASS}>
           <WorkspaceSwitcher tenantId={tenantId} />
           <AdminChromeControls />
-          <button type="button" className="btn btn-secondary" onClick={logOut}>
-            {t('shell.logout')}
-          </button>
-        </header>
-        <main className="admin-console-main">{children}</main>
-      </div>
-    </div>
+        </div>
+      }
+    >
+      {children}
+    </DigiiShell>
   );
 }

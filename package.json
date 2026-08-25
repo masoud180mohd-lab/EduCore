@@ -20,6 +20,7 @@
     "db:test-lifecycle": "tsx scripts/db-test-lifecycle.ts",
     "seed:admin": "tsx scripts/seed-local-admin.ts",
     "seed:parent-demo": "tsx scripts/seed-parent-demo.ts",
+    "seed:student-demo": "tsx scripts/seed-student-demo.ts",
     "rbac:reconcile-grants": "tsx scripts/reconcile-system-role-grants.ts",
     "ops:prereq": "node scripts/ops-prereq-check.mjs",
     "ops:stg:mfa-hard": "node scripts/ops-stg-mfa-hard.mjs",

@@ -7,6 +7,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
 import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -182,103 +186,121 @@ export default function MarkEntryPage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
-      <p>
-        <Link href={`/t/${tenantId}/teacher/marks`}>← {t('teacher.marksTitle')}</Link>
-      </p>
-      <AdminPageHeader title={t('teacher.enterMarks')}>
-        <p className="muted">
-          {examName}
-          {subject !== null ? (
-            <>
-              {' '}
-              · {t('teacher.maxLabel', { score: String(subject.maxScore) })} ·{' '}
-              <span className={`chip chip-${subject.status === 'draft' ? 'open' : 'closed'}`}>
-                {subject.status}
-              </span>
-            </>
-          ) : null}
-        </p>
-      </AdminPageHeader>
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      {loading ? <p className="muted">{t('common.loading')}</p> : null}
-      {!loading && drafts.length === 0 ? (
-        <Banner tone="warn">{t('teacher.noEnrollments')}</Banner>
-      ) : null}
-
-      <ul className="list">
-        {drafts.map((d) => (
-          <li key={d.studentId} className="mark-row">
-            <div>
-              <strong>{d.displayName}</strong>
-              <div className="muted">{d.studentId}</div>
-            </div>
-            <div className="field" style={{ margin: 0, minWidth: '6rem' }}>
-              <label htmlFor={`score-${d.studentId}`}>{t('teacher.score')}</label>
-              <input
-                id={`score-${d.studentId}`}
-                type="number"
-                min={0}
-                step="0.01"
-                disabled={locked || busy}
-                value={d.score}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setDrafts((prev) =>
-                    prev.map((row) =>
-                      row.studentId === d.studentId ? { ...row, score: value } : row,
-                    ),
-                  );
-                }}
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
-
-      <div className="bottom-bar actions">
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={locked || busy || drafts.length === 0}
-          onClick={() => void onSave()}
-        >
-          {busy ? t('common.saving') : t('common.save')}
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          disabled={locked || busy}
-          onClick={() => setConfirmSubmit(true)}
-        >
-          {t('common.submit')}
-        </button>
-        {canApprove ? (
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={busy}
-            onClick={() => void onApprove()}
+      <div className="flex flex-col gap-6">
+        <div>
+          <Link
+            className="text-xs font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            href={`/t/${tenantId}/teacher/marks`}
           >
-            {t('common.approve')}
-          </button>
-        ) : null}
-      </div>
+            ← {t('teacher.marksTitle')}
+          </Link>
+        </div>
 
-      <ConfirmDialog
-        open={confirmSubmit}
-        title={t('teacher.submitMarks')}
-        body={t('teacher.submitBody')}
-        confirmLabel={t('common.submit')}
-        danger
-        busy={busy}
-        onCancel={() => {
-          if (!busy) setConfirmSubmit(false);
-        }}
-        onConfirm={() => {
-          void runSubmit();
-        }}
-      />
+        <AdminPageHeader title={t('teacher.enterMarks')}>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
+            <span>{examName}</span>
+            {subject !== null ? (
+              <>
+                <span>·</span>
+                <span>{t('teacher.maxLabel', { score: String(subject.maxScore) })}</span>
+                <span>·</span>
+                <Badge variant={subject.status === 'draft' ? 'secondary' : 'default'}>
+                  {subject.status}
+                </Badge>
+              </>
+            ) : null}
+          </div>
+        </AdminPageHeader>
+
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {info !== null ? <Banner tone="info">{info}</Banner> : null}
+        {loading ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p> : null}
+        {!loading && drafts.length === 0 ? (
+          <Banner tone="warn">{t('teacher.noEnrollments')}</Banner>
+        ) : null}
+
+        <div className="flex flex-col gap-2.5">
+          {drafts.map((d) => (
+            <Card key={d.studentId} className="transition-colors hover:bg-muted/30">
+              <CardContent className="p-3 sm:p-4 flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                  <span className="font-semibold text-sm sm:text-base text-foreground">
+                    {d.displayName}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{d.studentId}</span>
+                </div>
+
+                <div className="flex items-center gap-2 max-w-[7rem]">
+                  <Input
+                    id={`score-${d.studentId}`}
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="Score"
+                    className="h-9 text-right"
+                    disabled={locked || busy}
+                    value={d.score}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setDrafts((prev) =>
+                        prev.map((row) =>
+                          row.studentId === d.studentId ? { ...row, score: value } : row,
+                        ),
+                      );
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="sticky bottom-4 z-10 flex items-center gap-3 rounded-xl border border-border bg-card/95 p-3 shadow-md backdrop-blur-sm">
+          <Button
+            type="button"
+            className="flex-1 sm:flex-none"
+            disabled={locked || busy || drafts.length === 0}
+            onClick={() => void onSave()}
+          >
+            {busy ? t('common.saving') : t('common.save')}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="flex-1 sm:flex-none"
+            disabled={locked || busy}
+            onClick={() => setConfirmSubmit(true)}
+          >
+            {t('common.submit')}
+          </Button>
+          {canApprove ? (
+            <Button
+              type="button"
+              className="flex-1 sm:flex-none"
+              disabled={busy}
+              onClick={() => void onApprove()}
+            >
+              {t('common.approve')}
+            </Button>
+          ) : null}
+        </div>
+
+        <ConfirmDialog
+          open={confirmSubmit}
+          title={t('teacher.submitMarks')}
+          body={t('teacher.submitBody')}
+          confirmLabel={t('common.submit')}
+          danger
+          busy={busy}
+          onCancel={() => {
+            if (!busy) setConfirmSubmit(false);
+          }}
+          onConfirm={() => {
+            void runSubmit();
+          }}
+        />
+      </div>
     </TeacherShell>
   );
 }
+

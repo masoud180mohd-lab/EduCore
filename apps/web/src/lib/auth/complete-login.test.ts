@@ -22,7 +22,7 @@ vi.mock('@/lib/api/client', () => ({
 }));
 
 import { apiRequest } from '@/lib/api/client';
-import { completeLoginFromTokens, verifyMfaAndComplete } from './complete-login.js';
+import { completeLoginFromTokens, verifyMfaAndComplete } from './complete-login';
 
 describe('completeLoginFromTokens', () => {
   afterEach(() => {

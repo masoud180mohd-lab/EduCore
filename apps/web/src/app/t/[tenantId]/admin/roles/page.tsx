@@ -13,6 +13,10 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -99,70 +103,95 @@ export default function AdminRolesPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader title={t('roles.title')} description={t('roles.description')} />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      <div className="flex flex-col gap-6">
+        <AdminPageHeader title={t('roles.title')} description={t('roles.description')} />
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
-      <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">{t('roles.create')}</h2>
-        <label className="field">
-          <span>{t('common.code')}</span>
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-            pattern="^[a-z][a-z0-9_]{1,63}$"
-            placeholder="e.g. bursar_clerk"
-            maxLength={64}
-          />
-        </label>
-        <label className="field">
-          <span>{t('common.name')}</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} />
-        </label>
-        <button className="btn btn-primary" type="submit" disabled={busy}>
-          {busy ? t('common.saving') : t('common.create')}
-        </button>
-      </form>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('roles.create')}</CardTitle>
+            <CardDescription>{t('roles.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="flex flex-col gap-4 max-w-lg" onSubmit={(e) => void onCreate(e)}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="code">{t('common.code')}</Label>
+                  <Input
+                    id="code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    required
+                    pattern="^[a-z][a-z0-9_]{1,63}$"
+                    placeholder="e.g. bursar_clerk"
+                    maxLength={64}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="name">{t('common.name')}</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    maxLength={120}
+                    placeholder="Bursar Clerk"
+                  />
+                </div>
+              </div>
+              <div>
+                <Button type="submit" disabled={busy}>
+                  {busy ? t('common.saving') : t('common.create')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
-      <ResourceList
-        loading={loading}
-        empty={t('roles.empty')}
-        isEmpty={rows.length === 0}
-        variant="table"
-        footer={
-          <ResourceListPagination
-            nextCursor={nextCursor}
-            loadingMore={loadingMore}
-            onLoadMore={() => {
-              void loadPage({ cursor: nextCursor, append: true });
-            }}
-          />
-        }
-      >
-        <AdminTable
-          caption={t('roles.title')}
-          headers={[t('common.name'), t('common.code'), t('roles.kind'), t('roles.permissions'), '']}
+        <ResourceList
+          loading={loading}
+          empty={t('roles.empty')}
+          isEmpty={rows.length === 0}
+          variant="table"
+          footer={
+            <ResourceListPagination
+              nextCursor={nextCursor}
+              loadingMore={loadingMore}
+              onLoadMore={() => {
+                void loadPage({ cursor: nextCursor, append: true });
+              }}
+            />
+          }
         >
-          {rows.map((role) => (
-            <tr key={role.id}>
-              <td>
-                <Link href={`/t/${tenantId}/admin/roles/${role.id}`}>{role.name}</Link>
-              </td>
-              <td className="muted">{role.code}</td>
-              <td className="muted">{role.isSystem ? t('roles.system') : t('roles.custom')}</td>
-              <td className="muted">{role.permissions.length}</td>
-              <td className="admin-table-actions">
-                <Link
-                  className="btn btn-secondary admin-table-open"
-                  href={`/t/${tenantId}/admin/roles/${role.id}`}
-                >
-                  {t('common.open')}
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </AdminTable>
-      </ResourceList>
+          <AdminTable
+            caption={t('roles.title')}
+            headers={[t('common.name'), t('common.code'), t('roles.kind'), t('roles.permissions'), '']}
+          >
+            {rows.map((role) => (
+              <tr key={role.id}>
+                <td className="font-medium">
+                  <Link
+                    href={`/t/${tenantId}/admin/roles/${role.id}`}
+                    className="hover:underline text-primary"
+                  >
+                    {role.name}
+                  </Link>
+                </td>
+                <td className="text-muted-foreground">{role.code}</td>
+                <td className="text-muted-foreground">{role.isSystem ? t('roles.system') : t('roles.custom')}</td>
+                <td className="text-muted-foreground">{role.permissions.length}</td>
+                <td className="admin-table-actions">
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href={`/t/${tenantId}/admin/roles/${role.id}`}>
+                      {t('common.open')}
+                    </Link>
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </AdminTable>
+        </ResourceList>
+      </div>
     </AdminShell>
   );
 }

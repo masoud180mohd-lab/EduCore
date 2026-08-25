@@ -7,6 +7,10 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { type PermissionRow, type RoleRow } from '@/lib/roles/types';
@@ -113,79 +117,111 @@ export default function AdminRoleDetailPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <p className="muted">
-        <Link href={`/t/${tenantId}/admin/roles`}>← {t('roles.title')}</Link>
-      </p>
-      <AdminPageHeader title={row?.name || t('roles.role')}>
-        {row !== null ? (
-          <p className="muted">
-            Code: {row.code} · {row.isSystem ? 'System' : 'Custom'}
-          </p>
-        ) : null}
-      </AdminPageHeader>
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {info !== null ? <Banner tone="info">{info}</Banner> : null}
-
-      {row !== null ? (
-        <div className="stack">
-          <form className="card stack" onSubmit={(e) => void onRename(e)}>
-            <label className="field">
-              <span>{t('common.displayName')}</span>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                maxLength={120}
-              />
-            </label>
-            <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? t('common.saving') : t('common.save')}
-            </button>
-          </form>
-
-          {row.isSystem ? (
-            <div className="stack">
-              <h2>{t('roles.permissions')}</h2>
-              <p className="muted">{t('roles.systemReadOnly')}</p>
-              <ul className="list">
-                {row.permissions.map((code) => (
-                  <li key={code} className="muted">
-                    {code}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <form className="card stack" onSubmit={(e) => void onSavePermissions(e)}>
-              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('roles.permissions')}</h2>
-              <div className="stack">
-                {catalog.map((perm) => (
-                  <label
-                    key={perm.id}
-                    className="field"
-                    style={{ flexDirection: 'row', gap: '0.5rem' }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selected.has(perm.code)}
-                      onChange={() => togglePermission(perm.code)}
-                    />
-                    <span>
-                      <strong>{perm.code}</strong>
-                      <span className="muted"> — {perm.description}</span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-              <button className="btn btn-primary" type="submit" disabled={busy}>
-                {busy ? t('common.saving') : t('common.save')}
-              </button>
-            </form>
-          )}
+      <div className="flex flex-col gap-6">
+        <div>
+          <Link
+            href={`/t/${tenantId}/admin/roles`}
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+          >
+            ← {t('roles.title')}
+          </Link>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
+            <AdminPageHeader title={row?.name || t('roles.role')}>
+              {row !== null ? (
+                <div className="text-sm text-muted-foreground mt-1">
+                  Code: <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{row.code}</code> · {row.isSystem ? 'System' : 'Custom'}
+                </div>
+              ) : null}
+            </AdminPageHeader>
+          </div>
         </div>
-      ) : error === null ? (
-        <p className="muted">{t('common.loading')}</p>
-      ) : null}
+
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {info !== null ? <Banner tone="info">{info}</Banner> : null}
+
+        {row !== null ? (
+          <div className="flex flex-col gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('common.displayName')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form className="flex flex-col gap-4 max-w-md" onSubmit={(e) => void onRename(e)}>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="name">{t('common.displayName')}</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      maxLength={120}
+                    />
+                  </div>
+                  <div>
+                    <Button type="submit" disabled={busy}>
+                      {busy ? t('common.saving') : t('common.save')}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {row.isSystem ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('roles.permissions')}</CardTitle>
+                  <CardDescription>{t('roles.systemReadOnly')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {row.permissions.map((code) => (
+                      <div key={code} className="rounded border bg-muted/40 p-2.5 text-xs font-mono">
+                        {code}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('roles.permissions')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form className="flex flex-col gap-4" onSubmit={(e) => void onSavePermissions(e)}>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {catalog.map((perm) => (
+                        <label
+                          key={perm.id}
+                          className="flex items-start gap-3 rounded-lg border p-3 hover:bg-muted/40 cursor-pointer transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            checked={selected.has(perm.code)}
+                            onChange={() => togglePermission(perm.code)}
+                          />
+                          <div className="text-sm">
+                            <strong className="font-semibold block">{perm.code}</strong>
+                            <span className="text-xs text-muted-foreground">{perm.description}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    <div>
+                      <Button type="submit" disabled={busy}>
+                        {busy ? t('common.saving') : t('common.save')}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : error === null ? (
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+        ) : null}
+      </div>
     </AdminShell>
   );
 }

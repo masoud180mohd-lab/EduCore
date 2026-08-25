@@ -13,6 +13,10 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   adminEnrollmentsCreatePath,
   adminEnrollmentPath,
@@ -267,149 +271,192 @@ export default function AdminStudentDetailPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <p className="muted">
-        <Link href={`/t/${tenantId}/admin/students`}>← {t('students.back')}</Link>
-      </p>
-      <AdminPageHeader title={row?.displayName ?? t('students.student')} />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      {row !== null ? (
-        <div className="stack">
-          <form className="card stack" onSubmit={(e) => void onSave(e)}>
-            <label className="field">
-              <span>{t('students.displayName')}</span>
-              <input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                required
-                maxLength={200}
-              />
-            </label>
-            <label className="field">
-              <span>{t('students.studentCode')}</span>
-              <input
-                value={studentCode}
-                onChange={(e) => setStudentCode(e.target.value)}
-                pattern="[A-Za-z0-9._-]{0,64}"
-                title={t('students.codeHint')}
-              />
-            </label>
-            <label className="field">
-              <span>{t('common.status')}</span>
-              <select value={status} onChange={(e) => setStatus(e.target.value as StudentStatus)}>
-                {STUDENT_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? t('common.saving') : t('students.saveChanges')}
-            </button>
-          </form>
-
-          {showAcademic ? (
-            <RelatedRecordsSection
-              title={t('students.enrollments')}
-              loading={enrollmentLoading}
-              error={enrollmentError}
-              emptyMessage={t('students.noEnrollments')}
-              isEmpty={enrollments.length === 0}
-              createHref={adminEnrollmentsCreatePath(tenantId, studentId)}
-              createLabel={t('students.createEnrollment')}
-              footer={
-                <ResourceListPagination
-                  nextCursor={enrollmentCursor}
-                  loadingMore={enrollmentLoadingMore}
-                  onLoadMore={() => {
-                    void loadEnrollments({ cursor: enrollmentCursor, append: true });
-                  }}
-                />
-              }
-            >
-              <ul className="list">
-                {enrollments.map((enr) => (
-                  <li key={enr.id} className="card">
-                    <Link href={adminEnrollmentPath(tenantId, enr.id)}>
-                      <strong>{classNames[enr.classId] ?? enr.classId}</strong>
-                    </Link>
-                    <div className="muted">
-                      <StatusChip label={enr.status} />
-                      {enr.streamId !== null
-                        ? ` · Stream ${streamNames[enr.streamId] ?? enr.streamId}`
-                        : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </RelatedRecordsSection>
-          ) : null}
-
-          {showFees ? (
-            <RelatedRecordsSection
-              title={t('students.fees')}
-              loading={invoiceLoading}
-              error={invoiceError}
-              emptyMessage={t('students.noInvoices')}
-              isEmpty={invoices.length === 0}
-              createHref={adminInvoicesCreatePath(tenantId, studentId)}
-              createLabel={t('students.createInvoice')}
-              footer={
-                <ResourceListPagination
-                  nextCursor={invoiceCursor}
-                  loadingMore={invoiceLoadingMore}
-                  onLoadMore={() => {
-                    void loadInvoices({ cursor: invoiceCursor, append: true });
-                  }}
-                />
-              }
-            >
-              <ul className="list">
-                {invoices.map((inv) => (
-                  <li key={inv.id} className="card">
-                    <Link href={adminInvoicePath(tenantId, inv.id)}>
-                      <strong>{invoiceStatusLabel(inv.status)}</strong>
-                    </Link>
-                    <div className="muted">
-                      {t('students.balance')} {formatTzsMinor(inv.balanceMinor)} · {t('students.total')}{' '}
-                      {formatTzsMinor(inv.totalMinor)}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </RelatedRecordsSection>
-          ) : null}
-
-          {showGuardians ? (
-            <RelatedRecordsSection
-              title={t('students.guardians')}
-              loading={guardianLoading}
-              error={guardianError}
-              emptyMessage={t('students.noGuardians')}
-              isEmpty={guardianLinks.length === 0}
-              createHref={`/t/${tenantId}/admin/guardians`}
-              createLabel={t('students.guardiansDirectory')}
-            >
-              <ul className="list">
-                {guardianLinks.map((link) => (
-                  <li key={link.id} className="card">
-                    <Link href={adminGuardianPath(tenantId, link.guardianId)}>
-                      <strong>{guardianNames[link.guardianId] ?? link.guardianId}</strong>
-                    </Link>
-                    <div className="muted">
-                      {link.relationshipType}
-                      {link.isPrimary ? ' · primary' : ''}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </RelatedRecordsSection>
-          ) : null}
+      <div className="flex flex-col gap-6">
+        <div>
+          <Link
+            href={`/t/${tenantId}/admin/students`}
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+          >
+            ← {t('students.back')}
+          </Link>
+          <div className="mt-2">
+            <AdminPageHeader title={row?.displayName ?? t('students.student')} />
+          </div>
         </div>
-      ) : error === null ? (
-        <p className="muted">{t('common.loading')}</p>
-      ) : null}
+
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {info !== null ? <Banner tone="info">{info}</Banner> : null}
+
+        {row !== null ? (
+          <div className="flex flex-col gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('students.student')}</CardTitle>
+                <CardDescription>{row.studentCode ?? 'No student code assigned'}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form className="flex flex-col gap-4 max-w-md" onSubmit={(e) => void onSave(e)}>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="displayName">{t('students.displayName')}</Label>
+                    <Input
+                      id="displayName"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      required
+                      maxLength={200}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="studentCode">{t('students.studentCode')}</Label>
+                    <Input
+                      id="studentCode"
+                      value={studentCode}
+                      onChange={(e) => setStudentCode(e.target.value)}
+                      pattern="[A-Za-z0-9._-]{0,64}"
+                      title={t('students.codeHint')}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="status">{t('common.status')}</Label>
+                    <select
+                      id="status"
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value as StudentStatus)}
+                    >
+                      {STUDENT_STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Button type="submit" disabled={busy}>
+                      {busy ? t('common.saving') : t('students.saveChanges')}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {showAcademic ? (
+              <RelatedRecordsSection
+                title={t('students.enrollments')}
+                loading={enrollmentLoading}
+                error={enrollmentError}
+                emptyMessage={t('students.noEnrollments')}
+                isEmpty={enrollments.length === 0}
+                createHref={adminEnrollmentsCreatePath(tenantId, studentId)}
+                createLabel={t('students.createEnrollment')}
+                footer={
+                  <ResourceListPagination
+                    nextCursor={enrollmentCursor}
+                    loadingMore={enrollmentLoadingMore}
+                    onLoadMore={() => {
+                      void loadEnrollments({ cursor: enrollmentCursor, append: true });
+                    }}
+                  />
+                }
+              >
+                <ul className="flex flex-col gap-2">
+                  {enrollments.map((enr) => (
+                    <li key={enr.id} className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <Link
+                          href={adminEnrollmentPath(tenantId, enr.id)}
+                          className="text-sm font-semibold hover:underline text-primary"
+                        >
+                          {classNames[enr.classId] ?? enr.classId}
+                        </Link>
+                        <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                          <StatusChip label={enr.status} />
+                          {enr.streamId !== null
+                            ? `· Stream ${streamNames[enr.streamId] ?? enr.streamId}`
+                            : null}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </RelatedRecordsSection>
+            ) : null}
+
+            {showFees ? (
+              <RelatedRecordsSection
+                title={t('students.fees')}
+                loading={invoiceLoading}
+                error={invoiceError}
+                emptyMessage={t('students.noInvoices')}
+                isEmpty={invoices.length === 0}
+                createHref={adminInvoicesCreatePath(tenantId, studentId)}
+                createLabel={t('students.createInvoice')}
+                footer={
+                  <ResourceListPagination
+                    nextCursor={invoiceCursor}
+                    loadingMore={invoiceLoadingMore}
+                    onLoadMore={() => {
+                      void loadInvoices({ cursor: invoiceCursor, append: true });
+                    }}
+                  />
+                }
+              >
+                <ul className="flex flex-col gap-2">
+                  {invoices.map((inv) => (
+                    <li key={inv.id} className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <Link
+                          href={adminInvoicePath(tenantId, inv.id)}
+                          className="text-sm font-semibold hover:underline text-primary"
+                        >
+                          {invoiceStatusLabel(inv.status)}
+                        </Link>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {t('students.balance')} {formatTzsMinor(inv.balanceMinor)} · {t('students.total')}{' '}
+                          {formatTzsMinor(inv.totalMinor)}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </RelatedRecordsSection>
+            ) : null}
+
+            {showGuardians ? (
+              <RelatedRecordsSection
+                title={t('students.guardians')}
+                loading={guardianLoading}
+                error={guardianError}
+                emptyMessage={t('students.noGuardians')}
+                isEmpty={guardianLinks.length === 0}
+                createHref={`/t/${tenantId}/admin/guardians`}
+                createLabel={t('students.guardiansDirectory')}
+              >
+                <ul className="flex flex-col gap-2">
+                  {guardianLinks.map((link) => (
+                    <li key={link.id} className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <Link
+                          href={adminGuardianPath(tenantId, link.guardianId)}
+                          className="text-sm font-semibold hover:underline text-primary"
+                        >
+                          {guardianNames[link.guardianId] ?? link.guardianId}
+                        </Link>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {link.relationshipType}
+                          {link.isPrimary ? ' · primary' : ''}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </RelatedRecordsSection>
+            ) : null}
+          </div>
+        ) : error === null ? (
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+        ) : null}
+      </div>
     </AdminShell>
   );
 }

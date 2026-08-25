@@ -9,14 +9,22 @@ import {
 } from './system-roles.js';
 
 describe('system role matrices (IMP-001 P4)', () => {
-  it('defines system codes owner/admin/staff/bursar/parent', () => {
-    expect([...SYSTEM_ROLE_CODES]).toEqual(['owner', 'admin', 'staff', 'bursar', 'parent']);
+  it('defines system codes owner/admin/staff/bursar/parent/student', () => {
+    expect([...SYSTEM_ROLE_CODES]).toEqual([
+      'owner',
+      'admin',
+      'staff',
+      'bursar',
+      'parent',
+      'student',
+    ]);
     expect(SYSTEM_ROLE_DEFINITIONS.map((d) => d.code)).toEqual([
       'owner',
       'admin',
       'staff',
       'bursar',
       'parent',
+      'student',
     ]);
   });
 
@@ -68,6 +76,14 @@ describe('system role matrices (IMP-001 P4)', () => {
     expect(parent).not.toContain('finance.read');
     expect(parent).not.toContain('guardian.manage');
     expect(isSystemRoleCode('parent')).toBe(true);
+  });
+
+  it('keeps student portal-scoped to self read only', () => {
+    const student = permissionsForSystemRole('student');
+    expect(student).toEqual(['student.self.read']);
+    expect(student).not.toContain('student.read');
+    expect(student).not.toContain('marks.read');
+    expect(isSystemRoleCode('student')).toBe(true);
   });
 
   it('type-guards system role codes', () => {

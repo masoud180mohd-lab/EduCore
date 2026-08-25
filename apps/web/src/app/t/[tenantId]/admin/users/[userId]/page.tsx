@@ -12,6 +12,10 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -146,7 +150,6 @@ export default function AdminUserDetailPage() {
       if (loadedUser !== null) {
         setError(null);
       } else if (first !== null) {
-        // Suspended/removed members may 404 on GET /users (active roster only).
         setError(null);
       } else if (userError !== null) {
         setError(userError);
@@ -451,256 +454,301 @@ export default function AdminUserDetailPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <p className="muted">
-        <Link href={`/t/${tenantId}/admin/users`}>← {t('users.title')}</Link>
-      </p>
-      <AdminPageHeader title={row?.displayName || row?.email || t('users.user')} />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      {showUserForm ? (
-        <div className="stack">
-          <form className="card stack" onSubmit={(e) => void onSave(e)}>
-            <label className="field">
-              <span>{t('common.displayName')}</span>
-              <input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                required
-                maxLength={120}
-              />
-            </label>
-            <div className="muted">
-              {t('common.email')}: {row.email} · {t('common.status')}: {row.status}
-            </div>
-            <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? t('common.saving') : t('common.save')}
-            </button>
-          </form>
-          {row.status !== 'disabled' ? (
-            <button
-              className="btn btn-secondary"
-              type="button"
-              disabled={busy}
-              onClick={() => setConfirm({ kind: 'disable' })}
-            >
-              {t('users.disableUser')}
-            </button>
-          ) : (
-            <div className="stack">
-              <p className="muted">{t('users.disabledHint')}</p>
-              <button
-                className="btn btn-primary"
-                type="button"
-                disabled={busy || isSelf}
-                onClick={() => setConfirm({ kind: 'enable' })}
-              >
-                {t('users.enableUser')}
-              </button>
-            </div>
-          )}
-        </div>
-      ) : null}
-
-      {membership !== null ? (
-        <div className="stack" style={{ marginTop: '1.5rem' }}>
-          <h2>{t('memberships.title')}</h2>
-          <p className="muted">
-            {t('common.status')}: <strong>{membership.status}</strong>
-            {membership.joinedAt !== null ? ` · Joined: ${membership.joinedAt}` : null}
-          </p>
-          {isSelf ? (
-            <p className="muted">You cannot suspend or remove your own membership.</p>
-          ) : null}
-          <div className="stack" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {canSuspend ? (
-              <button
-                className="btn btn-secondary"
-                type="button"
-                disabled={busy || isSelf}
-                onClick={() => setConfirm({ kind: 'membership', action: 'suspend' })}
-              >
-                Suspend membership
-              </button>
-            ) : null}
-            {canReactivate ? (
-              <button
-                className="btn btn-primary"
-                type="button"
-                disabled={busy}
-                onClick={() => setConfirm({ kind: 'membership', action: 'reactivate' })}
-              >
-                Reactivate membership
-              </button>
-            ) : null}
-            {canRemove ? (
-              <button
-                className="btn btn-secondary"
-                type="button"
-                disabled={busy || isSelf}
-                onClick={() => setConfirm({ kind: 'membership', action: 'remove' })}
-              >
-                Remove membership
-              </button>
-            ) : null}
-            {status === 'removed' ? (
-              <p className="muted">Membership is removed. Invite again from the Users list.</p>
-            ) : null}
+      <div className="flex flex-col gap-6">
+        <div>
+          <Link
+            href={`/t/${tenantId}/admin/users`}
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+          >
+            ← {t('users.title')}
+          </Link>
+          <div className="mt-2">
+            <AdminPageHeader title={row?.displayName || row?.email || t('users.user')} />
           </div>
         </div>
-      ) : showUserForm && error === null ? (
-        <p className="muted" style={{ marginTop: '1.5rem' }}>
-          No membership found for this user in this school.
-        </p>
-      ) : null}
 
-      {(showUserForm || membership !== null) && rolesCatalog.length > 0 ? (
-        <div className="stack" style={{ marginTop: '1.5rem' }}>
-          <h2>{t('roles.title')}</h2>
-          <p className="muted" style={{ marginTop: 0 }}>
-            Organization scope is stored on the assignment only; permissions still apply tenant-wide
-            until org AuthZ ships.
-          </p>
-          {userRoles.length === 0 ? (
-            <p className="muted">No roles assigned.</p>
-          ) : (
-            <ul className="list">
-              {userRoles.map((ur) => (
-                <li
-                  key={ur.id}
-                  className="card"
-                  style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}
-                >
-                  <span style={{ flex: 1 }}>
-                    <strong>{ur.roleCode}</strong>
-                    <div className="muted">
-                      {t('users.scope')}: {scopeLabel(ur.organizationId, orgNames, t('users.entireTenant'))} · {t('users.assignment', { id: ur.id })}
-                    </div>
-                  </span>
-                  <button
-                    className="btn btn-secondary"
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {info !== null ? <Banner tone="info">{info}</Banner> : null}
+
+        {showUserForm ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('users.user')}</CardTitle>
+              <CardDescription>
+                {t('common.email')}: {row.email} · {t('common.status')}: {row.status}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="flex flex-col gap-4" onSubmit={(e) => void onSave(e)}>
+                <div className="flex flex-col gap-2 max-w-md">
+                  <Label htmlFor="displayName">{t('common.displayName')}</Label>
+                  <Input
+                    id="displayName"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    required
+                    maxLength={120}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button type="submit" disabled={busy}>
+                    {busy ? t('common.saving') : t('common.save')}
+                  </Button>
+                  {row.status !== 'disabled' ? (
+                    <Button
+                      variant="outline"
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setConfirm({ kind: 'disable' })}
+                    >
+                      {t('users.disableUser')}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      disabled={busy || isSelf}
+                      onClick={() => setConfirm({ kind: 'enable' })}
+                    >
+                      {t('users.enableUser')}
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {membership !== null ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('memberships.title')}</CardTitle>
+              <CardDescription>
+                {t('common.status')}: <strong className="text-foreground">{membership.status}</strong>
+                {membership.joinedAt !== null ? ` · Joined: ${membership.joinedAt}` : null}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {isSelf ? (
+                <p className="text-sm text-muted-foreground">
+                  You cannot suspend or remove your own membership.
+                </p>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                {canSuspend ? (
+                  <Button
+                    variant="outline"
+                    type="button"
+                    disabled={busy || isSelf}
+                    onClick={() => setConfirm({ kind: 'membership', action: 'suspend' })}
+                  >
+                    Suspend membership
+                  </Button>
+                ) : null}
+                {canReactivate ? (
+                  <Button
+                    variant="secondary"
                     type="button"
                     disabled={busy}
-                    onClick={() =>
-                      setConfirm({ kind: 'unassign', assignmentId: ur.id, roleCode: ur.roleCode })
-                    }
+                    onClick={() => setConfirm({ kind: 'membership', action: 'reactivate' })}
                   >
-                    {t('common.remove')}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {rolesCatalog.length > 0 || rolesCursor !== null ? (
-            <form className="stack" onSubmit={(e) => void onAssignRole(e)}>
-              <label className="field">
-                <span>{t('users.assignRole')}</span>
-                <select
-                  value={assignRoleId}
-                  onChange={(e) => setAssignRoleId(e.target.value)}
-                  required
-                >
-                  <option value="">{t('common.selectRole')}</option>
-                  {rolesCatalog.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name} ({r.code})
-                    </option>
-                  ))}
-                </select>
-                <ResourceListPagination
-                  nextCursor={rolesCursor}
-                  loadingMore={loadingMoreRoles}
-                  onLoadMore={() => {
-                    void loadMoreRoles();
-                  }}
-                />
-              </label>
-              <label className="field">
-                <span>{t('common.scope')}</span>
-                <select value={assignOrgId} onChange={(e) => setAssignOrgId(e.target.value)}>
-                  <option value="">{t('users.entireTenant')}</option>
-                  {organizations.map((org) => (
-                    <option key={org.id} value={org.id}>
-                      {org.name}
-                    </option>
-                  ))}
-                </select>
-                <ResourceListPagination
-                  nextCursor={orgsCursor}
-                  loadingMore={loadingMoreOrgs}
-                  onLoadMore={() => {
-                    void loadMoreOrgs();
-                  }}
-                />
-              </label>
-              <button
-                className="btn btn-primary"
-                type="submit"
-                disabled={busy || assignRoleId === '' || assignDuplicate}
-              >
-                {busy ? t('common.assigning') : t('users.assignRole')}
-              </button>
-            </form>
-          ) : (
-            <p className="muted">{t('users.noRoles')}</p>
-          )}
-        </div>
-      ) : null}
+                    Reactivate membership
+                  </Button>
+                ) : null}
+                {canRemove ? (
+                  <Button
+                    variant="destructive"
+                    type="button"
+                    disabled={busy || isSelf}
+                    onClick={() => setConfirm({ kind: 'membership', action: 'remove' })}
+                  >
+                    Remove membership
+                  </Button>
+                ) : null}
+                {status === 'removed' ? (
+                  <p className="text-sm text-muted-foreground">
+                    Membership is removed. Invite again from the Users list.
+                  </p>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
+        ) : showUserForm && error === null ? (
+          <p className="text-sm text-muted-foreground">
+            No membership found for this user in this school.
+          </p>
+        ) : null}
 
-      {!showUserForm && membership === null && error === null ? (
-        <p className="muted">{t('common.loading')}</p>
-      ) : null}
+        {(showUserForm || membership !== null) && rolesCatalog.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('roles.title')}</CardTitle>
+              <CardDescription>
+                Organization scope is stored on the assignment only; permissions still apply
+                tenant-wide until org AuthZ ships.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-6">
+              {userRoles.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No roles assigned.</p>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {userRoles.map((ur) => (
+                    <li
+                      key={ur.id}
+                      className="flex items-center justify-between rounded-lg border p-3"
+                    >
+                      <div>
+                        <strong className="text-sm font-semibold">{ur.roleCode}</strong>
+                        <div className="text-xs text-muted-foreground">
+                          {t('users.scope')}:{' '}
+                          {scopeLabel(ur.organizationId, orgNames, t('users.entireTenant'))} ·{' '}
+                          {t('users.assignment', { id: ur.id })}
+                        </div>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() =>
+                          setConfirm({
+                            kind: 'unassign',
+                            assignmentId: ur.id,
+                            roleCode: ur.roleCode,
+                          })
+                        }
+                      >
+                        {t('common.remove')}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-      <ConfirmDialog
-        open={confirm !== null}
-        title={
-          confirm?.kind === 'disable'
-            ? t('users.disableConfirm')
-            : confirm?.kind === 'enable'
-              ? t('users.enableConfirm')
-              : confirm?.kind === 'membership'
-                ? t(MEMBERSHIP_COPY[confirm.action].title)
-                : confirm?.kind === 'unassign'
-                  ? t('users.removeRole')
-                  : t('common.confirm')
-        }
-        body={
-          confirm?.kind === 'disable' && row !== null
-            ? t('users.disableBody', { name: row.displayName || row.email })
-            : confirm?.kind === 'enable' && row !== null
-              ? t('users.enableBody', { name: row.displayName || row.email })
-              : confirm?.kind === 'membership'
-                ? t(MEMBERSHIP_COPY[confirm.action].body)
-                : confirm?.kind === 'unassign'
-                  ? t('users.removeRoleBody', { code: confirm.roleCode })
-                  : ''
-        }
-        confirmLabel={
-          confirm?.kind === 'disable'
-            ? t('common.disable')
-            : confirm?.kind === 'enable'
-              ? t('common.enable')
-              : confirm?.kind === 'membership'
-                ? t(MEMBERSHIP_COPY[confirm.action].confirmLabel)
-                : confirm?.kind === 'unassign'
-                  ? t('common.remove')
-                  : t('common.confirm')
-        }
-        danger={
-          confirm?.kind === 'disable' ||
-          confirm?.kind === 'unassign' ||
-          (confirm?.kind === 'membership' && confirm.action !== 'reactivate')
-        }
-        busy={busy}
-        onCancel={() => {
-          if (!busy) setConfirm(null);
-        }}
-        onConfirm={() => {
-          if (confirm?.kind === 'disable') void runDisable();
-          else if (confirm?.kind === 'enable') void runEnable();
-          else if (confirm?.kind === 'membership') void runMembershipAction(confirm.action);
-          else if (confirm?.kind === 'unassign') void runUnassignRole(confirm.assignmentId);
-        }}
-      />
+              {rolesCatalog.length > 0 || rolesCursor !== null ? (
+                <form className="flex flex-col gap-4 border-t pt-4" onSubmit={(e) => void onAssignRole(e)}>
+                  <h3 className="text-sm font-semibold">{t('users.assignRole')}</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="assignRole">{t('users.assignRole')}</Label>
+                      <select
+                        id="assignRole"
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        value={assignRoleId}
+                        onChange={(e) => setAssignRoleId(e.target.value)}
+                        required
+                      >
+                        <option value="">{t('common.selectRole')}</option>
+                        {rolesCatalog.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.name} ({r.code})
+                          </option>
+                        ))}
+                      </select>
+                      <ResourceListPagination
+                        nextCursor={rolesCursor}
+                        loadingMore={loadingMoreRoles}
+                        onLoadMore={() => {
+                          void loadMoreRoles();
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="assignOrg">{t('common.scope')}</Label>
+                      <select
+                        id="assignOrg"
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        value={assignOrgId}
+                        onChange={(e) => setAssignOrgId(e.target.value)}
+                      >
+                        <option value="">{t('users.entireTenant')}</option>
+                        {organizations.map((org) => (
+                          <option key={org.id} value={org.id}>
+                            {org.name}
+                          </option>
+                        ))}
+                      </select>
+                      <ResourceListPagination
+                        nextCursor={orgsCursor}
+                        loadingMore={loadingMoreOrgs}
+                        onLoadMore={() => {
+                          void loadMoreOrgs();
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Button
+                      type="submit"
+                      disabled={busy || assignRoleId === '' || assignDuplicate}
+                    >
+                      {busy ? t('common.assigning') : t('users.assignRole')}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t('users.noRoles')}</p>
+              )}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {!showUserForm && membership === null && error === null ? (
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+        ) : null}
+
+        <ConfirmDialog
+          open={confirm !== null}
+          title={
+            confirm?.kind === 'disable'
+              ? t('users.disableConfirm')
+              : confirm?.kind === 'enable'
+                ? t('users.enableConfirm')
+                : confirm?.kind === 'membership'
+                  ? t(MEMBERSHIP_COPY[confirm.action].title)
+                  : confirm?.kind === 'unassign'
+                    ? t('users.removeRole')
+                    : t('common.confirm')
+          }
+          body={
+            confirm?.kind === 'disable' && row !== null
+              ? t('users.disableBody', { name: row.displayName || row.email })
+              : confirm?.kind === 'enable' && row !== null
+                ? t('users.enableBody', { name: row.displayName || row.email })
+                : confirm?.kind === 'membership'
+                  ? t(MEMBERSHIP_COPY[confirm.action].body)
+                  : confirm?.kind === 'unassign'
+                    ? t('users.removeRoleBody', { code: confirm.roleCode })
+                    : ''
+          }
+          confirmLabel={
+            confirm?.kind === 'disable'
+              ? t('common.disable')
+              : confirm?.kind === 'enable'
+                ? t('common.enable')
+                : confirm?.kind === 'membership'
+                  ? t(MEMBERSHIP_COPY[confirm.action].confirmLabel)
+                  : confirm?.kind === 'unassign'
+                    ? t('common.remove')
+                    : t('common.confirm')
+          }
+          danger={
+            confirm?.kind === 'disable' ||
+            confirm?.kind === 'unassign' ||
+            (confirm?.kind === 'membership' && confirm.action !== 'reactivate')
+          }
+          busy={busy}
+          onCancel={() => {
+            if (!busy) setConfirm(null);
+          }}
+          onConfirm={() => {
+            if (confirm?.kind === 'disable') void runDisable();
+            else if (confirm?.kind === 'enable') void runEnable();
+            else if (confirm?.kind === 'membership') void runMembershipAction(confirm.action);
+            else if (confirm?.kind === 'unassign') void runUnassignRole(confirm.assignmentId);
+          }}
+        />
+      </div>
     </AdminShell>
   );
 }

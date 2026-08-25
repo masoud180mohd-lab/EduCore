@@ -307,3 +307,4 @@ Accepted under acting seats only; revise when a second review seat exists.
 | 1.29 | 2026-08-14 | IMP-048 KPI tiles, Students/Fees i18n, report-card PDF UI           |
 | 1.30 | 2026-08-14 | IMP-049 remaining Admin/Teacher/Parent/login chrome i18n            |
 | 1.31 | 2026-08-15 | **Phase 1b redesign scope (SPEC-PORTALS-001 / DSF-KIT-002):** visual/density polish of AdminShell within DSF-KIT-002 portal chrome (Office identity tint + portal chip, top-bar wordmark, table density pass, dashboard layout polish). **IA groups and screen inventory unchanged.** Screen 1 "login routing" is superseded by DSF-KIT-002 §4 when the routing slice ships. |
+| 1.32 | 2026-08-20 | Phase 1b implements via **DSF-KIT-001 v1.7** (Tailwind + shadcn) and **DSF-KIT-002 v1.1** Digii hybrid chrome. Migrate AdminShell + pages incrementally; **IA groups and screen inventory still unchanged.** |

@@ -61,10 +61,7 @@ describe('IMP-009 finance fees foundation', () => {
     expect(codes).toContain("'finance.manage'");
     expect(codes).toContain("'finance.reconcile'");
 
-    const roles = readFileSync(
-      path.join(root, 'apps/api/src/modules/identity-and-access/rbac/system-roles.ts'),
-      'utf8',
-    );
+    const roles = readFileSync(path.join(root, 'apps/api/src/common/rbac/system-roles.ts'), 'utf8');
     expect(roles).toContain("'finance.read'");
     expect(roles).toContain("'finance.manage'");
     // staff baseline must not include reconcile (owner/admin get it via full catalogue)

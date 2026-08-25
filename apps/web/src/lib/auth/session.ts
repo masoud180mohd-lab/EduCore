@@ -1,4 +1,4 @@
-import type { SessionAuth } from '../api/client.js';
+import type { SessionAuth } from '../api/client';
 
 const TOKEN_KEY = 'educore.accessToken';
 const TENANT_KEY = 'educore.tenantId';

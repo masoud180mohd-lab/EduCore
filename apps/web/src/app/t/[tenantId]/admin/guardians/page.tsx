@@ -14,6 +14,10 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -128,122 +132,156 @@ export default function AdminGuardiansPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader title={t('guardians.title')} description={t('guardians.description')} />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      <div className="flex flex-col gap-6">
+        <AdminPageHeader title={t('guardians.title')} description={t('guardians.description')} />
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
-      <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">{t('guardians.add')}</h2>
-        <div className="field">
-          <label htmlFor="displayName">{t('common.displayName')}</label>
-          <input
-            id="displayName"
-            required
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="phone">{t('common.phoneOptional')}</label>
-          <input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="email">{t('common.emailOptional')}</label>
-          <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </div>
-        <button type="submit" className="btn btn-primary" disabled={busy}>
-          {busy ? t('common.saving') : t('common.create')}
-        </button>
-      </form>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('guardians.add')}</CardTitle>
+            <CardDescription>{t('guardians.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="flex flex-col gap-4" onSubmit={(e) => void onCreate(e)}>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="displayName">{t('common.displayName')}</Label>
+                  <Input
+                    id="displayName"
+                    required
+                    maxLength={200}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Mama Amina"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="phone">{t('common.phoneOptional')}</Label>
+                  <Input
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+255 7XX XXX XXX"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="email">{t('common.emailOptional')}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="guardian@example.com"
+                  />
+                </div>
+              </div>
+              <div>
+                <Button type="submit" disabled={busy}>
+                  {busy ? t('common.saving') : t('common.create')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
-      <form
-        className="stack"
-        style={{ marginTop: '1.5rem' }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          setAppliedSearch(search);
-          setAppliedStatus(statusFilter);
-          void loadPage({
-            searchQ: search,
-            statusQ: statusFilter,
-            cursor: null,
-            append: false,
-          });
-        }}
-      >
-        <div className="field">
-          <label htmlFor="search">{t('common.search')}</label>
-          <input
-            id="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Name, email, or phone"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="list-status">{t('common.status')}</label>
-          <select
-            id="list-status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as '' | GuardianStatus)}
-          >
-            <option value="">{t('common.allStatuses')}</option>
-            {GUARDIAN_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          {t('common.applyFilters')}
-        </button>
-      </form>
-
-      <ResourceList
-        loading={loading}
-        empty={t('guardians.empty')}
-        isEmpty={rows.length === 0}
-        variant="table"
-        footer={
-          <ResourceListPagination
-            nextCursor={nextCursor}
-            loadingMore={loadingMore}
-            onLoadMore={() => {
-              void loadPage({
-                searchQ: appliedSearch,
-                statusQ: appliedStatus,
-                cursor: nextCursor,
-                append: true,
-              });
-            }}
-          />
-        }
-      >
-        <AdminTable
-          caption={t('guardians.title')}
-          headers={[t('common.name'), t('common.phone'), t('common.status'), '']}
-        >
-          {rows.map((g) => (
-            <tr key={g.id}>
-              <td>
-                <Link href={`/t/${tenantId}/admin/guardians/${g.id}`}>{g.displayName}</Link>
-              </td>
-              <td className="muted">{[g.email, g.phone].filter(Boolean).join(' · ') || '—'}</td>
-              <td>
-                <StatusChip label={g.status} />
-              </td>
-              <td className="admin-table-actions">
-                <Link
-                  className="btn btn-secondary admin-table-open"
-                  href={`/t/${tenantId}/admin/guardians/${g.id}`}
+        <Card>
+          <CardContent className="pt-6">
+            <form
+              className="flex flex-wrap items-end gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setAppliedSearch(search);
+                setAppliedStatus(statusFilter);
+                void loadPage({
+                  searchQ: search,
+                  statusQ: statusFilter,
+                  cursor: null,
+                  append: false,
+                });
+              }}
+            >
+              <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
+                <Label htmlFor="search">{t('common.search')}</Label>
+                <Input
+                  id="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Name, email, or phone"
+                />
+              </div>
+              <div className="flex flex-col gap-2 min-w-[150px]">
+                <Label htmlFor="list-status">{t('common.status')}</Label>
+                <select
+                  id="list-status"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as '' | GuardianStatus)}
                 >
-                  {t('common.open')}
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </AdminTable>
-      </ResourceList>
+                  <option value="">{t('common.allStatuses')}</option>
+                  {GUARDIAN_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button variant="secondary" type="submit" disabled={loading || loadingMore}>
+                {t('common.applyFilters')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <ResourceList
+          loading={loading}
+          empty={t('guardians.empty')}
+          isEmpty={rows.length === 0}
+          variant="table"
+          footer={
+            <ResourceListPagination
+              nextCursor={nextCursor}
+              loadingMore={loadingMore}
+              onLoadMore={() => {
+                void loadPage({
+                  searchQ: appliedSearch,
+                  statusQ: appliedStatus,
+                  cursor: nextCursor,
+                  append: true,
+                });
+              }}
+            />
+          }
+        >
+          <AdminTable
+            caption={t('guardians.title')}
+            headers={[t('common.name'), t('common.phone'), t('common.status'), '']}
+          >
+            {rows.map((g) => (
+              <tr key={g.id}>
+                <td className="font-medium">
+                  <Link
+                    href={`/t/${tenantId}/admin/guardians/${g.id}`}
+                    className="hover:underline text-primary"
+                  >
+                    {g.displayName}
+                  </Link>
+                </td>
+                <td className="text-muted-foreground">{[g.email, g.phone].filter(Boolean).join(' · ') || '—'}</td>
+                <td>
+                  <StatusChip label={g.status} />
+                </td>
+                <td className="admin-table-actions">
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href={`/t/${tenantId}/admin/guardians/${g.id}`}>
+                      {t('common.open')}
+                    </Link>
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </AdminTable>
+        </ResourceList>
+      </div>
     </AdminShell>
   );
 }

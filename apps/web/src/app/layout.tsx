@@ -5,6 +5,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { ThemeBootScript } from '@/components/ThemeBootScript';
 
 import '@/styles/tokens.css';
+import '@/styles/globals.css';
 
 export const metadata = {
   title: 'EduCore',

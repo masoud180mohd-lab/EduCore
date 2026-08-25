@@ -63,13 +63,14 @@ describe('IMP-022 roles admin', () => {
       'utf8',
     );
     expect(list).toContain('/api/v1/roles');
-    expect(list).toContain('Create custom role');
+    expect(list).toContain("t('roles.create')");
     const detail = readFileSync(
       path.join(root, 'apps/web/src/app/t/[tenantId]/admin/roles/[roleId]/page.tsx'),
       'utf8',
     );
     expect(detail).toContain('/permissions');
-    expect(detail).toContain('Save permissions');
+    expect(detail).toContain("t('roles.permissions')");
+    expect(detail).toContain("t('common.save')");
     const shell = readFileSync(path.join(root, 'apps/web/src/components/AdminShell.tsx'), 'utf8');
     expect(shell).toContain('/roles');
     const userDetail = readFileSync(
@@ -77,7 +78,7 @@ describe('IMP-022 roles admin', () => {
       'utf8',
     );
     expect(userDetail).toContain('/api/v1/user-roles');
-    expect(userDetail).toContain('Assign role');
+    expect(userDetail).toContain("t('users.assignRole')");
   });
 
   it('has task record and manual QA', () => {
