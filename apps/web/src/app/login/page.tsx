@@ -1,12 +1,13 @@
 'use client';
 
-import { GraduationCap } from 'lucide-react';
+import { GraduationCap, UserCog, User, School } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
 import { useAppPreferences } from '@/components/AppProviders';
 import { MfaChallengeForm } from '@/components/MfaChallengeForm';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,14 @@ import {
   verifyMfaAndComplete,
   type TenantChoice,
 } from '@/lib/auth/complete-login';
+
+const DEMO_ACCOUNTS = [
+  { role: 'admin', label: 'Admin', email: 'admin@educore.test', password: 'Password123!', icon: UserCog },
+  { role: 'teacher', label: 'Teacher', email: 'teacher@educore.test', password: 'Password123!', icon: User },
+  { role: 'principal', label: 'Principal', email: 'principal@educore.test', password: 'Password123!', icon: School },
+  { role: 'student', label: 'Student', email: 'student@educore.test', password: 'Password123!', icon: User },
+  { role: 'parent', label: 'Parent', email: 'parent@educore.test', password: 'Password123!', icon: UserCog },
+] as const;
 
 type LoginResponse = {
   readonly data?: {
@@ -32,6 +41,7 @@ export default function LoginPage() {
   const { t, locale, setLocale, theme, setTheme } = useAppPreferences();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
   const [tenantId, setTenantId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -172,7 +182,7 @@ export default function LoginPage() {
               className="flex size-9 items-center justify-center rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)]"
               suppressHydrationWarning
             >
-              <GraduationCap aria-hidden className="size-4" />
+              <GraduationCap aria-hidden className="size-4" suppressHydrationWarning />
             </span>
             <span className="text-xl font-semibold tracking-tight">EduCore</span>
           </div>
@@ -283,6 +293,24 @@ export default function LoginPage() {
               </form>
             </div>
           )}
+          {/* Demo accounts */}
+          <div className="flex flex-col gap-2 mt-4">
+            {DEMO_ACCOUNTS.map((acc) => (
+              <Button
+                key={acc.role}
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setEmail(acc.email);
+                  setPassword(acc.password);
+                  toast.success(`Filled ${acc.label} demo credentials`);
+                }}
+              >
+                <acc.icon className="mr-2 size-4" />
+                {acc.label}
+              </Button>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

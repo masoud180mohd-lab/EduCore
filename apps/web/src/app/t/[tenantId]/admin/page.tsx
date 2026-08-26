@@ -3,11 +3,17 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Users, UserCheck, Percent, Wallet } from 'lucide-react';
 
 import { Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 import {
   ADMIN_HUB_BY_ID,
   visibleAdminHubQuickStarts,
@@ -20,6 +26,8 @@ import type { MeLike } from '@/lib/auth/home-preference';
 import { readSession } from '@/lib/auth/session';
 import { formatTzsMinor } from '@/lib/finance/money';
 import { groupMessageKey, hubBlurbKey, navMessageKey, quickHintKey, quickLabelKey } from '@/lib/i18n/messages';
+import { headmasterProfile, formatTzs } from '@/lib/mock-data';
+import { cn } from '@/lib/utils';
 
 type TenantCurrent = {
   readonly data: { readonly id: string; readonly name?: string; readonly code?: string };
@@ -74,6 +82,7 @@ export default function AdminHomePage() {
   const [students, setStudents] = useState<StudentSummary | null>(null);
   const [invoices, setInvoices] = useState<InvoiceSummary | null>(null);
   const [attendance, setAttendance] = useState<AttendanceSummary | null>(null);
+  const [approvals, setApprovals] = useState(headmasterProfile.pendingApprovals);
 
   useEffect(() => {
     const auth = readSession();
@@ -132,12 +141,39 @@ export default function AdminHomePage() {
   const emptyAreas = !loading && error === null && areaCards.length === 0;
   const showKpis = students !== null || invoices !== null || attendance !== null;
 
+  /* ── mock KPI data (used alongside real API data when available) ── */
+  const { kpis } = headmasterProfile;
+  const collectionPct = Math.round((kpis.feesCollectedTzs / kpis.feesTargetTzs) * 100);
+
+  const kpiCards = [
+    { label: 'Total Students', value: students ? students.total.toLocaleString() : kpis.students.toLocaleString(), icon: Users },
+    { label: 'Teachers', value: String(kpis.teachers), icon: UserCheck },
+    { label: 'Attendance Today', value: `${kpis.attendanceTodayPct}%`, icon: Percent },
+    { label: 'Fees Collected', value: formatTzs(kpis.feesCollectedTzs), icon: Wallet },
+  ];
+
+  function decide(id: string, action: 'approve' | 'reject') {
+    const item = approvals.find((a) => a.id === id);
+    setApprovals((prev) => prev.filter((a) => a.id !== id));
+    toast.success(
+      action === 'approve'
+        ? `Approved: ${item?.title ?? ''}`
+        : `Rejected: ${item?.title ?? ''}`,
+    );
+  }
+
   return (
     <AdminShell tenantId={tenantId}>
-      <div className="flex flex-col gap-5">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">{t('hub.title')}</h1>
-          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+      <div className="flex flex-col gap-6">
+        {/* ── Header ── */}
+        <div className="animate-rise flex flex-col gap-1">
+          <p className="text-sm text-[var(--muted-foreground)]">
+            {headmasterProfile.name} · {school ?? '…'}
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t('hub.title')}
+          </h1>
+          <p className="text-sm text-[var(--muted-foreground)]">
             {school !== null ? `${school} — ${t('hub.description')}` : t('hub.loadingSchool')}
           </p>
         </div>
@@ -147,70 +183,157 @@ export default function AdminHomePage() {
         {loading ? <p className="text-sm text-[var(--muted-foreground)]">{t('hub.loadingAreas')}</p> : null}
         {emptyAreas ? <Banner tone="info">{t('hub.emptyAreas')}</Banner> : null}
 
-        {showKpis ? (
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('common.dashboard')}>
-            {students !== null ? (
-              <li>
-                <Card>
-                  <CardHeader className="p-4 pb-2">
-                    <CardDescription>{t('kpi.students')}</CardDescription>
-                    <CardTitle className="text-2xl tabular-nums">{students.total}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0 text-xs text-[var(--muted-foreground)]">
-                    {t('kpi.staffHint')}
-                  </CardContent>
-                </Card>
-              </li>
-            ) : null}
-            {invoices !== null ? (
-              <>
-                <li>
-                  <Card>
-                    <CardHeader className="p-4 pb-2">
-                      <CardDescription>{t('kpi.collected')}</CardDescription>
-                      <CardTitle className="text-2xl tabular-nums">
-                        {formatTzsMinor(invoices.collectedMinor)}
-                      </CardTitle>
-                    </CardHeader>
-                  </Card>
-                </li>
-                <li>
-                  <Card>
-                    <CardHeader className="p-4 pb-2">
-                      <CardDescription>{t('kpi.outstanding')}</CardDescription>
-                      <CardTitle className="text-2xl tabular-nums">
-                        {formatTzsMinor(invoices.outstandingMinor)}
-                      </CardTitle>
-                    </CardHeader>
-                  </Card>
-                </li>
-                <li>
-                  <Card>
-                    <CardHeader className="p-4 pb-2">
-                      <CardDescription>{t('kpi.overdue')}</CardDescription>
-                      <CardTitle className="text-2xl tabular-nums">{invoices.overdueCount}</CardTitle>
-                    </CardHeader>
-                  </Card>
-                </li>
-              </>
-            ) : null}
-            {attendance !== null ? (
-              <li className="sm:col-span-2 xl:col-span-1">
-                <Card>
-                  <CardHeader className="p-4 pb-2">
-                    <CardDescription>{t('kpi.attendanceToday')}</CardDescription>
-                    <CardTitle className="text-2xl tabular-nums">{attendance.present}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0 text-xs text-[var(--muted-foreground)]">
-                    {t('kpi.present')} {attendance.present} · {t('kpi.absent')} {attendance.absent} ·{' '}
-                    {t('kpi.late')} {attendance.late} · {t('kpi.excused')} {attendance.excused}
-                  </CardContent>
-                </Card>
-              </li>
-            ) : null}
-          </ul>
-        ) : null}
+        {/* ── KPI Cards ── */}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {kpiCards.map(({ label, value, icon: Icon }) => (
+            <Card key={label} className="border-[var(--border)]/80">
+              <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
+                <CardDescription>{label}</CardDescription>
+                <span className="flex size-8 items-center justify-center rounded-lg bg-[var(--secondary)] text-[var(--secondary-foreground)]">
+                  <Icon aria-hidden className="size-4" />
+                </span>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold tracking-tight tabular-nums">
+                  {value}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
+        {/* ── Fee Collection Progress ── */}
+        <Card className="border-[var(--border)]/80">
+          <CardHeader>
+            <CardTitle className="text-base">Fee Collection</CardTitle>
+            <CardDescription>
+              Target: {formatTzs(kpis.feesTargetTzs)}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex items-end justify-between gap-3">
+              <p className="text-3xl font-semibold tracking-tight tabular-nums">
+                {collectionPct}%
+              </p>
+              <p className="text-sm text-[var(--muted-foreground)] tabular-nums">
+                {formatTzs(kpis.feesCollectedTzs)}
+              </p>
+            </div>
+            <Progress value={collectionPct} aria-label="Fee Collection" />
+          </CardContent>
+        </Card>
+
+        {/* ── Pending Approvals + Alerts ── */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Pending Approvals */}
+          <Card className="border-[var(--border)]/80">
+            <CardHeader>
+              <CardTitle className="text-base">Pending Approvals</CardTitle>
+              <CardDescription>
+                {approvals.length === 0 ? '—' : `${approvals.length} waiting`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {approvals.length === 0 ? (
+                <p className="text-sm text-[var(--muted-foreground)]">All clear for now.</p>
+              ) : (
+                approvals.map((item, index) => (
+                  <div key={item.id} className="flex flex-col gap-3">
+                    {index > 0 && <Separator />}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium leading-snug">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                          {item.requester}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => decide(item.id, 'reject')}
+                        >
+                          Reject
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => decide(item.id, 'approve')}
+                        >
+                          Approve
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Alerts */}
+          <Card className="border-[var(--border)]/80">
+            <CardHeader>
+              <CardTitle className="text-base">Alerts</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {headmasterProfile.alerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="flex items-start gap-3 rounded-lg border border-[var(--border)]/70 bg-[var(--muted)]/25 px-3 py-3"
+                >
+                  <span
+                    className={cn(
+                      'mt-1 size-2 shrink-0 rounded-full',
+                      alert.severity === 'high' && 'bg-rose-600',
+                      alert.severity === 'medium' && 'bg-amber-500',
+                      alert.severity === 'low' && 'bg-teal-600',
+                    )}
+                    aria-hidden
+                  />
+                  <p className="text-sm leading-snug">{alert.text}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Class Attendance Snapshot ── */}
+        <Card className="border-[var(--border)]/80">
+          <CardHeader>
+            <CardTitle className="text-base">Class Attendance Snapshot</CardTitle>
+            <CardDescription>Today · live roll-up</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {headmasterProfile.classAttendance.map((row) => {
+              const pct = Math.round((row.present / row.total) * 100);
+              return (
+                <div key={row.className} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="font-medium">{row.className}</span>
+                    <span className="flex items-center gap-2 tabular-nums text-[var(--muted-foreground)]">
+                      {row.present}/{row.total}
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          pct < 90 &&
+                            'bg-amber-100 text-amber-950 dark:bg-amber-950/50 dark:text-amber-100',
+                          pct < 85 &&
+                            'bg-rose-100 text-rose-950 dark:bg-rose-950/50 dark:text-rose-100',
+                        )}
+                      >
+                        {pct}%
+                      </Badge>
+                    </span>
+                  </div>
+                  <Progress value={pct} aria-label={row.className} />
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        {/* ── Quick Starts ── */}
         {quickStarts.length > 0 ? (
           <section className="flex flex-col gap-3" aria-labelledby="admin-hub-quick-heading">
             <h2 id="admin-hub-quick-heading" className="text-sm font-semibold">
@@ -234,6 +357,7 @@ export default function AdminHomePage() {
           </section>
         ) : null}
 
+        {/* ── Area Groups ── */}
         {!loading && !emptyAreas ? (
           <div className="flex flex-col gap-6">
             {groups.map((group) => {
