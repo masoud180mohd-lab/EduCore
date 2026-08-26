@@ -13,7 +13,7 @@ COMMENT ON COLUMN students.user_id IS
 
 INSERT INTO permissions (id, code, description) VALUES
   (
-    '01900000-0001-7000-8000-000000000052',
+    '01900000-0001-7000-8000-000000000056',
     'student.self.read',
     'Read own bound student profile (student portal)'
   )

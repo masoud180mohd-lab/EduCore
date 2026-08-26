@@ -21,6 +21,7 @@
     "seed:admin": "tsx scripts/seed-local-admin.ts",
     "seed:parent-demo": "tsx scripts/seed-parent-demo.ts",
     "seed:student-demo": "tsx scripts/seed-student-demo.ts",
+    "seed:all-demo": "node scripts/seed-all-demo-users.mjs",
     "rbac:reconcile-grants": "tsx scripts/reconcile-system-role-grants.ts",
     "ops:prereq": "node scripts/ops-prereq-check.mjs",
     "ops:stg:mfa-hard": "node scripts/ops-stg-mfa-hard.mjs",

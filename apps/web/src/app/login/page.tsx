@@ -167,8 +167,11 @@ export default function LoginPage() {
 
       <Card className="relative z-10 w-full max-w-md animate-rise shadow-[0_24px_60px_-40px_color-mix(in_srgb,var(--color-ink)_45%,transparent)]">
         <CardHeader>
-          <div className="mb-2 flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)]">
+          <div className="mb-2 flex items-center gap-2" suppressHydrationWarning>
+            <span
+              className="flex size-9 items-center justify-center rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)]"
+              suppressHydrationWarning
+            >
               <GraduationCap aria-hidden className="size-4" />
             </span>
             <span className="text-xl font-semibold tracking-tight">EduCore</span>
