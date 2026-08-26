@@ -307,7 +307,7 @@ export default function LoginPage() {
                   toast.success(`Filled ${acc.label} demo credentials`);
                 }}
               >
-                <acc.icon className="mr-2 size-4" />
+                <acc.icon className="mr-2 size-4" suppressHydrationWarning />
                 {acc.label}
               </Button>
             ))}
