@@ -21,11 +21,11 @@ import {
 } from '@/lib/auth/complete-login';
 
 const DEMO_ACCOUNTS = [
-  { role: 'admin', label: 'Admin', email: 'admin@educore.test', password: 'Password123!', icon: UserCog },
-  { role: 'teacher', label: 'Teacher', email: 'teacher@educore.test', password: 'Password123!', icon: User },
-  { role: 'principal', label: 'Principal', email: 'principal@educore.test', password: 'Password123!', icon: School },
-  { role: 'student', label: 'Student', email: 'student@educore.test', password: 'Password123!', icon: User },
-  { role: 'parent', label: 'Parent', email: 'parent@educore.test', password: 'Password123!', icon: UserCog },
+  { role: 'admin', label: 'Admin', email: 'admin@educore.local', password: 'Password123!', tenantId: 'demo-school', icon: UserCog },
+  { role: 'teacher', label: 'Teacher', email: 'teacher@educore.local', password: 'Password123!', tenantId: 'demo-school', icon: User },
+  { role: 'principal', label: 'Principal', email: 'head@educore.local', password: 'Password123!', tenantId: 'demo-school', icon: School },
+  { role: 'student', label: 'Student', email: 'student@educore.local', password: 'Password123!', tenantId: 'demo-school', icon: User },
+  { role: 'parent', label: 'Parent', email: 'parent@educore.local', password: 'Password123!', tenantId: 'demo-school', icon: UserCog },
 ] as const;
 
 type LoginResponse = {
@@ -303,6 +303,7 @@ export default function LoginPage() {
                 onClick={() => {
                   setEmail(acc.email);
                   setPassword(acc.password);
+                  setTenantId(acc.tenantId);
                   toast.success(`Filled ${acc.label} demo credentials`);
                 }}
               >
