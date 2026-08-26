@@ -24,7 +24,7 @@ school data, runtime secrets, payment configuration, or public-pilot status.
 
 ### Slice 2: Owner UAT evidence
 
-- [ ] Run the preflight against staging.
+- [x] Run the preflight against staging (2026-08-26; API and web HTTP 200).
 - [ ] Owner completes `docs/engineering/qa/M9-uat-core-workflows.md`.
 - [ ] Save the completed result as `M9-uat-staging-YYYY-MM-DD.md`.
 
