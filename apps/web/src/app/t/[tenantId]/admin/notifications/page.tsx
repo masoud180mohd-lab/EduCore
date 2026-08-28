@@ -14,7 +14,9 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Card, CardContent } from '@/components/ui/card';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { Layers, MessageSquare, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -293,21 +295,64 @@ export default function AdminNotificationsPage() {
 
       {gateReady && canRead ? (
         <div className="stack">
-          <section className="card stack">
-            <h2 className="section-title">{t('sms.usage')}</h2>
-            {usageLoading ? <p className="muted">{t('common.loading')}</p> : null}
-            {usageError !== null ? <Banner tone="error">{usageError}</Banner> : null}
-            {usage !== null ? (
-              <p className="muted">
-                Date {usage.usageDate} · Sent {usage.sentCount} · Segments {usage.segmentCount}
-                {usage.bypassDailyCap
-                  ? ' · Daily cap bypassed (lab)'
-                  : usage.dailyCap !== null
-                    ? ` · Cap ${String(usage.dailyCap)}`
-                    : ' · Cap unset'}
-              </p>
-            ) : null}
-          </section>
+          {/* SMS Usage KPI Cards */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card className="border-border/70 bg-card">
+              <CardContent className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    SMS Zilizotumwa Leo
+                  </p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
+                    {usageLoading ? '…' : (usage?.sentCount ?? 0)}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <Send className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 bg-card">
+              <CardContent className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Vipande vya SMS (Segments)
+                  </p>
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">
+                    {usageLoading ? '…' : (usage?.segmentCount ?? 0)}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <Layers className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 bg-card">
+              <CardContent className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Kiwango cha Ukomo (Daily Cap)
+                  </p>
+                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-1">
+                    {usageLoading
+                      ? '…'
+                      : usage?.bypassDailyCap
+                        ? 'Bypassed (Lab)'
+                        : usage?.dailyCap !== null && usage?.dailyCap !== undefined
+                          ? String(usage.dailyCap)
+                          : 'Unset'}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {usageError !== null ? <Banner tone="error">{usageError}</Banner> : null}
 
           {canManage ? (
             <section className="card stack">
