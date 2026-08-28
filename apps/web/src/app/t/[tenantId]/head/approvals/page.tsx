@@ -143,15 +143,14 @@ export default function HeadApprovalsPage() {
           </Link>
         </div>
 
-        <AdminPageHeader
-          title={t('head.approvalsTitle')}
-          description={t('head.approvalsDesc')}
-        />
+        <AdminPageHeader title={t('head.approvalsTitle')} description={t('head.approvalsDesc')} />
 
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
         {success !== null ? <Banner tone="info">{success}</Banner> : null}
         {loading ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p> : null}
-        {!loading && items.length === 0 ? <Banner tone="info">{t('head.noApprovals')}</Banner> : null}
+        {!loading && items.length === 0 ? (
+          <Banner tone="info">{t('head.noApprovals')}</Banner>
+        ) : null}
 
         <div className="flex flex-col gap-3">
           {items.map((item) => (
@@ -203,4 +202,3 @@ export default function HeadApprovalsPage() {
     </HeadShell>
   );
 }
-

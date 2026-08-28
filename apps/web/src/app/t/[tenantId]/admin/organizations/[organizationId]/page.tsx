@@ -80,10 +80,9 @@ export default function AdminOrganizationDetailPage() {
     const auth = readSession();
     if (auth === null) return;
     try {
-      const res = await apiRequest<{ data: OrganizationRow }>(
-        `/api/v1/organizations/${parentId}`,
-        { auth },
-      );
+      const res = await apiRequest<{ data: OrganizationRow }>(`/api/v1/organizations/${parentId}`, {
+        auth,
+      });
       setParentOptions((prev) => appendById(prev, [res.data]));
     } catch {
       /* select still holds id until picker catches up */
@@ -209,7 +208,9 @@ export default function AdminOrganizationDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>{t('orgs.organization')}</CardTitle>
-              <CardDescription>{row.code ? `Code: ${row.code}` : 'No code assigned'}</CardDescription>
+              <CardDescription>
+                {row.code ? `Code: ${row.code}` : 'No code assigned'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form className="flex flex-col gap-4 max-w-md" onSubmit={(e) => void onSave(e)}>

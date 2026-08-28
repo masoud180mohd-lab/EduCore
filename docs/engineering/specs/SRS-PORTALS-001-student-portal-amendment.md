@@ -1,10 +1,10 @@
 # SRS amendment — Student portal (Phase 4a)
 
-| Field | Value |
-|-------|--------|
-| Parent | `SPEC-PORTALS-001` Phase 4 |
+| Field  | Value                       |
+| ------ | --------------------------- |
+| Parent | `SPEC-PORTALS-001` Phase 4  |
 | Freeze | `DSF-009-student-portal.md` |
-| Date | 2026-08-21 |
+| Date   | 2026-08-21                  |
 
 ## Requirements (shall)
 

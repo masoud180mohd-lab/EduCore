@@ -85,15 +85,29 @@ export default function RegisterSchoolPage() {
         <form className="stack" onSubmit={onSchool}>
           <label>
             {t('platform.code')}
-            <input value={code} required minLength={3} maxLength={64} onChange={(e) => setCode(e.target.value)} />
+            <input
+              value={code}
+              required
+              minLength={3}
+              maxLength={64}
+              onChange={(e) => setCode(e.target.value)}
+            />
           </label>
           <label>
             {t('platform.name')}
-            <input value={name} required maxLength={200} onChange={(e) => setName(e.target.value)} />
+            <input
+              value={name}
+              required
+              maxLength={200}
+              onChange={(e) => setName(e.target.value)}
+            />
           </label>
           <label>
             {t('platform.locale')}
-            <select value={primaryLocale} onChange={(e) => setPrimaryLocale(e.target.value as 'en' | 'sw')}>
+            <select
+              value={primaryLocale}
+              onChange={(e) => setPrimaryLocale(e.target.value as 'en' | 'sw')}
+            >
               <option value="en">English</option>
               <option value="sw">Kiswahili</option>
             </select>

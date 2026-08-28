@@ -124,7 +124,9 @@ export default function GuardianFeesInvoiceDetailPage() {
     <AdminShell tenantId={tenantId}>
       <p className="muted">
         {invoice !== null ? (
-          <Link href={`${base}/fees/students/${invoice.studentId}`}>← {t('fees.invoicesTitle')}</Link>
+          <Link href={`${base}/fees/students/${invoice.studentId}`}>
+            ← {t('fees.invoicesTitle')}
+          </Link>
         ) : (
           <Link href={`${base}/fees`}>← {t('guardians.fees')}</Link>
         )}

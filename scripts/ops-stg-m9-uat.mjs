@@ -49,7 +49,8 @@ async function probe(name, url) {
     status = String(res.status);
     detail = res.ok ? 'reachable' : 'not healthy';
   } catch (error) {
-    detail = error instanceof Error && error.name === 'TimeoutError' ? 'timed out' : 'request failed';
+    detail =
+      error instanceof Error && error.name === 'TimeoutError' ? 'timed out' : 'request failed';
   }
 
   return {
@@ -75,7 +76,10 @@ function evidence(rows, checkedAt) {
     '',
     '| Probe | Host | HTTP | Duration | Result |',
     '| --- | --- | --- | --- | --- |',
-    ...rows.map((row) => `| ${row.name} | ${row.host} | ${row.status} | ${row.durationMs} ms | ${row.detail} |`),
+    ...rows.map(
+      (row) =>
+        `| ${row.name} | ${row.host} | ${row.status} | ${row.durationMs} ms | ${row.detail} |`,
+    ),
     '',
     '## Next required action',
     '',
@@ -86,8 +90,14 @@ function evidence(rows, checkedAt) {
 }
 
 async function main() {
-  const api = stagingUrl(process.env['EDUCORE_STAGING_API'] ?? DEFAULT_API_BASE, 'EDUCORE_STAGING_API');
-  const web = stagingUrl(process.env['EDUCORE_STAGING_WEB'] ?? DEFAULT_WEB_BASE, 'EDUCORE_STAGING_WEB');
+  const api = stagingUrl(
+    process.env['EDUCORE_STAGING_API'] ?? DEFAULT_API_BASE,
+    'EDUCORE_STAGING_API',
+  );
+  const web = stagingUrl(
+    process.env['EDUCORE_STAGING_WEB'] ?? DEFAULT_WEB_BASE,
+    'EDUCORE_STAGING_WEB',
+  );
   api.pathname = '/health';
   api.search = '';
   web.pathname = '/';

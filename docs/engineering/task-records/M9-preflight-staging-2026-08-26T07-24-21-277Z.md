@@ -1,15 +1,15 @@
 # M9 staging preflight — 2026-08-26T07:24:21.277Z
 
-| Field | Value |
-| --- | --- |
-| Checked (UTC) | 2026-08-26T07:24:21.277Z |
-| Scope | Health and web reachability only — not workflow UAT |
-| Overall | **Pass** |
+| Field         | Value                                               |
+| ------------- | --------------------------------------------------- |
+| Checked (UTC) | 2026-08-26T07:24:21.277Z                            |
+| Scope         | Health and web reachability only — not workflow UAT |
+| Overall       | **Pass**                                            |
 
-| Probe | Host | HTTP | Duration | Result |
-| --- | --- | --- | --- | --- |
-| API health | educore-api-staging.fly.dev | 200 | 1153 ms | reachable |
-| Web entry | educore-web-staging.fly.dev | 200 | 1823 ms | reachable |
+| Probe      | Host                        | HTTP | Duration | Result    |
+| ---------- | --------------------------- | ---- | -------- | --------- |
+| API health | educore-api-staging.fly.dev | 200  | 1153 ms  | reachable |
+| Web entry  | educore-web-staging.fly.dev | 200  | 1823 ms  | reachable |
 
 ## Next required action
 

@@ -124,10 +124,7 @@ export default function AdminStudentsPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <div className="flex flex-col gap-6">
-        <AdminPageHeader
-          title={t('students.title')}
-          description={t('students.description')}
-        />
+        <AdminPageHeader title={t('students.title')} description={t('students.description')} />
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
         <Card>
@@ -273,9 +270,7 @@ export default function AdminStudentsPage() {
                 </td>
                 <td className="admin-table-actions">
                   <Button asChild variant="secondary" size="sm">
-                    <Link href={`/t/${tenantId}/admin/students/${s.id}`}>
-                      {t('common.open')}
-                    </Link>
+                    <Link href={`/t/${tenantId}/admin/students/${s.id}`}>{t('common.open')}</Link>
                   </Button>
                 </td>
               </tr>

@@ -155,11 +155,7 @@ export default function AdminSettingsPage() {
       <AdminPageHeader title={t('settings.title')} description={t('settings.description')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      {readOnly ? (
-        <Banner tone="info">
-          {t('settings.readOnly')}
-        </Banner>
-      ) : null}
+      {readOnly ? <Banner tone="info">{t('settings.readOnly')}</Banner> : null}
       {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {!loading ? (
         <form className="stack card" onSubmit={onSave}>
@@ -213,9 +209,7 @@ export default function AdminSettingsPage() {
           </div>
           {showAdvanced ? (
             <>
-              <Banner tone="error">
-                {t('settings.advancedWarn')}
-              </Banner>
+              <Banner tone="error">{t('settings.advancedWarn')}</Banner>
               <div className="field">
                 <label htmlFor="extrasJson">{t('settings.extras')}</label>
                 <textarea

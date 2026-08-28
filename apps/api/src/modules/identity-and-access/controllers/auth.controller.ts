@@ -76,6 +76,48 @@ export class AuthController {
     };
   }
 
+  @Post('accept-invite')
+  @HttpCode(200)
+  async acceptInvite(
+    @Req() request: AuthRequest,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<{ data: unknown }> {
+    const body = asRecord(request.body);
+    const userAgent = request.header('user-agent');
+    const result = await this.authService.acceptInvite({
+      email: body['email'],
+      password: body['password'],
+      displayName: body['displayName'],
+      tenantId: body['tenantId'],
+      correlationId: resolveCorrelationId(request),
+      ...(request.ip !== undefined && request.ip !== '' ? { ip: request.ip } : {}),
+      ...(userAgent !== undefined && userAgent !== '' ? { userAgent } : {}),
+    });
+
+    if (!result.requiresMfa && result.refreshToken !== null) {
+      setRefreshCookie(response, result.refreshToken);
+    }
+
+    return {
+      data: {
+        ...(result.accessToken !== null
+          ? {
+              accessToken: result.accessToken,
+              tokenType: result.tokenType,
+              expiresIn: result.expiresIn,
+              ...(includeRefreshTokenInBody() && result.refreshToken !== null
+                ? { refreshToken: result.refreshToken }
+                : {}),
+            }
+          : {}),
+        requiresMfa: result.requiresMfa,
+        mfaChallengeToken: result.mfaChallengeToken,
+        user: result.user,
+        tenantId: result.tenantId,
+      },
+    };
+  }
+
   @Post('mfa/verify')
   @HttpCode(200)
   async verifyMfa(

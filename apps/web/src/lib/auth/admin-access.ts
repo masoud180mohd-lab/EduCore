@@ -178,14 +178,7 @@ export function adminDeniedFallback(me: MeLike): AdminFallbackHome {
 }
 
 export type AdminNavGroupId =
-  | 'home'
-  | 'registry'
-  | 'access'
-  | 'academic'
-  | 'fees'
-  | 'communications'
-  | 'insights'
-  | 'settings';
+  'home' | 'registry' | 'access' | 'academic' | 'fees' | 'communications' | 'insights' | 'settings';
 
 export type AdminNavGroup = {
   readonly id: AdminNavGroupId;

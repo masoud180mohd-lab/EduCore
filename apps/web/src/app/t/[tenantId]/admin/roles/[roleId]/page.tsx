@@ -129,7 +129,8 @@ export default function AdminRoleDetailPage() {
             <AdminPageHeader title={row?.name || t('roles.role')}>
               {row !== null ? (
                 <div className="text-sm text-muted-foreground mt-1">
-                  Code: <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{row.code}</code> · {row.isSystem ? 'System' : 'Custom'}
+                  Code: <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{row.code}</code> ·{' '}
+                  {row.isSystem ? 'System' : 'Custom'}
                 </div>
               ) : null}
             </AdminPageHeader>
@@ -175,7 +176,10 @@ export default function AdminRoleDetailPage() {
                 <CardContent>
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {row.permissions.map((code) => (
-                      <div key={code} className="rounded border bg-muted/40 p-2.5 text-xs font-mono">
+                      <div
+                        key={code}
+                        className="rounded border bg-muted/40 p-2.5 text-xs font-mono"
+                      >
                         {code}
                       </div>
                     ))}
@@ -203,7 +207,9 @@ export default function AdminRoleDetailPage() {
                           />
                           <div className="text-sm">
                             <strong className="font-semibold block">{perm.code}</strong>
-                            <span className="text-xs text-muted-foreground">{perm.description}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {perm.description}
+                            </span>
                           </div>
                         </label>
                       ))}

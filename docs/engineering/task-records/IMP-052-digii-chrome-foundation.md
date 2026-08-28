@@ -1,10 +1,10 @@
 # IMP-052 — Digii chrome foundation (Tailwind + shadcn + Login/Platform proof)
 
-| Field | Value |
-| --- | --- |
-| Task | IMP-052 |
-| Date | 2026-08-20 |
-| Status | **In progress** — Wave 0–2 foundation landed |
+| Field     | Value                                                                           |
+| --------- | ------------------------------------------------------------------------------- |
+| Task      | IMP-052                                                                         |
+| Date      | 2026-08-20                                                                      |
+| Status    | **In progress** — Wave 0–2 foundation landed                                    |
 | Governing | DSF-KIT-001 v1.7 · DSF-KIT-002 v1.1 · DSF-002 v1.32 · SPEC-PORTALS-001 Phase 1b |
 
 ## Summary

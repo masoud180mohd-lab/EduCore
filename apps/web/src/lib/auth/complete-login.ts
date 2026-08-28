@@ -40,10 +40,7 @@ type MeEnvelope = {
   readonly data: MeLike;
 };
 
-async function fetchMe(
-  accessToken: string,
-  tenantId: string | null,
-): Promise<MeLike | null> {
+async function fetchMe(accessToken: string, tenantId: string | null): Promise<MeLike | null> {
   try {
     const result = await apiRequest<MeEnvelope>('/api/v1/auth/me', {
       auth: { accessToken, tenantId: tenantId ?? '' },

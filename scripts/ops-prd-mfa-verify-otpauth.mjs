@@ -68,19 +68,21 @@ const email = getSecret('SEED_ADMIN_EMAIL');
 const password = getSecret('SEED_ADMIN_PASS');
 const login = await fetch(`${API}/api/v1/auth/login`, {
   method: 'POST',
-  headers: { accept: 'application/json', 'content-type': 'application/json' },
+  headers: { 'accept': 'application/json', 'content-type': 'application/json' },
   body: JSON.stringify({ email, password }),
 });
 const loginBody = await login.json();
 const challenge = loginBody.data?.mfaChallengeToken;
-process.stdout.write(`login_http=${login.status} requiresMfa=${loginBody.data?.requiresMfa === true}\n`);
+process.stdout.write(
+  `login_http=${login.status} requiresMfa=${loginBody.data?.requiresMfa === true}\n`,
+);
 if (!challenge) {
   process.stderr.write('no_challenge\n');
   process.exit(1);
 }
 const verify = await fetch(`${API}/api/v1/auth/mfa/verify`, {
   method: 'POST',
-  headers: { accept: 'application/json', 'content-type': 'application/json' },
+  headers: { 'accept': 'application/json', 'content-type': 'application/json' },
   body: JSON.stringify({ mfaChallengeToken: challenge, code: generateTotpCode(secret) }),
 });
 const verifyBody = await verify.json();

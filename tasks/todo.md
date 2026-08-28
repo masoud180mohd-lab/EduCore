@@ -36,7 +36,7 @@
 - [ ] Manual verify P4b: follow `tasks/manual-test-p4b-rbac.md`
 - [ ] Manual verify product reads: follow `tasks/manual-test-product-reads-qa.md`
 - [x] **Governance closed (SOLO-GOV-001):** acting countersignatures + DBF/ACF Freeze v1.0 + FREEZE-ACC Accepted — theoretical roles consolidated; outbox send N/A
-- [ ] Next product: gated IMP increments (tenant CRUD / invites) only with explicit plan — freezes do not auto-open every OpenAPI path
+- [x] Next product: gated IMP increments (tenant CRUD / invites) only with explicit plan — freezes do not auto-open every OpenAPI path
 - [ ] P3 follow-ups: MFA, session list/revoke (optional)
 - [ ] Role-admin HTTP (blocked until Freeze v1.0)
 - Optional: git commit + GitHub push (operator)

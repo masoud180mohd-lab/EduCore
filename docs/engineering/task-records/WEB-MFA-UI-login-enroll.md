@@ -1,12 +1,12 @@
 # WEB-MFA-UI — Login challenge + admin enroll UX
 
-| Field     | Value                                              |
-| --------- | -------------------------------------------------- |
+| Field     | Value                                                |
+| --------- | ---------------------------------------------------- |
 | Program   | **WEB-MFA-UI** (hardening within ACF-001 / MFA-HARD) |
-| Date      | 2026-08-09                                         |
-| Status    | **Done** (solo-operator provisional)               |
-| Depends   | MFA-001…005 · MFA-HARD · WEB-AUTH0 · DSF-KIT-001   |
-| Authority | Solo-operator provisional (SOLO-GOV-001)           |
+| Date      | 2026-08-09                                           |
+| Status    | **Done** (solo-operator provisional)                 |
+| Depends   | MFA-001…005 · MFA-HARD · WEB-AUTH0 · DSF-KIT-001     |
+| Authority | Solo-operator provisional (SOLO-GOV-001)             |
 
 ## Outcome
 

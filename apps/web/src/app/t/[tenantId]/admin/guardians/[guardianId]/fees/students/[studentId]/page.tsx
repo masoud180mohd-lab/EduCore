@@ -90,7 +90,9 @@ export default function GuardianStudentInvoicesPage() {
       <p className="muted">
         <Link href={`${base}/fees`}>← {t('guardians.fees')}</Link>
       </p>
-      <AdminPageHeader title={`${t('fees.invoicesTitle')} — ${studentName ?? t('students.student')}`} />
+      <AdminPageHeader
+        title={`${t('fees.invoicesTitle')} — ${studentName ?? t('students.student')}`}
+      />
       <Banner tone="info">
         Pay at the school office (cash, bank, or cheque). Mobile money is not enabled (PAY-007 /
         PAY-PROVIDER-001).

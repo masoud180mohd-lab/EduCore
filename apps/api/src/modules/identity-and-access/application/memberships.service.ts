@@ -328,6 +328,47 @@ export class MembershipsService {
     );
   }
 
+  /**
+   * POST /memberships/:id/resend — resend invite (user.invite).
+   * Valid only for invited memberships. Missing → 404.
+   */
+  async resendInviteForTenant(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+    correlationId: string,
+  ): Promise<LifecycleMembershipResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(membershipId)) {
+      throw AppError.notFound('Membership not found.');
+    }
+
+    const membership = await this.memberships.getByIdForTenant(actorUserId, tenantId, membershipId);
+    if (membership === null || membership.status !== 'invited') {
+      throw AppError.notFound('Invited membership not found.');
+    }
+
+    if (this.audit !== null) {
+      await this.audit.publish({
+        action: 'membership.invite_resend',
+        outcome: 'success',
+        actorUserId,
+        tenantId,
+        resourceType: 'membership',
+        resourceId: membershipId,
+        correlationId,
+        metadata: { targetUserId: membership.userId },
+      });
+    }
+
+    return { data: membership };
+  }
+
   private async runLifecycle(
     actorUserId: string,
     tenantId: string,

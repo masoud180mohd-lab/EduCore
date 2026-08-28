@@ -257,7 +257,9 @@ export default function AdminEnrollmentDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic/enrollments`}>← {t('academic.enrollments')}</Link>
+        <Link href={`/t/${tenantId}/admin/academic/enrollments`}>
+          ← {t('academic.enrollments')}
+        </Link>
       </p>
       <AdminPageHeader title={studentName ?? t('academic.enrollment')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
@@ -268,8 +270,12 @@ export default function AdminEnrollmentDetailPage() {
             <div>
               <span className="chip">{row.status}</span>
             </div>
-            <div className="muted">{t('common.student')}: {studentName ?? row.studentId}</div>
-            <div className="muted">{t('common.year')}: {yearName ?? row.academicYearId}</div>
+            <div className="muted">
+              {t('common.student')}: {studentName ?? row.studentId}
+            </div>
+            <div className="muted">
+              {t('common.year')}: {yearName ?? row.academicYearId}
+            </div>
           </div>
 
           <form className="stack card" onSubmit={onTransfer}>
@@ -290,7 +296,9 @@ export default function AdminEnrollmentDetailPage() {
                   void loadStreamPicker({ forClassId: next, cursor: null, append: false });
                 }}
               >
-                <option value="">{t('common.select')} {t('common.class')}</option>
+                <option value="">
+                  {t('common.select')} {t('common.class')}
+                </option>
                 {classes.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}

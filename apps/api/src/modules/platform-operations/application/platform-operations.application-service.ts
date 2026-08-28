@@ -210,6 +210,27 @@ export class PlatformOperationsApplicationService {
     return { data: tenant };
   }
 
+  async updateTenant(
+    actorUserId: string,
+    tenantId: string,
+    rawBody: unknown,
+    correlationId: string,
+  ): Promise<GetPlatformTenantResult> {
+    assertActor(actorUserId);
+    if (!isUuid(tenantId)) {
+      throw AppError.notFound('School not found.');
+    }
+    const parsed = parseUpdateTenantBody(rawBody);
+    if (!this.tenants.isAvailable()) {
+      throw new AppError('INTERNAL_ERROR', 'Platform store unavailable.', 503);
+    }
+    const tenant = await this.tenants.updateTenant(actorUserId, tenantId, parsed, correlationId);
+    if (tenant === null) {
+      throw AppError.notFound('School not found.');
+    }
+    return { data: tenant };
+  }
+
   async listAudit(
     actorUserId: string,
     rawQuery: {
@@ -292,7 +313,9 @@ export class PlatformOperationsApplicationService {
     } catch (error) {
       if (isCoded(error, 'INVALID_STATUS')) {
         const current = (error as { currentStatus?: string }).currentStatus ?? 'unknown';
-        throw AppError.validation(`Cannot change status from ${current}.`, { currentStatus: current });
+        throw AppError.validation(`Cannot change status from ${current}.`, {
+          currentStatus: current,
+        });
       }
       throw error;
     }
@@ -382,7 +405,11 @@ function parseEntitlementBody(raw: unknown): {
   }
   let limit: number | null = null;
   if (body['limit'] !== undefined && body['limit'] !== null) {
-    if (typeof body['limit'] !== 'number' || !Number.isInteger(body['limit']) || body['limit'] < 0) {
+    if (
+      typeof body['limit'] !== 'number' ||
+      !Number.isInteger(body['limit']) ||
+      body['limit'] < 0
+    ) {
       throw AppError.validation('limit must be an integer ≥ 0.', { field: 'limit' });
     }
     limit = body['limit'];
@@ -399,6 +426,44 @@ function parseReason(raw: unknown): string {
     throw AppError.validation('reason must be 5–500 characters.', { field: 'reason' });
   }
   return reason;
+}
+
+function parseUpdateTenantBody(raw: unknown): {
+  readonly name?: string;
+  readonly primaryLocale?: 'en' | 'sw';
+  readonly timezone?: string;
+} {
+  if (typeof raw !== 'object' || raw === null) {
+    throw AppError.validation('Request body is required.');
+  }
+  const body = raw as Record<string, unknown>;
+  const name = body['name'] !== undefined ? asTrimmedString(body['name'], 'name') : undefined;
+  if (name !== undefined && (name.length < 2 || name.length > 200)) {
+    throw AppError.validation('name must be between 2 and 200 characters.', { field: 'name' });
+  }
+  const localeRaw = body['primaryLocale'];
+  let primaryLocale: 'en' | 'sw' | undefined = undefined;
+  if (localeRaw !== undefined) {
+    if (typeof localeRaw !== 'string' || !LOCALES.has(localeRaw)) {
+      throw AppError.validation('primaryLocale must be en or sw.', { field: 'primaryLocale' });
+    }
+    primaryLocale = localeRaw as 'en' | 'sw';
+  }
+  const timezone =
+    body['timezone'] !== undefined ? asTrimmedString(body['timezone'], 'timezone') : undefined;
+  if (timezone !== undefined && (timezone.length < 2 || timezone.length > 80)) {
+    throw AppError.validation('timezone is invalid.', { field: 'timezone' });
+  }
+  if (name === undefined && primaryLocale === undefined && timezone === undefined) {
+    throw AppError.validation(
+      'At least one field (name, primaryLocale, timezone) must be provided.',
+    );
+  }
+  return {
+    ...(name !== undefined ? { name } : {}),
+    ...(primaryLocale !== undefined ? { primaryLocale } : {}),
+    ...(timezone !== undefined ? { timezone } : {}),
+  };
 }
 
 function asTrimmedString(value: unknown, field: string): string {
@@ -447,7 +512,12 @@ function isEntitlementCode(value: string): value is EntitlementCode {
 }
 
 function isPgCode(error: unknown, code: string): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === code;
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === code
+  );
 }
 
 function isCoded(error: unknown, code: string): boolean {

@@ -1,11 +1,11 @@
 # DSF-007 — Platform Super Admin Portal (screen inventory)
 
-| Field     | Value                                                                 |
-| --------- | --------------------------------------------------------------------- |
-| Freeze ID | `DSF-007`                                                             |
-| Version   | `1.0`                                                                 |
-| Date      | 2026-08-15                                                            |
-| Status    | **Accepted — Owner GO in session 2026-08-15** (SOLO-GOV-003 gate form) |
+| Field     | Value                                                                                                              |
+| --------- | ------------------------------------------------------------------------------------------------------------------ |
+| Freeze ID | `DSF-007`                                                                                                          |
+| Version   | `1.0`                                                                                                              |
+| Date      | 2026-08-15                                                                                                         |
+| Status    | **Accepted — Owner GO in session 2026-08-15** (SOLO-GOV-003 gate form)                                             |
 | Governing | SPEC-PORTALS-001 v1.0 (P1) · DSF-KIT-002 (PlatformShell) · DSF-KIT-001 tokens/states · ACF-PLAT-001 · DBF-PLAT-001 |
 
 **Honesty:** Screen inventory for Phase 1a only. Platform Support role, support sessions UI, and metering dashboards are **out of this freeze** (Q8 default). Coding still requires ACF-PLAT-001 + DBF-PLAT-001 acceptance.
@@ -27,12 +27,12 @@ EduCore Platform
 
 ## Screens (v1 inventory)
 
-| # | Screen | Route | Contents / actions |
-| --- | --- | --- | --- |
-| 1 | Schools list | `/platform` | Table: name, code, status chip (draft/active/suspended/closed), plan, created. Filter by status. Cursor "Load more". Primary action: **Register school**. |
-| 2 | Register school | `/platform/tenants/new` | Two-step form: (1) school — code, name, locale, timezone; (2) initial owner — email, display name. Confirm screen restates both. Success → detail. |
-| 3 | School detail | `/platform/tenants/[id]` | Profile panel; status panel with **Suspend / Reinstate** (ConfirmDialog, required reason, danger styling for suspend); plan panel (current plan + assign from catalog); entitlements panel (toggle rows per code, optional limit); recent audit slice for this tenant. |
-| 4 | Platform audit | `/platform/audit` | Table: time, action, outcome, actor, tenant, resource. Cursor pagination. Filter by tenant and action. Read-only. |
+| #   | Screen          | Route                    | Contents / actions                                                                                                                                                                                                                                                     |
+| --- | --------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Schools list    | `/platform`              | Table: name, code, status chip (draft/active/suspended/closed), plan, created. Filter by status. Cursor "Load more". Primary action: **Register school**.                                                                                                              |
+| 2   | Register school | `/platform/tenants/new`  | Two-step form: (1) school — code, name, locale, timezone; (2) initial owner — email, display name. Confirm screen restates both. Success → detail.                                                                                                                     |
+| 3   | School detail   | `/platform/tenants/[id]` | Profile panel; status panel with **Suspend / Reinstate** (ConfirmDialog, required reason, danger styling for suspend); plan panel (current plan + assign from catalog); entitlements panel (toggle rows per code, optional limit); recent audit slice for this tenant. |
+| 4   | Platform audit  | `/platform/audit`        | Table: time, action, outcome, actor, tenant, resource. Cursor pagination. Filter by tenant and action. Read-only.                                                                                                                                                      |
 
 ## Required states (every screen)
 
@@ -50,6 +50,6 @@ Support sessions UI · metering/usage dashboards · platform settings/feature-fl
 
 ## Amendments
 
-| Ver | Date | Notes |
-| --- | --- | --- |
+| Ver | Date       | Notes                      |
+| --- | ---------- | -------------------------- |
 | 1.0 | 2026-08-15 | Initial Phase 1a inventory |

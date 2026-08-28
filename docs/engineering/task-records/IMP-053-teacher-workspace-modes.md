@@ -1,10 +1,10 @@
 # IMP-053 — Teacher Workspace modes (Darasa / Somo)
 
-| Field | Value |
-| --- | --- |
-| Task | IMP-053 |
-| Date | 2026-08-20 |
-| Status | **Landed** (lab) |
+| Field     | Value                                                                 |
+| --------- | --------------------------------------------------------------------- |
+| Task      | IMP-053                                                               |
+| Date      | 2026-08-20                                                            |
+| Status    | **Landed** (lab)                                                      |
 | Governing | SPEC-PORTALS-001 D1 · DSF-001 v1.2 · DSF-003 v1.2 · DSF-KIT-002 Digii |
 
 ## Summary

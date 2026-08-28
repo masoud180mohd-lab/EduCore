@@ -40,8 +40,7 @@ export function AppProviders({ children }: { readonly children: ReactNode }) {
   useEffect(() => {
     const storedTheme = readStoredTheme();
     const nextTheme: UiTheme =
-      storedTheme ??
-      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      storedTheme ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     const nextLocale = readStoredLocale() ?? 'en';
     setThemeState(nextTheme);
     setLocaleState(nextLocale);

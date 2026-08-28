@@ -1,13 +1,13 @@
 # IMP-049 — Full UI EN/SW chrome
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **IMP-049** |
-| Date      | 2026-08-14 |
-| Status    | **Done** (solo-operator provisional) |
-| Freezes   | DSF-KIT-001 v1.4 · DSF-002 v1.30 |
+| Field     | Value                                            |
+| --------- | ------------------------------------------------ |
+| Program   | **IMP-049**                                      |
+| Date      | 2026-08-14                                       |
+| Status    | **Done** (solo-operator provisional)             |
+| Freezes   | DSF-KIT-001 v1.4 · DSF-002 v1.30                 |
 | Depends   | IMP-047 chrome i18n · IMP-048 Students/Fees i18n |
-| Authority | Owner + AI (SOLO-GOV-002) |
+| Authority | Owner + AI (SOLO-GOV-002)                        |
 
 ## Outcome
 
@@ -15,13 +15,13 @@ Translate remaining visible Admin, Teacher, Parent, and login chrome so the lang
 
 ## Delivered
 
-| Area | Detail |
-| ---- | ------ |
-| Catalog | Extra EN/SW keys in `messages-extra.ts`; `MessageKey` from merged catalog; interpolation via `formatMessage` |
-| Shells | TeacherShell / ParentShell nav + language/theme; Admin rail aria labels |
+| Area    | Detail                                                                                                                                               |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Catalog | Extra EN/SW keys in `messages-extra.ts`; `MessageKey` from merged catalog; interpolation via `formatMessage`                                         |
+| Shells  | TeacherShell / ParentShell nav + language/theme; Admin rail aria labels                                                                              |
 | Screens | Academic lists/details, users/roles/memberships, guardians, orgs, settings MFA, SMS, invoices/receipts, teacher attendance/marks, parent fees, login |
-| Shared | ConfirmDialog, ResourceList, StatusChip (`translateToken`) |
-| Test | EN/SW key parity in `messages.test.ts` |
+| Shared  | ConfirmDialog, ResourceList, StatusChip (`translateToken`)                                                                                           |
+| Test    | EN/SW key parity in `messages.test.ts`                                                                                                               |
 
 ## Honesty limits
 

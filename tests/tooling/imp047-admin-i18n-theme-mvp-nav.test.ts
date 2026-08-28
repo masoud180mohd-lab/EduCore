@@ -8,17 +8,14 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 
 describe('IMP-047 Admin i18n, theme, MVP modules', () => {
   it('ships EN/SW message catalog and preference providers', () => {
-    const messages = readFileSync(
-      path.join(root, 'apps/web/src/lib/i18n/messages.ts'),
-      'utf8',
-    );
+    const messages = readFileSync(path.join(root, 'apps/web/src/lib/i18n/messages.ts'), 'utf8');
     expect(messages).toContain("'en'");
     expect(messages).toContain("'sw'");
     expect(messages).toContain('nav.attendance');
     expect(existsSync(path.join(root, 'apps/web/src/components/AppProviders.tsx'))).toBe(true);
-    expect(existsSync(path.join(root, 'apps/web/src/components/chrome/AdminChromeControls.tsx'))).toBe(
-      true,
-    );
+    expect(
+      existsSync(path.join(root, 'apps/web/src/components/chrome/AdminChromeControls.tsx')),
+    ).toBe(true);
   });
 
   it('tokens define dark theme and chrome controls', () => {
@@ -40,18 +37,8 @@ describe('IMP-047 Admin i18n, theme, MVP modules', () => {
   });
 
   it('admin-access exposes MVP nav ids', () => {
-    const access = readFileSync(
-      path.join(root, 'apps/web/src/lib/auth/admin-access.ts'),
-      'utf8',
-    );
-    for (const id of [
-      'staff',
-      'attendance',
-      'exams',
-      'reportCards',
-      'announcements',
-      'reports',
-    ]) {
+    const access = readFileSync(path.join(root, 'apps/web/src/lib/auth/admin-access.ts'), 'utf8');
+    for (const id of ['staff', 'attendance', 'exams', 'reportCards', 'announcements', 'reports']) {
       expect(access).toContain(`'${id}'`);
     }
     expect(access).toContain("'communications'");
@@ -74,7 +61,9 @@ describe('IMP-047 Admin i18n, theme, MVP modules', () => {
 
   it('has task record', () => {
     expect(
-      existsSync(path.join(root, 'docs/engineering/task-records/IMP-047-admin-i18n-theme-mvp-nav.md')),
+      existsSync(
+        path.join(root, 'docs/engineering/task-records/IMP-047-admin-i18n-theme-mvp-nav.md'),
+      ),
     ).toBe(true);
   });
 });

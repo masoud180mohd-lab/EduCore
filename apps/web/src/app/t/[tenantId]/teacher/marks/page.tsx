@@ -95,10 +95,7 @@ export default function MarksHomePage() {
   return (
     <TeacherShell tenantId={tenantId}>
       <div className="flex flex-col gap-6">
-        <AdminPageHeader
-          title={t('teacher.marksTitle')}
-          description={t('teacher.marksDesc')}
-        />
+        <AdminPageHeader title={t('teacher.marksTitle')} description={t('teacher.marksDesc')} />
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
         <Card>
@@ -169,7 +166,9 @@ export default function MarksHomePage() {
         </Card>
 
         {loading ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p> : null}
-        {!loading && exams.length === 0 ? <Banner tone="info">{t('teacher.noExams')}</Banner> : null}
+        {!loading && exams.length === 0 ? (
+          <Banner tone="info">{t('teacher.noExams')}</Banner>
+        ) : null}
 
         <div className="flex flex-col gap-2.5">
           {exams.map((exam) => (
@@ -200,4 +199,3 @@ export default function MarksHomePage() {
     </TeacherShell>
   );
 }
-

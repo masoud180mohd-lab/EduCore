@@ -1,32 +1,32 @@
 # M9 staging UAT — 2026-08-27
 
-| Field | Value |
-| --- | --- |
-| Environment | staging |
-| Web / API | `educore-web-staging.fly.dev` / `educore-api-staging.fly.dev` |
-| Tester | Owner-assisted Codex run |
-| Scope | M9-001 core workflows; no real money or payment provider |
+| Field       | Value                                                         |
+| ----------- | ------------------------------------------------------------- |
+| Environment | staging                                                       |
+| Web / API   | `educore-web-staging.fly.dev` / `educore-api-staging.fly.dev` |
+| Tester      | Owner-assisted Codex run                                      |
+| Scope       | M9-001 core workflows; no real money or payment provider      |
 
 ## Results
 
-| # | Result | Evidence / limitation |
-| --- | --- | --- |
-| A1 | Pass | Privileged admin password + enrolled TOTP reached the tenant shell. |
-| A2 | Pass | Password-only login returned an MFA challenge and no access token under hard enforcement. |
-| A3 | Pass | A refreshed authenticated session remained valid; no credential appeared in the URL. |
-| B1 | Pass | Student registry presented a readable primary label. |
-| B2 | **Fail** | Enrollment detail still presents academic-year / organization UUIDs instead of resolved names. |
-| C1 | Partial | Fee-structure page loaded. A staging fixture was then created through the app's database helper. |
-| C2 | Partial | An invoice draft was created and issued through the application helper; the browser UI path was not re-executed after browser control became unavailable. |
-| C3 | Partial | An office cash payment for 10,000 minor units was accepted and fully allocated. No real payment provider was called. |
-| C4 | Partial | A receipt was created and its number was present; UI receipt/history rendering still needs a browser rerun. |
-| C5 | Blocked | No linked parent fixture is present in staging, so the parent portal's same-student view was not proven. |
-| D1 | Pass | Teacher workspace loaded without access denial. |
-| D2 | Blocked | Staging has no organization/class available to open an attendance session. |
-| D3 | Blocked | Staging has no exam available for mark entry. |
-| E1 | Pass | Fees and parent surfaces state that payments are office-only; they do not claim a live mobile-money provider. |
-| E2 | Pass (observed) | Teacher attendance and marks surfaces made no offline-production claim. |
-| E3 | Pass | Staging API `/health` returned HTTP 200 and `status: ok`. |
+| #   | Result          | Evidence / limitation                                                                                                                                     |
+| --- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1  | Pass            | Privileged admin password + enrolled TOTP reached the tenant shell.                                                                                       |
+| A2  | Pass            | Password-only login returned an MFA challenge and no access token under hard enforcement.                                                                 |
+| A3  | Pass            | A refreshed authenticated session remained valid; no credential appeared in the URL.                                                                      |
+| B1  | Pass            | Student registry presented a readable primary label.                                                                                                      |
+| B2  | **Fail**        | Enrollment detail still presents academic-year / organization UUIDs instead of resolved names.                                                            |
+| C1  | Partial         | Fee-structure page loaded. A staging fixture was then created through the app's database helper.                                                          |
+| C2  | Partial         | An invoice draft was created and issued through the application helper; the browser UI path was not re-executed after browser control became unavailable. |
+| C3  | Partial         | An office cash payment for 10,000 minor units was accepted and fully allocated. No real payment provider was called.                                      |
+| C4  | Partial         | A receipt was created and its number was present; UI receipt/history rendering still needs a browser rerun.                                               |
+| C5  | Blocked         | No linked parent fixture is present in staging, so the parent portal's same-student view was not proven.                                                  |
+| D1  | Pass            | Teacher workspace loaded without access denial.                                                                                                           |
+| D2  | Blocked         | Staging has no organization/class available to open an attendance session.                                                                                |
+| D3  | Blocked         | Staging has no exam available for mark entry.                                                                                                             |
+| E1  | Pass            | Fees and parent surfaces state that payments are office-only; they do not claim a live mobile-money provider.                                             |
+| E2  | Pass (observed) | Teacher attendance and marks surfaces made no offline-production claim.                                                                                   |
+| E3  | Pass            | Staging API `/health` returned HTTP 200 and `status: ok`.                                                                                                 |
 
 ## Ledger-helper evidence
 

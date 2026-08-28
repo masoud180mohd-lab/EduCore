@@ -298,10 +298,7 @@ describe('AuthService login', () => {
     };
     const sessions = {
       isAvailable: () => true,
-      lookupUserByExternalSubject: vi
-        .fn()
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(user),
+      lookupUserByExternalSubject: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(user),
       lookupUserByEmail: vi.fn().mockResolvedValue(user),
       linkExternalSubject: vi.fn().mockResolvedValue(true),
       hasActiveMembership: vi.fn().mockResolvedValue(true),
@@ -340,10 +337,7 @@ describe('AuthService login', () => {
     };
     const sessions = {
       isAvailable: () => true,
-      lookupUserByExternalSubject: vi
-        .fn()
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(user),
+      lookupUserByExternalSubject: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(user),
       lookupUserByEmail: vi.fn().mockResolvedValue(user),
       linkExternalSubject: vi.fn().mockResolvedValue(true),
       hasActiveMembership: vi.fn().mockResolvedValue(true),

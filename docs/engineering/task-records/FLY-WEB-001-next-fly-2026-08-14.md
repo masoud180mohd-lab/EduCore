@@ -1,17 +1,17 @@
 # FLY-WEB-001 — Next.js on Fly (staging + prod)
 
-| Field     | Value |
-| --------- | ----- |
-| Date      | 2026-08-14 |
-| Status    | **Done** |
+| Field     | Value                     |
+| --------- | ------------------------- |
+| Date      | 2026-08-14                |
+| Status    | **Done**                  |
 | Authority | Owner + AI (SOLO-GOV-002) |
 
 ## Delivered
 
-| App | URL | `/health` |
-| --- | --- | --------- |
-| `educore-web-staging` | https://educore-web-staging.fly.dev | ok |
-| `educore-web` | https://educore-web.fly.dev | ok |
+| App                   | URL                                 | `/health` |
+| --------------------- | ----------------------------------- | --------- |
+| `educore-web-staging` | https://educore-web-staging.fly.dev | ok        |
+| `educore-web`         | https://educore-web.fly.dev         | ok        |
 
 - `apps/web/Dockerfile` (standalone Next 15)
 - `infra/fly/educore-web.staging.toml` / `educore-web.toml` (`fra`)

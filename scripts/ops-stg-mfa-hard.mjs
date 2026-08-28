@@ -68,7 +68,9 @@ const current = getSecret('MFA_ENFORCE') ?? '(unset)';
 process.stdout.write(`current MFA_ENFORCE=${current}\n`);
 
 if (current === 'hard') {
-  process.stdout.write('Already hard — no change. Sync Fly if needed: node scripts/ops-stg-sync-fly-secrets.mjs\n');
+  process.stdout.write(
+    'Already hard — no change. Sync Fly if needed: node scripts/ops-stg-sync-fly-secrets.mjs\n',
+  );
   process.exit(0);
 }
 

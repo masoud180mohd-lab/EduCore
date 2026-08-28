@@ -110,7 +110,9 @@ export class StudentsService {
   async summarizeForTenant(
     actorUserId: string,
     tenantId: string,
-  ): Promise<{ readonly data: { readonly total: number; readonly byStatus: Readonly<Record<string, number>> } }> {
+  ): Promise<{
+    readonly data: { readonly total: number; readonly byStatus: Readonly<Record<string, number>> };
+  }> {
     if (!isUuid(actorUserId)) throw AppError.unauthorized();
     if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
     if (!this.students.isAvailable()) {

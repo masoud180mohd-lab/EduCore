@@ -67,6 +67,38 @@ export class SessionRepository {
     return mapUserCredential(result.rows[0]);
   }
 
+  /** Accept invite: sets password and activates user + membership. */
+  async acceptInvite(
+    email: string,
+    passwordHash: string,
+    displayName?: string,
+  ): Promise<UserCredentialRow | null> {
+    if (this.pool === null) {
+      return null;
+    }
+    const result = await this.pool.query<{
+      id: string;
+      email: string;
+      display_name: string;
+      status: string;
+    }>(
+      `SELECT id, email, display_name, status
+         FROM app.auth_accept_invite($1::citext, $2::text, $3::text)`,
+      [email, passwordHash, displayName ?? null],
+    );
+    const row = result.rows[0];
+    if (row === undefined) {
+      return null;
+    }
+    return {
+      id: row.id,
+      email: row.email,
+      displayName: row.display_name,
+      status: row.status,
+      passwordHash,
+    };
+  }
+
   async lookupUserByExternalSubject(subject: string): Promise<UserCredentialRow | null> {
     if (this.pool === null) {
       return null;

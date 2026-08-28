@@ -115,11 +115,7 @@ export default function AdminReportCardsPage() {
 
       <div className="field" style={{ maxWidth: '28rem', marginBottom: 'var(--space-4)' }}>
         <label htmlFor="rc-exam">{t('reportCards.pickExam')}</label>
-        <select
-          id="rc-exam"
-          value={examId}
-          onChange={(e) => setExamId(e.target.value)}
-        >
+        <select id="rc-exam" value={examId} onChange={(e) => setExamId(e.target.value)}>
           <option value="">{t('reportCards.pickExam')}</option>
           {exams.map((exam) => (
             <option key={exam.id} value={exam.id}>

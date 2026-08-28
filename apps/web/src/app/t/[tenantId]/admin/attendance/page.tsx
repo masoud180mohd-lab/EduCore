@@ -54,7 +54,9 @@ export default function AdminAttendancePage() {
         apiRequest<{ data: ClassRow[] }>('/api/v1/classes?limit=100&status=active', { auth }),
       ]);
       const page = readPageMeta(sessions);
-      setRows((prev) => (append ? appendById(prev, sessions.data ?? []) : [...(sessions.data ?? [])]));
+      setRows((prev) =>
+        append ? appendById(prev, sessions.data ?? []) : [...(sessions.data ?? [])],
+      );
       setNextCursor(page.nextCursor);
       setClassLabels(buildClassLabelMap(classes.data ?? []));
       setError(null);

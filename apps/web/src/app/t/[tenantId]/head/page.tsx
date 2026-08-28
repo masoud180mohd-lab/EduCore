@@ -86,14 +86,9 @@ export default function HeadDashboardPage() {
     <HeadShell tenantId={tenantId}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <AdminPageHeader
-            title={t('head.dashboardTitle')}
-            description={t('head.dashboardDesc')}
-          />
+          <AdminPageHeader title={t('head.dashboardTitle')} description={t('head.dashboardDesc')} />
           <Button asChild className="self-start sm:self-auto">
-            <Link href={`/t/${tenantId}/head/approvals`}>
-              {t('head.openApprovals')}
-            </Link>
+            <Link href={`/t/${tenantId}/head/approvals`}>{t('head.openApprovals')}</Link>
           </Button>
         </div>
 
@@ -102,7 +97,10 @@ export default function HeadDashboardPage() {
         {!loading && !showKpis ? <Banner tone="info">{t('head.noKpis')}</Banner> : null}
 
         {showKpis ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label={t('common.dashboard')}>
+          <div
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            aria-label={t('common.dashboard')}
+          >
             {students !== null ? (
               <Card>
                 <CardHeader className="pb-2">
@@ -176,13 +174,19 @@ export default function HeadDashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 text-xs text-muted-foreground">
-                  <span className="text-emerald-600 font-medium">{t('kpi.present')}: {attendance.present}</span>
+                  <span className="text-emerald-600 font-medium">
+                    {t('kpi.present')}: {attendance.present}
+                  </span>
                   {' · '}
-                  <span className="text-red-500 font-medium">{t('kpi.absent')}: {attendance.absent}</span>
+                  <span className="text-red-500 font-medium">
+                    {t('kpi.absent')}: {attendance.absent}
+                  </span>
                   {attendance.late > 0 ? (
                     <>
                       {' · '}
-                      <span className="text-amber-500 font-medium">{t('kpi.late')}: {attendance.late}</span>
+                      <span className="text-amber-500 font-medium">
+                        {t('kpi.late')}: {attendance.late}
+                      </span>
                     </>
                   ) : null}
                 </CardContent>
@@ -194,4 +198,3 @@ export default function HeadDashboardPage() {
     </HeadShell>
   );
 }
-

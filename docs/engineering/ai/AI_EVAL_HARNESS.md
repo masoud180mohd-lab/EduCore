@@ -1,13 +1,13 @@
 # AI Evaluation Harness (AI-005)
 
-| Field     | Value                                              |
-| --------- | -------------------------------------------------- |
-| ID        | `AI_EVAL_HARNESS`                                  |
-| Version   | `1.0`                                              |
-| Date      | 2026-08-04                                         |
-| Program   | **EPIC-AI-01** / **AI-005** / F-AI-03              |
-| Gate link | `AI_FEATURE_GATE.md` checklist item 7              |
-| Authority | Solo-operator provisional (SOLO-GOV-001)           |
+| Field     | Value                                    |
+| --------- | ---------------------------------------- |
+| ID        | `AI_EVAL_HARNESS`                        |
+| Version   | `1.0`                                    |
+| Date      | 2026-08-04                               |
+| Program   | **EPIC-AI-01** / **AI-005** / F-AI-03    |
+| Gate link | `AI_FEATURE_GATE.md` checklist item 7    |
+| Authority | Solo-operator provisional (SOLO-GOV-001) |
 
 **Honesty:** Skeleton harness for **Fake** provider only. Not a production LLM judge, bias suite, or human-acceptance UI.
 
@@ -23,27 +23,27 @@ Before adding a product `featureCode` to the runtime allowlist, add fixtures her
 
 ## Scope
 
-| In scope                                      | Out of scope                         |
-| --------------------------------------------- | ------------------------------------ |
-| Fake-only offline runner (vitest / unit)      | Real OpenAI/Anthropic evals          |
-| Typed fixtures + suite runner                 | Live HTTP eval admin UI              |
+| In scope                                                      | Out of scope                       |
+| ------------------------------------------------------------- | ---------------------------------- |
+| Fake-only offline runner (vitest / unit)                      | Real OpenAI/Anthropic evals        |
+| Typed fixtures + suite runner                                 | Live HTTP eval admin UI            |
 | Categories: happy, failure, redaction, gate, kill_switch, cap | Hallucination LLM-as-judge scoring |
-| Evidence for feature-gate checklist item 7    | Bias review product workflow         |
+| Evidence for feature-gate checklist item 7                    | Bias review product workflow       |
 
 ## Fixture contract
 
 Each fixture:
 
-| Field        | Notes                                                                 |
-| ------------ | --------------------------------------------------------------------- |
-| `id`         | Stable string, e.g. `lab.echo.happy.en`                               |
-| `category`   | `happy` \| `failure` \| `redaction` \| `gate` \| `kill_switch` \| `cap` |
-| `description`| Human-readable intent                                                 |
-| `env`        | Optional `AI_*` overrides for the case                                |
-| `command`    | `featureCode`, `promptCode`, `locale`, `variables`                    |
-| `prompt`     | Optional registry body/allowlist (defaults to seeded `lab.echo`)      |
-| `meterUsed`  | Optional prior daily request count for cap cases                      |
-| `expect`     | `status`, optional `rejectReason`, `outputText` match, `countUsage`   |
+| Field         | Notes                                                                   |
+| ------------- | ----------------------------------------------------------------------- |
+| `id`          | Stable string, e.g. `lab.echo.happy.en`                                 |
+| `category`    | `happy` \| `failure` \| `redaction` \| `gate` \| `kill_switch` \| `cap` |
+| `description` | Human-readable intent                                                   |
+| `env`         | Optional `AI_*` overrides for the case                                  |
+| `command`     | `featureCode`, `promptCode`, `locale`, `variables`                      |
+| `prompt`      | Optional registry body/allowlist (defaults to seeded `lab.echo`)        |
+| `meterUsed`   | Optional prior daily request count for cap cases                        |
+| `expect`      | `status`, optional `rejectReason`, `outputText` match, `countUsage`     |
 
 Runner rules:
 

@@ -1,11 +1,11 @@
 # IMP-055 — Student portal Phase 4a (DSF-009)
 
-| Field | Value |
-|-------|--------|
-| Status | **Done (lab)** |
-| Date | 2026-08-21 |
-| Freeze | `DSF-009-student-portal.md` |
-| Spec | `SPEC-PORTALS-001` Phase 4 / `SRS-PORTALS-001-student-portal-amendment.md` |
+| Field  | Value                                                                      |
+| ------ | -------------------------------------------------------------------------- |
+| Status | **Done (lab)**                                                             |
+| Date   | 2026-08-21                                                                 |
+| Freeze | `DSF-009-student-portal.md`                                                |
+| Spec   | `SPEC-PORTALS-001` Phase 4 / `SRS-PORTALS-001-student-portal-amendment.md` |
 
 ## Delivered
 

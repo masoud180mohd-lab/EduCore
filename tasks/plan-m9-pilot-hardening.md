@@ -42,8 +42,8 @@ school data, runtime secrets, payment configuration, or public-pilot status.
 
 ## Risks
 
-| Risk | Mitigation |
-| --- | --- |
-| Automation could be mistaken for UAT | Emit and document it explicitly as preflight only. |
-| Sensitive response data enters evidence | Store only endpoint host, HTTP status, timing, and Pass/Fail. |
-| Staging is healthy but core workflow fails | Owner executes the existing manual critical-path UAT. |
+| Risk                                       | Mitigation                                                    |
+| ------------------------------------------ | ------------------------------------------------------------- |
+| Automation could be mistaken for UAT       | Emit and document it explicitly as preflight only.            |
+| Sensitive response data enters evidence    | Store only endpoint host, HTTP status, timing, and Pass/Fail. |
+| Staging is healthy but core workflow fails | Owner executes the existing manual critical-path UAT.         |

@@ -94,10 +94,7 @@ export default function AdminFeesHubPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin`}>← {t('common.admin')}</Link>
       </p>
-      <AdminPageHeader
-        title={t('fees.title')}
-        description={t('fees.description')}
-      />
+      <AdminPageHeader title={t('fees.title')} description={t('fees.description')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
       <Banner tone="info">{t('fees.officeBanner')}</Banner>

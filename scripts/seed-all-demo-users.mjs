@@ -73,7 +73,11 @@ const ALL_PERMISSIONS = [
 
 const SYSTEM_ROLES = [
   { code: 'owner', name: 'School Owner', permissions: ALL_PERMISSIONS },
-  { code: 'admin', name: 'School Admin', permissions: ALL_PERMISSIONS.filter((p) => p !== 'entitlement.manage') },
+  {
+    code: 'admin',
+    name: 'School Admin',
+    permissions: ALL_PERMISSIONS.filter((p) => p !== 'entitlement.manage'),
+  },
   {
     code: 'staff',
     name: 'General Staff',

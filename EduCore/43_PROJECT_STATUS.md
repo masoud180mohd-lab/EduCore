@@ -14,7 +14,7 @@ This is the canonical status page for EduCore. It answers what is complete, what
 - `42_ENGINEERING_READINESS_REVIEW.md` is a **historical checklist** (Board wrapper retired). Do not wait for re-review.
 - Domain work proceeds behind **Owner-accepted** slice Database / API / Design freezes and IMP gates — not as invent-anything production.
 
-Last status sync: **2026-08-21**.
+Last status sync: **2026-08-27**.
 
 ## Completed And Approved
 
@@ -105,7 +105,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 1. ~~**M9-001**~~ Pilot readiness pack — cutover checklist, solo incident runbook, core UAT script (`docs/engineering/task-records/M9-001-pilot-readiness-pack.md`).
 2. **M9-002** Owner executes UAT on staging (evidence task-record).
-3. **M9-003** B-07 D3 secrets rotate rehearsal (staging).
+3. ~~**M9-003**~~ B-07 D3 secrets rotate rehearsal (staging) — **Pass** 2026-08-27 (`docs/engineering/task-records/M9-003-d3-secrets-rotate-rehearsal-2026-08-27.md`); next D3 due ≈ 2027-02-27.
 4. **M9-004** p95 latency baseline sample (SLO-3).
 5. **M9-005** WEB-MFA-UI residual polish if still needed after UAT.
 

@@ -266,15 +266,15 @@ export default function AdminGuardiansPage() {
                     {g.displayName}
                   </Link>
                 </td>
-                <td className="text-muted-foreground">{[g.email, g.phone].filter(Boolean).join(' · ') || '—'}</td>
+                <td className="text-muted-foreground">
+                  {[g.email, g.phone].filter(Boolean).join(' · ') || '—'}
+                </td>
                 <td>
                   <StatusChip label={g.status} />
                 </td>
                 <td className="admin-table-actions">
                   <Button asChild variant="secondary" size="sm">
-                    <Link href={`/t/${tenantId}/admin/guardians/${g.id}`}>
-                      {t('common.open')}
-                    </Link>
+                    <Link href={`/t/${tenantId}/admin/guardians/${g.id}`}>{t('common.open')}</Link>
                   </Button>
                 </td>
               </tr>

@@ -59,7 +59,9 @@ async function educorePasswordLogin(password) {
     body: JSON.stringify({ email: EMAIL, password }),
   });
   if (!res.ok) {
-    throw new Error(`EduCore password login failed ${res.status}: ${json?.error?.code ?? textHint(json)}`);
+    throw new Error(
+      `EduCore password login failed ${res.status}: ${json?.error?.code ?? textHint(json)}`,
+    );
   }
   return json.data ?? json;
 }
@@ -106,13 +108,15 @@ async function ensurePasswordGrant(domain, mgmtToken, clientId) {
   const patch = await jsonFetch(`https://${domain}/api/v2/clients/${clientId}`, {
     method: 'PATCH',
     headers: {
-      Authorization: `Bearer ${mgmtToken}`,
+      'Authorization': `Bearer ${mgmtToken}`,
       'content-type': 'application/json',
     },
     body: JSON.stringify({ grant_types: grants }),
   });
   if (!patch.res.ok) {
-    throw new Error(`Auth0 enable password grant failed ${patch.res.status}: ${textHint(patch.json)}`);
+    throw new Error(
+      `Auth0 enable password grant failed ${patch.res.status}: ${textHint(patch.json)}`,
+    );
   }
   process.stdout.write('Auth0 password grant enabled on app (smoke only)\n');
 }
@@ -133,7 +137,8 @@ async function ensureAuth0User(domain, clientId, password) {
     process.stdout.write(`Auth0 user created: ${EMAIL}\n`);
     return 'created';
   }
-  const blob = `${json.code ?? ''} ${json.name ?? ''} ${json.description ?? ''} ${json.message ?? ''}`.toLowerCase();
+  const blob =
+    `${json.code ?? ''} ${json.name ?? ''} ${json.description ?? ''} ${json.message ?? ''}`.toLowerCase();
   if (
     res.status === 400 &&
     (blob.includes('user_exists') ||
@@ -142,7 +147,9 @@ async function ensureAuth0User(domain, clientId, password) {
       blob.includes('invalid_signup'))
   ) {
     // invalid_signup often means user already exists or public signup locked — continue to login.
-    process.stdout.write(`Auth0 signup skipped (${json.code ?? json.name ?? res.status}): assume user exists\n`);
+    process.stdout.write(
+      `Auth0 signup skipped (${json.code ?? json.name ?? res.status}): assume user exists\n`,
+    );
     return 'assumed_exists';
   }
   throw new Error(`Auth0 signup failed ${res.status}: ${textHint(json)}`);
@@ -229,7 +236,9 @@ async function mintIdTokenViaPkce(domain, clientId, clientSecret) {
   const code = await new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       server.close();
-      reject(new Error(`PKCE timed out after ${PKCE_TIMEOUT_MS}ms — log in at Auth0 when browser opens`));
+      reject(
+        new Error(`PKCE timed out after ${PKCE_TIMEOUT_MS}ms — log in at Auth0 when browser opens`),
+      );
     }, PKCE_TIMEOUT_MS);
 
     const server = createServer((req, res) => {
@@ -246,7 +255,11 @@ async function mintIdTokenViaPkce(domain, clientId, clientSecret) {
           res.end(`Auth0 error: ${err}`);
           clearTimeout(timer);
           server.close();
-          reject(new Error(`Auth0 authorize error: ${err} ${url.searchParams.get('error_description') ?? ''}`));
+          reject(
+            new Error(
+              `Auth0 authorize error: ${err} ${url.searchParams.get('error_description') ?? ''}`,
+            ),
+          );
           return;
         }
         const gotState = url.searchParams.get('state');
@@ -319,7 +332,7 @@ async function educoreIdpLogin(idToken, tenantId) {
 async function educoreMe(accessToken) {
   const { res, json } = await jsonFetch(`${API}/api/v1/auth/me`, {
     headers: {
-      authorization: `Bearer ${accessToken}`,
+      'authorization': `Bearer ${accessToken}`,
       'x-correlation-id': `auth0-smoke-me-${randomBytes(3).toString('hex')}`,
     },
   });
@@ -341,7 +354,8 @@ async function main() {
     `Auth0-Smoke-${randomBytes(6).toString('hex')}!aA1`;
 
   if (idp !== 'auth0') throw new Error('AUTH_IDP_PROVIDER must be auth0');
-  if (!domain || !clientId || !clientSecret) throw new Error('AUTH0_DOMAIN/CLIENT_ID/SECRET required');
+  if (!domain || !clientId || !clientSecret)
+    throw new Error('AUTH0_DOMAIN/CLIENT_ID/SECRET required');
   if (educorePass.length < 8) throw new Error('SEED_ADMIN_PASS required (≥8) for tenant discovery');
 
   process.stdout.write(`API=${API}\n`);

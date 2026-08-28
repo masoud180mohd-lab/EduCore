@@ -5,6 +5,7 @@ import {
   Headers,
   HttpCode,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -57,13 +58,29 @@ export class PlatformOperationsController {
     @Body() body: unknown,
     @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey?: string,
   ): Promise<unknown> {
-    return this.platform.registerTenant(actorId(request), body, idempotencyKey, correlationId(request));
+    return this.platform.registerTenant(
+      actorId(request),
+      body,
+      idempotencyKey,
+      correlationId(request),
+    );
   }
 
   @Get('tenants/:id')
   @UseGuards(RequirePlatformOperator())
   async getTenant(@Req() request: AuthedRequest, @Param('id') id: string): Promise<unknown> {
     return this.platform.getTenant(actorId(request), id);
+  }
+
+  @Patch('tenants/:id')
+  @HttpCode(200)
+  @UseGuards(RequirePlatformOperator({ write: true }))
+  async updateTenant(
+    @Req() request: AuthedRequest,
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ): Promise<unknown> {
+    return this.platform.updateTenant(actorId(request), id, body, correlationId(request));
   }
 
   @Post('tenants/:id/suspend')

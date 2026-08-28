@@ -1,13 +1,13 @@
 # API Contract Freeze — Finance / Fees (ACF-012)
 
-| Field     | Value                                                  |
-| --------- | ------------------------------------------------------ |
-| Freeze ID | `ACF-012`                                              |
-| Version   | `1.8`                                                  |
+| Field     | Value                                                   |
+| --------- | ------------------------------------------------------- |
+| Freeze ID | `ACF-012`                                               |
+| Version   | `1.8`                                                   |
 | Date      | 2026-08-14 (rev 1.8 invoice summary; 1.7 sync-provider) |
-| Companion | DBF-012                                                |
-| Program   | **IMP-009** (prompt IMP-007 ID collision)              |
-| Authority | Solo-operator provisional (SOLO-GOV-001)               |
+| Companion | DBF-012                                                 |
+| Program   | **IMP-009** (prompt IMP-007 ID collision)               |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                |
 
 **Honesty:** Provisional. Prompt’s “ACF-010 finance” maps here — repo ACF-010 is guardians.
 
@@ -30,30 +30,30 @@
 
 ## Endpoints
 
-| Method | Path                                     | AuthZ                                                                    |
-| ------ | ---------------------------------------- | ------------------------------------------------------------------------ |
-| GET    | `/api/v1/fee-structures`                 | finance.read                                                             |
-| GET    | `/api/v1/fee-structures/{id}`            | finance.read                                                             |
-| POST   | `/api/v1/fee-structures`                 | finance.manage + Idempotency-Key                                         |
-| PATCH  | `/api/v1/fee-structures/{id}`            | finance.manage + optional Idempotency-Key                                |
-| GET    | `/api/v1/invoices`                       | finance.read                                                             |
+| Method | Path                                     | AuthZ                                                                                                                                                  |
+| ------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| GET    | `/api/v1/fee-structures`                 | finance.read                                                                                                                                           |
+| GET    | `/api/v1/fee-structures/{id}`            | finance.read                                                                                                                                           |
+| POST   | `/api/v1/fee-structures`                 | finance.manage + Idempotency-Key                                                                                                                       |
+| PATCH  | `/api/v1/fee-structures/{id}`            | finance.manage + optional Idempotency-Key                                                                                                              |
+| GET    | `/api/v1/invoices`                       | finance.read                                                                                                                                           |
 | GET    | `/api/v1/invoices/summary`               | finance.read — KPI: collectedMinor, outstandingMinor, overdueCount (issued/partially_paid with `issued_at` older than 30 UTC days; no due_date column) |
-| GET    | `/api/v1/invoices/{id}`                  | finance.read                                                             |
-| POST   | `/api/v1/invoices`                       | finance.manage + Idempotency-Key                                         |
-| POST   | `/api/v1/invoices/{id}/issue`            | finance.manage + Idempotency-Key                                         |
-| POST   | `/api/v1/invoices/{id}/void`             | finance.manage + Idempotency-Key                                         |
-| POST   | `/api/v1/payments`                       | finance.manage + Idempotency-Key                                         |
-| GET    | `/api/v1/payments/{id}`                  | finance.read                                                             |
-| POST   | `/api/v1/payments/{id}/reverse`          | finance.manage + Idempotency-Key                                         |
-| POST   | `/api/v1/payments/{id}/reconcile`        | finance.reconcile + Idempotency-Key                                      |
-| GET    | `/api/v1/invoices/{id}/payments`         | finance.read                                                             |
-| GET    | `/api/v1/receipts`                       | finance.read                                                             |
-| GET    | `/api/v1/receipts/{id}`                  | finance.read                                                             |
-| POST   | `/api/v1/payments/webhooks/fake`         | finance.manage (no Idempotency-Key — dedupe is by `eventId`)             |
-| POST   | `/api/v1/payments/mobile-money`          | finance.manage + Idempotency-Key — pending MoMo + BillPay                |
-| POST   | `/api/v1/payments/{id}/sync-provider`    | finance.reconcile + Idempotency-Key — query ClickPesa + ingest           |
-| POST   | `/api/v1/payments/sync-provider-pending` | finance.reconcile + Idempotency-Key — batch pending sync (`limit` 1–100) |
-| POST   | `/api/v1/payments/webhooks/clickpesa`    | **No session**; ClickPesa HMAC-SHA256 checksum required                  |
+| GET    | `/api/v1/invoices/{id}`                  | finance.read                                                                                                                                           |
+| POST   | `/api/v1/invoices`                       | finance.manage + Idempotency-Key                                                                                                                       |
+| POST   | `/api/v1/invoices/{id}/issue`            | finance.manage + Idempotency-Key                                                                                                                       |
+| POST   | `/api/v1/invoices/{id}/void`             | finance.manage + Idempotency-Key                                                                                                                       |
+| POST   | `/api/v1/payments`                       | finance.manage + Idempotency-Key                                                                                                                       |
+| GET    | `/api/v1/payments/{id}`                  | finance.read                                                                                                                                           |
+| POST   | `/api/v1/payments/{id}/reverse`          | finance.manage + Idempotency-Key                                                                                                                       |
+| POST   | `/api/v1/payments/{id}/reconcile`        | finance.reconcile + Idempotency-Key                                                                                                                    |
+| GET    | `/api/v1/invoices/{id}/payments`         | finance.read                                                                                                                                           |
+| GET    | `/api/v1/receipts`                       | finance.read                                                                                                                                           |
+| GET    | `/api/v1/receipts/{id}`                  | finance.read                                                                                                                                           |
+| POST   | `/api/v1/payments/webhooks/fake`         | finance.manage (no Idempotency-Key — dedupe is by `eventId`)                                                                                           |
+| POST   | `/api/v1/payments/mobile-money`          | finance.manage + Idempotency-Key — pending MoMo + BillPay                                                                                              |
+| POST   | `/api/v1/payments/{id}/sync-provider`    | finance.reconcile + Idempotency-Key — query ClickPesa + ingest                                                                                         |
+| POST   | `/api/v1/payments/sync-provider-pending` | finance.reconcile + Idempotency-Key — batch pending sync (`limit` 1–100)                                                                               |
+| POST   | `/api/v1/payments/webhooks/clickpesa`    | **No session**; ClickPesa HMAC-SHA256 checksum required                                                                                                |
 
 ## Allowlists
 

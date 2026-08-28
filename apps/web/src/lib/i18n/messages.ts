@@ -50,7 +50,8 @@ const BASE_EN = {
   'hub.emptyAreas':
     'No admin areas are available for your permissions. Ask an owner to grant access, or use Teacher / Parent from the school switcher if those roles apply.',
   'page.attendance.title': 'Attendance',
-  'page.attendance.description': 'Review sessions recorded by teachers. Open a session to see marks.',
+  'page.attendance.description':
+    'Review sessions recorded by teachers. Open a session to see marks.',
   'page.exams.title': 'Exams & marks',
   'page.exams.description': 'Exams, subject marks, and approval status across the school.',
   'page.staff.title': 'Staff & teachers',
@@ -60,7 +61,8 @@ const BASE_EN = {
   'page.reportCards.soon':
     'PDF report cards are not live yet. Enter and approve marks under Exams first; generation will land in a follow-up release.',
   'page.reports.title': 'Reports',
-  'page.reports.description': 'Operational exports and summaries. Analytics dashboards will follow.',
+  'page.reports.description':
+    'Operational exports and summaries. Analytics dashboards will follow.',
   'page.announcements.title': 'Announcements',
   'page.announcements.description': 'In-app notices for staff and classes.',
   'page.announcements.soon':
@@ -139,7 +141,8 @@ const BASE_EN = {
   'fees.allStudents': 'All students',
   'fees.allYears': 'All years',
   'fees.structuresTitle': 'Fee structures',
-  'fees.structuresDescription': 'Named fee packages by academic year. Filter the list by year and status.',
+  'fees.structuresDescription':
+    'Named fee packages by academic year. Filter the list by year and status.',
   'fees.createStructure': 'Create structure',
   'fees.receiptsTitle': 'Receipts',
   'fees.receiptsDescription': 'Issued after succeeded office payments.',
@@ -296,7 +299,8 @@ const BASE_SW = {
   'fees.receiptsHint': 'Risiti kwa nambari na hali',
   'fees.back': 'Ada',
   'fees.invoicesTitle': 'Ankara',
-  'fees.invoicesDescription': 'Ankara za rasimu na zilizotolewa. Salio linatokana na mahesabu (soma tu).',
+  'fees.invoicesDescription':
+    'Ankara za rasimu na zilizotolewa. Salio linatokana na mahesabu (soma tu).',
   'fees.createDraft': 'Unda rasimu ya ankara',
   'fees.student': 'Mwanafunzi',
   'fees.selectStudent': 'Chagua mwanafunzi',

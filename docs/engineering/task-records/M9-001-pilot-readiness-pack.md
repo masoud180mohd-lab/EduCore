@@ -1,12 +1,12 @@
 # M9-001 — Pilot readiness pack (cutover + incident + UAT)
 
-| Field | Value |
-| --- | --- |
-| Date | 2026-08-21 |
-| Program | **M9** Pilot hardening (Phase 3) |
-| Status | **Done** (docs pack) — gated school cutover still Owner decision |
-| Authority | SOLO-GOV-002 |
-| Depends | B-07 SLOs/drills · MFA-HARD · PAY-007 office path · OPS-PROD infra |
+| Field     | Value                                                              |
+| --------- | ------------------------------------------------------------------ |
+| Date      | 2026-08-21                                                         |
+| Program   | **M9** Pilot hardening (Phase 3)                                   |
+| Status    | **Done** (docs pack) — gated school cutover still Owner decision   |
+| Authority | SOLO-GOV-002                                                       |
+| Depends   | B-07 SLOs/drills · MFA-HARD · PAY-007 office path · OPS-PROD infra |
 
 ## Objective
 
@@ -30,12 +30,12 @@ Close the first M9 gap: Owner can decide gated-school cutover using written chec
 
 ## Next M9 slices (suggested)
 
-| ID | Work |
-| --- | --- |
-| **M9-002** | Owner runs UAT on staging; file `M9-uat-staging-YYYY-MM-DD.md` |
+| ID         | Work                                                                           |
+| ---------- | ------------------------------------------------------------------------------ |
+| **M9-002** | Owner runs UAT on staging; file `M9-uat-staging-YYYY-MM-DD.md`                 |
 | **M9-003** | B-07 **D3** secrets rotate rehearsal (staging) when due / when Owner schedules |
-| **M9-004** | p95 latency baseline sample under light load (SLO-3 evidence) |
-| **M9-005** | Optional: WEB-MFA-UI residual polish if enroll UX gaps remain |
+| **M9-004** | p95 latency baseline sample under light load (SLO-3 evidence)                  |
+| **M9-005** | Optional: WEB-MFA-UI residual polish if enroll UX gaps remain                  |
 
 ## Honesty
 

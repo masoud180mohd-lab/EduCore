@@ -4,12 +4,7 @@ import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
-import {
-  AdminPageHeader,
-  Banner,
-  ConfirmDialog,
-  ResourceListPagination,
-} from '@/components/admin';
+import { AdminPageHeader, Banner, ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
 import { Button } from '@/components/ui/button';
@@ -375,7 +370,10 @@ export default function AdminGuardianDetailPage() {
               <CardTitle>{t('common.profile')}</CardTitle>
             </CardHeader>
             <CardContent>
-              <form className="flex flex-col gap-4 max-w-md" onSubmit={(e) => void onSaveProfile(e)}>
+              <form
+                className="flex flex-col gap-4 max-w-md"
+                onSubmit={(e) => void onSaveProfile(e)}
+              >
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="displayName">{t('common.displayName')}</Label>
                   <Input
@@ -442,7 +440,9 @@ export default function AdminGuardianDetailPage() {
             {guardian?.userId !== null && guardian?.userId !== undefined ? (
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div>
-                  <strong className="text-sm font-semibold">{boundLabel ?? t('guardians.boundUser')}</strong>
+                  <strong className="text-sm font-semibold">
+                    {boundLabel ?? t('guardians.boundUser')}
+                  </strong>
                   <div className="text-xs text-muted-foreground">{guardian.userId}</div>
                 </div>
                 <Button
@@ -530,9 +530,14 @@ export default function AdminGuardianDetailPage() {
             {links.length === 0 ? <Banner tone="info">{t('guardians.noLinks')}</Banner> : null}
             <ul className="flex flex-col gap-2">
               {links.map((link) => (
-                <li key={link.id} className="flex items-center justify-between rounded-lg border p-3">
+                <li
+                  key={link.id}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
                   <div>
-                    <strong className="text-sm font-semibold">{names[link.studentId] ?? link.studentId}</strong>
+                    <strong className="text-sm font-semibold">
+                      {names[link.studentId] ?? link.studentId}
+                    </strong>
                     <div className="text-xs text-muted-foreground mt-1">
                       {link.relationshipType} · {link.status}
                       {link.isPrimary ? ` · ${t('common.primary')}` : ''}
@@ -552,7 +557,10 @@ export default function AdminGuardianDetailPage() {
               ))}
             </ul>
 
-            <form className="flex flex-col gap-4 border-t pt-4 max-w-md" onSubmit={(e) => void onLink(e)}>
+            <form
+              className="flex flex-col gap-4 border-t pt-4 max-w-md"
+              onSubmit={(e) => void onLink(e)}
+            >
               <h3 className="text-sm font-semibold">{t('guardians.linkStudent')}</h3>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="studentId">{t('students.student')}</Label>
@@ -603,11 +611,13 @@ export default function AdminGuardianDetailPage() {
 
         <ConfirmDialog
           open={confirm !== null}
-          title={confirm?.kind === 'unbind' ? t('guardians.unbindTitle') : t('guardians.endLinkTitle')}
-          body={
-            confirm?.kind === 'unbind' ? t('guardians.unbindBody') : t('guardians.endLinkBody')
+          title={
+            confirm?.kind === 'unbind' ? t('guardians.unbindTitle') : t('guardians.endLinkTitle')
           }
-          confirmLabel={confirm?.kind === 'unbind' ? t('guardians.unbindUser') : t('guardians.endLink')}
+          body={confirm?.kind === 'unbind' ? t('guardians.unbindBody') : t('guardians.endLinkBody')}
+          confirmLabel={
+            confirm?.kind === 'unbind' ? t('guardians.unbindUser') : t('guardians.endLink')
+          }
           danger
           busy={busy}
           onCancel={() => {

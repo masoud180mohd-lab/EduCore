@@ -773,9 +773,7 @@ export class MarksService {
     const cards: ReportCardDetail[] = [];
     for (const studentId of studentIds) {
       const subjects = byStudent.get(studentId) ?? [];
-      const percents = subjects
-        .map((s) => s.percent)
-        .filter((p): p is number => p !== null);
+      const percents = subjects.map((s) => s.percent).filter((p): p is number => p !== null);
       const averagePercent =
         percents.length === 0
           ? null

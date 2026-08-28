@@ -1,18 +1,18 @@
 # B-07 weekly PITR glance — 2026-08-13
 
-| Field | Value |
-| --- | --- |
-| Checked (UTC) | 2026-08-13T10:58:45.330Z |
-| Owner | Project Owner / solo-operator (SOLO-GOV-001) |
-| Signal | Neon `history_retention_seconds` + project list (SLO-5) |
+| Field         | Value                                                   |
+| ------------- | ------------------------------------------------------- |
+| Checked (UTC) | 2026-08-13T10:58:45.330Z                                |
+| Owner         | Project Owner / solo-operator (SOLO-GOV-001)            |
+| Signal        | Neon `history_retention_seconds` + project list (SLO-5) |
 
 ## Projects
 
-| Name | Region | PG | Retention | Extend |
-| --- | --- | --- | --- | --- |
-| educore-prod | aws-eu-central-1 | 16 | 6h (21600s) | PATCH 7d rejected (plan max 6h) |
-| educore-staging-fra | aws-eu-central-1 | 16 | 6h (21600s) | PATCH 7d rejected (plan max 6h) |
-| educore-staging | aws-us-east-2 | 18 | 6h (21600s) | unchanged (legacy US; not FRA primary) |
+| Name                | Region           | PG  | Retention   | Extend                                 |
+| ------------------- | ---------------- | --- | ----------- | -------------------------------------- |
+| educore-prod        | aws-eu-central-1 | 16  | 6h (21600s) | PATCH 7d rejected (plan max 6h)        |
+| educore-staging-fra | aws-eu-central-1 | 16  | 6h (21600s) | PATCH 7d rejected (plan max 6h)        |
+| educore-staging     | aws-us-east-2    | 18  | 6h (21600s) | unchanged (legacy US; not FRA primary) |
 
 ## Honesty
 

@@ -150,11 +150,7 @@ export function DigiiShell({
 }: DigiiShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const homeHref =
-    brandHref ??
-    navGroups?.[0]?.items[0]?.href ??
-    navItems?.[0]?.href ??
-    '/';
+  const homeHref = brandHref ?? navGroups?.[0]?.items[0]?.href ?? navItems?.[0]?.href ?? '/';
 
   return (
     <div className="min-h-dvh bg-[color-mix(in_srgb,var(--color-bg)_92%,var(--color-accent)_8%)] text-[var(--foreground)]">
@@ -180,7 +176,12 @@ export function DigiiShell({
                     {brand}
                   </Dialog.Title>
                   <Dialog.Close asChild>
-                    <Button type="button" variant="ghost" size="icon-sm" aria-label={closeMenuLabel}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={closeMenuLabel}
+                    >
                       <X />
                     </Button>
                   </Dialog.Close>

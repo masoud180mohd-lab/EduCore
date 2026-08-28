@@ -80,7 +80,5 @@ export function modeFromPathname(pathname: string | null): TeacherMode | null {
 }
 
 export function homeHrefForMode(tenantId: string, mode: TeacherMode): string {
-  return mode === 'subject'
-    ? `/t/${tenantId}/teacher/marks`
-    : `/t/${tenantId}/teacher`;
+  return mode === 'subject' ? `/t/${tenantId}/teacher/marks` : `/t/${tenantId}/teacher`;
 }

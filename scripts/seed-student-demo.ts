@@ -278,10 +278,12 @@ export async function seedStudentDemo(
     await app.query(`SELECT set_config('app.rls_mode', 'tenant', true)`);
     await app.query(`SELECT set_config('app.is_platform_operator', 'false', true)`);
 
-    await app.query(
-      `SELECT * FROM app.bind_student_user($1::uuid, $2::uuid, $3::uuid, $4::uuid)`,
-      [config.actorUserId, config.tenantId, SEED_STUDENT_PROFILE_ID, studentUserId],
-    );
+    await app.query(`SELECT * FROM app.bind_student_user($1::uuid, $2::uuid, $3::uuid, $4::uuid)`, [
+      config.actorUserId,
+      config.tenantId,
+      SEED_STUDENT_PROFILE_ID,
+      studentUserId,
+    ]);
 
     await app.query('COMMIT');
   } catch (error) {

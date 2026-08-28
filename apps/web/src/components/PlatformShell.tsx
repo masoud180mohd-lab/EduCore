@@ -17,7 +17,8 @@ type MeEnvelope = {
   readonly data: MeLike;
 };
 
-type GateState = { readonly kind: 'loading' } | { readonly kind: 'allowed' } | { readonly kind: 'denied' };
+type GateState =
+  { readonly kind: 'loading' } | { readonly kind: 'allowed' } | { readonly kind: 'denied' };
 
 export function PlatformShell({ children }: { readonly children: ReactNode }) {
   const router = useRouter();
@@ -70,7 +71,10 @@ export function PlatformShell({ children }: { readonly children: ReactNode }) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-4 px-4">
         <h1 className="text-xl font-semibold">{t('platform.forbiddenTitle')}</h1>
-        <div className="rounded-lg border border-[var(--color-danger)]/40 bg-[color-mix(in_srgb,var(--color-danger)_10%,white)] px-4 py-3 text-sm" role="alert">
+        <div
+          className="rounded-lg border border-[var(--color-danger)]/40 bg-[color-mix(in_srgb,var(--color-danger)_10%,white)] px-4 py-3 text-sm"
+          role="alert"
+        >
           {t('platform.forbidden')}
         </div>
         <div className="flex flex-wrap gap-2">

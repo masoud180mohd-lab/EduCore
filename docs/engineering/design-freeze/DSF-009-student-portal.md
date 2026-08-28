@@ -1,20 +1,20 @@
 # DSF-009 — Student portal (Phase 4a)
 
-| Field | Value |
-|-------|--------|
-| Status | **Accepted (Phase 4a)** |
-| Date | 2026-08-21 |
-| Spec | `SPEC-PORTALS-001` Phase 4 |
-| Stack | Digii chrome (`DSF-KIT-002`) + Tailwind/shadcn (`DSF-KIT-001` §2.1) |
+| Field  | Value                                                               |
+| ------ | ------------------------------------------------------------------- |
+| Status | **Accepted (Phase 4a)**                                             |
+| Date   | 2026-08-21                                                          |
+| Spec   | `SPEC-PORTALS-001` Phase 4                                          |
+| Stack  | Digii chrome (`DSF-KIT-002`) + Tailwind/shadcn (`DSF-KIT-001` §2.1) |
 
 ## 1. Scope (4a — this freeze)
 
-| In | Out (deferred) |
-|----|-----------------|
+| In                                                             | Out (deferred)                       |
+| -------------------------------------------------------------- | ------------------------------------ |
 | `students.user_id` bind + `student` role + `student.self.read` | Attendance / results / fees self BFF |
-| `GET /api/v1/me/student` | Timetable (SPEC Q3 excluded) |
-| Digii `StudentShell` + student home | Admin bind UI polish |
-| Preferential routing to `/student` when only/primarily student | Phase 5 Parent refine |
+| `GET /api/v1/me/student`                                       | Timetable (SPEC Q3 excluded)         |
+| Digii `StudentShell` + student home                            | Admin bind UI polish                 |
+| Preferential routing to `/student` when only/primarily student | Phase 5 Parent refine                |
 
 ## 2. Isolation (fail-closed)
 

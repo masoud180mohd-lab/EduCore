@@ -41,8 +41,8 @@ async function neon(apiKey, method, urlPath, body) {
   const res = await fetch(`${API}${urlPath}`, {
     method,
     headers: {
-      Authorization: `Bearer ${apiKey}`,
-      Accept: 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -72,11 +72,17 @@ async function main() {
 
   const projects = await neon(apiKey, 'GET', '/projects');
   const existing = (projects.projects ?? []).find(
-    (p) => p.name === NAME || (p.region_id === REGION && /educore.*fra|educore-staging-fra/i.test(p.name)),
+    (p) =>
+      p.name === NAME ||
+      (p.region_id === REGION && /educore.*fra|educore-staging-fra/i.test(p.name)),
   );
   if (existing) {
-    process.stdout.write(`project already exists: ${existing.name} (${existing.id}) region=${existing.region_id}\n`);
-    process.stdout.write('Set DATABASE_URL manually from Neon console if needed, then continue bootstrap.\n');
+    process.stdout.write(
+      `project already exists: ${existing.name} (${existing.id}) region=${existing.region_id}\n`,
+    );
+    process.stdout.write(
+      'Set DATABASE_URL manually from Neon console if needed, then continue bootstrap.\n',
+    );
     setSecret('NEON_PROJECT_ID', existing.id);
     return;
   }
@@ -100,10 +106,16 @@ async function main() {
   setSecret('NEON_PROJECT_ID', project.id);
   setSecret('DATABASE_URL', uri);
   process.stdout.write('DATABASE_URL now points at Frankfurt Neon.\n');
-  process.stdout.write('NEXT: doppler run --project educore --config stg -- npm run db:bootstrap-roles\n');
+  process.stdout.write(
+    'NEXT: doppler run --project educore --config stg -- npm run db:bootstrap-roles\n',
+  );
   process.stdout.write('THEN: doppler run --project educore --config stg -- npm run db:migrate\n');
-  process.stdout.write('THEN: doppler run --project educore --config stg -- node scripts/ops-stg-rotate-db-passwords.mjs\n');
-  process.stdout.write('THEN: seed + fly sync (ops-stg-prepare-admin-seed / seed:admin / ops-stg-sync-fly-secrets)\n');
+  process.stdout.write(
+    'THEN: doppler run --project educore --config stg -- node scripts/ops-stg-rotate-db-passwords.mjs\n',
+  );
+  process.stdout.write(
+    'THEN: seed + fly sync (ops-stg-prepare-admin-seed / seed:admin / ops-stg-sync-fly-secrets)\n',
+  );
 }
 
 main().catch((err) => {

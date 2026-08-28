@@ -1,28 +1,28 @@
 # DSF-KIT-002 — Portal Chrome & Brand Deepening (Multi-Portal)
 
-| Field       | Value                                                                  |
-| ----------- | ---------------------------------------------------------------------- |
-| Freeze ID   | `DSF-KIT-002`                                                          |
-| Version     | `1.1`                                                                  |
-| Date        | 2026-08-20                                                             |
-| Status      | **Accepted — Owner GO in session 2026-08-15** (gate form per SOLO-GOV-003) |
-| Authority   | Owner + AI (SOLO-GOV-002/003)                                          |
-| Governing   | SPEC-PORTALS-001 v1.0 · DSF-KIT-001 v1.5 · 07_DESIGN_SYSTEM · 32_ACCESS_CONTROL_BIBLE |
-| Amends      | DSF-KIT-001 §4 (role navigation model) — see §6 below                  |
+| Field     | Value                                                                                 |
+| --------- | ------------------------------------------------------------------------------------- |
+| Freeze ID | `DSF-KIT-002`                                                                         |
+| Version   | `1.1`                                                                                 |
+| Date      | 2026-08-20                                                                            |
+| Status    | **Accepted — Owner GO in session 2026-08-15** (gate form per SOLO-GOV-003)            |
+| Authority | Owner + AI (SOLO-GOV-002/003)                                                         |
+| Governing | SPEC-PORTALS-001 v1.0 · DSF-KIT-001 v1.5 · 07_DESIGN_SYSTEM · 32_ACCESS_CONTROL_BIBLE |
+| Amends    | DSF-KIT-001 §4 (role navigation model) — see §6 below                                 |
 
 **Honesty:** Chrome/token contract only. Screen inventories stay in slice DSFs (DSF-007/008/009 pending). Accepting this freeze does **not** authorize feature coding — each phase still needs its ACF/DBF/SRS gates per SPEC-PORTALS-001 §8. Production/public pilot remains NO GO.
 
 ## 1. Portal shell inventory
 
-| Shell | Route namespace | Users | Nav pattern | Density |
-| --- | --- | --- | --- | --- |
-| `PlatformShell` | `/platform` | Super Admin (Support later) | Digii hybrid (v1.1) | Dense tables |
-| `AdminShell` *(existing)* | `/t/:id/admin` | Office staff | Digii hybrid (v1.1); IA groups unchanged | Dense tables |
-| `HeadShell` | `/t/:id/head` | Headmaster, Deputy (delegated) | Digii hybrid, decision-first | Medium — KPIs + lists |
-| `TeacherShell` *(reshaped)* | `/t/:id/teacher` | Teachers | Mode tabs (Darasa/Somo) + bottom-safe mobile column | Mobile-first, max `--content-max-teacher` |
-| `StudentShell` | `/t/:id/student` | Students (Phase 4) | Bottom tabs | Mobile-first, simple |
-| `ParentShell` *(existing)* | `/t/:id/parent` | Parents | Header + child switcher + tabs | Mobile-first, simple |
-| Auth chrome | `/login`, tenant picker, portal chooser | All | Centered card form; subtle atmosphere OK; no marketing hero collage | — |
+| Shell                       | Route namespace                         | Users                          | Nav pattern                                                         | Density                                   |
+| --------------------------- | --------------------------------------- | ------------------------------ | ------------------------------------------------------------------- | ----------------------------------------- |
+| `PlatformShell`             | `/platform`                             | Super Admin (Support later)    | Digii hybrid (v1.1)                                                 | Dense tables                              |
+| `AdminShell` _(existing)_   | `/t/:id/admin`                          | Office staff                   | Digii hybrid (v1.1); IA groups unchanged                            | Dense tables                              |
+| `HeadShell`                 | `/t/:id/head`                           | Headmaster, Deputy (delegated) | Digii hybrid, decision-first                                        | Medium — KPIs + lists                     |
+| `TeacherShell` _(reshaped)_ | `/t/:id/teacher`                        | Teachers                       | Mode tabs (Darasa/Somo) + bottom-safe mobile column                 | Mobile-first, max `--content-max-teacher` |
+| `StudentShell`              | `/t/:id/student`                        | Students (Phase 4)             | Bottom tabs                                                         | Mobile-first, simple                      |
+| `ParentShell` _(existing)_  | `/t/:id/parent`                         | Parents                        | Header + child switcher + tabs                                      | Mobile-first, simple                      |
+| Auth chrome                 | `/login`, tenant picker, portal chooser | All                            | Centered card form; subtle atmosphere OK; no marketing hero collage | —                                         |
 
 New shells reuse DSF-KIT-001 tokens (§2 / §2.1), primitives, and operational states (§5–§8 of that freeze). Implementation stack: Tailwind + shadcn per DSF-KIT-001 v1.7.
 
@@ -45,14 +45,14 @@ One brand, one token family (teal/ink of DSF-KIT-001 §2 stays canonical). Porta
 2. **Portal chip:** small labeled chip in the utility bar naming the active portal; doubles as the portal switcher trigger when the user holds >1 capability.
 3. **Identity tint `--portal-accent`:** used **only** for the portal chip, active-nav marker, and shell top strip. All operational controls (buttons, links, focus) keep shared `--color-accent #0f6b5c`.
 
-| Portal | `--portal-accent` | Hue rationale |
-| --- | --- | --- |
-| Platform | `#134a6d` | deep sea blue — systemic authority |
-| Office (Admin) | `#0f6b5c` | anchor teal (brand baseline) |
-| Head | `#8a5a13` | amber ink — decision gravitas |
-| Teacher | `#4f6b0f` | olive green — chalk/classroom |
-| Student | `#44546b` | slate — calm, read-only |
-| Parent | `#6b0f3f` | plum — distinct from danger `#b42318` |
+| Portal         | `--portal-accent` | Hue rationale                         |
+| -------------- | ----------------- | ------------------------------------- |
+| Platform       | `#134a6d`         | deep sea blue — systemic authority    |
+| Office (Admin) | `#0f6b5c`         | anchor teal (brand baseline)          |
+| Head           | `#8a5a13`         | amber ink — decision gravitas         |
+| Teacher        | `#4f6b0f`         | olive green — chalk/classroom         |
+| Student        | `#44546b`         | slate — calm, read-only               |
+| Parent         | `#6b0f3f`         | plum — distinct from danger `#b42318` |
 
 All six pass ≥4.5:1 on `--color-surface` white for text-size usage. Banned looks from DSF-KIT-001 §1 remain banned. Any further per-portal theming requires a DSF-KIT amend.
 
@@ -83,10 +83,10 @@ Username-pattern routing is forbidden. API stays AuthZ truth; nav renders only r
 
 ## 6. DSF-KIT-001 amendments enacted by this freeze
 
-| DSF-KIT-001 item | Disposition |
-| --- | --- |
-| §4 rule 2 (post-login `/auth/me` → admin/teacher/parent home) | **Replaced** by §4 above |
-| §4 IMP-050 note (workspace switcher + student disabled hint) | **Retired**, replaced by §5 above |
+| DSF-KIT-001 item                                                                        | Disposition                                  |
+| --------------------------------------------------------------------------------------- | -------------------------------------------- |
+| §4 rule 2 (post-login `/auth/me` → admin/teacher/parent home)                           | **Replaced** by §4 above                     |
+| §4 IMP-050 note (workspace switcher + student disabled hint)                            | **Retired**, replaced by §5 above            |
 | Everything else (tokens, type, layouts, components, states, a11y, offline, i18n, theme) | **Unchanged and binding** for all new shells |
 
 ## 7. Acceptance
@@ -98,7 +98,7 @@ Username-pattern routing is forbidden. API stays AuthZ truth; nav renders only r
 
 ## Amendments
 
-| Ver | Date | Notes |
-| --- | --- | --- |
-| 1.0 | 2026-08-15 | Initial portal chrome freeze from SPEC-PORTALS-001 Phase 0 |
+| Ver | Date       | Notes                                                                                                                         |
+| --- | ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1.0 | 2026-08-15 | Initial portal chrome freeze from SPEC-PORTALS-001 Phase 0                                                                    |
 | 1.1 | 2026-08-20 | Owner GO: Digii hybrid chrome (EduNexus reference) for Platform/Admin/Head; pairs with DSF-KIT-001 v1.7 Tailwind/shadcn stack |

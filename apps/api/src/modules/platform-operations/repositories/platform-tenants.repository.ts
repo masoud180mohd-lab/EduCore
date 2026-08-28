@@ -393,6 +393,47 @@ export class PlatformTenantsRepository {
     });
   }
 
+  async updateTenant(
+    actorUserId: string,
+    tenantId: string,
+    input: {
+      readonly name?: string;
+      readonly primaryLocale?: 'en' | 'sw';
+      readonly timezone?: string;
+    },
+    correlationId: string,
+  ): Promise<PlatformTenantDetail | null> {
+    if (!isUuid(tenantId) || this.platformPool === null) {
+      return null;
+    }
+    return withPlatformTransaction(this.platformPool, { userId: actorUserId }, async (client) => {
+      const tenant = await client.query(`SELECT id FROM tenants WHERE id = $1::uuid LIMIT 1`, [
+        tenantId,
+      ]);
+      if (tenant.rows[0] === undefined) {
+        return null;
+      }
+      await client.query(
+        `UPDATE tenants
+            SET name = COALESCE($2, name),
+                primary_locale = COALESCE($3, primary_locale),
+                timezone = COALESCE($4, timezone),
+                updated_at = now()
+          WHERE id = $1::uuid`,
+        [tenantId, input.name ?? null, input.primaryLocale ?? null, input.timezone ?? null],
+      );
+      await insertAudit(client, {
+        action: 'platform.tenant.update',
+        actorUserId,
+        tenantId,
+        resourceId: tenantId,
+        correlationId,
+        metadata: { ...input },
+      });
+      return loadDetail(client, tenantId);
+    });
+  }
+
   async listAudit(
     actorUserId: string,
     query: {

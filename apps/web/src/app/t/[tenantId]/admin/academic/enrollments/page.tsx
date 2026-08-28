@@ -466,7 +466,9 @@ export default function AdminEnrollmentsPage() {
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
           >
-            <option value="">{t('common.select')} {t('common.student')}</option>
+            <option value="">
+              {t('common.select')} {t('common.student')}
+            </option>
             {students.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.displayName}
@@ -491,7 +493,9 @@ export default function AdminEnrollmentsPage() {
               setClassId(e.target.value);
             }}
           >
-            <option value="">{t('common.select')} {t('common.class')}</option>
+            <option value="">
+              {t('common.select')} {t('common.class')}
+            </option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -650,7 +654,9 @@ export default function AdminEnrollmentsPage() {
             onChange={(e) => setStreamFilter(e.target.value)}
             disabled={classFilter === ''}
           >
-            <option value="">{classFilter === '' ? t('common.selectClassFirst') : t('common.allStreams')}</option>
+            <option value="">
+              {classFilter === '' ? t('common.selectClassFirst') : t('common.allStreams')}
+            </option>
             {filterStreams.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}

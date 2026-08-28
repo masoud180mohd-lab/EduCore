@@ -178,14 +178,21 @@ export function AdminMfaPanel() {
       {!loading && me !== null ? (
         <p className="muted" style={{ margin: 0 }}>
           {t('mfa.enforcement')}{' '}
-          <strong>{me.mfaEnforced === 'hard' ? t('mfa.enforcedHard') : t('mfa.enforcedSoft')}</strong>
+          <strong>
+            {me.mfaEnforced === 'hard' ? t('mfa.enforcedHard') : t('mfa.enforcedSoft')}
+          </strong>
           {me.mfaEnrollmentRequired ? t('mfa.enrollRecommended') : null}
           {hasActive ? t('mfa.activeNow') : t('mfa.noneActive')}
         </p>
       ) : null}
 
       {!loading && pending === null && !hasActive ? (
-        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void beginEnroll()}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={busy}
+          onClick={() => void beginEnroll()}
+        >
           {busy ? t('common.starting') : t('mfa.enroll')}
         </button>
       ) : null}

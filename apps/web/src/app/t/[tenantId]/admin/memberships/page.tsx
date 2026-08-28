@@ -106,6 +106,50 @@ export default function AdminMembershipsPage() {
     void loadPage({ statusFilter: status, cursor: null, append: false });
   }
 
+  const [actionInfo, setActionInfo] = useState<string | null>(null);
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
+
+  async function onResend(membershipId: string) {
+    const auth = readSession();
+    if (auth === null) return;
+    setActionBusy(membershipId);
+    setError(null);
+    setActionInfo(null);
+    try {
+      await apiRequest(`/api/v1/memberships/${membershipId}/resend`, {
+        method: 'POST',
+        auth,
+      });
+      setActionInfo('Mwaliko umetumwa upya kikamilifu.');
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(err.message);
+      else setError('Imeshindikana kutuma upya mwaliko.');
+    } finally {
+      setActionBusy(null);
+    }
+  }
+
+  async function onLifecycle(membershipId: string, action: 'suspend' | 'reactivate' | 'remove') {
+    const auth = readSession();
+    if (auth === null) return;
+    setActionBusy(membershipId);
+    setError(null);
+    setActionInfo(null);
+    try {
+      await apiRequest(`/api/v1/memberships/${membershipId}/${action}`, {
+        method: 'POST',
+        auth,
+      });
+      setActionInfo(`Mabadiliko ya uanachama yamehifadhiwa (${action}).`);
+      void loadPage({ statusFilter: appliedStatus, cursor: null, append: false });
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(err.message);
+      else setError('Imeshindikana kubadilisha hali ya mwanachama.');
+    } finally {
+      setActionBusy(null);
+    }
+  }
+
   return (
     <AdminShell tenantId={tenantId}>
       <div className="flex flex-col gap-6">
@@ -114,6 +158,7 @@ export default function AdminMembershipsPage() {
           description={t('memberships.description')}
         />
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {actionInfo !== null ? <Banner tone="info">{actionInfo}</Banner> : null}
 
         <Card>
           <CardContent className="pt-6">
@@ -162,7 +207,7 @@ export default function AdminMembershipsPage() {
         >
           <AdminTable
             caption={t('memberships.title')}
-            headers={[t('common.status'), t('users.user'), 'Joined', '']}
+            headers={[t('common.status'), t('users.user'), 'Joined', 'Actions']}
           >
             {rows.map((m) => (
               <tr key={m.id}>
@@ -178,11 +223,50 @@ export default function AdminMembershipsPage() {
                   </Link>
                 </td>
                 <td className="text-muted-foreground">{m.joinedAt ?? '—'}</td>
-                <td className="admin-table-actions">
+                <td className="admin-table-actions flex items-center gap-1.5 justify-end">
+                  {m.status === 'invited' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={actionBusy === m.id}
+                      onClick={() => void onResend(m.id)}
+                    >
+                      Tuma Upya
+                    </Button>
+                  )}
+                  {m.status === 'active' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={actionBusy === m.id}
+                      onClick={() => void onLifecycle(m.id, 'suspend')}
+                    >
+                      Simamisha
+                    </Button>
+                  )}
+                  {m.status === 'suspended' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={actionBusy === m.id}
+                      onClick={() => void onLifecycle(m.id, 'reactivate')}
+                    >
+                      Rudisha
+                    </Button>
+                  )}
+                  {m.status !== 'removed' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10"
+                      disabled={actionBusy === m.id}
+                      onClick={() => void onLifecycle(m.id, 'remove')}
+                    >
+                      Ondoa
+                    </Button>
+                  )}
                   <Button asChild variant="secondary" size="sm">
-                    <Link href={`/t/${tenantId}/admin/users/${m.userId}`}>
-                      {t('common.open')}
-                    </Link>
+                    <Link href={`/t/${tenantId}/admin/users/${m.userId}`}>{t('common.open')}</Link>
                   </Button>
                 </td>
               </tr>

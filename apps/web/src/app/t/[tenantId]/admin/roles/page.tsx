@@ -165,7 +165,13 @@ export default function AdminRolesPage() {
         >
           <AdminTable
             caption={t('roles.title')}
-            headers={[t('common.name'), t('common.code'), t('roles.kind'), t('roles.permissions'), '']}
+            headers={[
+              t('common.name'),
+              t('common.code'),
+              t('roles.kind'),
+              t('roles.permissions'),
+              '',
+            ]}
           >
             {rows.map((role) => (
               <tr key={role.id}>
@@ -178,13 +184,13 @@ export default function AdminRolesPage() {
                   </Link>
                 </td>
                 <td className="text-muted-foreground">{role.code}</td>
-                <td className="text-muted-foreground">{role.isSystem ? t('roles.system') : t('roles.custom')}</td>
+                <td className="text-muted-foreground">
+                  {role.isSystem ? t('roles.system') : t('roles.custom')}
+                </td>
                 <td className="text-muted-foreground">{role.permissions.length}</td>
                 <td className="admin-table-actions">
                   <Button asChild variant="secondary" size="sm">
-                    <Link href={`/t/${tenantId}/admin/roles/${role.id}`}>
-                      {t('common.open')}
-                    </Link>
+                    <Link href={`/t/${tenantId}/admin/roles/${role.id}`}>{t('common.open')}</Link>
                   </Button>
                 </td>
               </tr>

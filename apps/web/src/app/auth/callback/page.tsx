@@ -180,18 +180,14 @@ export default function Auth0CallbackPage() {
     <div className="app-shell">
       <AdminPageHeader
         title={t('login.auth0Title')}
-        description={
-          mfaChallengeToken !== null ? t('login.auth0Mfa') : t('login.auth0Wait')
-        }
+        description={mfaChallengeToken !== null ? t('login.auth0Mfa') : t('login.auth0Wait')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {busy && tenants === null && mfaChallengeToken === null ? (
         <p className="muted">{t('login.pleaseWait')}</p>
       ) : null}
 
-      {mfaChallengeToken !== null ? (
-        <MfaChallengeForm busy={busy} onSubmit={onMfaVerify} />
-      ) : null}
+      {mfaChallengeToken !== null ? <MfaChallengeForm busy={busy} onSubmit={onMfaVerify} /> : null}
 
       {tenants !== null ? (
         <div className="stack">

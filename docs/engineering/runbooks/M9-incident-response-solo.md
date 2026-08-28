@@ -1,20 +1,20 @@
 # M9 — Solo-operator incident response (pilot)
 
-| Field | Value |
-| --- | --- |
-| Program | **M9** Pilot hardening |
-| Slice | **M9-001** |
-| Authority | SOLO-GOV-002 (Owner + AI) |
-| Aligns | B-07 alert thresholds |
-| Honesty | Single-person on-call; no secondary escalation named |
+| Field     | Value                                                |
+| --------- | ---------------------------------------------------- |
+| Program   | **M9** Pilot hardening                               |
+| Slice     | **M9-001**                                           |
+| Authority | SOLO-GOV-002 (Owner + AI)                            |
+| Aligns    | B-07 alert thresholds                                |
+| Honesty   | Single-person on-call; no secondary escalation named |
 
 ## Severity
 
-| Sev | Meaning | Response target (solo) |
-| --- | --- | --- |
-| **P1** | Outage or data/secret risk | Acknowledge within 15 min when awake; mitigate ASAP |
-| **P2** | Degraded auth or elevated errors | Same day |
-| **P3** | Non-urgent hygiene | Next working session |
+| Sev    | Meaning                          | Response target (solo)                              |
+| ------ | -------------------------------- | --------------------------------------------------- |
+| **P1** | Outage or data/secret risk       | Acknowledge within 15 min when awake; mitigate ASAP |
+| **P2** | Degraded auth or elevated errors | Same day                                            |
+| **P3** | Non-urgent hygiene               | Next working session                                |
 
 ## Alert → action map
 
@@ -63,12 +63,12 @@
 
 ## Rollback cheatsheet
 
-| Layer | Action |
-| --- | --- |
-| App | `flyctl releases -a <app>` → redeploy prior image |
-| MFA | Doppler `MFA_ENFORCE=soft` then sync Fly (break-glass) |
-| Providers | Keep/set Fake; never invent ClickPesa/Beem/OpenAI keys |
-| DB | Neon PITR / branch restore per B-07 D1 evidence pattern |
+| Layer     | Action                                                  |
+| --------- | ------------------------------------------------------- |
+| App       | `flyctl releases -a <app>` → redeploy prior image       |
+| MFA       | Doppler `MFA_ENFORCE=soft` then sync Fly (break-glass)  |
+| Providers | Keep/set Fake; never invent ClickPesa/Beem/OpenAI keys  |
+| DB        | Neon PITR / branch restore per B-07 D1 evidence pattern |
 
 ## Non-goals
 

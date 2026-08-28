@@ -25,7 +25,13 @@ import { groupAdminNav, visibleAdminNavIds, type AdminNavId } from '@/lib/auth/a
 import type { MeLike } from '@/lib/auth/home-preference';
 import { readSession } from '@/lib/auth/session';
 import { formatTzsMinor } from '@/lib/finance/money';
-import { groupMessageKey, hubBlurbKey, navMessageKey, quickHintKey, quickLabelKey } from '@/lib/i18n/messages';
+import {
+  groupMessageKey,
+  hubBlurbKey,
+  navMessageKey,
+  quickHintKey,
+  quickLabelKey,
+} from '@/lib/i18n/messages';
 import { headmasterProfile, formatTzs } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
@@ -146,7 +152,11 @@ export default function AdminHomePage() {
   const collectionPct = Math.round((kpis.feesCollectedTzs / kpis.feesTargetTzs) * 100);
 
   const kpiCards = [
-    { label: 'Total Students', value: students ? students.total.toLocaleString() : kpis.students.toLocaleString(), icon: Users },
+    {
+      label: 'Total Students',
+      value: students ? students.total.toLocaleString() : kpis.students.toLocaleString(),
+      icon: Users,
+    },
     { label: 'Teachers', value: String(kpis.teachers), icon: UserCheck },
     { label: 'Attendance Today', value: `${kpis.attendanceTodayPct}%`, icon: Percent },
     { label: 'Fees Collected', value: formatTzs(kpis.feesCollectedTzs), icon: Wallet },
@@ -156,9 +166,7 @@ export default function AdminHomePage() {
     const item = approvals.find((a) => a.id === id);
     setApprovals((prev) => prev.filter((a) => a.id !== id));
     toast.success(
-      action === 'approve'
-        ? `Approved: ${item?.title ?? ''}`
-        : `Rejected: ${item?.title ?? ''}`,
+      action === 'approve' ? `Approved: ${item?.title ?? ''}` : `Rejected: ${item?.title ?? ''}`,
     );
   }
 
@@ -170,9 +178,7 @@ export default function AdminHomePage() {
           <p className="text-sm text-[var(--muted-foreground)]">
             {headmasterProfile.name} · {school ?? '…'}
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t('hub.title')}
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('hub.title')}</h1>
           <p className="text-sm text-[var(--muted-foreground)]">
             {school !== null ? `${school} — ${t('hub.description')}` : t('hub.loadingSchool')}
           </p>
@@ -180,11 +186,16 @@ export default function AdminHomePage() {
 
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
         {kpiError ? <Banner tone="error">{t('kpi.loadError')}</Banner> : null}
-        {loading ? <p className="text-sm text-[var(--muted-foreground)]">{t('hub.loadingAreas')}</p> : null}
+        {loading ? (
+          <p className="text-sm text-[var(--muted-foreground)]">{t('hub.loadingAreas')}</p>
+        ) : null}
         {emptyAreas ? <Banner tone="info">{t('hub.emptyAreas')}</Banner> : null}
 
         {/* ── KPI Cards ── */}
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div
+          aria-label={t('common.dashboard')}
+          className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        >
           {kpiCards.map(({ label, value, icon: Icon }) => (
             <Card key={label} className="border-[var(--border)]/80">
               <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
@@ -194,9 +205,7 @@ export default function AdminHomePage() {
                 </span>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-semibold tracking-tight tabular-nums">
-                  {value}
-                </p>
+                <p className="text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
               </CardContent>
             </Card>
           ))}
@@ -206,15 +215,11 @@ export default function AdminHomePage() {
         <Card className="border-[var(--border)]/80">
           <CardHeader>
             <CardTitle className="text-base">Fee Collection</CardTitle>
-            <CardDescription>
-              Target: {formatTzs(kpis.feesTargetTzs)}
-            </CardDescription>
+            <CardDescription>Target: {formatTzs(kpis.feesTargetTzs)}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <div className="flex items-end justify-between gap-3">
-              <p className="text-3xl font-semibold tracking-tight tabular-nums">
-                {collectionPct}%
-              </p>
+              <p className="text-3xl font-semibold tracking-tight tabular-nums">{collectionPct}%</p>
               <p className="text-sm text-[var(--muted-foreground)] tabular-nums">
                 {formatTzs(kpis.feesCollectedTzs)}
               </p>
@@ -242,9 +247,7 @@ export default function AdminHomePage() {
                     {index > 0 && <Separator />}
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium leading-snug">
-                          {item.title}
-                        </p>
+                        <p className="text-sm font-medium leading-snug">{item.title}</p>
                         <p className="mt-1 text-xs text-[var(--muted-foreground)]">
                           {item.requester}
                         </p>
@@ -257,10 +260,7 @@ export default function AdminHomePage() {
                         >
                           Reject
                         </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => decide(item.id, 'approve')}
-                        >
+                        <Button size="sm" onClick={() => decide(item.id, 'approve')}>
                           Approve
                         </Button>
                       </div>

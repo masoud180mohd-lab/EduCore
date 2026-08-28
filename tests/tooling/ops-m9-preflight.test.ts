@@ -19,7 +19,9 @@ describe('M9 staging UAT preflight', () => {
   it('records only preflight-safe evidence and preserves Owner-run UAT', () => {
     expect(script).toContain("api.pathname = '/health'");
     expect(script).toContain('not workflow UAT');
-    expect(script).toContain('no response body, credential, token, email, tenant ID, or learner data');
+    expect(script).toContain(
+      'no response body, credential, token, email, tenant ID, or learner data',
+    );
     expect(script).toContain('Owner must still complete');
     expect(script).not.toContain('/api/v1/auth/login');
     expect(script).not.toContain('SEED_ADMIN_PASS');

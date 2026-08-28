@@ -1,12 +1,12 @@
 # IMP-044 — Admin chrome: Academic details + Roles
 
-| Field     | Value                                      |
-| --------- | ------------------------------------------ |
-| Program   | **IMP-044**                                |
-| Date      | 2026-08-12                                 |
-| Status    | **Done** (solo-operator provisional)       |
-| Depends   | IMP-037 hub · AdminPageHeader primitives   |
-| Authority | Solo-operator provisional (SOLO-GOV-001)   |
+| Field     | Value                                    |
+| --------- | ---------------------------------------- |
+| Program   | **IMP-044**                              |
+| Date      | 2026-08-12                               |
+| Status    | **Done** (solo-operator provisional)     |
+| Depends   | IMP-037 hub · AdminPageHeader primitives |
+| Authority | Solo-operator provisional (SOLO-GOV-001) |
 
 ## Outcome
 
@@ -14,11 +14,11 @@ Align remaining Academic detail pages and Roles list/detail with `AdminPageHeade
 
 ## Delivered
 
-| Surface | Fix |
-| ------- | --- |
-| Academic details | years / terms / classes / streams / subjects / enrollments detail → Header + Banner |
-| Roles list + detail | Header + Banner; system/custom meta under header |
-| Hub copy | Academic sub-hub blurbs; Roles + Academic home cards; Fees receipts honesty |
+| Surface             | Fix                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| Academic details    | years / terms / classes / streams / subjects / enrollments detail → Header + Banner |
+| Roles list + detail | Header + Banner; system/custom meta under header                                    |
+| Hub copy            | Academic sub-hub blurbs; Roles + Academic home cards; Fees receipts honesty         |
 
 ## Explicitly not done
 

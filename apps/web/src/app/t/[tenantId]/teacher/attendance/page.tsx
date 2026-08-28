@@ -133,12 +133,11 @@ export default function AttendancePickerPage() {
   return (
     <TeacherShell tenantId={tenantId}>
       <div className="flex flex-col gap-6">
-        <AdminPageHeader
-          title={t('teacher.takeAttendance')}
-          description={t('teacher.takeDesc')}
-        />
+        <AdminPageHeader title={t('teacher.takeAttendance')} description={t('teacher.takeDesc')} />
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
-        {loadingClasses ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p> : null}
+        {loadingClasses ? (
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+        ) : null}
         {!loadingClasses && classes.length === 0 ? (
           <Banner tone="info">{t('teacher.noClasses')}</Banner>
         ) : null}
@@ -215,4 +214,3 @@ export default function AttendancePickerPage() {
     </TeacherShell>
   );
 }
-

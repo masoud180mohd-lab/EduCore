@@ -191,7 +191,8 @@ export const EXTRA_EN = {
   'student.soonResultsDesc': 'Coming soon',
   'student.soonFees': 'Fees',
   'student.soonFeesDesc': 'Coming soon',
-  'student.noAccess': 'You do not have student portal access, or no student is bound to this account.',
+  'student.noAccess':
+    'You do not have student portal access, or no student is bound to this account.',
   'student.loadError': 'Could not load your student profile.',
 
   'academic.title': 'Academic',
@@ -1152,11 +1153,13 @@ export const EXTRA_SW: { readonly [K in keyof typeof EXTRA_EN]: string } = {
   'invoice.reverse': 'Geuza',
   'invoice.refreshProvider': 'Sasisha kutoka mtoa huduma',
   'invoice.reconcile': 'Linganisha',
-  'invoice.syncTitle': 'Uliza ClickPesa na sasisha malipo yanayosubiri. Inaweza kukamilisha daftari.',
+  'invoice.syncTitle':
+    'Uliza ClickPesa na sasisha malipo yanayosubiri. Inaweza kukamilisha daftari.',
   'invoice.reconcileTitle':
     'Linganisha malipo na tukio la mwisho la lango. Haibadilishi daftari wala salio.',
   'invoice.noGuardians': 'Hakuna walezi waliohusishwa.',
-  'invoice.officePayHint': 'Pesa taslimu / benki / hundi / nyingine. Simu-pesa inatumia fomu hapa chini.',
+  'invoice.officePayHint':
+    'Pesa taslimu / benki / hundi / nyingine. Simu-pesa inatumia fomu hapa chini.',
   'invoice.method': 'Njia',
   'invoice.reconcileInfo':
     'Linganisha: {outcome} — linganisha tu (bila kubadilisha daftari). Jaribio {amount} ({status}).{event}',
@@ -1176,8 +1179,7 @@ export const EXTRA_SW: { readonly [K in keyof typeof EXTRA_EN]: string } = {
   'guardians.endLinkTitle': 'Maliza uhusiano wa mlezi?',
   'guardians.unbindBody':
     'Ondoa uhusiano wa mtumiaji wa portal kutoka kwa mlezi huyu? Watapoteza ruhusa ya portal ya mzazi.',
-  'guardians.endLinkBody':
-    'Maliza uhusiano huu? Mwanafunzi hatahusishwa tena na mlezi huyu.',
+  'guardians.endLinkBody': 'Maliza uhusiano huu? Mwanafunzi hatahusishwa tena na mlezi huyu.',
   'guardians.linkStudentFirst':
     'Unganisha mwanafunzi na mlezi huyu kwanza, kisha rudi hapa kuona ada.',
 

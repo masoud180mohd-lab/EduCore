@@ -10,12 +10,12 @@
 
 ## Scope
 
-| In scope                      | Out of scope       |
-| ----------------------------- | ------------------ |
-| Exams list/get/create         | Parent results BFF |
-| Exam subjects list/get/create | Offline sync       |
-| Marks get + bulk PUT          | Nested student PII |
-| Submit / approve exam-subject | Stored letter grades |
+| In scope                            | Out of scope            |
+| ----------------------------------- | ----------------------- |
+| Exams list/get/create               | Parent results BFF      |
+| Exam subjects list/get/create       | Offline sync            |
+| Marks get + bulk PUT                | Nested student PII      |
+| Submit / approve exam-subject       | Stored letter grades    |
 | Report-card compose + PDF (rev 1.2) | Writable `grade` column |
 
 All routes: Bearer + `X-Tenant-Id`. Marks payloads are ids-only.
@@ -30,21 +30,21 @@ All routes: Bearer + `X-Tenant-Id`. Marks payloads are ids-only.
 
 ## Endpoints
 
-| Method | Path                                            | AuthZ                            |
-| ------ | ----------------------------------------------- | -------------------------------- |
-| GET    | `/api/v1/exams`                                 | marks.read                       |
-| POST   | `/api/v1/exams`                                 | marks.manage (+ Idempotency-Key) |
-| GET    | `/api/v1/exams/{examId}`                        | marks.read                       |
-| GET    | `/api/v1/exams/{examId}/subjects`               | marks.read                       |
-| POST   | `/api/v1/exams/{examId}/subjects`               | marks.manage (+ Idempotency-Key) |
-| GET    | `/api/v1/exam-subjects/{examSubjectId}`         | marks.read                       |
-| GET    | `/api/v1/exam-subjects/{examSubjectId}/marks`   | marks.read                       |
-| PUT    | `/api/v1/exam-subjects/{examSubjectId}/marks`   | marks.manage (+ Idempotency-Key) |
-| POST   | `/api/v1/exam-subjects/{examSubjectId}/submit`  | marks.manage                     |
-| POST   | `/api/v1/exam-subjects/{examSubjectId}/approve` | marks.approve                    |
-| GET    | `/api/v1/exams/{examId}/report-cards`           | marks.read                       |
-| GET    | `/api/v1/exams/{examId}/report-cards/{studentId}` | marks.read                     |
-| GET    | `/api/v1/exams/{examId}/report-cards/{studentId}/pdf` | marks.read (`application/pdf`) |
+| Method | Path                                                  | AuthZ                            |
+| ------ | ----------------------------------------------------- | -------------------------------- |
+| GET    | `/api/v1/exams`                                       | marks.read                       |
+| POST   | `/api/v1/exams`                                       | marks.manage (+ Idempotency-Key) |
+| GET    | `/api/v1/exams/{examId}`                              | marks.read                       |
+| GET    | `/api/v1/exams/{examId}/subjects`                     | marks.read                       |
+| POST   | `/api/v1/exams/{examId}/subjects`                     | marks.manage (+ Idempotency-Key) |
+| GET    | `/api/v1/exam-subjects/{examSubjectId}`               | marks.read                       |
+| GET    | `/api/v1/exam-subjects/{examSubjectId}/marks`         | marks.read                       |
+| PUT    | `/api/v1/exam-subjects/{examSubjectId}/marks`         | marks.manage (+ Idempotency-Key) |
+| POST   | `/api/v1/exam-subjects/{examSubjectId}/submit`        | marks.manage                     |
+| POST   | `/api/v1/exam-subjects/{examSubjectId}/approve`       | marks.approve                    |
+| GET    | `/api/v1/exams/{examId}/report-cards`                 | marks.read                       |
+| GET    | `/api/v1/exams/{examId}/report-cards/{studentId}`     | marks.read                       |
+| GET    | `/api/v1/exams/{examId}/report-cards/{studentId}/pdf` | marks.read (`application/pdf`)   |
 
 ### Query (exams list)
 

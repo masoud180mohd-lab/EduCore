@@ -96,7 +96,9 @@ export default function ParentStudentInvoicesPage() {
                       </div>
                       <span className="text-sm text-muted-foreground">
                         {t('fees.balance')}:{' '}
-                        <strong className="text-foreground">{formatTzsMinor(inv.balanceMinor)}</strong>{' '}
+                        <strong className="text-foreground">
+                          {formatTzsMinor(inv.balanceMinor)}
+                        </strong>{' '}
                         · {t('fees.total')}: {formatTzsMinor(inv.totalMinor)}
                       </span>
                     </div>
@@ -111,4 +113,3 @@ export default function ParentStudentInvoicesPage() {
     </ParentShell>
   );
 }
-

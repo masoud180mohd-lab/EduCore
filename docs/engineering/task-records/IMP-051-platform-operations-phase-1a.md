@@ -10,13 +10,13 @@ Ship the first product surface for Platform Super Admin: tenant lifecycle, manua
 
 ## Delivered
 
-| Area | What landed |
-| --- | --- |
+| Area        | What landed                                                                                                                                                    |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Persistence | Dedicated `educore_platform` Nest pool (`EDUCORE_PLATFORM_DATABASE_URL` / local default when `EDUCORE_ENABLE_APP_DB=1`). Writes use `withPlatformTransaction`. |
-| HTTP | `/api/v1/platform/*` behind `RequirePlatformOperator` (no `X-Tenant-Id`; MFA step-up on writes). |
-| Auth | `GET /auth/me` returns `platformOperator`. Login routes operators to `/platform` before tenant bind (D2). |
-| Seed | `npm run seed:admin` grants `platform_operators` via migrator/ops URL (`DATABASE_URL`). `educore_platform` cannot INSERT that table. |
-| Web | `PlatformShell` + schools list/register/detail + audit. EN/SW catalog. Identity tint `#134a6d`. |
+| HTTP        | `/api/v1/platform/*` behind `RequirePlatformOperator` (no `X-Tenant-Id`; MFA step-up on writes).                                                               |
+| Auth        | `GET /auth/me` returns `platformOperator`. Login routes operators to `/platform` before tenant bind (D2).                                                      |
+| Seed        | `npm run seed:admin` grants `platform_operators` via migrator/ops URL (`DATABASE_URL`). `educore_platform` cannot INSERT that table.                           |
+| Web         | `PlatformShell` + schools list/register/detail + audit. EN/SW catalog. Identity tint `#134a6d`.                                                                |
 
 ## Honesty
 

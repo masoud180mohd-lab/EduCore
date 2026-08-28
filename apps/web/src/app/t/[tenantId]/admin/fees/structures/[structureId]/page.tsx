@@ -244,7 +244,9 @@ export default function AdminFeeStructureDetailPage() {
             </div>
 
             <fieldset className="stack" style={{ border: 'none', padding: 0, margin: 0 }}>
-              <legend style={{ fontWeight: 600, fontSize: '0.875rem' }}>{t('fees.itemsLegend')}</legend>
+              <legend style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                {t('fees.itemsLegend')}
+              </legend>
               {items.map((item, index) => (
                 <div key={index} className="stack" style={{ gap: '0.5rem' }}>
                   <div className="field">

@@ -54,10 +54,10 @@ Avoid purple-on-white gradients, terracotta cream “AI brochure” looks, and d
 
 `TeacherShell` hosts persistent **Darasa | Somo** mode tabs under the Digii top bar:
 
-| Mode | Nav focus | Home |
-| --- | --- | --- |
+| Mode               | Nav focus         | Home                                 |
+| ------------------ | ----------------- | ------------------------------------ |
 | **Darasa (class)** | Sessions · Attend | today’s / recent attendance sessions |
-| **Somo (subject)** | Marks | open exams / marks entry (DSF-003) |
+| **Somo (subject)** | Marks             | open exams / marks entry (DSF-003)   |
 
 - Tabs shown only for modes the actor can reach (`attendance.manage` → Darasa; `marks.manage` → Somo; `staff` role with neither listed perm → both until assignment-matrix API exists).
 - One reachable mode → no tab strip (nav for that mode only).
@@ -104,8 +104,8 @@ ACF-009 attendance · ACF-008 enrollments · ACF-005 classes · ACF-002 students
 
 ## Revisions
 
-| Ver | Date       | Notes                                             |
-| --- | ---------- | ------------------------------------------------- |
-| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-006)              |
-| 1.1 | 2026-07-30 | Close session uses ConfirmDialog (IMP-034 Wave X) |
+| Ver | Date       | Notes                                                                     |
+| --- | ---------- | ------------------------------------------------------------------------- |
+| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-006)                                      |
+| 1.1 | 2026-07-30 | Close session uses ConfirmDialog (IMP-034 Wave X)                         |
 | 1.2 | 2026-08-20 | Teacher Workspace Darasa/Somo mode tabs (SPEC D1 / Phase 2); Digii chrome |

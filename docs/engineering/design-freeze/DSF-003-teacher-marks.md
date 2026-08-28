@@ -53,8 +53,8 @@ Acting seats only.
 
 ## Revisions
 
-| Ver | Date       | Notes                                      |
-| --- | ---------- | ------------------------------------------ |
-| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-008)       |
-| 1.1 | 2026-07-30 | Submit uses ConfirmDialog (IMP-034 Wave X) |
+| Ver | Date       | Notes                                                                |
+| --- | ---------- | -------------------------------------------------------------------- |
+| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-008)                                 |
+| 1.1 | 2026-07-30 | Submit uses ConfirmDialog (IMP-034 Wave X)                           |
 | 1.2 | 2026-08-20 | Subject mode (Somo) under Teacher Workspace tabs (SPEC D1 / Phase 2) |

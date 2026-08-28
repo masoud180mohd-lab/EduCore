@@ -86,7 +86,9 @@ export default function GuardianFeesEntryPage() {
       <p className="muted">
         <Link href={`${base}`}>← {t('guardians.guardian')}</Link>
       </p>
-      <AdminPageHeader title={`${t('guardians.fees')} — ${guardian?.displayName ?? t('guardians.guardian')}`}>
+      <AdminPageHeader
+        title={`${t('guardians.fees')} — ${guardian?.displayName ?? t('guardians.guardian')}`}
+      >
         <p className="muted">
           Read-only invoices and balances for linked students (DSF-005 / IMP-011).
         </p>
@@ -101,9 +103,7 @@ export default function GuardianFeesEntryPage() {
       {loading ? <p className="muted">{t('common.loading')}</p> : null}
 
       {!loading && error === null && activeLinks.length === 0 ? (
-        <Banner tone="info">
-          {t('guardians.linkStudentFirst')}
-        </Banner>
+        <Banner tone="info">{t('guardians.linkStudentFirst')}</Banner>
       ) : null}
 
       {!loading && activeLinks.length > 0 ? (

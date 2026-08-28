@@ -3,12 +3,7 @@
 import Link from 'next/link';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import {
-  AdminTable,
-  ResourceList,
-  ResourceListPagination,
-  StatusChip,
-} from '@/components/admin';
+import { AdminTable, ResourceList, ResourceListPagination, StatusChip } from '@/components/admin';
 import { useAppPreferences } from '@/components/AppProviders';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
@@ -92,7 +87,9 @@ export default function PlatformSchoolsPage() {
           <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">
             {t('platform.schoolsTitle')}
           </h1>
-          <p className="mt-1 text-sm text-[var(--muted-foreground)]">{t('platform.schoolsDescription')}</p>
+          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+            {t('platform.schoolsDescription')}
+          </p>
         </div>
         <Link
           className="inline-flex h-10 min-h-11 items-center justify-center rounded-md bg-[var(--primary)] px-4 text-sm font-medium text-[var(--primary-foreground)] hover:opacity-90"
@@ -141,7 +138,13 @@ export default function PlatformSchoolsPage() {
       >
         <AdminTable
           caption={t('platform.schoolsTitle')}
-          headers={[t('platform.name'), t('platform.code'), t('platform.status'), t('platform.plan'), t('common.created')]}
+          headers={[
+            t('platform.name'),
+            t('platform.code'),
+            t('platform.status'),
+            t('platform.plan'),
+            t('common.created'),
+          ]}
         >
           {rows.map((row) => (
             <tr key={row.id}>

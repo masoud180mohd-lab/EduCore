@@ -588,9 +588,7 @@ export default function AdminInvoiceDetailPage() {
           {payOk ? (
             <form className="stack card" onSubmit={(e) => void onPay(e)}>
               <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('invoice.pay')}</h2>
-              <p className="muted">
-                {t('invoice.officePayHint')}
-              </p>
+              <p className="muted">{t('invoice.officePayHint')}</p>
               <div className="field">
                 <label htmlFor="pay-method">{t('invoice.method')}</label>
                 <select
@@ -631,9 +629,7 @@ export default function AdminInvoiceDetailPage() {
               onSubmit={(e) => void onRequestMobileMoney(e)}
             >
               <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('invoice.requestMoMo')}</h2>
-              <p className="muted">
-                {t('invoice.requestMoMoDesc')}
-              </p>
+              <p className="muted">{t('invoice.requestMoMoDesc')}</p>
               <div className="field">
                 <label htmlFor="momo-amount">{t('invoice.amountBalance')}</label>
                 <input

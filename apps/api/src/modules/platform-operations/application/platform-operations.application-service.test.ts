@@ -50,7 +50,9 @@ describe('PlatformOperationsApplicationService', () => {
   it('registers a tenant with idempotency replay', async () => {
     const tenants = {
       isAvailable: () => true,
-      registerTenant: vi.fn().mockResolvedValue({ tenant: school, ownerUserId: actorId, ownerCreated: true }),
+      registerTenant: vi
+        .fn()
+        .mockResolvedValue({ tenant: school, ownerUserId: actorId, ownerCreated: true }),
     };
     const idempotency = new InMemoryIdempotencyStore();
     const svc = service(tenants, idempotency);
@@ -101,7 +103,9 @@ describe('PlatformOperationsApplicationService', () => {
       isAvailable: () => true,
       setTenantStatus: vi
         .fn()
-        .mockRejectedValue(Object.assign(new Error('bad'), { code: 'INVALID_STATUS', currentStatus: 'closed' })),
+        .mockRejectedValue(
+          Object.assign(new Error('bad'), { code: 'INVALID_STATUS', currentStatus: 'closed' }),
+        ),
     };
     await expect(
       service(tenants).suspendTenant(actorId, tenantId, { reason: 'Need a pause' }, 'corr'),
@@ -111,7 +115,13 @@ describe('PlatformOperationsApplicationService', () => {
   it('rejects unknown entitlement codes', async () => {
     const tenants = { isAvailable: () => true, setEntitlement: vi.fn() };
     await expect(
-      service(tenants).setEntitlement(actorId, tenantId, 'hostel', { enabled: true, reason: 'Not allowed' }, 'corr'),
+      service(tenants).setEntitlement(
+        actorId,
+        tenantId,
+        'hostel',
+        { enabled: true, reason: 'Not allowed' },
+        'corr',
+      ),
     ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
     expect(tenants.setEntitlement).not.toHaveBeenCalled();
   });

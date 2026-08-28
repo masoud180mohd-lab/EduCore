@@ -15,7 +15,10 @@ export default function AdminReportsPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader title={t('page.reports.title')} description={t('page.reports.description')} />
+      <AdminPageHeader
+        title={t('page.reports.title')}
+        description={t('page.reports.description')}
+      />
       <Banner tone="info">{t('reports.soonHint')}</Banner>
       <ul className="list" style={{ marginTop: 'var(--space-4)' }}>
         <li>

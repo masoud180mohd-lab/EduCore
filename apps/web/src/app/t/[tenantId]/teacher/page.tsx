@@ -56,14 +56,9 @@ export default function TeacherHomePage() {
     <TeacherShell tenantId={tenantId}>
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <AdminPageHeader
-            title={t('teacher.sessions')}
-            description={t('teacher.sessionsDesc')}
-          />
+          <AdminPageHeader title={t('teacher.sessions')} description={t('teacher.sessionsDesc')} />
           <Button asChild className="self-start sm:self-auto">
-            <Link href={`/t/${tenantId}/teacher/attendance`}>
-              {t('teacher.takeAttendance')}
-            </Link>
+            <Link href={`/t/${tenantId}/teacher/attendance`}>{t('teacher.takeAttendance')}</Link>
           </Button>
         </div>
 
@@ -102,4 +97,3 @@ export default function TeacherHomePage() {
     </TeacherShell>
   );
 }
-

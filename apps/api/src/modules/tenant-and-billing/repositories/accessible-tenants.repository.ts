@@ -134,6 +134,50 @@ export class AccessibleTenantsRepository {
       return null;
     }
   }
+
+  /**
+   * Update tenant profile via app.tenant_update_profile helper.
+   */
+  async updateTenantProfile(
+    userId: string,
+    tenantId: string,
+    input: {
+      readonly name?: string;
+      readonly timezone?: string;
+      readonly primaryLocale?: string;
+    },
+  ): Promise<AccessibleTenantRow | null> {
+    if (!isUuid(userId) || !isUuid(tenantId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withUserRlsTransaction(this.pool, userId, async (client) => {
+        const result = await client.query<{
+          id: string;
+          code: string;
+          name: string;
+          status: string;
+          primary_locale: string;
+          timezone: string;
+          created_at: Date;
+          updated_at: Date;
+        }>(`SELECT * FROM app.tenant_update_profile($1::uuid, $2::text, $3::text, $4::text)`, [
+          tenantId,
+          input.name ?? null,
+          input.timezone ?? null,
+          input.primaryLocale ?? null,
+        ]);
+        const row = result.rows[0];
+        return row === undefined ? null : mapTenantRow(row);
+      });
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'AccessibleTenantsRepository', error, {
+        operation: 'updateTenantProfile',
+      });
+      return null;
+    }
+  }
 }
 
 function mapTenantRow(row: {

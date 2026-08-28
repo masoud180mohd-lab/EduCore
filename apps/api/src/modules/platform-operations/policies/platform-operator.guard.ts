@@ -27,7 +27,9 @@ const PLATFORM_MFA_TENANT = '00000000-0000-4000-8000-000000000000';
  * ACF-PLAT-001: authenticated platform super_admin, no X-Tenant-Id.
  * Write routes also require the privileged MFA gate (hard when MFA_ENFORCE=hard).
  */
-export function RequirePlatformOperator(options: { readonly write?: boolean } = {}): Type<CanActivate> {
+export function RequirePlatformOperator(
+  options: { readonly write?: boolean } = {},
+): Type<CanActivate> {
   @Injectable()
   class RequirePlatformOperatorGuardMixin implements CanActivate {
     constructor(
@@ -45,7 +47,10 @@ export function RequirePlatformOperator(options: { readonly write?: boolean } = 
       }
 
       const header = request.header(TENANT_ID_HEADER);
-      if ((header !== undefined && header.trim() !== '') || request[TENANT_CONTEXT_REQUEST_KEY] !== undefined) {
+      if (
+        (header !== undefined && header.trim() !== '') ||
+        request[TENANT_CONTEXT_REQUEST_KEY] !== undefined
+      ) {
         throw AppError.validation('Platform routes must not send X-Tenant-Id.');
       }
 

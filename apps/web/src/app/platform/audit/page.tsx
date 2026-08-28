@@ -83,7 +83,10 @@ export default function PlatformAuditPage() {
 
   return (
     <div className="stack">
-      <AdminPageHeader title={t('platform.auditTitle')} description={t('platform.auditDescription')} />
+      <AdminPageHeader
+        title={t('platform.auditTitle')}
+        description={t('platform.auditDescription')}
+      />
       <form className="filters" onSubmit={onFilter}>
         <label>
           {t('platform.tenant')}

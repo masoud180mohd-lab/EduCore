@@ -57,10 +57,7 @@ export default function StudentHomePage() {
   return (
     <StudentShell tenantId={tenantId}>
       <div className="flex flex-col gap-6">
-        <AdminPageHeader
-          title={t('student.homeTitle')}
-          description={t('student.homeDesc')}
-        />
+        <AdminPageHeader title={t('student.homeTitle')} description={t('student.homeDesc')} />
 
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
         {loading ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p> : null}
@@ -107,4 +104,3 @@ export default function StudentHomePage() {
     </StudentShell>
   );
 }
-

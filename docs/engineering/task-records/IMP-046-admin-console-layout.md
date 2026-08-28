@@ -1,13 +1,13 @@
 # IMP-046 — Admin office console layout
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **IMP-046** |
-| Date      | 2026-08-14 |
-| Status    | **Done** (solo-operator provisional) |
+| Field     | Value                                    |
+| --------- | ---------------------------------------- |
+| Program   | **IMP-046**                              |
+| Date      | 2026-08-14                               |
+| Status    | **Done** (solo-operator provisional)     |
 | Freezes   | DSF-KIT-001 v**1.1** · DSF-002 v**1.28** |
-| Depends   | IMP-029 grouped IA · IMP-033 AuthZ gate |
-| Authority | Owner + AI (SOLO-GOV-002) |
+| Depends   | IMP-029 grouped IA · IMP-033 AuthZ gate  |
+| Authority | Owner + AI (SOLO-GOV-002)                |
 
 ## Outcome
 
@@ -15,13 +15,13 @@ Replace the cramped grouped top-nav AdminShell with a professional office consol
 
 ## Delivered
 
-| Surface | Change |
-| ------- | ------ |
-| `AdminShell` | Left rail + utility bar; mobile hamburger / overlay / Esc |
+| Surface      | Change                                                             |
+| ------------ | ------------------------------------------------------------------ |
+| `AdminShell` | Left rail + utility bar; mobile hamburger / overlay / Esc          |
 | `tokens.css` | `--color-rail*` + `--content-max-admin: 72rem` + `.admin-console*` |
-| Admin home | Tighter “Office” hub; group cards in a grid |
-| DSF-KIT-001 | Amend 1.1 — AdminShell layout + rail tokens |
-| DSF-002 | Amend 1.28 — Option A groups kept; chrome is the rail |
+| Admin home   | Tighter “Office” hub; group cards in a grid                        |
+| DSF-KIT-001  | Amend 1.1 — AdminShell layout + rail tokens                        |
+| DSF-002      | Amend 1.28 — Option A groups kept; chrome is the rail              |
 
 ## Explicitly not done
 

@@ -203,7 +203,9 @@ export default function AdminStreamsPage() {
             value={classId}
             onChange={(e) => setClassId(e.target.value)}
           >
-            <option value="">{t('common.select')} {t('common.class')}</option>
+            <option value="">
+              {t('common.select')} {t('common.class')}
+            </option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}

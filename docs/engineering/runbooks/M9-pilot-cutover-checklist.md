@@ -1,12 +1,12 @@
 # M9 — Gated pilot school cutover checklist
 
-| Field | Value |
-| --- | --- |
-| Program | **M9** Pilot hardening |
-| Slice | **M9-001** |
-| Audience | Project Owner (SOLO-GOV-002) |
-| Env | Prefer **staging** UAT first; prod only after Owner GO |
-| Status | Checklist — does **not** authorize public unrestricted pilot |
+| Field    | Value                                                        |
+| -------- | ------------------------------------------------------------ |
+| Program  | **M9** Pilot hardening                                       |
+| Slice    | **M9-001**                                                   |
+| Audience | Project Owner (SOLO-GOV-002)                                 |
+| Env      | Prefer **staging** UAT first; prod only after Owner GO       |
+| Status   | Checklist — does **not** authorize public unrestricted pilot |
 
 ## Purpose
 
@@ -51,11 +51,11 @@ Run [`../qa/M9-uat-core-workflows.md`](../qa/M9-uat-core-workflows.md) on the **
 
 ## Owner decision
 
-| Outcome | Meaning |
-| --- | --- |
-| **GO (gated)** | One named school may use office-fees + online attendance/marks on the chosen env |
-| **NO-GO** | Stay lab/staging; fix listed gaps; do not onboard school data |
-| **GO WITH RISK** | Owner accepts named residuals (e.g. 6h PITR, solo on-call) in writing below |
+| Outcome          | Meaning                                                                          |
+| ---------------- | -------------------------------------------------------------------------------- |
+| **GO (gated)**   | One named school may use office-fees + online attendance/marks on the chosen env |
+| **NO-GO**        | Stay lab/staging; fix listed gaps; do not onboard school data                    |
+| **GO WITH RISK** | Owner accepts named residuals (e.g. 6h PITR, solo on-call) in writing below      |
 
 ```text
 School / tenant: ____________________

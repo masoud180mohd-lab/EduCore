@@ -16,7 +16,8 @@ import { canAccessHeadPortal } from '@/lib/auth/head-access';
 import type { MeLike } from '@/lib/auth/home-preference';
 import { clearSession, readSession } from '@/lib/auth/session';
 
-type GateState = { readonly kind: 'loading' } | { readonly kind: 'allowed' } | { readonly kind: 'denied' };
+type GateState =
+  { readonly kind: 'loading' } | { readonly kind: 'allowed' } | { readonly kind: 'denied' };
 
 export function HeadShell({
   tenantId,

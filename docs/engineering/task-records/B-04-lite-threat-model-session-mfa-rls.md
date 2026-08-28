@@ -1,12 +1,12 @@
 # B-04 / SEC-TM-001 — Lite threat model task record
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **B-04** readiness blocker (threat artifact) |
-| Date      | 2026-08-08 |
-| Status    | **Done** (lite, solo-operator provisional) |
+| Field     | Value                                                                                 |
+| --------- | ------------------------------------------------------------------------------------- |
+| Program   | **B-04** readiness blocker (threat artifact)                                          |
+| Date      | 2026-08-08                                                                            |
+| Status    | **Done** (lite, solo-operator provisional)                                            |
 | Decision  | `docs/engineering/decisions/B-04-lite-threat-model-session-mfa-rls.md` (**Accepted**) |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                              |
 
 ## Delivered
 

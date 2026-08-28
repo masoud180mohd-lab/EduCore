@@ -19,7 +19,12 @@ import { MarksRepository } from './repositories/marks.repository.js';
  * Exams / exam subjects / marks product surfaces (IMP-008 / ACF-011).
  */
 @Module({
-  imports: [DatabaseModule, PlatformOperationsModule, StudentRegistryModule, AcademicStructureModule],
+  imports: [
+    DatabaseModule,
+    PlatformOperationsModule,
+    StudentRegistryModule,
+    AcademicStructureModule,
+  ],
   controllers: [AssessmentController, MarksController],
   providers: [
     AssessmentApplicationService,

@@ -21,7 +21,9 @@ async function main() {
       ['admin@educore.staging'],
     );
     if (users.rows[0] === undefined) {
-      process.stdout.write('admin@educore.staging not visible to educore_app (expected under RLS)\n');
+      process.stdout.write(
+        'admin@educore.staging not visible to educore_app (expected under RLS)\n',
+      );
     } else {
       process.stdout.write(`visible_user=${users.rows[0].email}\n`);
     }

@@ -20,15 +20,15 @@
 
 ## Endpoints
 
-| Method | Path                                       | AuthZ             | Notes                                                                      |
-| ------ | ------------------------------------------ | ----------------- | -------------------------------------------------------------------------- |
-| GET    | `/api/v1/attendance-sessions`              | attendance.read   | filters: classId, sessionDate, status, limit, cursor                       |
+| Method | Path                                       | AuthZ             | Notes                                                                                               |
+| ------ | ------------------------------------------ | ----------------- | --------------------------------------------------------------------------------------------------- |
+| GET    | `/api/v1/attendance-sessions`              | attendance.read   | filters: classId, sessionDate, status, limit, cursor                                                |
 | GET    | `/api/v1/attendance-sessions/summary`      | attendance.read   | KPI for a UTC date (default today). `{ sessionDate, sessionCount, present, absent, late, excused }` |
-| GET    | `/api/v1/attendance-sessions/{id}`         | attendance.read   | 404 Session not found.                                                     |
-| POST   | `/api/v1/attendance-sessions`              | attendance.manage | Idempotency required; body classId, streamId?, sessionDate, notes?         |
-| POST   | `/api/v1/attendance-sessions/{id}/close`   | attendance.manage | Idempotency recommended                                                    |
-| GET    | `/api/v1/attendance-sessions/{id}/records` | attendance.read   |                                                                            |
-| PUT    | `/api/v1/attendance-sessions/{id}/records` | attendance.manage | Idempotency required; body `{ "records": [{ studentId, status, note? }] }` |
+| GET    | `/api/v1/attendance-sessions/{id}`         | attendance.read   | 404 Session not found.                                                                              |
+| POST   | `/api/v1/attendance-sessions`              | attendance.manage | Idempotency required; body classId, streamId?, sessionDate, notes?                                  |
+| POST   | `/api/v1/attendance-sessions/{id}/close`   | attendance.manage | Idempotency recommended                                                                             |
+| GET    | `/api/v1/attendance-sessions/{id}/records` | attendance.read   |                                                                                                     |
+| PUT    | `/api/v1/attendance-sessions/{id}/records` | attendance.manage | Idempotency required; body `{ "records": [{ studentId, status, note? }] }`                          |
 
 ## Rules
 

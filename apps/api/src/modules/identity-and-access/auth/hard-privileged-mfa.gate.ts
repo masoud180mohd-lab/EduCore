@@ -5,10 +5,7 @@ import { Injectable } from '@nestjs/common';
 
 import { AppError } from '../../../common/errors/app-error.js';
 import type { PrivilegedMfaGate } from '../../../common/policy/privileged-mfa-gate.js';
-import {
-  PRIVILEGED_MFA_PERMISSIONS,
-  resolveMfaEnforceMode,
-} from './mfa-crypto.js';
+import { PRIVILEGED_MFA_PERMISSIONS, resolveMfaEnforceMode } from './mfa-crypto.js';
 import { MfaRepository } from '../repositories/mfa.repository.js';
 
 @Injectable()

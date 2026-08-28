@@ -252,7 +252,9 @@ export default function AdminClassesPage() {
               setAcademicYearId(e.target.value);
             }}
           >
-            <option value="">{t('common.select')} {t('common.year')}</option>
+            <option value="">
+              {t('common.select')} {t('common.year')}
+            </option>
             {years.map((y) => (
               <option key={y.id} value={y.id}>
                 {y.name}

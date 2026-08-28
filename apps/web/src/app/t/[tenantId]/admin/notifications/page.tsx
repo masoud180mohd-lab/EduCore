@@ -364,7 +364,9 @@ export default function AdminNotificationsPage() {
                   {guardians.map((g) => (
                     <option key={g.id} value={g.id}>
                       {g.displayName}
-                      {g.phone !== null && g.phone !== '' ? ` · ${t('sms.hasPhone')}` : ` · ${t('sms.noPhone')}`}
+                      {g.phone !== null && g.phone !== ''
+                        ? ` · ${t('sms.hasPhone')}`
+                        : ` · ${t('sms.noPhone')}`}
                     </option>
                   ))}
                 </select>

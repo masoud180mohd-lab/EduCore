@@ -4,13 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import {
-  AdminPageHeader,
-  AdminTable,
-  Banner,
-  ConfirmDialog,
-  StatusChip,
-} from '@/components/admin';
+import { AdminPageHeader, AdminTable, Banner, ConfirmDialog, StatusChip } from '@/components/admin';
 import { useAppPreferences } from '@/components/AppProviders';
 import { formatMessage } from '@/lib/i18n/messages';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
@@ -28,7 +22,12 @@ type ConfirmKind =
   | { readonly kind: 'suspend' }
   | { readonly kind: 'reinstate' }
   | { readonly kind: 'plan'; readonly planCode: string }
-  | { readonly kind: 'entitlement'; readonly code: PlatformEntitlementCode; readonly enabled: boolean; readonly limit: number | null };
+  | {
+      readonly kind: 'entitlement';
+      readonly code: PlatformEntitlementCode;
+      readonly enabled: boolean;
+      readonly limit: number | null;
+    };
 
 function statusTone(status: string): 'ok' | 'muted' | 'neutral' {
   if (status === 'active') return 'ok';
@@ -54,6 +53,10 @@ export default function PlatformSchoolDetailPage() {
   >({});
   const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [reason, setReason] = useState('');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editLocale, setEditLocale] = useState<'en' | 'sw'>('en');
+  const [editTimezone, setEditTimezone] = useState('');
 
   async function load() {
     const auth = readSession();
@@ -78,6 +81,9 @@ export default function PlatformSchoolDetailPage() {
         ),
       ]);
       setTenant(tenantRes.data);
+      setEditName(tenantRes.data.name);
+      setEditLocale(tenantRes.data.primaryLocale === 'sw' ? 'sw' : 'en');
+      setEditTimezone(tenantRes.data.timezone);
       setPlans(plansRes.data ?? []);
       setPlanCode(tenantRes.data.planCode ?? '');
       setAudit(auditRes.data ?? []);
@@ -103,7 +109,7 @@ export default function PlatformSchoolDetailPage() {
     void load();
   }, [tenantId]);
 
-  async function runWrite(path: string, method: 'POST' | 'PUT', body: unknown) {
+  async function runWrite(path: string, method: 'POST' | 'PUT' | 'PATCH', body: unknown) {
     const auth = readSession();
     if (auth === null) return;
     setBusy(true);
@@ -117,6 +123,10 @@ export default function PlatformSchoolDetailPage() {
         body,
       });
       setTenant(result.data);
+      setEditName(result.data.name);
+      setEditLocale(result.data.primaryLocale === 'sw' ? 'sw' : 'en');
+      setEditTimezone(result.data.timezone);
+      setIsEditingProfile(false);
       setPlanCode(result.data.planCode ?? '');
       setInfo(t('platform.writeSuccess'));
       setConfirm(null);
@@ -138,11 +148,15 @@ export default function PlatformSchoolDetailPage() {
   function onConfirm() {
     if (confirm === null || tenant === null) return;
     if (confirm.kind === 'suspend') {
-      void runWrite(`/api/v1/platform/tenants/${tenant.id}/suspend`, 'POST', { reason: reason.trim() });
+      void runWrite(`/api/v1/platform/tenants/${tenant.id}/suspend`, 'POST', {
+        reason: reason.trim(),
+      });
       return;
     }
     if (confirm.kind === 'reinstate') {
-      void runWrite(`/api/v1/platform/tenants/${tenant.id}/reinstate`, 'POST', { reason: reason.trim() });
+      void runWrite(`/api/v1/platform/tenants/${tenant.id}/reinstate`, 'POST', {
+        reason: reason.trim(),
+      });
       return;
     }
     if (confirm.kind === 'plan') {
@@ -156,6 +170,16 @@ export default function PlatformSchoolDetailPage() {
       enabled: confirm.enabled,
       limit: confirm.limit,
       reason: reason.trim(),
+    });
+  }
+
+  function onSaveProfile(event: FormEvent) {
+    event.preventDefault();
+    if (tenant === null) return;
+    void runWrite(`/api/v1/platform/tenants/${tenant.id}`, 'PATCH', {
+      name: editName.trim(),
+      primaryLocale: editLocale,
+      timezone: editTimezone.trim(),
     });
   }
 
@@ -214,17 +238,76 @@ export default function PlatformSchoolDetailPage() {
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
 
       <section className="card stack">
-        <h2 className="section-title">{t('platform.profile')}</h2>
-        <p>
-          <strong>{t('platform.code')}:</strong> {tenant.code}
-        </p>
-        <p>
-          <strong>{t('platform.locale')}:</strong> {tenant.primaryLocale}
-        </p>
-        <p>
-          <strong>{t('platform.timezone')}:</strong> {tenant.timezone}
-        </p>
-        {showId ? <p className="muted">{tenant.id}</p> : null}
+        <div className="flex items-center justify-between">
+          <h2 className="section-title">{t('platform.profile')}</h2>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setIsEditingProfile((prev) => !prev)}
+          >
+            {isEditingProfile ? t('common.back') : 'Hariri Taarifa'}
+          </button>
+        </div>
+
+        {isEditingProfile ? (
+          <form className="stack" onSubmit={onSaveProfile}>
+            <label>
+              <strong>{t('platform.name')}:</strong>
+              <input
+                type="text"
+                required
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                maxLength={200}
+              />
+            </label>
+            <label>
+              <strong>{t('platform.locale')}:</strong>
+              <select
+                value={editLocale}
+                onChange={(e) => setEditLocale(e.target.value as 'en' | 'sw')}
+              >
+                <option value="en">English (en)</option>
+                <option value="sw">Kiswahili (sw)</option>
+              </select>
+            </label>
+            <label>
+              <strong>{t('platform.timezone')}:</strong>
+              <input
+                type="text"
+                required
+                value={editTimezone}
+                onChange={(e) => setEditTimezone(e.target.value)}
+                maxLength={80}
+              />
+            </label>
+            <div className="actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setIsEditingProfile(false)}
+              >
+                {t('common.back')}
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={busy}>
+                {busy ? t('common.saving') : t('common.save')}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <p>
+              <strong>{t('platform.code')}:</strong> {tenant.code}
+            </p>
+            <p>
+              <strong>{t('platform.locale')}:</strong> {tenant.primaryLocale}
+            </p>
+            <p>
+              <strong>{t('platform.timezone')}:</strong> {tenant.timezone}
+            </p>
+            {showId ? <p className="muted">{tenant.id}</p> : null}
+          </>
+        )}
       </section>
 
       <section className="card stack">
@@ -232,12 +315,20 @@ export default function PlatformSchoolDetailPage() {
         <StatusChip label={tenant.status} tone={statusTone(tenant.status)} />
         <div className="actions">
           {tenant.status === 'active' ? (
-            <button type="button" className="btn btn-danger" onClick={() => setConfirm({ kind: 'suspend' })}>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => setConfirm({ kind: 'suspend' })}
+            >
               {t('platform.suspend')}
             </button>
           ) : null}
           {tenant.status === 'suspended' ? (
-            <button type="button" className="btn btn-primary" onClick={() => setConfirm({ kind: 'reinstate' })}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setConfirm({ kind: 'reinstate' })}
+            >
               {t('platform.reinstate')}
             </button>
           ) : null}
@@ -265,7 +356,11 @@ export default function PlatformSchoolDetailPage() {
               ))}
             </select>
           </label>
-          <button type="submit" className="btn btn-primary" disabled={planCode === '' || planCode === tenant.planCode}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={planCode === '' || planCode === tenant.planCode}
+          >
             {t('platform.assignPlan')}
           </button>
         </form>

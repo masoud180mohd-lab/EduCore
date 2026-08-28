@@ -15,12 +15,12 @@
 
 ## Revision history
 
-| Version | Date       | Notes                                              |
-| ------- | ---------- | -------------------------------------------------- |
-| 1.0     | 2026-07-20 | List only (`listStudents`)                         |
-| 1.1     | 2026-07-20 | Add `GET /students/{studentId}` (`getStudent`)     |
-| 1.2     | 2026-07-20 | Add `POST /students` (`createStudent`)             |
-| **1.3** | 2026-07-21 | Add `PATCH /students/{studentId}` (`patchStudent`) |
+| Version | Date       | Notes                                                                             |
+| ------- | ---------- | --------------------------------------------------------------------------------- |
+| 1.0     | 2026-07-20 | List only (`listStudents`)                                                        |
+| 1.1     | 2026-07-20 | Add `GET /students/{studentId}` (`getStudent`)                                    |
+| 1.2     | 2026-07-20 | Add `POST /students` (`createStudent`)                                            |
+| **1.3** | 2026-07-21 | Add `PATCH /students/{studentId}` (`patchStudent`)                                |
 | **1.4** | 2026-08-14 | Add `GET /students/summary` KPI counts (IMP-048). Must register before `GET :id`. |
 
 ## Scope
@@ -81,9 +81,9 @@ Identity/Tenant ACF-001 remains unchanged and does **not** cover this path.
 
 ## Endpoint: summary (rev 1.4)
 
-| Method | Path                       | Auth   | Header                     | AuthZ                |
-| ------ | -------------------------- | ------ | -------------------------- | -------------------- |
-| `GET`  | `/api/v1/students/summary` | Bearer | `X-Tenant-Id` **required** | `student.read`       |
+| Method | Path                       | Auth   | Header                     | AuthZ          |
+| ------ | -------------------------- | ------ | -------------------------- | -------------- |
+| `GET`  | `/api/v1/students/summary` | Bearer | `X-Tenant-Id` **required** | `student.read` |
 
 **operationId:** `summarizeStudents`
 

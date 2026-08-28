@@ -52,7 +52,10 @@ describe('RequirePlatformOperator', () => {
 
   it('forbids users who are not active super admins', async () => {
     const Guard = RequirePlatformOperator();
-    const guard = new Guard({ isActiveSuperAdmin: vi.fn().mockResolvedValue(false) } as never, null);
+    const guard = new Guard(
+      { isActiveSuperAdmin: vi.fn().mockResolvedValue(false) } as never,
+      null,
+    );
     const request = {
       [AUTH_CONTEXT_REQUEST_KEY]: { userId },
       header: () => undefined,
@@ -65,7 +68,10 @@ describe('RequirePlatformOperator', () => {
   it('allows an active super admin on read routes without MFA', async () => {
     const Guard = RequirePlatformOperator();
     const mfa = { assertAccess: vi.fn() };
-    const guard = new Guard({ isActiveSuperAdmin: vi.fn().mockResolvedValue(true) } as never, mfa as never);
+    const guard = new Guard(
+      { isActiveSuperAdmin: vi.fn().mockResolvedValue(true) } as never,
+      mfa as never,
+    );
     const request = {
       [AUTH_CONTEXT_REQUEST_KEY]: { userId },
       header: () => undefined,
@@ -77,7 +83,10 @@ describe('RequirePlatformOperator', () => {
   it('requires MFA on write routes', async () => {
     const Guard = RequirePlatformOperator({ write: true });
     const mfa = { assertAccess: vi.fn().mockResolvedValue(undefined) };
-    const guard = new Guard({ isActiveSuperAdmin: vi.fn().mockResolvedValue(true) } as never, mfa as never);
+    const guard = new Guard(
+      { isActiveSuperAdmin: vi.fn().mockResolvedValue(true) } as never,
+      mfa as never,
+    );
     const request = {
       [AUTH_CONTEXT_REQUEST_KEY]: { userId },
       header: () => undefined,

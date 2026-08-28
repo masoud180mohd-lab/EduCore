@@ -1,12 +1,12 @@
 # Engineering Readiness Re-Review Prep — 2026-08-04
 
-| Field | Value |
-| --- | --- |
-| Document ID | `READY-REREVIEW-PREP-2026-08-04` |
-| Against | `EduCore/42_ENGINEERING_READINESS_REVIEW.md` (2026-07-13 **NO GO**) |
-| Mode | Solo-operator honesty (**SOLO-GOV-001**) |
-| Status | **Prep only** — not a Board verdict; not production GO |
-| Authority | Solo-operator provisional |
+| Field       | Value                                                               |
+| ----------- | ------------------------------------------------------------------- |
+| Document ID | `READY-REREVIEW-PREP-2026-08-04`                                    |
+| Against     | `EduCore/42_ENGINEERING_READINESS_REVIEW.md` (2026-07-13 **NO GO**) |
+| Mode        | Solo-operator honesty (**SOLO-GOV-001**)                            |
+| Status      | **Prep only** — not a Board verdict; not production GO              |
+| Authority   | Solo-operator provisional                                           |
 
 ## Purpose
 
@@ -14,58 +14,58 @@ Prepare evidence for a future Engineering Readiness **re-review**. This document
 
 ## Headline verdict (prep)
 
-| Claim | Verdict |
-| --- | --- |
-| Unrestricted production / public pilot | **Still NO GO** |
-| Gated lab IMP behind provisional DBF/ACF/DSF (SOLO-GOV-001) | **Allowed** (already practiced) |
-| Independent multi-person freeze countersign | **Still missing** (SOLO-GOV-001 residual) |
+| Claim                                                       | Verdict                                   |
+| ----------------------------------------------------------- | ----------------------------------------- |
+| Unrestricted production / public pilot                      | **Still NO GO**                           |
+| Gated lab IMP behind provisional DBF/ACF/DSF (SOLO-GOV-001) | **Allowed** (already practiced)           |
+| Independent multi-person freeze countersign                 | **Still missing** (SOLO-GOV-001 residual) |
 
 ## Original mandatory blockers — status update
 
-| ID | Original issue | Status now | Evidence (examples) | Residual gap |
-| --- | --- | --- | --- | --- |
-| **B-01** | Database Freeze absent | **Closed-provisional (slice)** | `docs/engineering/database-freeze/DBF-001`…`013`, `DBF-AI-001*`; isolation tests under `tests/isolation/` | No kit-wide single ERD Freeze v1.0; SOLO-GOV-001 only |
-| **B-02** | API Contract Freeze absent | **Closed-provisional (slice)** | `docs/engineering/api-contract-freeze/ACF-001`…`014`, `ACF-AI-*`; OpenAPI YAMLs under freeze trees | Not every future product route frozen |
-| **B-03** | Design System Freeze absent | **Closed-provisional (kit freeze)** | `DSF-KIT-001` Accepted + slice DSF-001…006 | Independent design countersign still open; SOLO-GOV-001 |
-| **B-04** | Threat model + IdP/session | **Closed-provisional (threat + IdP posture)** | Lite TM + **ID-001** (IdP deferred); opaque sessions + TOTP + MFA-HARD | OIDC not integrated; support/break-glass thin; soft MFA unsuitable for pilot finance |
-| **B-05** | Production infra + DR | **Closed-provisional** | `docs/engineering/decisions/B-05-mvp-hosting-dr-secrets.md` (Fly.io + Neon + Doppler; RPO≤24h; RTO≤8h) | Live account provisioning + restore-drill **evidence** still open; SOLO-GOV-001 |
-| **B-06** | Engineering foundation | **Closed-provisional** | Monorepo; `npm run check`; `.github/workflows/quality-gate.yml`; module boundaries script | CODEOWNERS / branch-protection proof weak; live DB tests env-dependent |
-| **B-07** | Operational readiness | **Closed-provisional (ops stub)** | `B-07-pilot-slos-restore-drill-schedule.md` — 5 SLOs, alerts, D1 due 2026-09-15 / 30d after staging Neon | Executed drill evidence + multi-person on-call still open |
+| ID       | Original issue              | Status now                                    | Evidence (examples)                                                                                       | Residual gap                                                                         |
+| -------- | --------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **B-01** | Database Freeze absent      | **Closed-provisional (slice)**                | `docs/engineering/database-freeze/DBF-001`…`013`, `DBF-AI-001*`; isolation tests under `tests/isolation/` | No kit-wide single ERD Freeze v1.0; SOLO-GOV-001 only                                |
+| **B-02** | API Contract Freeze absent  | **Closed-provisional (slice)**                | `docs/engineering/api-contract-freeze/ACF-001`…`014`, `ACF-AI-*`; OpenAPI YAMLs under freeze trees        | Not every future product route frozen                                                |
+| **B-03** | Design System Freeze absent | **Closed-provisional (kit freeze)**           | `DSF-KIT-001` Accepted + slice DSF-001…006                                                                | Independent design countersign still open; SOLO-GOV-001                              |
+| **B-04** | Threat model + IdP/session  | **Closed-provisional (threat + IdP posture)** | Lite TM + **ID-001** (IdP deferred); opaque sessions + TOTP + MFA-HARD                                    | OIDC not integrated; support/break-glass thin; soft MFA unsuitable for pilot finance |
+| **B-05** | Production infra + DR       | **Closed-provisional**                        | `docs/engineering/decisions/B-05-mvp-hosting-dr-secrets.md` (Fly.io + Neon + Doppler; RPO≤24h; RTO≤8h)    | Live account provisioning + restore-drill **evidence** still open; SOLO-GOV-001      |
+| **B-06** | Engineering foundation      | **Closed-provisional**                        | Monorepo; `npm run check`; `.github/workflows/quality-gate.yml`; module boundaries script                 | CODEOWNERS / branch-protection proof weak; live DB tests env-dependent               |
+| **B-07** | Operational readiness       | **Closed-provisional (ops stub)**             | `B-07-pilot-slos-restore-drill-schedule.md` — 5 SLOs, alerts, D1 due 2026-09-15 / 30d after staging Neon  | Executed drill evidence + multi-person on-call still open                            |
 
 ## Lab programmes since original review (honest)
 
-| Programme | Lab state | Production honesty |
-| --- | --- | --- |
-| Identity / RBAC / students / academic / attendance / marks / guardians / fees / admin UI | Gated IMP under slice freezes | Slice-scoped only; not “full product complete” |
-| Payments | ClickPesa chosen; Fake default; PAY-006 UI | **No** sandbox keys → PAY-OPS deferred; no real-money pilot |
-| SMS / COMMS | Fake default; Beem env-gated | No production Sender ID / volume claim |
-| AI | EPIC-AI-01 + AI-006; Fake default; OpenAI optional | Product features still gate-blocked (`lab.echo` only); DPA/residency open |
-| MFA | Soft lab + MFA-HARD continuous gate | Enroll under soft before `MFA_ENFORCE=hard`; IdP still open |
+| Programme                                                                                | Lab state                                          | Production honesty                                                        |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------- |
+| Identity / RBAC / students / academic / attendance / marks / guardians / fees / admin UI | Gated IMP under slice freezes                      | Slice-scoped only; not “full product complete”                            |
+| Payments                                                                                 | ClickPesa chosen; Fake default; PAY-006 UI         | **No** sandbox keys → PAY-OPS deferred; no real-money pilot               |
+| SMS / COMMS                                                                              | Fake default; Beem env-gated                       | No production Sender ID / volume claim                                    |
+| AI                                                                                       | EPIC-AI-01 + AI-006; Fake default; OpenAI optional | Product features still gate-blocked (`lab.echo` only); DPA/residency open |
+| MFA                                                                                      | Soft lab + MFA-HARD continuous gate                | Enroll under soft before `MFA_ENFORCE=hard`; IdP still open               |
 
 ## Suggested score deltas (prep — not Board scores)
 
 Directional only relative to 2026-07-13 kit scores. **Not** a new official Board scoring.
 
-| Area | 2026-07-13 | Prep estimate 2026-08-04 | Why |
-| --- | ---: | ---: | --- |
-| Database | 42 | ~58 | Many slice DBFs + isolation tests; still not kit-wide freeze |
-| API | 45 | ~60 | Many slice ACFs + OpenAPI fragments |
-| Security | 58 | ~72 | MFA soft+hard + lite threat model; IdP still open |
-| Engineering | 66 | ~78 | Real repo, CI quality gate, boundaries |
-| AI | 60 | ~72 | Gateway + Fake + eval harness + OpenAI adapter |
-| Infrastructure | 38 | ~55 | B-05 topology Accepted; live provision still open |
-| Operational | 43 | ~55 | B-07 SLOs + drill schedule; executed drills still open |
-| **Production (overall)** | **44** | **~56** | Lab + decision stubs ≠ production GO |
+| Area                     | 2026-07-13 | Prep estimate 2026-08-04 | Why                                                          |
+| ------------------------ | ---------: | -----------------------: | ------------------------------------------------------------ |
+| Database                 |         42 |                      ~58 | Many slice DBFs + isolation tests; still not kit-wide freeze |
+| API                      |         45 |                      ~60 | Many slice ACFs + OpenAPI fragments                          |
+| Security                 |         58 |                      ~72 | MFA soft+hard + lite threat model; IdP still open            |
+| Engineering              |         66 |                      ~78 | Real repo, CI quality gate, boundaries                       |
+| AI                       |         60 |                      ~72 | Gateway + Fake + eval harness + OpenAI adapter               |
+| Infrastructure           |         38 |                      ~55 | B-05 topology Accepted; live provision still open            |
+| Operational              |         43 |                      ~55 | B-07 SLOs + drill schedule; executed drills still open       |
+| **Production (overall)** |     **44** |                  **~56** | Lab + decision stubs ≠ production GO                         |
 
 ## Re-review gate checklist (from § Re-Review Gate in 42)
 
-| Gate item | Met? | Notes |
-| --- | --- | --- |
-| Sprint 0 exit evidence | **Yes (provisional)** | `docs/engineering/governance/SPRINT0_ENGINEERING_EXIT_NOTE.md` |
-| DB / API / DSF accepted for Identity/Org slice | **Partial** | DBF/ACF under SOLO-GOV-001; **DSF-KIT-001** + slice DSFs |
-| Threat-model + identity decision | **Partial** | Lite TM + ID-001 defer IdP; MFA yes; break-glass thin; OIDC not built |
-| Production topology / DR decision | **Provisional yes** | B-05 Accepted (Fly+Neon+Doppler); live provision still open |
-| CI, tenant-isolation, restore, ops evidence | **Partial** | CI + isolation yes; B-07 schedule yes; **executed** restore drills no |
+| Gate item                                      | Met?                  | Notes                                                                 |
+| ---------------------------------------------- | --------------------- | --------------------------------------------------------------------- |
+| Sprint 0 exit evidence                         | **Yes (provisional)** | `docs/engineering/governance/SPRINT0_ENGINEERING_EXIT_NOTE.md`        |
+| DB / API / DSF accepted for Identity/Org slice | **Partial**           | DBF/ACF under SOLO-GOV-001; **DSF-KIT-001** + slice DSFs              |
+| Threat-model + identity decision               | **Partial**           | Lite TM + ID-001 defer IdP; MFA yes; break-glass thin; OIDC not built |
+| Production topology / DR decision              | **Provisional yes**   | B-05 Accepted (Fly+Neon+Doppler); live provision still open           |
+| CI, tenant-isolation, restore, ops evidence    | **Partial**           | CI + isolation yes; B-07 schedule yes; **executed** restore drills no |
 
 ## Recommended close-out order (next work)
 
@@ -100,20 +100,20 @@ Directional only relative to 2026-07-13 kit scores. **Not** a new official Board
 
 ## Next agent/user GO options
 
-| Code | Work |
-| --- | --- |
-| ~~`GO OPS-PHASE0`~~ | **Done** |
-| ~~`GO OPS-EXEC`~~ | **Done** |
-| ~~`GO DRILL-D1`~~ | **Pass** (FRA re-check 2026-08-10) |
-| ~~`GO DRILL-D2`~~ | **Pass** 2026-08-13 (staging Fly redeploy + `/health`) |
-| ~~`GO FLY-DOCKER`~~ | **Done** |
-| ~~`GO IDP`~~ | **Done (defer)** — `ID-001` |
-| ~~`GO DSF-KIT`~~ | **Done** — `DSF-KIT-001` |
-| ~~`GO IDP-002`~~ | **Done** — Auth0 selected (`ID-002-hosted-oidc-provider-auth0.md`) |
-| ~~`GO IDP-003`~~ | **Done** — Auth0 → opaque session behind `AUTH_IDP_PROVIDER` (`ID-003-auth0-oidc-opaque-session.md`) |
+| Code                 | Work                                                                                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------- |
+| ~~`GO OPS-PHASE0`~~  | **Done**                                                                                                       |
+| ~~`GO OPS-EXEC`~~    | **Done**                                                                                                       |
+| ~~`GO DRILL-D1`~~    | **Pass** (FRA re-check 2026-08-10)                                                                             |
+| ~~`GO DRILL-D2`~~    | **Pass** 2026-08-13 (staging Fly redeploy + `/health`)                                                         |
+| ~~`GO FLY-DOCKER`~~  | **Done**                                                                                                       |
+| ~~`GO IDP`~~         | **Done (defer)** — `ID-001`                                                                                    |
+| ~~`GO DSF-KIT`~~     | **Done** — `DSF-KIT-001`                                                                                       |
+| ~~`GO IDP-002`~~     | **Done** — Auth0 selected (`ID-002-hosted-oidc-provider-auth0.md`)                                             |
+| ~~`GO IDP-003`~~     | **Done** — Auth0 → opaque session behind `AUTH_IDP_PROVIDER` (`ID-003-auth0-oidc-opaque-session.md`)           |
 | ~~`GO IDP-003-OPS`~~ | **Done** — staging Auth0 secrets + migrate + Fly (`ID-003-OPS-staging-auth0-provision.md`; US tenant residual) |
-| ~~`GO WEB-AUTH0`~~ | **Done** — PKCE “Ingia na Auth0” on `/login` (`WEB-AUTH0-pkce-login-ui.md`) |
-| `GO PAY-OPS` | Deferred by Owner (no ClickPesa keys) |
+| ~~`GO WEB-AUTH0`~~   | **Done** — PKCE “Ingia na Auth0” on `/login` (`WEB-AUTH0-pkce-login-ui.md`)                                    |
+| `GO PAY-OPS`         | Deferred by Owner (no ClickPesa keys)                                                                          |
 
 ---
 

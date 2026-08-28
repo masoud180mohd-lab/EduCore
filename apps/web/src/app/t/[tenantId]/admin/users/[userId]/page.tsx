@@ -4,12 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import {
-  AdminPageHeader,
-  Banner,
-  ConfirmDialog,
-  ResourceListPagination,
-} from '@/components/admin';
+import { AdminPageHeader, Banner, ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
 import { Button } from '@/components/ui/button';
@@ -524,7 +519,8 @@ export default function AdminUserDetailPage() {
             <CardHeader>
               <CardTitle>{t('memberships.title')}</CardTitle>
               <CardDescription>
-                {t('common.status')}: <strong className="text-foreground">{membership.status}</strong>
+                {t('common.status')}:{' '}
+                <strong className="text-foreground">{membership.status}</strong>
                 {membership.joinedAt !== null ? ` · Joined: ${membership.joinedAt}` : null}
               </CardDescription>
             </CardHeader>
@@ -626,7 +622,10 @@ export default function AdminUserDetailPage() {
               )}
 
               {rolesCatalog.length > 0 || rolesCursor !== null ? (
-                <form className="flex flex-col gap-4 border-t pt-4" onSubmit={(e) => void onAssignRole(e)}>
+                <form
+                  className="flex flex-col gap-4 border-t pt-4"
+                  onSubmit={(e) => void onAssignRole(e)}
+                >
                   <h3 className="text-sm font-semibold">{t('users.assignRole')}</h3>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="flex flex-col gap-2">
@@ -678,10 +677,7 @@ export default function AdminUserDetailPage() {
                     </div>
                   </div>
                   <div>
-                    <Button
-                      type="submit"
-                      disabled={busy || assignRoleId === '' || assignDuplicate}
-                    >
+                    <Button type="submit" disabled={busy || assignRoleId === '' || assignDuplicate}>
                       {busy ? t('common.assigning') : t('users.assignRole')}
                     </Button>
                   </div>

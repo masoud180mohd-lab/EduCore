@@ -54,6 +54,7 @@ export default function AdminUsersPage() {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [roleCode, setRoleCode] = useState<InviteRoleCode | ''>('staff');
+  const [lastInviteLink, setLastInviteLink] = useState<string | null>(null);
 
   async function loadPage(opts: {
     readonly searchQ: string;
@@ -118,6 +119,8 @@ export default function AdminUsersPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
+      const inviteUrl = `${window.location.origin}/auth/accept-invite?email=${encodeURIComponent(email.trim().toLowerCase())}&tenantId=${encodeURIComponent(tenantId)}`;
+      setLastInviteLink(inviteUrl);
       setEmail('');
       setDisplayName('');
       setRoleCode('staff');
@@ -144,6 +147,36 @@ export default function AdminUsersPage() {
         <AdminPageHeader title={t('users.title')} description={t('users.description')} />
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
         {info !== null ? <Banner tone="info">{info}</Banner> : null}
+
+        {lastInviteLink !== null && (
+          <Card className="border-emerald-500/30 bg-emerald-500/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base text-emerald-600 dark:text-emerald-400">
+                Kiungo cha Mwaliko (Invite Link)
+              </CardTitle>
+              <CardDescription>
+                Mtumiaji ametumiwa mwaliko. Unaweza pia kumnakilia kiungo hiki moja kwa moja:
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center gap-2">
+              <input
+                readOnly
+                value={lastInviteLink}
+                className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-mono"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  void navigator.clipboard.writeText(lastInviteLink);
+                  setInfo('Kiungo kimerekodiwa (copied to clipboard)!');
+                }}
+              >
+                Nakili Kiungo
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
