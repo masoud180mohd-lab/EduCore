@@ -37,6 +37,35 @@ type Draft = {
   readonly score: string;
 };
 
+function getGradeLetter(score: number, maxScore: number): { letter: string; color: string } {
+  if (Number.isNaN(score) || maxScore <= 0) return { letter: '—', color: 'text-muted-foreground' };
+  const percentage = (score / maxScore) * 100;
+  if (percentage >= 75)
+    return {
+      letter: 'A',
+      color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+    };
+  if (percentage >= 65)
+    return {
+      letter: 'B',
+      color: 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/30',
+    };
+  if (percentage >= 45)
+    return {
+      letter: 'C',
+      color: 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/30',
+    };
+  if (percentage >= 30)
+    return {
+      letter: 'D',
+      color: 'text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/30',
+    };
+  return {
+    letter: 'F',
+    color: 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/30',
+  };
+}
+
 export default function MarkEntryPage() {
   const params = useParams<{ tenantId: string; examSubjectId: string }>();
   const { tenantId, examSubjectId } = params;
@@ -52,6 +81,18 @@ export default function MarkEntryPage() {
 
   const locked = subject !== null && subject.status !== 'draft';
   const canApprove = subject?.status === 'submitted';
+
+  const maxScoreVal = subject ? Number(subject.maxScore) : 100;
+  const numericScores = drafts
+    .map((d) => (d.score.trim() === '' ? null : Number(d.score)))
+    .filter((n): n is number => n !== null && !Number.isNaN(n));
+  const enteredCount = numericScores.length;
+  const avgScore =
+    numericScores.length > 0
+      ? (numericScores.reduce((acc, v) => acc + v, 0) / numericScores.length).toFixed(1)
+      : null;
+  const maxEnteredScore = numericScores.length > 0 ? Math.max(...numericScores) : null;
+  const minEnteredScore = numericScores.length > 0 ? Math.min(...numericScores) : null;
 
   const load = useCallback(async () => {
     const auth = readSession();
@@ -219,6 +260,26 @@ export default function MarkEntryPage() {
           <Banner tone="warn">{t('teacher.noEnrollments')}</Banner>
         ) : null}
 
+        {/* Live Score Analytics Bar */}
+        {drafts.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-border/80 bg-card shadow-xs">
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                📊 Wastani (Average): <strong className="tabular-nums text-sm">{avgScore ?? '—'}</strong> / {maxScoreVal}
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                🏆 Ya Juu (Highest): <strong className="tabular-nums text-sm">{maxEnteredScore ?? '—'}</strong>
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                📉 Ya Chini (Lowest): <strong className="tabular-nums text-sm">{minEnteredScore ?? '—'}</strong>
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted text-muted-foreground border border-border">
+                📝 Waliojazwa: <strong className="tabular-nums text-sm">{enteredCount}</strong> / {drafts.length}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-2.5">
           {drafts.map((d) => (
             <Card key={d.studentId} className="transition-colors hover:bg-muted/30">
@@ -230,14 +291,15 @@ export default function MarkEntryPage() {
                   <span className="text-xs text-muted-foreground">{d.studentId}</span>
                 </div>
 
-                <div className="flex items-center gap-2 max-w-[7rem]">
+                <div className="flex items-center gap-2">
                   <Input
                     id={`score-${d.studentId}`}
                     type="number"
                     min={0}
+                    max={maxScoreVal}
                     step="0.01"
-                    placeholder="Score"
-                    className="h-9 text-right"
+                    placeholder="Alama"
+                    className="h-9 w-24 text-right tabular-nums font-medium"
                     disabled={locked || busy}
                     value={d.score}
                     onChange={(e) => {
@@ -249,6 +311,13 @@ export default function MarkEntryPage() {
                       );
                     }}
                   />
+                  {d.score.trim() !== '' && !Number.isNaN(Number(d.score)) && (
+                    <span
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-bold ${getGradeLetter(Number(d.score), maxScoreVal).color}`}
+                    >
+                      {getGradeLetter(Number(d.score), maxScoreVal).letter}
+                    </span>
+                  )}
                 </div>
               </CardContent>
             </Card>

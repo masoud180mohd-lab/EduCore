@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { buildClassLabelMap, formatClassLabel } from '@/lib/academic/class-labels';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+import { BookOpen, CheckCircle, Clock, FileText, Sparkles } from 'lucide-react';
 
 type ExamRow = {
   readonly id: string;
@@ -92,11 +93,67 @@ export default function MarksHomePage() {
     }
   }
 
+  const openCount = exams.filter((e) => e.status === 'open' || e.status === 'draft').length;
+  const approvedCount = exams.filter(
+    (e) => e.status === 'approved' || e.status === 'closed',
+  ).length;
+
   return (
     <TeacherShell tenantId={tenantId}>
       <div className="flex flex-col gap-6">
         <AdminPageHeader title={t('teacher.marksTitle')} description={t('teacher.marksDesc')} />
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
+
+        {/* Metric KPI Cards */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="border-border/70 bg-card">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Jumla ya Mitihani
+                </p>
+                <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
+                  {exams.length}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <FileText className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-card">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Mitihani Inayoendelea (Open)
+                </p>
+                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-1">
+                  {openCount}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Clock className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-card">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Iliyoidhinishwa (Approved)
+                </p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">
+                  {approvedCount}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader>
