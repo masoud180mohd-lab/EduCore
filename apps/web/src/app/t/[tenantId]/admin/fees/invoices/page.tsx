@@ -14,8 +14,10 @@ import {
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { useAppPreferences } from '@/components/AppProviders';
+import { Card, CardContent } from '@/components/ui/card';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { FileSpreadsheet, TrendingDown, TrendingUp } from 'lucide-react';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -350,6 +352,10 @@ export default function AdminInvoicesPage() {
     (s) => academicYearId === '' || s.academicYearId === academicYearId,
   );
 
+  const totalInvoiced = rows.reduce((sum, r) => sum + Number(r.totalMinor || 0), 0);
+  const totalBalance = rows.reduce((sum, r) => sum + Number(r.balanceMinor || 0), 0);
+  const totalCollected = Math.max(0, totalInvoiced - totalBalance);
+
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
@@ -360,6 +366,57 @@ export default function AdminInvoicesPage() {
         description={t('fees.invoicesDescription')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
+
+      {/* Financial KPI Summary Cards */}
+      <div className="grid gap-4 sm:grid-cols-3" style={{ marginBottom: '1.5rem' }}>
+        <Card className="border-border/70 bg-card">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Jumla ya Ankara ({rows.length})
+              </p>
+              <p className="text-xl font-bold text-foreground tabular-nums mt-1">
+                {formatTzsMinor(totalInvoiced)}
+              </p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <FileSpreadsheet className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 bg-card">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Iliyolipwa (Collected)
+              </p>
+              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">
+                {formatTzsMinor(totalCollected)}
+              </p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 bg-card">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Deni Linalodaiwa (Balance)
+              </p>
+              <p className="text-xl font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-1">
+                {formatTzsMinor(totalBalance)}
+              </p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <TrendingDown className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
         <h2 className="section-title">{t('fees.createDraft')}</h2>
