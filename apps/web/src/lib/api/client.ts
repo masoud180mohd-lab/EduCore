@@ -40,11 +40,18 @@ export type RequestOptions = {
 };
 
 function apiBase(): string {
-  const raw = process.env['NEXT_PUBLIC_API_BASE_URL']?.trim();
-  if (raw === undefined || raw === '') {
-    return 'http://127.0.0.1:3000';
+  if (typeof window !== 'undefined' && window.location) {
+    const raw = process.env['NEXT_PUBLIC_API_BASE_URL']?.trim();
+    if (raw && !raw.includes('127.0.0.1') && !raw.includes('localhost')) {
+      return raw.replace(/\/$/, '');
+    }
+    return `${window.location.protocol}//${window.location.hostname}:3000`;
   }
-  return raw.replace(/\/$/, '');
+  const raw = process.env['NEXT_PUBLIC_API_BASE_URL']?.trim();
+  if (raw !== undefined && raw !== '') {
+    return raw.replace(/\/$/, '');
+  }
+  return 'http://127.0.0.1:3000';
 }
 
 export function teacherFriendlyMessage(error: ApiClientError): string {
