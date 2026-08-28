@@ -258,7 +258,7 @@ async function main() {
   const token = await loginAndVerify(base, email, password, tenantId, totpSecret);
   process.stdout.write('authenticated session established (password + TOTP)\n');
 
-  const authHeaders = { authorization: `Bearer ${token}`, 'x-tenant-id': tenantId };
+  const authHeaders = { 'authorization': `Bearer ${token}`, 'x-tenant-id': tenantId };
   const endpoints = [
     { name: 'GET /health (control)', path: '/health', headers: undefined },
     { name: 'GET /api/v1/auth/me', path: '/api/v1/auth/me', headers: authHeaders },

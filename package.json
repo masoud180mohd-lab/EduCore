@@ -26,6 +26,7 @@
     "ops:prereq": "node scripts/ops-prereq-check.mjs",
     "ops:stg:mfa-hard": "node scripts/ops-stg-mfa-hard.mjs",
     "ops:stg:mfa-status": "node scripts/ops-stg-mfa-status.mjs",
+    "ops:stg:m9-latency": "node scripts/ops-stg-m9-latency-baseline.mjs",
     "ops:stg:sync-fly-secrets": "node scripts/ops-stg-sync-fly-secrets.mjs",
     "ops:d1": "node scripts/ops-d1-restore-drill.mjs",
     "ops:pitr:glance": "node scripts/ops-weekly-pitr-glance.mjs",

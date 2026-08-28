@@ -22,6 +22,7 @@ import {
   type AcademicYearRow,
   type ClassRow,
   type LifecycleStatus,
+  type StreamRow,
   type TermRow,
   LIFECYCLE_STATUSES,
 } from '@/lib/academic/types';
@@ -41,6 +42,10 @@ export default function AdminClassDetailPage() {
   const [terms, setTerms] = useState<TermRow[]>([]);
   const [termsCursor, setTermsCursor] = useState<string | null>(null);
   const [loadingMoreTerms, setLoadingMoreTerms] = useState(false);
+  const [streams, setStreams] = useState<StreamRow[]>([]);
+  const [newStreamName, setNewStreamName] = useState('');
+  const [newStreamCode, setNewStreamCode] = useState('');
+  const [addingStream, setAddingStream] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -158,6 +163,16 @@ export default function AdminClassDetailPage() {
           /* picker may already include term */
         }
       }
+
+      try {
+        const streamsRes = await apiRequest<PaginatedEnvelope<StreamRow>>(
+          buildListQuery('/api/v1/streams', { limit: 100, filters: { classId } }),
+          { auth },
+        );
+        setStreams([...(streamsRes.data ?? [])]);
+      } catch {
+        /* streams list might be empty */
+      }
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
       else setError('Could not load class.');
@@ -174,6 +189,44 @@ export default function AdminClassDetailPage() {
     setTermId('');
     void loadTermPicker({ forYearId: academicYearId, cursor: null, append: false });
   }, [academicYearId, loadTermPicker, row]);
+
+  async function onAddStream(e: FormEvent) {
+    e.preventDefault();
+    const auth = readSession();
+    if (auth === null || newStreamName.trim() === '') return;
+    setAddingStream(true);
+    setError(null);
+    setInfo(null);
+    const actionKey = `stream.create:${classId}:${newStreamName}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
+    try {
+      await apiRequest('/api/v1/streams', {
+        method: 'POST',
+        auth,
+        body: {
+          classId,
+          name: newStreamName.trim(),
+          code: newStreamCode.trim() === '' ? undefined : newStreamCode.trim(),
+          status: 'active',
+        },
+        idempotencyKey: idem,
+      });
+      clearIdempotencyKey(actionKey);
+      setNewStreamName('');
+      setNewStreamCode('');
+      setInfo('Mkondo umeongezwa kikamilifu.');
+      const streamsRes = await apiRequest<PaginatedEnvelope<StreamRow>>(
+        buildListQuery('/api/v1/streams', { limit: 100, filters: { classId } }),
+        { auth },
+      );
+      setStreams([...(streamsRes.data ?? [])]);
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
+      else setError('Imeshindikana kuongeza mkondo.');
+    } finally {
+      setAddingStream(false);
+    }
+  }
 
   function onSave(event: FormEvent) {
     event.preventDefault();
@@ -208,34 +261,49 @@ export default function AdminClassDetailPage() {
         idempotencyKey: idem,
       });
       clearIdempotencyKey(actionKey);
-      setConfirm(null);
-      setInfo('Class updated.');
+      setInfo('Mabadiliko yamehifadhiwa.');
       await load();
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'academic'));
-      else setError('Could not update class.');
+      else setError('Could not save class.');
     } finally {
       setBusy(false);
+      setConfirm(null);
     }
   }
 
   async function runDelete() {
     const auth = readSession();
-    if (auth === null) return;
+    if (auth === null || row === null) return;
     setBusy(true);
     setError(null);
     setInfo(null);
     setDeleteDependents(null);
+    const actionKey = `class.delete:${classId}`;
+    const idem = readOrCreateIdempotencyKey(actionKey);
     try {
-      await apiRequest<void>(`/api/v1/classes/${classId}`, { method: 'DELETE', auth });
-      setConfirm(null);
+      await apiRequest(`/api/v1/classes/${classId}`, {
+        method: 'DELETE',
+        auth,
+        idempotencyKey: idem,
+      });
+      clearIdempotencyKey(actionKey);
       router.push(`/t/${tenantId}/admin/academic/classes`);
     } catch (err) {
       if (err instanceof ApiClientError) {
-        setDeleteDependents(parseDeleteDependents(err));
-        setError(adminFriendlyMessage(err, 'academic'));
-      } else setError('Could not delete class.');
+        const dependents = parseDeleteDependents(err);
+        if (dependents !== null) {
+          setDeleteDependents(dependents);
+          setError('Imeshindikana kufuta darasa hili kwa kuwa lina taarifa zinazolitegemea.');
+        } else {
+          setError(adminFriendlyMessage(err, 'academic'));
+        }
+      } else {
+        setError('Could not delete class.');
+      }
+    } finally {
       setBusy(false);
+      setConfirm(null);
     }
   }
 
@@ -244,15 +312,20 @@ export default function AdminClassDetailPage() {
       <p className="muted">
         <Link href={`/t/${tenantId}/admin/academic/classes`}>← {t('academic.classes')}</Link>
       </p>
-      <AdminPageHeader title={row?.name ?? t('academic.class')} />
+      <AdminPageHeader
+        title={row?.name ?? t('common.loading')}
+        description={t('academic.classes')}
+      />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {deleteDependents !== null ? (
         <DeleteDependentsBanner tenantId={tenantId} groups={deleteDependents} />
       ) : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {row !== null ? (
-        <div className="stack">
+        <div className="grid gap-6 lg:grid-cols-2 items-start">
+          {/* Class edit form */}
           <form className="card stack" onSubmit={onSave}>
+            <h3 className="section-title">Taarifa za Darasa</h3>
             <label className="field">
               <span>{t('academic.year')}</span>
               <select
@@ -320,26 +393,99 @@ export default function AdminClassDetailPage() {
                 ))}
               </select>
             </label>
-            <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? t('common.saving') : t('common.save')}
-            </button>
-            <button
-              className="btn btn-secondary"
-              type="button"
-              onClick={() => setConfirm('delete')}
-              disabled={busy}
-            >
-              {t('common.delete')}
-            </button>
+            <div className="flex items-center gap-2 pt-2">
+              <button className="btn btn-primary" type="submit" disabled={busy}>
+                {busy ? t('common.saving') : t('common.save')}
+              </button>
+              <button
+                className="btn btn-secondary"
+                type="button"
+                onClick={() => setConfirm('delete')}
+                disabled={busy}
+              >
+                {t('common.delete')}
+              </button>
+            </div>
           </form>
-          <p>
-            <Link className="btn btn-secondary" href={`/t/${tenantId}/admin/academic/streams`}>
-              Manage streams
-            </Link>{' '}
-            <Link className="btn btn-secondary" href={`/t/${tenantId}/admin/academic/enrollments`}>
-              {t('academic.enrollments')}
-            </Link>
-          </p>
+
+          {/* Streams for this class */}
+          <div className="stack">
+            <div className="card stack">
+              <div className="flex items-center justify-between">
+                <h3 className="section-title">Mikondo ya Darasa (Streams)</h3>
+                <Link
+                  className="text-xs font-semibold text-primary hover:underline"
+                  href={`/t/${tenantId}/admin/academic/streams`}
+                >
+                  Tazama yote →
+                </Link>
+              </div>
+
+              {streams.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Hakuna mikondo iliyoongezwa kwenye darasa hili bado.</p>
+              ) : (
+                <div className="divide-y divide-border/60">
+                  {streams.map((s) => (
+                    <div key={s.id} className="flex items-center justify-between py-2.5">
+                      <div>
+                        <Link
+                          href={`/t/${tenantId}/admin/academic/streams/${s.id}`}
+                          className="text-sm font-semibold hover:underline text-primary"
+                        >
+                          {s.name}
+                        </Link>
+                        {s.code && <span className="ml-2 text-xs font-mono text-muted-foreground">({s.code})</span>}
+                      </div>
+                      <Link
+                        className="btn btn-secondary text-xs"
+                        href={`/t/${tenantId}/admin/academic/streams/${s.id}`}
+                      >
+                        {t('common.open')}
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Inline Add Stream */}
+              <form onSubmit={onAddStream} className="pt-3 border-t border-border/60 stack">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Ongeza Mkondo Mpya (k.m. A, B, au C)
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    placeholder="Jina la Mkondo (mfano: A)"
+                    required
+                    value={newStreamName}
+                    onChange={(e) => setNewStreamName(e.target.value)}
+                    className="text-sm"
+                  />
+                  <input
+                    placeholder="Code (hiari)"
+                    value={newStreamCode}
+                    onChange={(e) => setNewStreamCode(e.target.value)}
+                    className="text-sm"
+                  />
+                </div>
+                <button type="submit" className="btn btn-secondary text-xs" disabled={addingStream || newStreamName.trim() === ''}>
+                  {addingStream ? 'Inaongeza...' : '+ Ongeza Mkondo'}
+                </button>
+              </form>
+            </div>
+
+            <div className="card flex items-center justify-between p-4">
+              <div>
+                <h4 className="text-sm font-bold">Wanafunzi wa Darasa Hili</h4>
+                <p className="text-xs text-muted-foreground">Tazama wanafunzi waliosajiliwa au sajili wapya.</p>
+              </div>
+              <Link
+                className="btn btn-secondary text-xs"
+                href={`/t/${tenantId}/admin/academic/enrollments?classId=${classId}`}
+              >
+                {t('academic.enrollments')} →
+              </Link>
+            </div>
+          </div>
         </div>
       ) : error === null ? (
         <p className="muted">{t('common.loading')}</p>
