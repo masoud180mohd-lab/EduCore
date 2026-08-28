@@ -399,6 +399,10 @@ export class MarksRepository {
     });
   }
 
+  /**
+   * Report-card source lines (ACF-011 v1.2): approved exam subjects only —
+   * draft/submitted marks must never reach a report card or its PDF.
+   */
   async listReportLinesForExam(
     actorUserId: string,
     tenantId: string,
@@ -425,6 +429,7 @@ export class MarksRepository {
              FROM marks m
              JOIN exam_subjects es ON es.id = m.exam_subject_id AND es.tenant_id = m.tenant_id
              WHERE m.tenant_id = $1::uuid AND es.exam_id = $2::uuid
+               AND es.status = 'approved'
              ORDER BY m.student_id ASC, es.subject_id ASC`,
             [tenantId, examId],
           );

@@ -720,7 +720,10 @@ export class MarksService {
     if (!this.marks.isAvailable()) throw AppError.notFound('Exam not found.');
     const exam = await this.marks.getExam(actorUserId, tenantId, examId);
     if (exam === null) throw AppError.notFound('Exam not found.');
-    const lines = await this.marks.listReportLinesForExam(actorUserId, tenantId, examId);
+    const allLines = await this.marks.listReportLinesForExam(actorUserId, tenantId, examId);
+    // ACF-011 v1.2: report cards compose approved exam subjects only. The
+    // repository query filters in SQL; this guards the invariant in depth.
+    const lines = allLines.filter((line) => line.examSubjectStatus === 'approved');
     const studentIds = [...new Set(lines.map((line) => line.studentId))];
     const subjectIds = [...new Set(lines.map((line) => line.subjectId))];
     const studentNames = new Map<string, string>();
