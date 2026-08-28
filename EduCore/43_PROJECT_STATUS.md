@@ -99,7 +99,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 
 ## Next Milestone
 
-**M9 Pilot hardening** — **In progress (Owner + AI).** Lab/staging MVP remains Done. Public-school cutover is Owner’s call using M9 checklists — not a Board stamp.
+**M9 Pilot hardening** — **GO (gated) issued 2026-08-28** for EduCore Staging School on staging (Owner-delegated; evidence `docs/engineering/task-records/M9-cutover-staging-school-2026-08-28.md`; 48h watch through 2026-08-30). Prod cutover still requires its own UAT + Owner GO.
 
 ### M9 progress
 

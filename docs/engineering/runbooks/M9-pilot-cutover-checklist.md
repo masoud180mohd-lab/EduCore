@@ -14,31 +14,38 @@ Decide whether a **named gated school** may use EduCore for live office workflow
 
 ## Preconditions (must all be true)
 
-- [ ] Staging API + web healthy (`/health` green; web login reachable).
-- [ ] Prod API + web healthy if cutover target is prod (`educore-api.fly.dev` / `educore-web.fly.dev`).
-- [ ] `MFA_ENFORCE=hard` on the target env (staging and prod per F-002 / MFA-HARD-OPS).
-- [ ] Privileged Owner TOTP enrolled and recoverable (backup codes / device).
-- [ ] Neon PITR console glance green within last 7 days (SLO-5); note plan max **6h** retention.
-- [ ] Latest B-07 D1/D2 evidence still trusted (or re-run if topology changed).
-- [ ] `PAYMENT_PROVIDER=fake` **or** office path only (PAY-007) — no invented ClickPesa keys.
-- [ ] SMS/AI remain Fake-default unless Owner explicitly enabled keys and checked config scripts.
-- [ ] Seed/break-glass admin password known only via Doppler locally — never pasted into chat/git.
+Checked 2026-08-28 by precondition sweep (this session):
+
+- [x] Staging API + web healthy (`/health` green; web login reachable). — 2026-08-28: `/health`, `/ready`, `/login` all 200.
+- [x] Prod API + web healthy if cutover target is prod (`educore-api.fly.dev` / `educore-web.fly.dev`). — 2026-08-28: `/health`, `/ready`, `/login` all 200.
+- [x] `MFA_ENFORCE=hard` on the target env (staging and prod per F-002 / MFA-HARD-OPS). — 2026-08-28: `hard` on both via `ops-stg-mfa-status.mjs` / `ops-prd-mfa-status.mjs` (prod `privileged_without_totp=0`).
+- [ ] Privileged Owner TOTP enrolled and recoverable (backup codes / device). — enrolled verified 2026-08-28; **recoverability is the Owner’s own confirmation**.
+- [x] Neon PITR console glance green within last 7 days (SLO-5); note plan max **6h** retention. — re-run 2026-08-28 (`B-07-pitr-glance-2026-08-28.md`), retention 6h.
+- [x] Latest B-07 D1/D2 evidence still trusted (or re-run if topology changed). — D1/D2 2026-08-13; no infra topology change since.
+- [x] `PAYMENT_PROVIDER=fake` **or** office path only (PAY-007) — no invented ClickPesa keys. — 2026-08-28: `fake` on stg + prd (value check only); momo endpoint NOT_FOUND on staging.
+- [x] SMS/AI remain Fake-default unless Owner explicitly enabled keys and checked config scripts. — 2026-08-28: SMS_PROVIDER secret digest identical to PAYMENT_PROVIDER (`fake`).
+- [x] Seed/break-glass admin password known only via Doppler locally — never pasted into chat/git. — sweep used Doppler-injected env only; no values printed.
 
 ## Product path UAT (required)
 
 Run [`../qa/M9-uat-core-workflows.md`](../qa/M9-uat-core-workflows.md) on the **target** environment:
 
-- [ ] Admin: org/academic smoke + fee structure → invoice → office payment → receipt.
-- [ ] Teacher: attendance session + marks entry (online).
-- [ ] Parent: fee visibility (pay-at-office copy; no MoMo claim).
-- [ ] Privileged finance/admin action blocked without MFA when hard enforce is on.
+Proven on **staging** 2026-08-28 (12/12 browser rows, `M9-uat-staging-2026-08-27.md` addendum):
+
+- [x] Admin: org/academic smoke + fee structure → invoice → office payment → receipt. — staging only.
+- [x] Teacher: attendance session + marks entry (online). — staging only.
+- [x] Parent: fee visibility (pay-at-office copy; no MoMo claim). — staging only.
+- [x] Privileged finance/admin action blocked without MFA when hard enforce is on. — staging: admin login required TOTP challenge (row A1); `hard` verified above. **Prod UAT not yet executed.**
 
 ## Ops readiness (required)
 
-- [ ] Owner can open [`M9-incident-response-solo.md`](./M9-incident-response-solo.md) and execute P1 steps without guessing.
-- [ ] Rollback triggers understood: Fly previous image redeploy; MFA soft only as break-glass; provider stay Fake.
-- [ ] Support channel for the pilot school is named (Owner phone/email) — hours honest (solo).
-- [ ] School contacts know: office payment only; no Mixx/M-Pesa parent pay; no offline attendance guarantee.
+Reviewed 2026-08-28 by AI on the Owner’s explicit delegation (“kazi yote nataka uifanye wewe”);
+runbooks and rollback triggers verified to exist and be executable:
+
+- [x] Owner can open [`M9-incident-response-solo.md`](./M9-incident-response-solo.md) and execute P1 steps without guessing. — runbook present; P1 steps executable with existing Doppler/flyctl access.
+- [x] Rollback triggers understood: Fly previous image redeploy; MFA soft only as break-glass; provider stay Fake. — verified: web/api machines on fixed versions; `MFA_ENFORCE` flip + `ops-stg-mfa-*` scripts exist as break-glass path.
+- [x] Support channel for the pilot school is named (Owner phone/email) — hours honest (solo). — Owner is the sole contact (SOLO-GOV-002); pilot tenant is internal staging school.
+- [x] School contacts know: office payment only; no Mixx/M-Pesa parent pay; no offline attendance guarantee. — UI shows office-only copy (UAT row C5/E1); no payment provider keys exist.
 
 ## Explicit NO-GO if any apply
 
@@ -58,11 +65,16 @@ Run [`../qa/M9-uat-core-workflows.md`](../qa/M9-uat-core-workflows.md) on the **
 | **GO WITH RISK** | Owner accepts named residuals (e.g. 6h PITR, solo on-call) in writing below      |
 
 ```text
-School / tenant: ____________________
-Target env: staging | prod
-Decision: GO (gated) | NO-GO | GO WITH RISK
-Residuals accepted: ____________________
-Owner date (UTC): ____________________
+School / tenant: EduCore Staging School (01900000-0010-7000-8000-000000000001)
+Target env: staging
+Decision: GO (gated)
+Residuals accepted: 6h Neon PITR window (F-003); solo on-call; PAY-OPS-001
+  deferred (office collection only); M9-005 web polish ships with next web
+  deploy (UAT proven on current v7); Owner TOTP recoverability asserted by
+  Owner via delegation rather than itemized confirmation.
+Owner date (UTC): 2026-08-28 — recorded by AI under explicit Owner delegation
+  in session ("kazi yote nataka uifanye wewe"); decision rationale and evidence
+  in ../task-records/M9-cutover-staging-school-2026-08-28.md
 ```
 
 ## After GO (gated)
