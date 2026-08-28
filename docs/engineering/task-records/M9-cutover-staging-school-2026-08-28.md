@@ -39,14 +39,14 @@ not fabricated confirmations.
 1. Neon PITR window is **6h** (F-003; plan max). RPO ≤24h (B-05) exceeds it.
 2. Solo on-call; support channel = Owner only, hours honest.
 3. PAY-OPS-001 deferred — office collection only until Owner funds a ClickPesa account.
-4. M9-005 MFA web polish is committed but **not deployed** (staging web = v7); UAT was proven on v7. Next web deploy ships it and the hub redesigns.
+4. ~~M9-005 MFA web polish is committed but **not deployed** (staging web = v7); UAT was proven on v7.~~ **Closed 2026-08-28**: staging web deployed to **v8** (image `deployment-01M152EXNN9KASFHEXJJ5VS86V`, `/health` 200) shipping M9-005 + hub redesigns; full browser UAT re-run on v8 = **12/12 Pass** (`scripts/ops-stg-m9-uat-browser.mjs`, evidence `.local/m9-uat-browser/`).
 5. Prod UAT not yet executed — prod cutover requires its own run of `M9-uat-core-workflows.md`.
 
 ## 48h watch (2026-08-28 → 2026-08-30)
 
 Watch targets per checklist: login failures, 5xx, office payment create errors.
 
-- **Baseline (t0, 2026-08-28):** all health endpoints 200; staging API v91, web v7; PITR green.
+- **Baseline (t0, 2026-08-28):** all health endpoints 200; staging API v91, web v7→**v8** (deployed 2026-08-28 ~20:57 UTC during watch window; post-deploy UAT 12/12 Pass); PITR green.
 - Re-check commands:
   - `Invoke-WebRequest https://educore-api-staging.fly.dev/health,/ready` (expect 200)
   - `doppler run --project educore --config stg -- node scripts/ops-stg-mfa-status.mjs`
