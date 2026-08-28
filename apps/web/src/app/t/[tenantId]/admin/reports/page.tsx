@@ -35,18 +35,54 @@ type StudentSummary = {
   other: number;
 };
 
-type InvoiceRow = {
-  readonly id: string;
-  readonly totalMinor: number;
-  readonly balanceMinor: number;
+/** Server-side aggregate from GET /api/v1/invoices/summary — never re-derive money client-side. */
+type InvoiceSummary = {
+  readonly collectedMinor: number;
+};
+
+type CountedPage = {
+  readonly data: ReadonlyArray<unknown>;
+  readonly page: { readonly nextCursor: string | null };
 };
 
 type ReportsStats = {
   activeStudents: number;
   collectedFeesMinor: number;
-  totalExams: number;
-  totalClasses: number;
+  totalExams: number | null;
+  totalExamsCapped: boolean;
+  totalClasses: number | null;
+  totalClassesCapped: boolean;
 };
+
+const EMPTY_STATS: ReportsStats = {
+  activeStudents: 0,
+  collectedFeesMinor: 0,
+  totalExams: null,
+  totalExamsCapped: false,
+  totalClasses: null,
+  totalClassesCapped: false,
+};
+
+/**
+ * Count a paginated list without silently truncating: when a next cursor
+ * exists the list was capped, so the card discloses "N+" instead of a false
+ * exact total (cursor pagination carries no meta.total).
+ */
+function countFromPage(result: PromiseSettledResult<CountedPage>): {
+  count: number | null;
+  capped: boolean;
+} {
+  if (result.status !== 'fulfilled' || !Array.isArray(result.value.data)) {
+    return { count: null, capped: false };
+  }
+  const capped = result.value.page?.nextCursor != null;
+  return { count: result.value.data.length, capped };
+}
+
+function formatCount(count: number | null, capped: boolean): string {
+  if (count === null) return '—';
+  return capped ? `${String(count)}+` : String(count);
+}
 
 export default function AdminReportsPage() {
   const params = useParams<{ tenantId: string }>();
@@ -54,12 +90,8 @@ export default function AdminReportsPage() {
   const { t } = useAppPreferences();
   const base = `/t/${tenantId}/admin`;
 
-  const [stats, setStats] = useState<ReportsStats>({
-    activeStudents: 0,
-    collectedFeesMinor: 0,
-    totalExams: 0,
-    totalClasses: 0,
-  });
+  const [stats, setStats] = useState<ReportsStats>(EMPTY_STATS);
+  const [kpiError, setKpiError] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
@@ -69,35 +101,30 @@ export default function AdminReportsPage() {
     try {
       const [stuRes, invRes, exRes, clRes] = await Promise.allSettled([
         apiRequest<{ data: StudentSummary }>('/api/v1/students/summary', { auth }),
-        apiRequest<{ data: InvoiceRow[] }>('/api/v1/invoices?limit=100', { auth }),
-        apiRequest<{ data: unknown[] }>('/api/v1/exams?limit=100', { auth }),
-        apiRequest<{ data: unknown[] }>('/api/v1/classes?limit=100&status=active', { auth }),
+        apiRequest<{ data: InvoiceSummary }>('/api/v1/invoices/summary', { auth }),
+        apiRequest<CountedPage>('/api/v1/exams?limit=100', { auth }),
+        apiRequest<CountedPage>('/api/v1/classes?limit=100', { auth }),
       ]);
 
-      const activeStudents = stuRes.status === 'fulfilled' && stuRes.value.data ? stuRes.value.data.active : 0;
-      
-      let collectedFees = 0;
-      if (invRes.status === 'fulfilled' && invRes.value.data) {
-        let totalInv = 0;
-        let totalBal = 0;
-        for (const inv of invRes.value.data) {
-          totalInv += Number(inv.totalMinor || 0);
-          totalBal += Number(inv.balanceMinor || 0);
-        }
-        collectedFees = Math.max(0, totalInv - totalBal);
-      }
+      // Money and student counts come from server-side aggregates over the
+      // full dataset — the invoice list itself must never be summed here.
+      const activeStudents =
+        stuRes.status === 'fulfilled' && stuRes.value.data ? stuRes.value.data.active : 0;
+      const collectedFees =
+        invRes.status === 'fulfilled' && invRes.value.data ? invRes.value.data.collectedMinor : 0;
 
-      const totalExams = exRes.status === 'fulfilled' && exRes.value.data ? exRes.value.data.length : 0;
-      const totalClasses = clRes.status === 'fulfilled' && clRes.value.data ? clRes.value.data.length : 0;
+      const exams = countFromPage(exRes);
+      const classes = countFromPage(clRes);
 
       setStats({
         activeStudents,
         collectedFeesMinor: collectedFees,
-        totalExams,
-        totalClasses,
+        totalExams: exams.count,
+        totalExamsCapped: exams.capped,
+        totalClasses: classes.count,
+        totalClassesCapped: classes.capped,
       });
-    } catch {
-      /* ignore */
+      setKpiError(stuRes.status === 'rejected' || invRes.status === 'rejected');
     } finally {
       setLoading(false);
     }
@@ -110,7 +137,8 @@ export default function AdminReportsPage() {
   const reportCategories = [
     {
       title: 'Ripoti ya Usajili wa Wanafunzi (Student Demographics)',
-      description: 'Orodha ya wanafunzi waliosajiliwa, madarasa, mikondo, na mawasiliano ya wazazi wao.',
+      description:
+        'Orodha ya wanafunzi waliosajiliwa, madarasa, mikondo, na mawasiliano ya wazazi wao.',
       href: `${base}/students`,
       icon: GraduationCap,
       accent: 'from-blue-500/10 to-blue-500/5 text-blue-600 dark:text-blue-400 border-blue-500/20',
@@ -118,31 +146,38 @@ export default function AdminReportsPage() {
     },
     {
       title: 'Ripoti ya Mahudhurio (Attendance Analytics)',
-      description: 'Takwimu za mahudhurio ya kila siku, viwango vya utoro, na rekodi za madarasa yote.',
+      description:
+        'Takwimu za mahudhurio ya kila siku, viwango vya utoro, na rekodi za madarasa yote.',
       href: `${base}/attendance`,
       icon: CalendarCheck,
-      accent: 'from-emerald-500/10 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+      accent:
+        'from-emerald-500/10 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
       badge: 'Mahudhurio',
     },
     {
       title: 'Ripoti ya Mapato na Ada (Financial Statements)',
-      description: 'Taarifa za makusanyo ya ada, ankara zilizolipwa, madeni yaliyobaki, na stakabadhi za fedha.',
+      description:
+        'Taarifa za makusanyo ya ada, ankara zilizolipwa, madeni yaliyobaki, na stakabadhi za fedha.',
       href: `${base}/fees/invoices`,
       icon: Wallet,
-      accent: 'from-amber-500/10 to-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-500/20',
+      accent:
+        'from-amber-500/10 to-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-500/20',
       badge: 'Fedha & Ada',
     },
     {
       title: 'Ripoti ya Mitihani na Ufaulu (Exam Performance)',
-      description: 'Uchambuzi wa alama za mitihani, wastani wa masomo, na madaraja ya madarasa yote.',
+      description:
+        'Uchambuzi wa alama za mitihani, wastani wa masomo, na madaraja ya madarasa yote.',
       href: `${base}/exams`,
       icon: Award,
-      accent: 'from-purple-500/10 to-purple-500/5 text-purple-600 dark:text-purple-400 border-purple-500/20',
+      accent:
+        'from-purple-500/10 to-purple-500/5 text-purple-600 dark:text-purple-400 border-purple-500/20',
       badge: 'Kitaaluma & Mitihani',
     },
     {
       title: 'Kadi za Matokeo za Wanafunzi (Report Cards)',
-      description: 'Kadi rasmi za matokeo ya mitihani ya wanafunzi zikiwa na maoni ya walimu na daraja la jumla.',
+      description:
+        'Kadi rasmi za matokeo ya mitihani ya wanafunzi zikiwa na maoni ya walimu na daraja la jumla.',
       href: `${base}/report-cards`,
       icon: FileSpreadsheet,
       accent: 'from-rose-500/10 to-rose-500/5 text-rose-600 dark:text-rose-400 border-rose-500/20',
@@ -150,7 +185,8 @@ export default function AdminReportsPage() {
     },
     {
       title: 'Ripoti ya Muundo wa Kitaaluma (Academic Structure)',
-      description: 'Takwimu za miaka ya masomo, mihula, masomo yanayofundishwa, na idadi ya mikondo.',
+      description:
+        'Takwimu za miaka ya masomo, mihula, masomo yanayofundishwa, na idadi ya mikondo.',
       href: `${base}/academic`,
       icon: BookOpen,
       accent: 'from-cyan-500/10 to-cyan-500/5 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
@@ -189,6 +225,7 @@ export default function AdminReportsPage() {
         </div>
 
         {/* Live Institutional KPI Cards */}
+        {kpiError ? <Banner tone="error">{t('kpi.loadError')}</Banner> : null}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="border-border/70 bg-card">
             <CardContent className="flex items-center justify-between p-4">
@@ -229,7 +266,7 @@ export default function AdminReportsPage() {
                   Mitihani Iliyopo
                 </p>
                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 tabular-nums mt-1">
-                  {loading ? '…' : stats.totalExams}
+                  {loading ? '…' : formatCount(stats.totalExams, stats.totalExamsCapped)}
                 </p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
@@ -245,7 +282,7 @@ export default function AdminReportsPage() {
                   Madarasa Yaliyopo
                 </p>
                 <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
-                  {loading ? '…' : stats.totalClasses}
+                  {loading ? '…' : formatCount(stats.totalClasses, stats.totalClassesCapped)}
                 </p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
@@ -260,7 +297,11 @@ export default function AdminReportsPage() {
           {reportCategories.map((report) => {
             const Icon = report.icon;
             return (
-              <Link key={report.title} href={report.href} className="group block focus:outline-none">
+              <Link
+                key={report.title}
+                href={report.href}
+                className="group block focus:outline-none"
+              >
                 <Card className="h-full border-border/70 bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg">
                   <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
                     <div className="space-y-1">
@@ -271,7 +312,9 @@ export default function AdminReportsPage() {
                         {report.title}
                       </CardTitle>
                     </div>
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl border bg-gradient-to-br ${report.accent}`}>
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-xl border bg-gradient-to-br ${report.accent}`}
+                    >
                       <Icon className="h-5 w-5" />
                     </div>
                   </CardHeader>
