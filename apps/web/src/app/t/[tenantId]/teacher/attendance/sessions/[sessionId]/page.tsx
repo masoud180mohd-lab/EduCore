@@ -51,6 +51,17 @@ export default function MarkSessionPage() {
 
   const closed = session?.status === 'closed';
 
+  const presentCount = drafts.filter((d) => d.status === 'present').length;
+  const absentCount = drafts.filter((d) => d.status === 'absent').length;
+  const lateCount = drafts.filter((d) => d.status === 'late').length;
+  const excusedCount = drafts.filter((d) => d.status === 'excused').length;
+  const unmarkedCount = drafts.filter((d) => d.status === null).length;
+
+  function onMarkAllPresent() {
+    if (closed || busy) return;
+    setDrafts((prev) => prev.map((d) => ({ ...d, status: 'present' })));
+  }
+
   const load = useCallback(async () => {
     const auth = readSession();
     if (auth === null) return;
@@ -211,6 +222,44 @@ export default function MarkSessionPage() {
         {!loading && drafts.length === 0 ? (
           <Banner tone="warn">No active enrollments for this class.</Banner>
         ) : null}
+
+        {/* Live Counters & Quick Actions */}
+        {drafts.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl border border-border/80 bg-card shadow-xs">
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                🟢 Wapo (Present): <strong className="tabular-nums text-sm">{presentCount}</strong>
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+                🔴 Hawapo (Absent): <strong className="tabular-nums text-sm">{absentCount}</strong>
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                🟡 Wamechelewa (Late): <strong className="tabular-nums text-sm">{lateCount}</strong>
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                🔵 Ruhusa (Excused): <strong className="tabular-nums text-sm">{excusedCount}</strong>
+              </span>
+              {unmarkedCount > 0 && (
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted text-muted-foreground border border-border">
+                  ⚪ Bado: <strong className="tabular-nums text-sm">{unmarkedCount}</strong>
+                </span>
+              )}
+            </div>
+
+            {!closed && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs font-medium border-emerald-600/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 shrink-0"
+                disabled={busy}
+                onClick={onMarkAllPresent}
+              >
+                ✓ Weka Wote Wapo (Mark All Present)
+              </Button>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col gap-2.5">
           {drafts.map((d) => (

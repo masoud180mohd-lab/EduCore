@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
+import { Calendar, Clock, ArrowRight } from 'lucide-react';
 
-import { AdminPageHeader, Banner } from '@/components/admin';
+import { AdminPageHeader, Banner, StatusChip } from '@/components/admin';
 import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
 import { Button } from '@/components/ui/button';
@@ -33,6 +35,7 @@ export default function AttendancePickerPage() {
   const { t } = useAppPreferences();
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [streams, setStreams] = useState<StreamRow[]>([]);
+  const [recentSessions, setRecentSessions] = useState<SessionRow[]>([]);
   const [classId, setClassId] = useState('');
   const [streamId, setStreamId] = useState('');
   const [sessionDate, setSessionDate] = useState(todayIso());
@@ -46,13 +49,17 @@ export default function AttendancePickerPage() {
     void (async () => {
       setLoadingClasses(true);
       try {
-        const result = await apiRequest<{ data: ClassRow[] }>(
-          '/api/v1/classes?limit=100&status=active',
-          {
-            auth,
-          },
-        );
-        setClasses(result.data ?? []);
+        const [classesResult, sessionsResult] = await Promise.allSettled([
+          apiRequest<{ data: ClassRow[] }>('/api/v1/classes?limit=100&status=active', { auth }),
+          apiRequest<{ data: SessionRow[] }>('/api/v1/attendance-sessions?limit=10', { auth }),
+        ]);
+
+        if (classesResult.status === 'fulfilled') {
+          setClasses(classesResult.value.data ?? []);
+        }
+        if (sessionsResult.status === 'fulfilled') {
+          setRecentSessions(sessionsResult.value.data ?? []);
+        }
       } catch (err) {
         if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
       } finally {
@@ -210,6 +217,48 @@ export default function AttendancePickerPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Recent Attendance Sessions */}
+        {recentSessions.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Vipindi vya Mahudhurio vya Hivi Karibuni
+              </CardTitle>
+              <CardDescription>
+                Bonyeza kipindi chochote kutazama au kuendelea kuweka mahudhurio.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="divide-y divide-border/60 p-0">
+              {recentSessions.map((sess) => {
+                const cls = classes.find((c) => c.id === sess.classId);
+                const classNameLabel = cls ? `${cls.name}${cls.code ? ` (${cls.code})` : ''}` : sess.classId;
+                return (
+                  <Link
+                    key={sess.id}
+                    href={`/t/${tenantId}/teacher/attendance/sessions/${sess.id}`}
+                    className="flex items-center justify-between p-4 hover:bg-muted/40 transition-colors group"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {classNameLabel}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Tarehe: {sess.sessionDate}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <StatusChip label={sess.status} />
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </TeacherShell>
   );
