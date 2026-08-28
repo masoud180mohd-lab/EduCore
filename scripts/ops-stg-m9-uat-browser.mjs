@@ -23,7 +23,7 @@
  *   doppler run --project educore --config stg -- node scripts/ops-stg-m9-uat-browser.mjs
  */
 import { createDecipheriv, createHmac } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -253,6 +253,7 @@ async function selectFirstOption(page, selector, preferredValue = null) {
 
 // --- main ---------------------------------------------------------------------
 async function main() {
+  rmSync(EVIDENCE_DIR, { recursive: true, force: true });
   mkdirSync(EVIDENCE_DIR, { recursive: true });
 
   const adminEmail = process.env['SEED_ADMIN_EMAIL']?.trim();
@@ -361,9 +362,15 @@ async function main() {
       });
       await hydrated(page, 'form');
       await page.waitForSelector('form', { timeout: STEP_TIMEOUT_MS });
-      const errorBanner = await page.locator('[role="alert"]').count();
+      await page.waitForSelector('a[href*="/admin/fees/structures/"]', { timeout: STEP_TIMEOUT_MS });
+      const structureRows = await page.locator('a[href*="/admin/fees/structures/"]').count();
       await shot(page, 'c1-fee-structures');
-      record('C1', 'fee structures page loads', errorBanner === 0, errorBanner === 0 ? 'no alert banner' : 'alert banner present');
+      record(
+        'C1',
+        'fee structures page loads',
+        structureRows > 0,
+        `${structureRows} structure(s) listed`,
+      );
     } catch (error) {
       await shot(page, 'c1-fee-structures-fail');
       record('C1', 'fee structures page loads', false, String(error.message ?? error));
@@ -554,7 +561,7 @@ async function main() {
       await page.locator('a[href*="/teacher/marks/subjects/"]').first().waitFor({ timeout: STEP_TIMEOUT_MS });
       await page.locator('a[href*="/teacher/marks/subjects/"]').first().click();
       await page.waitForURL('**/teacher/marks/subjects/*', { timeout: STEP_TIMEOUT_MS });
-      const scoreInput = page.locator('input[placeholder="Alama"]').first();
+      const scoreInput = page.locator('input[id^="score-"]').first();
       await scoreInput.waitFor({ timeout: STEP_TIMEOUT_MS });
       await scoreInput.fill('75');
       await page.getByRole('button', { name: /save|hifadhi/i }).first().click();
@@ -562,7 +569,7 @@ async function main() {
       await shot(page, 'd3-marks-saved');
       // Persistence check: reload and confirm the score stays.
       await page.reload({ waitUntil: 'domcontentloaded' });
-      const reloaded = page.locator('input[placeholder="Alama"]').first();
+      const reloaded = page.locator('input[id^="score-"]').first();
       await reloaded.waitFor({ timeout: STEP_TIMEOUT_MS });
       await page.waitForTimeout(2_000);
       const value = await reloaded.inputValue();

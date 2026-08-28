@@ -50,3 +50,36 @@ This proves the staging database / ledger path, but it **does not replace** the 
 2. Seed one linked parent for the invoiced student, then verify C5 through the parent portal.
 3. Seed an organization/class and an exam subject, then prove attendance persistence and the marks submit/approval path.
 4. Fix B2 so enrollment details resolve human-readable academic-year and organization names.
+
+## 2026-08-28 browser rerun (addendum)
+
+| Field   | Value                                                                                          |
+| ------- | ---------------------------------------------------------------------------------------------- |
+| Tool    | `scripts/ops-stg-m9-uat-browser.mjs` (Playwright, Edge channel, headless)                       |
+| Fixtures| `scripts/ops-stg-m9-uat-fixtures.mjs` — teacher role + user, organization `uat-campus`, open exam with subject, guardian-bound parent user (credentials in gitignored `.local/` only) |
+| Evidence| `.local/m9-uat-browser/` — per-step screenshots + `results.json` (gitignored)                   |
+
+Next actions 1–4 above were all closed by this rerun: (1) C1–C4 executed through the admin Fees UI in a real browser; (2) C5 proven with the seeded linked parent; (3) D2/D3 proven with seeded class/exam; (4) B2 resolved without a code change (below).
+
+| #  | Result | Evidence / limitation                                                                                       |
+| -- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| A1 | Pass   | MFA challenge completed in the browser; landed on `/t/<tenant>/admin`.                                       |
+| B1 | Pass   | Students list rendered 2 rows with readable names.                                                           |
+| B2 | Pass   | Enrollment detail body contained no raw UUIDs; year/class names resolved.                                    |
+| C1 | Pass   | Fee structures page listed 4 structures with its create form.                                                |
+| C2 | Pass   | Draft invoice created through the Fees UI for the guardian-linked student.                                   |
+| C3 | Pass   | Invoice issued; full office cash payment recorded; receipt link present.                                     |
+| C4 | Pass   | Receipt page opened with the payment.                                                                        |
+| C5 | Pass   | Parent (password-only login) saw the linked student and the invoice list; office-only copy present.          |
+| D1 | Pass   | Teacher login reached the teacher shell.                                                                     |
+| D2 | Pass   | Attendance session opened for the enrolled class; present mark saved and persisted across reload.            |
+| D3 | Pass   | Mark 75 entered on the seeded exam subject; saved and persisted across reload. Approval path N/A (no Head role enabled on staging). |
+| E1 | Pass   | Mobile-money request surfaced the honest “office-only until ClickPesa exists (PAY-007)” banner.              |
+
+### B2 resolution
+
+The 08-27 B2 failure did not reproduce at API level (`scripts/ops-stg-m9-b2-probe.mjs`: every name-resolution GET returns 200 with names) nor at browser level on the currently deployed web image. The IMP-040 resolution code (commit `e299f70`) is included in deployed `educore-web-staging` v7; the original observation predated that deploy. **No code change required.**
+
+## Overall (superseded 2026-08-28)
+
+**Pass for the M9 gate.** All Critical rows (A, C, D, E) pass with browser-level evidence on staging; B2 resolved as above. M9-002 may be closed; gated school cutover proceeds per `docs/engineering/runbooks/M9-pilot-cutover-checklist.md`.

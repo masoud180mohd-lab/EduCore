@@ -104,7 +104,7 @@ Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze
 ### M9 progress
 
 1. ~~**M9-001**~~ Pilot readiness pack — cutover checklist, solo incident runbook, core UAT script (`docs/engineering/task-records/M9-001-pilot-readiness-pack.md`).
-2. **M9-002** Owner executes UAT on staging (evidence task-record).
+2. ~~**M9-002**~~ Owner executes UAT on staging (evidence task-record) — **Pass** 2026-08-28; 12/12 browser-level rows via `scripts/ops-stg-m9-uat-browser.mjs` (2026-08-28 addendum in `docs/engineering/task-records/M9-uat-staging-2026-08-27.md`).
 3. ~~**M9-003**~~ B-07 D3 secrets rotate rehearsal (staging) — **Pass** 2026-08-27 (`docs/engineering/task-records/M9-003-d3-secrets-rotate-rehearsal-2026-08-27.md`); next D3 due ≈ 2027-02-27.
 4. ~~**M9-004**~~ p95 latency baseline sample (SLO-3) — captured 2026-08-28 via `scripts/ops-stg-m9-latency-baseline.mjs`; 2 runs: run 1 `/auth/me` p95 954 ms (client-side variance), run 2 all endpoints within 800 ms (`docs/engineering/task-records/M9-004-latency-baseline-staging-2026-08-28T*.md`).
 5. ~~**M9-005**~~ WEB-MFA-UI residual polish — Done 2026-08-28 (`docs/engineering/task-records/M9-005-web-mfa-ui-residual-polish-2026-08-28.md`).
