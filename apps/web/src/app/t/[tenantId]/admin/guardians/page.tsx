@@ -28,6 +28,7 @@ import {
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+import { Mail, Phone, ShieldCheck, UserCheck, Users } from 'lucide-react';
 
 type GuardianRow = {
   readonly id: string;
@@ -130,11 +131,65 @@ export default function AdminGuardiansPage() {
     }
   }
 
+  const activeCount = rows.filter((r) => r.status === 'active').length;
+  const inactiveCount = rows.length - activeCount;
+
   return (
     <AdminShell tenantId={tenantId}>
       <div className="flex flex-col gap-6">
         <AdminPageHeader title={t('guardians.title')} description={t('guardians.description')} />
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
+
+        {/* Metric KPI cards */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="border-border/70 bg-card">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Jumla ya Wazazi
+                </p>
+                <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
+                  {rows.length}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                <Users className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-card">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Wazazi Hai
+                </p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">
+                  {activeCount}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <UserCheck className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-card">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Wasiokuwa Hai
+                </p>
+                <p className="text-2xl font-bold text-muted-foreground tabular-nums mt-1">
+                  {inactiveCount}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader>
@@ -267,7 +322,21 @@ export default function AdminGuardiansPage() {
                   </Link>
                 </td>
                 <td className="text-muted-foreground">
-                  {[g.email, g.phone].filter(Boolean).join(' · ') || '—'}
+                  <div className="flex flex-col gap-0.5 text-xs">
+                    {g.phone && (
+                      <a href={`tel:${g.phone}`} className="flex items-center gap-1 hover:text-primary">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
+                        {g.phone}
+                      </a>
+                    )}
+                    {g.email && (
+                      <a href={`mailto:${g.email}`} className="flex items-center gap-1 hover:text-primary">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        {g.email}
+                      </a>
+                    )}
+                    {!g.phone && !g.email && '—'}
+                  </div>
                 </td>
                 <td>
                   <StatusChip label={g.status} />

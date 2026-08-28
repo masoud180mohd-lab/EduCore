@@ -407,6 +407,7 @@ export const EXTRA_EN = {
   'mfa.enforcement': 'Enforcement:',
   'mfa.enforcedHard': 'required',
   'mfa.enforcedSoft': 'optional (lab)',
+  'mfa.enrollRequired': ' — enroll an authenticator to continue using privileged areas.',
   'mfa.enrollRecommended': ' — enroll recommended for your role.',
   'mfa.activeNow': ' — authenticator active.',
   'mfa.noneActive': ' — no active authenticator.',
@@ -422,6 +423,8 @@ export const EXTRA_EN = {
   'mfa.disableTitle': 'Disable authenticator?',
   'mfa.disableBody':
     'You will no longer be asked for a code at sign-in. Re-enroll before required two-step sign-in is turned on if you are an admin.',
+  'mfa.disableBodyHard':
+    'Required two-step sign-in remains on. Enroll another authenticator in this session before signing out, or you will not be able to sign in again.',
   'mfa.since': 'since {date}',
   'mfa.factorActive': '{label} — active',
   'mfa.scanInfo': 'Scan or enter the secret in your authenticator, then confirm with a code.',
@@ -1051,6 +1054,7 @@ export const EXTRA_SW: { readonly [K in keyof typeof EXTRA_EN]: string } = {
   'mfa.enforcement': 'Utekelezaji:',
   'mfa.enforcedHard': 'inahitajika',
   'mfa.enforcedSoft': 'si lazima (lab)',
+  'mfa.enrollRequired': ' — sajili authenticator ili uendelee kutumia maeneo yenye ruhusa maalum.',
   'mfa.enrollRecommended': ' — sajili inapendekezwa kwa jukumu lako.',
   'mfa.activeNow': ' — authenticator iko hai.',
   'mfa.noneActive': ' — hakuna authenticator hai.',
@@ -1066,6 +1070,8 @@ export const EXTRA_SW: { readonly [K in keyof typeof EXTRA_EN]: string } = {
   'mfa.disableTitle': 'Zima authenticator?',
   'mfa.disableBody':
     'Hutaulizwa nambari unapoingia. Sajili tena kabla kuingia kwa hatua mbili kunahitajika ikiwa wewe ni admin.',
+  'mfa.disableBodyHard':
+    'Kuingia kwa hatua mbili kunaendelea kuhitajika. Sajili authenticator nyingine katika session hii kabla hujatoka, vinginevyo hutaweza kuingia tena.',
   'mfa.since': 'tangu {date}',
   'mfa.factorActive': '{label} — hai',
   'mfa.scanInfo': 'Changanua au weka siri kwenye authenticator, kisha thibitisha kwa nambari.',

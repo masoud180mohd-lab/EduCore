@@ -42,6 +42,7 @@ export function AdminMfaPanel() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [disableId, setDisableId] = useState<string | null>(null);
+  const [confirmCodeInvalid, setConfirmCodeInvalid] = useState(false);
 
   const load = useCallback(async () => {
     const auth = readSession();
@@ -95,6 +96,7 @@ export function AdminMfaPanel() {
         otpauthUri: result.data.otpauthUri,
       });
       setConfirmCode('');
+      setConfirmCodeInvalid(false);
       setInfo(t('mfa.scanInfo'));
     } catch (err) {
       if (err instanceof ApiClientError) setError(adminFriendlyMessage(err, 'settings'));
@@ -111,10 +113,12 @@ export function AdminMfaPanel() {
     if (auth === null) return;
     const code = confirmCode.trim();
     if (!/^\d{6}$/.test(code)) {
+      setConfirmCodeInvalid(true);
       setError(t('mfa.enterCode'));
       return;
     }
     setBusy(true);
+    setConfirmCodeInvalid(false);
     setError(null);
     setInfo(null);
     try {
@@ -130,8 +134,10 @@ export function AdminMfaPanel() {
       await load();
     } catch (err) {
       if (err instanceof ApiClientError) {
-        if (err.code === 'MFA_INVALID') setError(t('mfa.invalidCode'));
-        else setError(adminFriendlyMessage(err, 'settings'));
+        if (err.code === 'MFA_INVALID') {
+          setConfirmCodeInvalid(true);
+          setError(t('mfa.invalidCode'));
+        } else setError(adminFriendlyMessage(err, 'settings'));
       } else setError(t('mfa.confirmError'));
     } finally {
       setBusy(false);
@@ -181,7 +187,11 @@ export function AdminMfaPanel() {
           <strong>
             {me.mfaEnforced === 'hard' ? t('mfa.enforcedHard') : t('mfa.enforcedSoft')}
           </strong>
-          {me.mfaEnrollmentRequired ? t('mfa.enrollRecommended') : null}
+          {me.mfaEnrollmentRequired
+            ? me.mfaEnforced === 'hard'
+              ? t('mfa.enrollRequired')
+              : t('mfa.enrollRecommended')
+            : null}
           {hasActive ? t('mfa.activeNow') : t('mfa.noneActive')}
         </p>
       ) : null}
@@ -207,6 +217,9 @@ export function AdminMfaPanel() {
               readOnly
               rows={3}
               value={pending.otpauthUri}
+              autoCapitalize="none"
+              autoComplete="off"
+              spellCheck={false}
               style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.75rem' }}
             />
             <p style={{ margin: '0.5rem 0 0' }}>
@@ -219,6 +232,9 @@ export function AdminMfaPanel() {
               id="totpSecret"
               readOnly
               value={pending.secret}
+              autoCapitalize="none"
+              autoComplete="off"
+              spellCheck={false}
               style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.875rem' }}
             />
           </div>
@@ -228,11 +244,16 @@ export function AdminMfaPanel() {
               id="confirmMfa"
               inputMode="numeric"
               autoComplete="one-time-code"
+              spellCheck={false}
               maxLength={6}
               required
               value={confirmCode}
               disabled={busy}
-              onChange={(e) => setConfirmCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              aria-invalid={confirmCodeInvalid}
+              onChange={(e) => {
+                setConfirmCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                setConfirmCodeInvalid(false);
+              }}
             />
           </div>
           <button
@@ -284,7 +305,11 @@ export function AdminMfaPanel() {
       <ConfirmDialog
         open={disableId !== null}
         title={t('mfa.disableTitle')}
-        body={t('mfa.disableBody')}
+        body={
+          me?.mfaEnforced === 'hard' && active.length === 1
+            ? t('mfa.disableBodyHard')
+            : t('mfa.disableBody')
+        }
         confirmLabel={t('common.disable')}
         danger
         busy={busy}

@@ -29,6 +29,12 @@ import {
 } from '@/lib/admin/list-pagination';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 import { type StudentRow, type StudentStatus, STUDENT_STATUSES } from '@/lib/students/types';
+import { GraduationCap, UserCheck, UserX, Users } from 'lucide-react';
+
+type StudentSummary = {
+  readonly total: number;
+  readonly byStatus: Readonly<Record<string, number>>;
+};
 
 export default function AdminStudentsPage() {
   const params = useParams<{ tenantId: string }>();
@@ -36,6 +42,7 @@ export default function AdminStudentsPage() {
   const router = useRouter();
   const { t } = useAppPreferences();
   const [rows, setRows] = useState<StudentRow[]>([]);
+  const [summary, setSummary] = useState<StudentSummary | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +55,17 @@ export default function AdminStudentsPage() {
   const [displayName, setDisplayName] = useState('');
   const [studentCode, setStudentCode] = useState('');
   const [createStatus, setCreateStatus] = useState<StudentStatus>('active');
+
+  async function loadSummary() {
+    const auth = readSession();
+    if (auth === null) return;
+    try {
+      const res = await apiRequest<{ data: StudentSummary }>('/api/v1/students/summary', { auth });
+      setSummary(res.data);
+    } catch {
+      /* non-blocking summary */
+    }
+  }
 
   async function loadPage(opts: {
     readonly searchQ: string;
@@ -85,6 +103,7 @@ export default function AdminStudentsPage() {
   }
 
   useEffect(() => {
+    void loadSummary();
     void loadPage({ searchQ: '', statusQ: '', cursor: null, append: false });
   }, []);
 
@@ -126,6 +145,59 @@ export default function AdminStudentsPage() {
       <div className="flex flex-col gap-6">
         <AdminPageHeader title={t('students.title')} description={t('students.description')} />
         {error !== null ? <Banner tone="error">{error}</Banner> : null}
+
+        {/* Metric KPI cards */}
+        {summary !== null && (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card className="border-border/70 bg-card">
+              <CardContent className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Jumla ya Wanafunzi
+                  </p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
+                    {summary.total}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <Users className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 bg-card">
+              <CardContent className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Wanafunzi Hai
+                  </p>
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">
+                    {summary.byStatus['active'] ?? 0}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <UserCheck className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 bg-card">
+              <CardContent className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Wasiokuwa Hai / Nje
+                  </p>
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-1">
+                    {summary.total - (summary.byStatus['active'] ?? 0)}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <UserX className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <Card>
           <CardHeader>
