@@ -205,8 +205,25 @@ function readCredentials(label) {
 }
 
 // --- browser helpers ----------------------------------------------------------
+// React hydration probe: controlled inputs only behave once React has attached
+// props. Acting before hydration causes native form GETs and wiped values.
+async function hydrated(page, selector) {
+  await page.waitForFunction(
+    (sel) => {
+      const el = document.querySelector(sel);
+      if (el === null) return false;
+      return Object.keys(el).some(
+        (k) => k.startsWith('__reactProps$') || k.startsWith('__reactEvents$'),
+      );
+    },
+    selector,
+    { timeout: STEP_TIMEOUT_MS },
+  );
+}
+
 async function uiLogin(page, tenantId, email, password, expectUrlGlob) {
-  await page.goto(`${WEB_BASE}/login`, { waitUntil: 'domcontentloaded', timeout: STEP_TIMEOUT_MS });
+  await page.goto(`${WEB_BASE}/login`, { waitUntil: 'load', timeout: STEP_TIMEOUT_MS });
+  await hydrated(page, '#email');
   await page.fill('#email', email);
   await page.fill('#password', password);
   await page.fill('#tenantId', tenantId);
@@ -272,9 +289,10 @@ async function main() {
     // A1 — login + MFA challenge in the browser.
     try {
       await page.goto(`${WEB_BASE}/login`, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'load',
         timeout: STEP_TIMEOUT_MS,
       });
+      await hydrated(page, '#email');
       await page.fill('#email', adminEmail);
       await page.fill('#password', adminPass);
       await page.fill('#tenantId', tenantId);
@@ -293,7 +311,7 @@ async function main() {
     // B1 — students list renders rows.
     try {
       await page.goto(`${WEB_BASE}/t/${tenantId}/admin/students`, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'load',
         timeout: STEP_TIMEOUT_MS,
       });
       await page.waitForSelector('table tbody tr', { timeout: STEP_TIMEOUT_MS });
@@ -308,7 +326,7 @@ async function main() {
     // B2 — enrollment detail resolves names (no raw UUIDs in body text).
     try {
       await page.goto(`${WEB_BASE}/t/${tenantId}/admin/academic/enrollments`, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'load',
         timeout: STEP_TIMEOUT_MS,
       });
       const detailLink = page
@@ -338,9 +356,10 @@ async function main() {
     // C1 — fee structures page loads with its create form.
     try {
       await page.goto(`${WEB_BASE}/t/${tenantId}/admin/fees/structures`, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'load',
         timeout: STEP_TIMEOUT_MS,
       });
+      await hydrated(page, 'form');
       await page.waitForSelector('form', { timeout: STEP_TIMEOUT_MS });
       const errorBanner = await page.locator('[role="alert"]').count();
       await shot(page, 'c1-fee-structures');
@@ -354,9 +373,10 @@ async function main() {
     let invoiceUrl = null;
     try {
       await page.goto(`${WEB_BASE}/t/${tenantId}/admin/fees/invoices`, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'load',
         timeout: STEP_TIMEOUT_MS,
       });
+      await hydrated(page, '#inv-student');
       const chosenStudent = await selectFirstOption(page, '#inv-student', linkedStudentId);
       await selectFirstOption(page, '#inv-year');
       await page.fill('#inv-line-desc', 'UAT browser re-run (M9-002)');
@@ -493,9 +513,10 @@ async function main() {
     // D2 — open attendance session, mark present, save, verify persistence.
     try {
       await page.goto(`${WEB_BASE}/t/${tenantId}/teacher/attendance`, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'load',
         timeout: STEP_TIMEOUT_MS,
       });
+      await hydrated(page, '#classId');
       await selectFirstOption(page, '#classId', enrolledClassId);
       await page.locator('form:has(#classId) button[type="submit"]').click();
       await page.waitForURL('**/teacher/attendance/sessions/*', { timeout: STEP_TIMEOUT_MS });
@@ -524,7 +545,7 @@ async function main() {
     // D3 — enter marks for the seeded exam subject, save, verify persistence.
     try {
       await page.goto(`${WEB_BASE}/t/${tenantId}/teacher/marks`, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'load',
         timeout: STEP_TIMEOUT_MS,
       });
       await page.locator('a[href*="/teacher/marks/exams/"]').first().waitFor({ timeout: STEP_TIMEOUT_MS });
