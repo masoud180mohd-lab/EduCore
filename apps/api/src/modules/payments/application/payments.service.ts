@@ -427,7 +427,7 @@ export class PaymentsService {
     if (config === null) {
       throw new AppError('INTERNAL_ERROR', 'ClickPesa webhook is not configured.');
     }
-    if (!this.payments.isAvailable()) {
+    if (!this.payments.isWebhookIngestAvailable()) {
       throw new AppError('INTERNAL_ERROR', 'Payments store unavailable.');
     }
     if (rawBody === null || typeof rawBody !== 'object' || Array.isArray(rawBody)) {

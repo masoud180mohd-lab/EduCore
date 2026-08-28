@@ -47,7 +47,7 @@ describe('NotificationsService.createRequestForTenant', () => {
     ).rejects.toBeInstanceOf(AppError);
   });
 
-  it('sends via Fake when request is queued', async () => {
+  it('returns the queued request without sending (async outbox contract)', async () => {
     const createRequest = vi.fn().mockResolvedValue({
       id: '01900000-0000-7000-8000-0000000000r1',
       tenantId,
@@ -65,45 +65,12 @@ describe('NotificationsService.createRequestForTenant', () => {
       createdAt: '2026-08-03T00:00:00.000Z',
       updatedAt: '2026-08-03T00:00:00.000Z',
     });
-    const completeSend = vi.fn().mockResolvedValue({
-      deliveryId: 'd1',
-      requestStatus: 'succeeded',
-      deliveryStatus: 'sent',
-    });
-    const getRequest = vi.fn().mockResolvedValue({
-      id: '01900000-0000-7000-8000-0000000000r1',
-      tenantId,
-      templateCode: 'comms_test_sms',
-      templateVersion: 1,
-      locale: 'sw',
-      channel: 'sms',
-      recipientType: 'guardian',
-      recipientId: guardianId,
-      payload: { school_name: 'Shule' },
-      status: 'succeeded',
-      skipReason: null,
-      createdAt: '2026-08-03T00:00:00.000Z',
-      updatedAt: '2026-08-03T00:00:00.000Z',
-    });
-    const getTemplateBody = vi.fn().mockResolvedValue('{{school_name}}: EduCore SMS test.');
-    const sms = {
-      providerCode: 'fake',
-      send: vi.fn().mockResolvedValue({
-        providerCode: 'fake',
-        providerMessageId: 'fake_msg_1',
-        status: 'sent',
-      }),
-    };
-    const service = createNotificationsServiceForTest(
-      {
-        isAvailable: () => true,
-        createRequest,
-        completeSend,
-        getRequest,
-        getTemplateBody,
-      } as never,
-      sms,
-    );
+    const completeSend = vi.fn();
+    const service = createNotificationsServiceForTest({
+      isAvailable: () => true,
+      createRequest,
+      completeSend,
+    } as never);
 
     const result = await service.createRequestForTenant(
       actorUserId,
@@ -117,15 +84,11 @@ describe('NotificationsService.createRequestForTenant', () => {
       'corr',
     );
 
-    expect(result.data.status).toBe('succeeded');
-    expect(sms.send).toHaveBeenCalledOnce();
-    expect(completeSend).toHaveBeenCalledWith(
-      expect.objectContaining({
-        providerCode: 'fake',
-        deliveryStatus: 'sent',
-        destE164: '255712345678',
-      }),
-    );
+    // COMMS-006: sending happens in the outbox worker, never in the request path.
+    expect(result.data.status).toBe('queued');
+    expect(result.data).not.toHaveProperty('destE164');
+    expect(result.data).not.toHaveProperty('phoneLast4');
+    expect(completeSend).not.toHaveBeenCalled();
   });
 });
 

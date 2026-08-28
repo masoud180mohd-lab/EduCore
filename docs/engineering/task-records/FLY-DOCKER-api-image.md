@@ -1,12 +1,12 @@
 # FLY-DOCKER / INFRA-002 — API Dockerfile + Fly staging config
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **GO FLY-DOCKER** (OPS-001 Phase D unblock) |
-| Date      | 2026-08-08 |
+| Field     | Value                                                             |
+| --------- | ----------------------------------------------------------------- |
+| Program   | **GO FLY-DOCKER** (OPS-001 Phase D unblock)                       |
+| Date      | 2026-08-08                                                        |
 | Status    | **Done** (artifacts in-repo — live deploy pending Owner accounts) |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
-| Depends   | B-05 · OPS-001 |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                          |
+| Depends   | B-05 · OPS-001                                                    |
 
 ## Delivered
 

@@ -29,9 +29,11 @@ What is being frozen?
 
 - ...
 
-## Approval
+## Owner GO (session)
 
-Approved by:
+Per SOLO-GOV-003, the only human gate is Owner GO stated in session and recorded here. No signature blocks, emails, or meetings.
+
+Owner GO recorded:
 
 Date:
 

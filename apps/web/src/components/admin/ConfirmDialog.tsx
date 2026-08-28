@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef } from 'react';
 
+import { useAppPreferences } from '@/components/AppProviders';
+
 /**
  * Accessible confirm dialog (IMP-027 / IMP-034) — replaces `window.confirm` for admin destructive actions.
  * Focuses Cancel on open; Esc / backdrop cancel when not busy; restores focus to opener on close.
@@ -11,10 +13,14 @@ export function ConfirmDialog({
   open,
   title,
   body,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   danger = false,
   busy = false,
+  reasonRequired = false,
+  reasonLabel,
+  reasonValue = '',
+  onReasonChange,
   onConfirm,
   onCancel,
 }: {
@@ -25,12 +31,19 @@ export function ConfirmDialog({
   readonly cancelLabel?: string;
   readonly danger?: boolean;
   readonly busy?: boolean;
+  readonly reasonRequired?: boolean;
+  readonly reasonLabel?: string;
+  readonly reasonValue?: string;
+  readonly onReasonChange?: (value: string) => void;
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
 }) {
   const titleId = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  const { t } = useAppPreferences();
+  const resolvedConfirm = confirmLabel ?? t('common.confirm');
+  const resolvedCancel = cancelLabel ?? t('common.cancel');
 
   useEffect(() => {
     if (!open) return;
@@ -68,7 +81,7 @@ export function ConfirmDialog({
       <button
         type="button"
         className="confirm-dialog-backdrop"
-        aria-label="Dismiss"
+        aria-label={t('common.dismiss')}
         disabled={busy}
         onClick={() => {
           if (!busy) onCancel();
@@ -84,6 +97,19 @@ export function ConfirmDialog({
           {title}
         </h2>
         <p className="muted">{body}</p>
+        {reasonRequired ? (
+          <label className="confirm-dialog-reason">
+            <span>{reasonLabel ?? t('common.reason')}</span>
+            <textarea
+              value={reasonValue}
+              minLength={5}
+              maxLength={500}
+              required
+              disabled={busy}
+              onChange={(event) => onReasonChange?.(event.target.value)}
+            />
+          </label>
+        ) : null}
         <div className="actions">
           <button
             ref={cancelRef}
@@ -92,15 +118,15 @@ export function ConfirmDialog({
             disabled={busy}
             onClick={onCancel}
           >
-            {cancelLabel}
+            {resolvedCancel}
           </button>
           <button
             type="button"
             className={danger ? 'btn btn-danger' : 'btn btn-primary'}
-            disabled={busy}
+            disabled={busy || (reasonRequired && reasonValue.trim().length < 5)}
             onClick={onConfirm}
           >
-            {busy ? 'Working…' : confirmLabel}
+            {busy ? t('common.working') : resolvedConfirm}
           </button>
         </div>
       </div>

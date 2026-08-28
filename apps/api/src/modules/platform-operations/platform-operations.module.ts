@@ -7,10 +7,11 @@ import { PlatformOperationsDomainService } from './domain/platform-operations.do
 import { PlatformOperationsPolicy } from './policies/platform-operations.policy.js';
 import { PLATFORM_OPERATIONS_REPOSITORY } from './repositories/platform-operations.repository.js';
 import { PlatformOperationsRepositoryPlaceholder } from './repositories/platform-operations.repository.placeholder.js';
+import { PlatformTenantsRepository } from './repositories/platform-tenants.repository.js';
 
 /**
- * Bounded context: Platform Operations.
- * Audit publisher foundation (IMP-001-T19); no business HTTP routes yet.
+ * Bounded context: Platform Operations (ACF-PLAT-001 / DBF-PLAT-001).
+ * Tenant-path AuditPublisher remains Noop until a follow-on; platform writes persist audit_events in-module.
  */
 @Module({
   controllers: [PlatformOperationsController],
@@ -18,6 +19,7 @@ import { PlatformOperationsRepositoryPlaceholder } from './repositories/platform
     PlatformOperationsApplicationService,
     PlatformOperationsDomainService,
     PlatformOperationsPolicy,
+    PlatformTenantsRepository,
     {
       provide: PLATFORM_OPERATIONS_REPOSITORY,
       useClass: PlatformOperationsRepositoryPlaceholder,
@@ -27,6 +29,11 @@ import { PlatformOperationsRepositoryPlaceholder } from './repositories/platform
       useClass: NoopAuditPublisher,
     },
   ],
-  exports: [PlatformOperationsApplicationService, PLATFORM_OPERATIONS_REPOSITORY, AUDIT_PUBLISHER],
+  exports: [
+    PlatformOperationsApplicationService,
+    PlatformTenantsRepository,
+    PLATFORM_OPERATIONS_REPOSITORY,
+    AUDIT_PUBLISHER,
+  ],
 })
 export class PlatformOperationsModule {}

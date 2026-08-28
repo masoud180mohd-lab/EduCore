@@ -1,7 +1,6 @@
-/**
- * Load more control for cursor-paginated admin lists (IMP-030).
- * Hidden when nextCursor is null — never claim “all loaded” while more exist.
- */
+'use client';
+
+import { useAppPreferences } from '@/components/AppProviders';
 export function ResourceListPagination({
   nextCursor,
   loadingMore,
@@ -13,6 +12,7 @@ export function ResourceListPagination({
   readonly onLoadMore: () => void;
   readonly disabled?: boolean;
 }) {
+  const { t } = useAppPreferences();
   if (nextCursor === null || nextCursor === '') return null;
 
   return (
@@ -23,7 +23,7 @@ export function ResourceListPagination({
         disabled={disabled || loadingMore}
         onClick={onLoadMore}
       >
-        {loadingMore ? 'Loading more…' : 'Load more'}
+        {loadingMore ? t('common.loadingMore') : t('common.loadMore')}
       </button>
     </div>
   );

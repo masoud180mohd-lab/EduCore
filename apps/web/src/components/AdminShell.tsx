@@ -1,10 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
+import { useAppPreferences, useTenantLocaleHint } from '@/components/AppProviders';
+import { AdminChromeControls } from '@/components/chrome/AdminChromeControls';
+import { DigiiShell, type DigiiNavGroup } from '@/components/chrome/DigiiShell';
+import { DIGII_TOP_ACTIONS_CLASS } from '@/components/chrome/digii-top-actions';
+import { WorkspaceSwitcher } from '@/components/chrome/WorkspaceSwitcher';
+import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/api/client';
 import {
   adminDeniedFallback,
@@ -15,11 +21,17 @@ import {
 } from '@/lib/auth/admin-access';
 import type { MeLike } from '@/lib/auth/home-preference';
 import { clearSession, readSession } from '@/lib/auth/session';
+import { groupMessageKey, navMessageKey } from '@/lib/i18n/messages';
 
 const BRAND_FALLBACK = 'EduCore Admin';
 
 type TenantCurrent = {
-  readonly data: { readonly id: string; readonly name?: string; readonly code?: string };
+  readonly data: {
+    readonly id: string;
+    readonly name?: string;
+    readonly code?: string;
+    readonly primaryLocale?: string;
+  };
 };
 
 type MeEnvelope = {
@@ -29,7 +41,6 @@ type MeEnvelope = {
 type NavLink = {
   readonly id: AdminNavId;
   readonly href: (base: string) => string;
-  readonly label: string;
 };
 
 type GateState =
@@ -40,19 +51,24 @@ type GateState =
       readonly fallback: 'teacher' | 'parent';
     };
 
-/** Flat catalog — presentation is grouped via `groupAdminNav` (IMP-029). Routes unchanged. */
 const NAV_LINKS: ReadonlyArray<NavLink> = [
-  { id: 'home', href: (base) => base, label: 'Home' },
-  { id: 'users', href: (base) => `${base}/users`, label: 'Users' },
-  { id: 'memberships', href: (base) => `${base}/memberships`, label: 'Memberships' },
-  { id: 'organizations', href: (base) => `${base}/organizations`, label: 'Orgs' },
-  { id: 'students', href: (base) => `${base}/students`, label: 'Students' },
-  { id: 'guardians', href: (base) => `${base}/guardians`, label: 'Guardians' },
-  { id: 'roles', href: (base) => `${base}/roles`, label: 'Roles' },
-  { id: 'academic', href: (base) => `${base}/academic`, label: 'Academic' },
-  { id: 'fees', href: (base) => `${base}/fees`, label: 'Fees' },
-  { id: 'notifications', href: (base) => `${base}/notifications`, label: 'SMS' },
-  { id: 'settings', href: (base) => `${base}/settings`, label: 'Settings' },
+  { id: 'home', href: (base) => base },
+  { id: 'users', href: (base) => `${base}/users` },
+  { id: 'staff', href: (base) => `${base}/staff` },
+  { id: 'memberships', href: (base) => `${base}/memberships` },
+  { id: 'organizations', href: (base) => `${base}/organizations` },
+  { id: 'students', href: (base) => `${base}/students` },
+  { id: 'guardians', href: (base) => `${base}/guardians` },
+  { id: 'roles', href: (base) => `${base}/roles` },
+  { id: 'academic', href: (base) => `${base}/academic` },
+  { id: 'attendance', href: (base) => `${base}/attendance` },
+  { id: 'exams', href: (base) => `${base}/exams` },
+  { id: 'reportCards', href: (base) => `${base}/report-cards` },
+  { id: 'fees', href: (base) => `${base}/fees` },
+  { id: 'notifications', href: (base) => `${base}/notifications` },
+  { id: 'announcements', href: (base) => `${base}/announcements` },
+  { id: 'reports', href: (base) => `${base}/reports` },
+  { id: 'settings', href: (base) => `${base}/settings` },
 ];
 
 const NAV_BY_ID = Object.fromEntries(NAV_LINKS.map((l) => [l.id, l])) as Record<
@@ -60,11 +76,6 @@ const NAV_BY_ID = Object.fromEntries(NAV_LINKS.map((l) => [l.id, l])) as Record<
   NavLink
 >;
 
-/**
- * Admin chrome (DSF-002 / IMP-033 / IMP-029).
- * Session + tenant bind first; then /auth/me capability gate.
- * Nav is permission-filtered and grouped for tablet — API remains AuthZ truth.
- */
 export function AdminShell({
   tenantId,
   children,
@@ -73,9 +84,12 @@ export function AdminShell({
   readonly children: ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
+  const { t } = useAppPreferences();
   const [gate, setGate] = useState<GateState>({ kind: 'loading' });
   const [brand, setBrand] = useState(BRAND_FALLBACK);
+  const [tenantLocale, setTenantLocale] = useState<string | null>(null);
+
+  useTenantLocaleHint(tenantLocale);
 
   useEffect(() => {
     const session = readSession();
@@ -107,6 +121,7 @@ export function AdminShell({
         });
         if (!cancelled) {
           setBrand(result.data.name ?? result.data.code ?? BRAND_FALLBACK);
+          setTenantLocale(result.data.primaryLocale ?? null);
         }
       } catch {
         if (!cancelled) setBrand(BRAND_FALLBACK);
@@ -120,8 +135,8 @@ export function AdminShell({
 
   if (gate.kind === 'loading') {
     return (
-      <div className="app-shell app-shell-wide">
-        <p className="muted">Checking access…</p>
+      <div className="flex min-h-dvh items-center justify-center bg-[var(--muted)] text-sm text-[var(--muted-foreground)]">
+        {t('shell.checkingAccess')}
       </div>
     );
   }
@@ -130,81 +145,74 @@ export function AdminShell({
     const fallbackHref =
       gate.fallback === 'parent' ? `/t/${tenantId}/parent` : `/t/${tenantId}/teacher`;
     return (
-      <div className="app-shell app-shell-wide">
-        <h1>Admin unavailable</h1>
-        <div className="banner banner-error" role="alert">
-          You do not have access to Admin for this school. Sign in with an admin account, or open
-          your teacher/parent workspace.
+      <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-4 px-4">
+        <h1 className="text-xl font-semibold">{t('shell.adminUnavailable')}</h1>
+        <div
+          className="rounded-lg border border-[var(--color-danger)]/40 bg-[color-mix(in_srgb,var(--color-danger)_10%,white)] px-4 py-3 text-sm"
+          role="alert"
+        >
+          {t('shell.adminUnavailableBody')}
         </div>
-        <p className="stack">
-          <Link className="btn btn-primary" href={fallbackHref}>
-            {gate.fallback === 'parent' ? 'Open parent portal' : 'Open teacher workspace'}
-          </Link>
-          <button
+        <div className="flex flex-wrap gap-2">
+          <Button asChild>
+            <Link href={fallbackHref}>
+              {gate.fallback === 'parent' ? t('shell.openParent') : t('shell.openTeacher')}
+            </Link>
+          </Button>
+          <Button
             type="button"
-            className="btn btn-secondary"
+            variant="secondary"
             onClick={() => {
               clearSession();
               router.replace('/login');
             }}
           >
-            Log out
-          </button>
-        </p>
+            {t('shell.logout')}
+          </Button>
+        </div>
       </div>
     );
   }
 
   const base = `/t/${tenantId}/admin`;
-  const groups = groupAdminNav(gate.navIds);
-
-  function isCurrent(href: string): boolean {
-    if (href === base) return pathname === base;
-    return pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
-  }
+  const navGroups: DigiiNavGroup[] = groupAdminNav(gate.navIds).map((group) => ({
+    id: group.id,
+    label: t(groupMessageKey(group.id)),
+    items: group.items.map((id) => {
+      const href = NAV_BY_ID[id].href(base);
+      return {
+        id,
+        href,
+        label: t(navMessageKey(id)),
+        match: id === 'home' ? ('exact' as const) : ('prefix' as const),
+      };
+    }),
+  }));
 
   return (
-    <div className="app-shell app-shell-wide">
-      <header className="top-nav top-nav-grouped">
-        <strong className="top-nav-brand">{brand}</strong>
-        <nav aria-label="Admin" className="admin-nav-groups">
-          {groups.map((group) => (
-            <div key={group.id} className="admin-nav-group">
-              <span className="admin-nav-group-label" id={`admin-nav-${group.id}`}>
-                {group.label}
-              </span>
-              <ul className="admin-nav-group-links" aria-labelledby={`admin-nav-${group.id}`}>
-                {group.items.map((id) => {
-                  const link = NAV_BY_ID[id];
-                  const href = link.href(base);
-                  const current = isCurrent(href);
-                  return (
-                    <li key={id}>
-                      <Link href={href} aria-current={current ? 'page' : undefined}>
-                        {link.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </nav>
-        <button
-          type="button"
-          className="btn btn-secondary top-nav-logout"
-          onClick={() => {
-            clearSession();
-            router.replace('/login');
-          }}
-        >
-          Log out
-        </button>
-      </header>
+    <DigiiShell
+      brand={brand}
+      brandMeta={t('shell.office')}
+      brandHref={base}
+      chipLabel={t('shell.office')}
+      navLabel={t('common.navAdmin')}
+      navGroups={navGroups}
+      portalAccent="#0f6b5c"
+      menuLabel={t('shell.menu')}
+      closeMenuLabel={t('shell.closeMenu')}
+      logoutLabel={t('shell.logout')}
+      onLogout={() => {
+        clearSession();
+        router.replace('/login');
+      }}
+      topActions={
+        <div className={DIGII_TOP_ACTIONS_CLASS}>
+          <WorkspaceSwitcher tenantId={tenantId} />
+          <AdminChromeControls />
+        </div>
+      }
+    >
       {children}
-      <p className="muted" style={{ marginTop: '2rem' }}>
-        <Link href={`/t/${tenantId}/teacher`}>Open teacher attendance</Link>
-      </p>
-    </div>
+    </DigiiShell>
   );
 }

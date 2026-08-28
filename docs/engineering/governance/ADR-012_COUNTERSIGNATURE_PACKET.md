@@ -1,5 +1,7 @@
 # ADR-012 Countersignature Packet & Communication Kit
 
+> **RETIRED (SOLO-GOV-003, 2026-08-15):** This packet describes emails, countersignatures, calendar invites, and a video meeting for people who were never staffed. Owner directive: signature/video gates are deleted kit-wide. Kept as history only — **do not act on anything below.** The `outbox/` files it references have been deleted. See `SOLO-GOV-003-signature-video-gates-retired.md`.
+
 | Field       | Value                                                                                                                                  |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Document ID | `ADR-012-CSK-001`                                                                                                                      |

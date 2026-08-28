@@ -17,10 +17,7 @@ import {
 } from './openai-config.js';
 import { AiProviderNotConfiguredError } from './not-configured-ai.provider.js';
 
-export type OpenAiFetch = (
-  input: string | URL,
-  init?: RequestInit,
-) => Promise<Response>;
+export type OpenAiFetch = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
 @Injectable()
 export class OpenAiAiProvider implements AiProviderPort {
@@ -28,10 +25,7 @@ export class OpenAiAiProvider implements AiProviderPort {
   private readonly config: OpenAiConfig | null;
   private readonly fetchImpl: OpenAiFetch;
 
-  constructor(
-    config: OpenAiConfig | null = loadOpenAiConfig(),
-    fetchImpl: OpenAiFetch = fetch,
-  ) {
+  constructor(config: OpenAiConfig | null = loadOpenAiConfig(), fetchImpl: OpenAiFetch = fetch) {
     this.config = config;
     this.fetchImpl = fetchImpl;
   }
@@ -50,7 +44,7 @@ export class OpenAiAiProvider implements AiProviderPort {
     const response = await this.fetchImpl(url, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${config.apiKey}`,
+        'Authorization': `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -95,14 +89,18 @@ export function mapOpenAiChatCompletion(
     typeof obj['usage'] === 'object' && obj['usage'] !== null
       ? (obj['usage'] as Record<string, unknown>)
       : {};
-  const inputTokens = nonNegInt(usage['prompt_tokens'], Math.max(1, Math.ceil(outputText.length / 8)));
+  const inputTokens = nonNegInt(
+    usage['prompt_tokens'],
+    Math.max(1, Math.ceil(outputText.length / 8)),
+  );
   const outputTokens = nonNegInt(
     usage['completion_tokens'],
     Math.max(1, Math.ceil(outputText.length / 4)),
   );
 
   const modelRaw = obj['model'];
-  const modelCode = typeof modelRaw === 'string' && modelRaw.trim() !== '' ? modelRaw : fallbackModel;
+  const modelCode =
+    typeof modelRaw === 'string' && modelRaw.trim() !== '' ? modelRaw : fallbackModel;
 
   return {
     providerCode: OPENAI_PROVIDER_CODE,

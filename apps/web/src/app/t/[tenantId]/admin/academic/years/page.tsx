@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -33,6 +34,7 @@ export default function AdminAcademicYearsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<AcademicYearRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -125,18 +127,15 @@ export default function AdminAcademicYearsPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic`}>← Academic</Link>
+        <Link href={`/t/${tenantId}/admin/academic`}>← {t('academic.back')}</Link>
       </p>
-      <AdminPageHeader
-        title="Academic years"
-        description="Create years used by terms, classes, fees, and marks. Search and filter the list below."
-      />
+      <AdminPageHeader title={t('academic.years')} description={t('academic.yearsDesc')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Create year</h2>
+        <h2 className="section-title">{t('academic.createYear')}</h2>
         <div className="field">
-          <label htmlFor="year-name">Name</label>
+          <label htmlFor="year-name">{t('common.name')}</label>
           <input
             id="year-name"
             required
@@ -146,11 +145,11 @@ export default function AdminAcademicYearsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="year-code">Code (optional)</label>
+          <label htmlFor="year-code">{t('common.codeOptional')}</label>
           <input id="year-code" value={code} onChange={(e) => setCode(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="year-starts">Starts on (optional)</label>
+          <label htmlFor="year-starts">{t('common.startsOn')}</label>
           <input
             id="year-starts"
             type="date"
@@ -159,7 +158,7 @@ export default function AdminAcademicYearsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="year-ends">Ends on (optional)</label>
+          <label htmlFor="year-ends">{t('common.endsOn')}</label>
           <input
             id="year-ends"
             type="date"
@@ -168,7 +167,7 @@ export default function AdminAcademicYearsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="year-create-status">Status</label>
+          <label htmlFor="year-create-status">{t('common.status')}</label>
           <select
             id="year-create-status"
             value={createStatus}
@@ -182,7 +181,7 @@ export default function AdminAcademicYearsPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy}>
-          {busy ? 'Saving…' : 'Create year'}
+          {busy ? t('common.saving') : t('common.create')}
         </button>
       </form>
 
@@ -202,7 +201,7 @@ export default function AdminAcademicYearsPage() {
         }}
       >
         <div className="field">
-          <label htmlFor="year-search">Search</label>
+          <label htmlFor="year-search">{t('common.search')}</label>
           <input
             id="year-search"
             value={search}
@@ -211,13 +210,13 @@ export default function AdminAcademicYearsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="year-list-status">Status</label>
+          <label htmlFor="year-list-status">{t('common.status')}</label>
           <select
             id="year-list-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as '' | LifecycleStatus)}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('common.allStatuses')}</option>
             {LIFECYCLE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -226,13 +225,13 @@ export default function AdminAcademicYearsPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          Apply filters
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No academic years yet."
+        empty={t('academic.emptyYears')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -250,7 +249,10 @@ export default function AdminAcademicYearsPage() {
           />
         }
       >
-        <AdminTable caption="Academic years" headers={['Name', 'Code', 'Status', '']}>
+        <AdminTable
+          caption={t('academic.years')}
+          headers={[t('common.name'), t('common.code'), t('common.status'), '']}
+        >
           {rows.map((row) => (
             <tr key={row.id}>
               <td>
@@ -265,7 +267,7 @@ export default function AdminAcademicYearsPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/academic/years/${row.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

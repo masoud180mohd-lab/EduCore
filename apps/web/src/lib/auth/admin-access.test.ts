@@ -10,7 +10,7 @@ import {
   groupAdminNav,
   visibleAdminNavIds,
   type AdminNavId,
-} from './admin-access.js';
+} from './admin-access';
 
 describe('canAccessAdminShell', () => {
   it('allows owner/admin roles', () => {
@@ -18,11 +18,11 @@ describe('canAccessAdminShell', () => {
     expect(canAccessAdminShell({ roles: [{ code: 'admin' }], permissions: [] })).toBe(true);
   });
 
-  it('allows staff with finance or student read (bursar / registry)', () => {
+  it('allows bursar finance.read or staff student read (registry)', () => {
     expect(
       canAccessAdminShell({
-        roles: [{ code: 'staff' }],
-        permissions: ['finance.read', 'attendance.manage'],
+        roles: [{ code: 'bursar' }],
+        permissions: ['finance.read', 'finance.manage'],
       }),
     ).toBe(true);
     expect(
@@ -64,10 +64,10 @@ describe('visibleAdminNavIds', () => {
     expect(ids.has('roles')).toBe(true);
   });
 
-  it('filters staff with finance+academic to Fees/Academic/Home only (no Users/Settings)', () => {
+  it('filters bursar+academic perms to Fees/Academic/Home only (no Users/Settings)', () => {
     const ids = visibleAdminNavIds({
-      roles: [{ code: 'staff' }],
-      permissions: ['finance.manage', 'academic.read', 'attendance.manage'],
+      roles: [{ code: 'bursar' }],
+      permissions: ['finance.manage', 'academic.read'],
     });
     expect(ids.has('home')).toBe(true);
     expect(ids.has('fees')).toBe(true);
@@ -167,7 +167,8 @@ describe('groupAdminNav (IMP-029)', () => {
       'access',
       'academic',
       'fees',
-      'notifications',
+      'communications',
+      'insights',
       'settings',
     ]);
     expect(groups.find((g) => g.id === 'registry')?.items).toEqual([
@@ -175,7 +176,18 @@ describe('groupAdminNav (IMP-029)', () => {
       'guardians',
       'organizations',
     ]);
-    expect(groups.find((g) => g.id === 'access')?.items).toEqual(['users', 'memberships', 'roles']);
+    expect(groups.find((g) => g.id === 'access')?.items).toEqual([
+      'users',
+      'staff',
+      'memberships',
+      'roles',
+    ]);
+    expect(groups.find((g) => g.id === 'academic')?.items).toEqual([
+      'academic',
+      'attendance',
+      'exams',
+      'reportCards',
+    ]);
   });
 
   it('omits empty groups; finance-only sees Fees not Access', () => {
@@ -184,7 +196,8 @@ describe('groupAdminNav (IMP-029)', () => {
       permissions: ['finance.manage', 'attendance.manage'],
     });
     const groups = groupAdminNav(ids);
-    expect(groups.map((g) => g.id)).toEqual(['home', 'fees']);
+    expect(groups.map((g) => g.id)).toEqual(['home', 'academic', 'fees', 'insights']);
+    expect(groups.find((g) => g.id === 'academic')?.items).toEqual(['attendance']);
     expect(groups.some((g) => g.id === 'access')).toBe(false);
     expect(groups.some((g) => g.id === 'registry')).toBe(false);
   });

@@ -4,17 +4,17 @@
 
 This is the canonical status page for EduCore. It answers what is complete, what is frozen, what is flexible, what is allowed now, and what must happen next. It does not override the Development Constitution, accepted ADRs, or an approved freeze record.
 
-**Honesty:** Freeze acceptance language below is under **solo-operator consolidation (SOLO-GOV-001)** unless an independent multi-person countersign is recorded. That is not the same as unrestricted production approval.
+**Honesty:** EduCore is **Owner + AI** ([SOLO-GOV-002](../docs/engineering/governance/SOLO-GOV-002-owner-plus-ai.md)). Kit Independent Board / architect-team language is retired. That is not a public-pilot stamp.
 
 ## Current Phase
 
-**Staging lab MVP live (Frankfurt), post–Engineering Sprint 0. Production / public pilot still NO GO.**
+**Staging lab MVP live (Frankfurt). M9 pilot hardening in progress. Owner + AI. No Independent Board.**
 
 - Architecture Freeze v1.0 remains the kit baseline (`38_ARCHITECTURE_FREEZE_RECORD.md`).
-- Independent Engineering Readiness Review (`42_ENGINEERING_READINESS_REVIEW.md`) remains **NO GO for unrestricted production / public pilot**.
-- Domain work proceeds only behind **slice** Database / API / provisional Design freezes and IMP gates under SOLO-GOV-001 — not as open-ended production feature development.
+- `42_ENGINEERING_READINESS_REVIEW.md` is a **historical checklist** (Board wrapper retired). Do not wait for re-review.
+- Domain work proceeds behind **Owner-accepted** slice Database / API / Design freezes and IMP gates — not as invent-anything production.
 
-Last status sync: **2026-08-13**.
+Last status sync: **2026-08-27**.
 
 ## Completed And Approved
 
@@ -25,14 +25,14 @@ Last status sync: **2026-08-13**.
 - Architecture Review and Architecture Freeze v1.0.
 - ADR-001 through ADR-011 (kit); engineering ADRs including ADR-012 (historical sequencing exception); **PAY-001 Accepted** (ClickPesa / Zanzibar) amending `PAY-PROVIDER-001` (Fake remains CI default).
 - AI Development Kit v2.0, implementation roadmap, Master Engineering Execution Prompt, and AI-EOS.
-- Engineering Readiness Review and its blocker register (verdict still NO GO for unrestricted production).
+- Engineering Readiness Review (`42`) retained as historical checklist; Independent Board never staffed (SOLO-GOV-002).
 
 ### Engineering foundation
 
 - Monorepo workspace, CI (`npm run check`), Nest modular monolith skeleton, Postgres + RLS tooling, local Docker path, structured logging / health / error envelope.
 - Engineering Sprint 0 foundation work largely executed (see `roadmap/sprint0_engineering_foundation.md` and `docs/engineering/`).
 
-### Slice freezes (solo-operator Accepted / provisional)
+### Slice freezes (Owner-accepted)
 
 Authoritative artifacts live under `docs/engineering/` (not rewritten into kit freeze v1.0 wording):
 
@@ -40,17 +40,17 @@ Authoritative artifacts live under `docs/engineering/` (not rewritten into kit f
 | ---- | ------------------ |
 | DBF-001…012 | Identity/tenant, students, academic structure, enrollments, attendance, guardians, marks, finance fees |
 | ACF-001…013 | Matching API contract slices + parent portal fees |
-| DSF-001…006 | Provisional UI slices: teacher attendance/marks, admin shell/guardians/academic, admin fees, parent fees/portal |
-| FREEZE-ACC-001 | Identity & Tenant Accepted v1.0 (solo-operator) |
+| DSF-001…006 | Owner-accepted UI slices: teacher attendance/marks, admin shell/guardians/academic, admin fees, parent fees/portal |
+| FREEZE-ACC-001 | Identity & Tenant Accepted v1.0 (Owner) |
 
 ### Product surface shipped in lab (gated IMP)
 
 - Auth sessions, tenant bind, memberships/roles/permissions (deny-by-default).
 - Admin ops UI polish closed for AUDIT-ADMIN-UI-R1 (IMP-027…046).
-- Teacher attendance/marks UI; parent/guardian fee visibility (Fake payments path).
-- Office fees path: structures → invoices → office payment → receipts (real MoMo **not** integrated).
+- Teacher attendance/marks UI; parent/guardian fee visibility (pay at office).
+- Office fees path: structures → invoices → office payment → receipts (PAY-007 live path; MoMo later).
 - **Staging FRA:** Fly `educore-api-staging` + Neon `educore-staging-fra`; D1 Pass (2026-08-08 + FRA re-check 2026-08-10); D2 Pass (app redeploy 2026-08-13); Auth0 US PKCE; **MFA_ENFORCE=hard**.
-- **Production infra (not GO):** Fly `educore-api` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green; IdP local; MFA soft; Fake payments.
+- **Production infra (Owner lab, not public-school cutover):** Fly `educore-api` + `educore-web` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green; IdP local; **MFA_ENFORCE=hard** (F-002); office fees (PAY-007). Web: https://educore-web.fly.dev
 
 ## Frozen
 
@@ -69,40 +69,47 @@ A material architecture change requires an ADR, impact review, affected-document
 
 ### Slice contracts (engineering)
 
-Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze requires a slice revision. Provisional DSF slices do **not** equal kit-wide Design System Freeze acceptance.
+Within an accepted DBF/ACF slice, inventing tables/endpoints outside that freeze requires a slice revision. Slice DSF still governs screens even with `DSF-KIT-001`.
 
 ## Still Flexible / open
 
 | Area | Status |
 | ---- | ------ |
-| Kit-wide Design System Freeze | **Accepted (provisional):** `DSF-KIT-001` v1.0 — slice DSF-001…006 still govern screens |
-| Production IdP / MFA | **WEB-AUTH0** (US tenant residual); **WEB-MFA-UI**; staging **MFA-HARD** live (Owner enrolled TOTP) |
-| Hosting, IaC, secrets provider, RPO/RTO | **Live staging + prod infra:** Fly.io + Neon Frankfurt + Doppler; RPO≤24h; RTO≤8h (D1/D2 evidence). Prod `educore-api` is **infra live, not Board GO**. Neon PITR max **6h** on current plan |
-| First **real** payment provider | **Chosen:** ClickPesa (`clickpesa`) for Zanzibar — PAY-001 Accepted; Fake default until adapter + secrets |
+| Kit-wide Design System Freeze | **Accepted (provisional):** `DSF-KIT-001` v1.2 — slice DSF-001…006 still govern screens |
+| Production IdP / MFA | **WEB-AUTH0** (US tenant residual); **WEB-MFA-UI**; staging **and prod** MFA-HARD |
+| Hosting, IaC, secrets provider, RPO/RTO | **Live staging + prod infra:** Fly.io + Neon Frankfurt + Doppler. Neon PITR max **6h** on current plan (kit RPO was 24h) |
+| First **real** payment provider | **Live:** office cash/bank/cheque (PAY-007). **Later:** ClickPesa — PAY-001 choice unchanged; Fake runtime; no keys |
 | AI provider / release gate | **Lab adapter chosen:** OpenAI (`openai`) env-gated; Fake CI default; product features still gate-blocked (`lab.echo` only) |
 | Offline attendance worker | Foundation/docs path; not production offline cutover |
-| Independent multi-person freeze re-sign | Open (SOLO-GOV-001 honesty residual) |
+| Independent Board / freeze re-sign | **Retired** (SOLO-GOV-002). F-005 withdrawn. |
 
 ## Work Allowed Now
 
-1. Gated IMP increments behind **existing** accepted/provisional slice freezes (DBF/ACF/DSF), with SOLO-GOV-001 honesty in docs.
+1. Gated IMP increments behind **existing** Owner-accepted slice freezes (DBF/ACF/DSF).
 2. Hardening, isolation tests, OpenAPI/docs sync, and Admin/Teacher/Parent UX polish **within** frozen contracts.
-3. Decision briefs that close open limitations (**PAY-001…006** lab shipped; **PAY-OPS-001** when keys).
-4. Engineering Readiness **re-review preparation** before any production/pilot claim.
+3. Decision briefs that close open limitations (**PAY-001…007**; **PAY-OPS-001** when Owner can afford ClickPesa).
+4. Owner-directed ops (keys, PITR plan, public-school cutover). No Board meeting required.
 
 ## Work Not Allowed Now
 
-- Unrestricted production feature development or public pilot cutover.
-- Real mobile-money vendor SDK/credentials without a superseding payment decision + sandbox contract + webhook security spec.
 - Inventing schema/API/UI outside the governing slice freeze.
-- High-risk AI, MFA-less privileged production finance admin claims, or silent architecture redesign.
-- Treating solo-operator signatures as independent external peer review.
+- Real ClickPesa credentials invented in git/chat; enabling `clickpesa` without Doppler secrets.
+- High-risk AI, MFA-less privileged finance admin, or silent architecture redesign.
+- Inventing an Independent Board or waiting for fictional countersigners.
 
 ## Next Milestone
 
-**Lab/staging MVP** — **Done (provisional, SOLO-GOV-001).** Production still **NO GO**.
+**M9 Pilot hardening** — **GO (gated) issued 2026-08-28** for EduCore Staging School on staging (Owner-delegated; evidence `docs/engineering/task-records/M9-cutover-staging-school-2026-08-28.md`; 48h watch through 2026-08-30). Prod cutover still requires its own UAT + Owner GO.
 
-Closed:
+### M9 progress
+
+1. ~~**M9-001**~~ Pilot readiness pack — cutover checklist, solo incident runbook, core UAT script (`docs/engineering/task-records/M9-001-pilot-readiness-pack.md`).
+2. ~~**M9-002**~~ Owner executes UAT on staging (evidence task-record) — **Pass** 2026-08-28; 12/12 browser-level rows via `scripts/ops-stg-m9-uat-browser.mjs` (2026-08-28 addendum in `docs/engineering/task-records/M9-uat-staging-2026-08-27.md`).
+3. ~~**M9-003**~~ B-07 D3 secrets rotate rehearsal (staging) — **Pass** 2026-08-27 (`docs/engineering/task-records/M9-003-d3-secrets-rotate-rehearsal-2026-08-27.md`); next D3 due ≈ 2027-02-27.
+4. ~~**M9-004**~~ p95 latency baseline sample (SLO-3) — captured 2026-08-28 via `scripts/ops-stg-m9-latency-baseline.mjs`; 2 runs: run 1 `/auth/me` p95 954 ms (client-side variance), run 2 all endpoints within 800 ms (`docs/engineering/task-records/M9-004-latency-baseline-staging-2026-08-28T*.md`).
+5. ~~**M9-005**~~ WEB-MFA-UI residual polish — Done 2026-08-28 (`docs/engineering/task-records/M9-005-web-mfa-ui-residual-polish-2026-08-28.md`).
+
+### Closed (MVP / ops)
 
 1. ~~B-05~~ Fly.io + Neon + Doppler; RPO≤24h; RTO≤8h.
 2. ~~B-04~~ Lite threat model.
@@ -111,23 +118,27 @@ Closed:
 5. ~~OPS-001 / FLY-DOCKER / OPS-EXEC~~ Staging provisioned; D1 evidence on `main`.
 6. ~~WEB-AUTH0 + MFA-HARD~~ Staging privileged path requires TOTP.
 
-Owner close-out **before Board re-review**:
+Owner residuals (not Board):
 
-1. ~~**D2**~~ Pass — Fly staging redeploy + health (not PITR rewire).
+1. ~~**D2**~~ Pass — Fly staging redeploy + health.
 2. ~~**Weekly Neon PITR glance**~~ Done — plan max 6h (7d rejected).
-3. ~~**Secrets hygiene**~~ Staging `SEED_ADMIN_PASS` rotated + applied (retrieve via Doppler locally).
-4. **PAY-OPS-001** still blocked — no ClickPesa keys; runtime Fake.
-5. **Board re-review** of `42` — **still required**; chat / SOLO-GOV-001 ≠ that review.
-6. ~~**Production Fly + Neon + Doppler**~~ Infra live (`OPS-PROD-001`) — **not** GO.
+3. ~~**Secrets hygiene**~~ Staging `SEED_ADMIN_PASS` rotated.
+4. **PAY-OPS-001** deferred (PAY-007) — office collection live; ClickPesa when Owner can fund the account.
+5. ~~**Board re-review** of `42`~~ **Retired** (SOLO-GOV-002).
+6. ~~**Production Fly + Neon + Doppler**~~ Infra live (`OPS-PROD-001`).
+7. ~~**F-002**~~ Prod MFA hard. **F-005** withdrawn.
+8. ~~**F-004 / F-016 / F-017 live**~~ Prod migrated; staging + prod Fly images 2026-08-13.
+9. ~~**FLY-WEB**~~ `educore-web-staging` + `educore-web` live 2026-08-14.
+10. **Gated school cutover** — use `docs/engineering/runbooks/M9-pilot-cutover-checklist.md` after M9-002 UAT Pass.
 
-**Governance:** Full Board re-review still required per `42_ENGINEERING_READINESS_REVIEW.md`.
+**Governance:** Owner + AI. `42` is a checklist, not a people-gate.
 
 ## Naming Convention
 
 - **Architecture Sprint 0**: completed planning and architecture validation (`roadmap/sprint0_planning_validation.md`).
 - **Engineering Sprint 0**: non-business technical foundation (`roadmap/sprint0_engineering_foundation.md`) — exit note `SPRINT0_ENGINEERING_EXIT_NOTE.md`.
 - **Feature slices / IMP programs**: gated production-shaped work under slice freezes (Identity → Students → Academic → Attendance → Marks → Guardians → Fees → Admin UI polish).
-- **Next epic focus**: Independent **Board re-review** of `42`; **PAY-OPS** when ClickPesa keys; Neon plan upgrade if weekly PITR window is required.
+- **Next epic focus**: **M9** pilot hardening (UAT → optional D3/p95 → gated school cutover). Office-fees remains live path; ClickPesa later; Neon plan upgrade if a 24h PITR window is required.
 
 ## Status Update Rules
 

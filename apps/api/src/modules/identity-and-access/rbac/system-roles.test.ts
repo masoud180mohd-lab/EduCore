@@ -9,13 +9,22 @@ import {
 } from './system-roles.js';
 
 describe('system role matrices (IMP-001 P4)', () => {
-  it('defines system codes owner/admin/staff/parent', () => {
-    expect([...SYSTEM_ROLE_CODES]).toEqual(['owner', 'admin', 'staff', 'parent']);
+  it('defines system codes owner/admin/staff/bursar/parent/student', () => {
+    expect([...SYSTEM_ROLE_CODES]).toEqual([
+      'owner',
+      'admin',
+      'staff',
+      'bursar',
+      'parent',
+      'student',
+    ]);
     expect(SYSTEM_ROLE_DEFINITIONS.map((d) => d.code)).toEqual([
       'owner',
       'admin',
       'staff',
+      'bursar',
       'parent',
+      'student',
     ]);
   });
 
@@ -46,6 +55,19 @@ describe('system role matrices (IMP-001 P4)', () => {
     expect(staff).not.toContain('tenant.manage');
     expect(staff).not.toContain('user.manage');
     expect(staff).not.toContain('role.manage');
+    expect(staff).not.toContain('finance.read');
+    expect(staff).not.toContain('finance.manage');
+  });
+
+  it('gives bursar finance.manage and not classroom writes', () => {
+    const bursar = permissionsForSystemRole('bursar');
+    expect(bursar).toContain('finance.read');
+    expect(bursar).toContain('finance.manage');
+    expect(bursar).toContain('student.read');
+    expect(bursar).not.toContain('finance.reconcile');
+    expect(bursar).not.toContain('attendance.manage');
+    expect(bursar).not.toContain('marks.manage');
+    expect(isSystemRoleCode('bursar')).toBe(true);
   });
 
   it('keeps parent portal-scoped without bursar finance.read', () => {
@@ -54,6 +76,14 @@ describe('system role matrices (IMP-001 P4)', () => {
     expect(parent).not.toContain('finance.read');
     expect(parent).not.toContain('guardian.manage');
     expect(isSystemRoleCode('parent')).toBe(true);
+  });
+
+  it('keeps student portal-scoped to self read only', () => {
+    const student = permissionsForSystemRole('student');
+    expect(student).toEqual(['student.self.read']);
+    expect(student).not.toContain('student.read');
+    expect(student).not.toContain('marks.read');
+    expect(isSystemRoleCode('student')).toBe(true);
   });
 
   it('type-guards system role codes', () => {

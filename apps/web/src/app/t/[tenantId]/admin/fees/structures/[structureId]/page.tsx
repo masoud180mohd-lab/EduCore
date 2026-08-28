@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
@@ -51,6 +52,7 @@ function itemsSignature(
 export default function AdminFeeStructureDetailPage() {
   const params = useParams<{ tenantId: string; structureId: string }>();
   const { tenantId, structureId } = params;
+  const { t } = useAppPreferences();
   const [row, setRow] = useState<FeeStructureDetail | null>(null);
   const [yearName, setYearName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -150,7 +152,7 @@ export default function AdminFeeStructureDetailPage() {
 
     const itemsChanged = itemsSignature(parsedItems) !== baselineItemsSig;
     if (itemsChanged && parsedItems.length === 0) {
-      setError('Add at least one fee item, or leave items unchanged.');
+      setError(t('fees.needItem'));
       return;
     }
 
@@ -197,10 +199,10 @@ export default function AdminFeeStructureDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/fees/structures`}>← Fee structures</Link>
+        <Link href={`/t/${tenantId}/admin/fees/structures`}>← {t('fees.structures')}</Link>
       </p>
-      <AdminPageHeader title={row?.name ?? 'Fee structure'} />
-      {loading ? <p className="muted">Loading…</p> : null}
+      <AdminPageHeader title={row?.name ?? t('structure.title')} />
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {notice !== null ? <Banner tone="info">{notice}</Banner> : null}
       {row !== null ? (
@@ -214,13 +216,12 @@ export default function AdminFeeStructureDetailPage() {
           </p>
 
           <form className="stack card" onSubmit={(e) => void onSave(e)}>
-            <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Edit structure</h2>
+            <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('fees.editStructure')}</h2>
             <p className="muted" style={{ margin: 0 }}>
-              Academic year and currency stay fixed. Item edits replace the whole list and are
-              blocked if invoices already reference these items.
+              {t('fees.editStructureHint')}
             </p>
             <div className="field">
-              <label htmlFor="fs-edit-name">Name</label>
+              <label htmlFor="fs-edit-name">{t('common.name')}</label>
               <input
                 id="fs-edit-name"
                 required
@@ -230,24 +231,26 @@ export default function AdminFeeStructureDetailPage() {
               />
             </div>
             <div className="field">
-              <label htmlFor="fs-edit-status">Status</label>
+              <label htmlFor="fs-edit-status">{t('common.status')}</label>
               <select
                 id="fs-edit-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as StructureStatus)}
               >
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
-                <option value="archived">Archived</option>
+                <option value="draft">draft</option>
+                <option value="active">active</option>
+                <option value="archived">archived</option>
               </select>
             </div>
 
             <fieldset className="stack" style={{ border: 'none', padding: 0, margin: 0 }}>
-              <legend style={{ fontWeight: 600, fontSize: '0.875rem' }}>Items (TZS major)</legend>
+              <legend style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                {t('fees.itemsLegend')}
+              </legend>
               {items.map((item, index) => (
                 <div key={index} className="stack" style={{ gap: '0.5rem' }}>
                   <div className="field">
-                    <label htmlFor={`edit-item-name-${String(index)}`}>Item name</label>
+                    <label htmlFor={`edit-item-name-${String(index)}`}>{t('fees.itemName')}</label>
                     <input
                       id={`edit-item-name-${String(index)}`}
                       value={item.name}
@@ -279,16 +282,16 @@ export default function AdminFeeStructureDetailPage() {
                 className="btn btn-secondary"
                 onClick={() => setItems([...items, { name: '', amountMajor: '' }])}
               >
-                Add item
+                {t('fees.addItem')}
               </button>
             </fieldset>
 
             <button type="submit" className="btn btn-primary" disabled={busy}>
-              {busy ? 'Saving…' : 'Save changes'}
+              {busy ? t('common.saving') : t('common.save')}
             </button>
           </form>
 
-          <h2 style={{ fontSize: '1.1rem' }}>Current total</h2>
+          <h2 style={{ fontSize: '1.1rem' }}>{t('fees.total')}</h2>
           <p className="muted">
             Total (items): {formatTzsMinor(row.items.reduce((sum, i) => sum + i.amountMinor, 0))}
           </p>

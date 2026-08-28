@@ -1,12 +1,12 @@
 # IMP-038 — Remaining Admin list filters (Guardians / Academic / Fee structures)
 
-| Field     | Value                                      |
-| --------- | ------------------------------------------ |
-| Program   | **IMP-038**                                |
-| Date      | 2026-08-11                                 |
-| Status    | **Done** (solo-operator provisional)       |
+| Field     | Value                                           |
+| --------- | ----------------------------------------------- |
+| Program   | **IMP-038**                                     |
+| Date      | 2026-08-11                                      |
+| Status    | **Done** (solo-operator provisional)            |
 | Depends   | IMP-036 list-filter pattern · ACF academic/fees |
-| Authority | Solo-operator provisional (SOLO-GOV-001)   |
+| Authority | Solo-operator provisional (SOLO-GOV-001)        |
 
 ## Outcome
 
@@ -14,12 +14,12 @@ Wire Admin UI list filters the API already supported on Guardians, Academic year
 
 ## Delivered
 
-| List            | Filters                                      |
-| --------------- | -------------------------------------------- |
-| Guardians       | `search` + `status` (`active` / `inactive`)  |
-| Academic years  | `search` + `status` (lifecycle)              |
-| Subjects        | `search` + `status` (lifecycle)              |
-| Fee structures  | `academicYearId` + `status` (`draft` / `active` / `archived`) |
+| List           | Filters                                                       |
+| -------------- | ------------------------------------------------------------- |
+| Guardians      | `search` + `status` (`active` / `inactive`)                   |
+| Academic years | `search` + `status` (lifecycle)                               |
+| Subjects       | `search` + `status` (lifecycle)                               |
+| Fee structures | `academicYearId` + `status` (`draft` / `active` / `archived`) |
 
 - Apply resets cursor (`append: false`); Load more keeps **applied** filters.
 - Years / subjects / structures: `AdminPageHeader` + `Banner` for list-page consistency.

@@ -1,10 +1,16 @@
 'use client';
 
+import { GraduationCap, UserCog, User, School } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { AdminPageHeader, Banner } from '@/components/admin';
+import { useAppPreferences } from '@/components/AppProviders';
 import { MfaChallengeForm } from '@/components/MfaChallengeForm';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { beginAuth0Login, isAuth0Configured } from '@/lib/auth/auth0-pkce';
 import {
@@ -13,6 +19,49 @@ import {
   verifyMfaAndComplete,
   type TenantChoice,
 } from '@/lib/auth/complete-login';
+
+const DEMO_ACCOUNTS = [
+  {
+    role: 'admin',
+    label: 'Admin',
+    email: 'admin@educore.local',
+    password: 'Password123!',
+    tenantId: '01900000-0010-7000-8000-000000000001',
+    icon: UserCog,
+  },
+  {
+    role: 'teacher',
+    label: 'Teacher',
+    email: 'teacher@educore.local',
+    password: 'Password123!',
+    tenantId: '01900000-0010-7000-8000-000000000001',
+    icon: User,
+  },
+  {
+    role: 'principal',
+    label: 'Principal',
+    email: 'head@educore.local',
+    password: 'Password123!',
+    tenantId: '01900000-0010-7000-8000-000000000001',
+    icon: School,
+  },
+  {
+    role: 'student',
+    label: 'Student',
+    email: 'student@educore.local',
+    password: 'Password123!',
+    tenantId: '01900000-0010-7000-8000-000000000001',
+    icon: User,
+  },
+  {
+    role: 'parent',
+    label: 'Parent',
+    email: 'parent@educore.local',
+    password: 'Password123!',
+    tenantId: '01900000-0010-7000-8000-000000000001',
+    icon: UserCog,
+  },
+] as const;
 
 type LoginResponse = {
   readonly data?: {
@@ -24,8 +73,10 @@ type LoginResponse = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t, locale, setLocale, theme, setTheme } = useAppPreferences();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
   const [tenantId, setTenantId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -33,7 +84,6 @@ export default function LoginPage() {
   const [tenants, setTenants] = useState<ReadonlyArray<TenantChoice> | null>(null);
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [mfaChallengeToken, setMfaChallengeToken] = useState<string | null>(null);
-  // Defer Auth0 UI until after mount so SSR HTML matches the first client paint.
   const [auth0Ready, setAuth0Ready] = useState(false);
 
   useEffect(() => {
@@ -51,7 +101,7 @@ export default function LoginPage() {
       setPendingToken(outcome.accessToken);
       setTenants(outcome.tenants);
       setMfaChallengeToken(null);
-      setError('Select a school to continue.');
+      setError(t('login.selectSchool'));
       return;
     }
     if (outcome.kind === 'mfa_required') {
@@ -87,7 +137,7 @@ export default function LoginPage() {
       );
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
-      else setError('Sign-in failed.');
+      else setError(t('login.failed'));
     } finally {
       setBusy(false);
     }
@@ -99,7 +149,7 @@ export default function LoginPage() {
     try {
       await beginAuth0Login();
     } catch {
-      setError('Auth0 is not configured for this web build.');
+      setError(t('login.auth0Missing'));
       setAuth0Busy(false);
     }
   }
@@ -111,8 +161,10 @@ export default function LoginPage() {
     try {
       await handleOutcome(await verifyMfaAndComplete({ mfaChallengeToken, code }));
     } catch (err) {
-      if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
-      else setError('MFA verification failed.');
+      if (err instanceof ApiClientError) {
+        setError(teacherFriendlyMessage(err));
+        if (/challenge/i.test(err.message)) setMfaChallengeToken(null);
+      } else setError(t('login.mfaFailed'));
     } finally {
       setBusy(false);
     }
@@ -127,112 +179,176 @@ export default function LoginPage() {
       router.replace(path);
     } catch (err) {
       if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
-      else setError('Could not select school.');
+      else setError(t('login.selectFailed'));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="app-shell">
-      <AdminPageHeader
-        title="Sign in"
-        description="EduCore — staff, admin, and parent accounts."
+    <div className="relative flex min-h-dvh items-center justify-center px-4 py-10">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,color-mix(in_srgb,var(--color-accent)_22%,transparent),transparent_45%),radial-gradient(circle_at_80%_0%,color-mix(in_srgb,var(--color-accent)_12%,transparent),transparent_40%)]"
       />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      <div className="absolute right-4 top-4 z-10 flex items-center gap-2 md:right-8 md:top-6">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setLocale(locale === 'en' ? 'sw' : 'en')}
+        >
+          <span suppressHydrationWarning>{locale === 'en' ? 'SW' : 'EN'}</span>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        >
+          <span suppressHydrationWarning>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+        </Button>
+      </div>
 
-      {mfaChallengeToken !== null ? (
-        <MfaChallengeForm
-          busy={busy}
-          onSubmit={onMfaVerify}
-          onCancel={() => {
-            setMfaChallengeToken(null);
-            setError(null);
-          }}
-        />
-      ) : tenants !== null ? (
-        <div className="stack">
-          <p>Choose your school:</p>
-          <ul className="list">
-            {tenants.map((t) => (
-              <li key={t.id}>
-                <button
-                  type="button"
-                  className="card"
-                  style={{ width: '100%', textAlign: 'left' }}
-                  onClick={() => void bindTenant(t.id)}
-                  disabled={busy}
-                >
-                  {t.name ?? t.code ?? t.id}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="stack">
-          {auth0Ready ? (
-            <>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={busy || auth0Busy}
-                onClick={() => void onAuth0Click()}
-              >
-                {auth0Busy ? 'Redirecting…' : 'Ingia na Auth0'}
-              </button>
-              <p className="muted" style={{ textAlign: 'center', margin: 0 }}>
-                or email / password
-              </p>
-            </>
+      <Card className="relative z-10 w-full max-w-md animate-rise shadow-[0_24px_60px_-40px_color-mix(in_srgb,var(--color-ink)_45%,transparent)]">
+        <CardHeader>
+          <div className="mb-2 flex items-center gap-2" suppressHydrationWarning>
+            <span
+              className="flex size-9 items-center justify-center rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)]"
+              suppressHydrationWarning
+            >
+              <GraduationCap aria-hidden className="size-4" suppressHydrationWarning />
+            </span>
+            <span className="text-xl font-semibold tracking-tight">EduCore</span>
+          </div>
+          <CardTitle>{t('login.title')}</CardTitle>
+          <CardDescription>{t('login.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {error !== null ? (
+            <div
+              className="rounded-lg border border-[var(--color-danger)]/35 bg-[color-mix(in_srgb,var(--color-danger)_10%,var(--card))] px-3 py-2 text-sm text-[var(--color-danger)]"
+              role="alert"
+            >
+              {error}
+            </div>
           ) : null}
 
-          <form className="stack" onSubmit={(e) => void onSubmit(e)}>
-            <div className="field">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="username"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+          {mfaChallengeToken !== null ? (
+            <MfaChallengeForm
+              busy={busy}
+              onSubmit={onMfaVerify}
+              onCancel={() => {
+                setMfaChallengeToken(null);
+                setError(null);
+              }}
+            />
+          ) : tenants !== null ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-[var(--muted-foreground)]">{t('login.chooseSchool')}</p>
+              <ul className="flex flex-col gap-2">
+                {tenants.map((school) => (
+                  <li key={school.id}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-auto w-full justify-start px-4 py-3 text-left"
+                      onClick={() => void bindTenant(school.id)}
+                      disabled={busy}
+                    >
+                      {school.name ?? school.code ?? school.id}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="field">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+          ) : (
+            <div className="flex flex-col gap-4">
+              {auth0Ready ? (
+                <>
+                  <Button
+                    type="button"
+                    size="lg"
+                    disabled={busy || auth0Busy}
+                    onClick={() => void onAuth0Click()}
+                  >
+                    {auth0Busy ? t('login.auth0Busy') : t('login.auth0')}
+                  </Button>
+                  <p className="text-center text-sm text-[var(--muted-foreground)]">
+                    {t('login.orPassword')}
+                  </p>
+                </>
+              ) : null}
+
+              <form className="flex flex-col gap-4" onSubmit={(e) => void onSubmit(e)}>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="email">{t('common.email')}</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="username"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="password">{t('common.password')}</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="tenantId">{t('login.schoolIdOptional')}</Label>
+                  <Input
+                    id="tenantId"
+                    name="tenantId"
+                    type="text"
+                    placeholder={t('login.schoolIdPlaceholder')}
+                    value={tenantId}
+                    onChange={(e) => setTenantId(e.target.value)}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  size="lg"
+                  variant={auth0Ready ? 'secondary' : 'default'}
+                  disabled={busy || auth0Busy}
+                  className="w-full"
+                >
+                  {busy ? t('login.signingIn') : t('login.signIn')}
+                </Button>
+              </form>
             </div>
-            <div className="field">
-              <label htmlFor="tenantId">School id (optional)</label>
-              <input
-                id="tenantId"
-                name="tenantId"
-                type="text"
-                placeholder="UUID if you know it"
-                value={tenantId}
-                onChange={(e) => setTenantId(e.target.value)}
-              />
-            </div>
-            <button
-              type="submit"
-              className={auth0Ready ? 'btn btn-secondary' : 'btn btn-primary'}
-              disabled={busy || auth0Busy}
-            >
-              {busy ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
-        </div>
-      )}
+          )}
+          {/* Demo accounts */}
+          <div className="flex flex-col gap-2 mt-4">
+            {DEMO_ACCOUNTS.map((acc) => (
+              <Button
+                key={acc.role}
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setEmail(acc.email);
+                  setPassword(acc.password);
+                  setTenantId(acc.tenantId);
+                  toast.success(`Filled ${acc.label} demo credentials`);
+                }}
+              >
+                <acc.icon className="mr-2 size-4" suppressHydrationWarning />
+                {acc.label}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

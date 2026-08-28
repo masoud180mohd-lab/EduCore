@@ -53,7 +53,7 @@ describe('IMP-021 user re-enable', () => {
       'utf8',
     );
     expect(page).toContain('/enable');
-    expect(page).toContain('Enable user');
+    expect(page).toContain("t('users.enableUser')");
   });
 
   it('has task record and manual QA', () => {

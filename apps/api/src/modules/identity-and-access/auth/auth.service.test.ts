@@ -298,10 +298,7 @@ describe('AuthService login', () => {
     };
     const sessions = {
       isAvailable: () => true,
-      lookupUserByExternalSubject: vi
-        .fn()
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(user),
+      lookupUserByExternalSubject: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(user),
       lookupUserByEmail: vi.fn().mockResolvedValue(user),
       linkExternalSubject: vi.fn().mockResolvedValue(true),
       hasActiveMembership: vi.fn().mockResolvedValue(true),
@@ -340,10 +337,7 @@ describe('AuthService login', () => {
     };
     const sessions = {
       isAvailable: () => true,
-      lookupUserByExternalSubject: vi
-        .fn()
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(user),
+      lookupUserByExternalSubject: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(user),
       lookupUserByEmail: vi.fn().mockResolvedValue(user),
       linkExternalSubject: vi.fn().mockResolvedValue(true),
       hasActiveMembership: vi.fn().mockResolvedValue(true),
@@ -417,6 +411,7 @@ describe('AuthService me + select-tenant', () => {
         .fn()
         .mockResolvedValue([{ tenantId, status: 'active', joinedAt: '2026-01-01T00:00:00.000Z' }]),
       hasActiveMembership: vi.fn().mockResolvedValue(true),
+      isActivePlatformSuperAdmin: vi.fn().mockResolvedValue(false),
     };
     const service = createAuth(sessions);
     const me = await service.me({ userId, sessionId, tenantId });
@@ -428,6 +423,7 @@ describe('AuthService me + select-tenant', () => {
     expect(me.mfaEnrollmentRequired).toBe(false);
     expect(me.mfaEnforced).toBe('soft');
     expect(me.mfaActive).toBe(false);
+    expect(me.platformOperator).toBe(false);
   });
 
   it('me returns roles and permissions only when membership is active', async () => {
@@ -443,6 +439,7 @@ describe('AuthService me + select-tenant', () => {
         .fn()
         .mockResolvedValue([{ tenantId, status: 'active', joinedAt: '2026-01-01T00:00:00.000Z' }]),
       hasActiveMembership: vi.fn().mockResolvedValue(true),
+      isActivePlatformSuperAdmin: vi.fn().mockResolvedValue(false),
     };
     const rbacRead = {
       listRolesForUser: vi
@@ -476,6 +473,7 @@ describe('AuthService me + select-tenant', () => {
         .fn()
         .mockResolvedValue([{ tenantId, status: 'revoked', joinedAt: '2026-01-01T00:00:00.000Z' }]),
       hasActiveMembership: vi.fn().mockResolvedValue(false),
+      isActivePlatformSuperAdmin: vi.fn().mockResolvedValue(false),
     };
     const rbacRead = {
       listRolesForUser: vi
@@ -506,6 +504,7 @@ describe('AuthService me + select-tenant', () => {
       }),
       listMembershipSummaries: vi.fn().mockResolvedValue([]),
       hasActiveMembership: vi.fn(),
+      isActivePlatformSuperAdmin: vi.fn().mockResolvedValue(false),
     };
     const rbacRead = { listRolesForUser: vi.fn() };
     const permissionSource = { getPermissions: vi.fn() };
@@ -532,6 +531,7 @@ describe('AuthService me + select-tenant', () => {
       }),
       listMembershipSummaries: vi.fn().mockResolvedValue([]),
       hasActiveMembership: vi.fn().mockResolvedValue(true),
+      isActivePlatformSuperAdmin: vi.fn().mockResolvedValue(false),
     };
     const mfaRepo = {
       isAvailable: () => true,
@@ -542,6 +542,26 @@ describe('AuthService me + select-tenant', () => {
     const me = await service.me({ userId, sessionId, tenantId });
     expect(me.mfaEnrollmentRequired).toBe(true);
     expect(me.mfaActive).toBe(false);
+    expect(me.platformOperator).toBe(false);
+  });
+
+  it('me returns platformOperator when the user is an active super admin', async () => {
+    const sessions = {
+      isAvailable: () => true,
+      getUserProfile: vi.fn().mockResolvedValue({
+        id: userId,
+        email: 'a@b.co',
+        displayName: 'A',
+        status: 'active',
+      }),
+      listMembershipSummaries: vi.fn().mockResolvedValue([]),
+      hasActiveMembership: vi.fn(),
+      isActivePlatformSuperAdmin: vi.fn().mockResolvedValue(true),
+    };
+    const service = createAuth(sessions);
+    const me = await service.me({ userId, sessionId });
+    expect(me.platformOperator).toBe(true);
+    expect(sessions.isActivePlatformSuperAdmin).toHaveBeenCalledWith(userId);
   });
 
   it('selectTenant rebinds when membership is active', async () => {

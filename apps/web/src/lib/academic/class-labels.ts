@@ -21,9 +21,6 @@ export function buildClassLabelMap(
   return map;
 }
 
-export function formatClassLabel(
-  map: ReadonlyMap<string, string>,
-  classId: string,
-): string {
+export function formatClassLabel(map: ReadonlyMap<string, string>, classId: string): string {
   return map.get(classId) ?? 'Unknown class';
 }

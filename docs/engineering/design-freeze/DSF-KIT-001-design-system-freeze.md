@@ -1,14 +1,14 @@
-# DSF-KIT-001 — Kit-wide Design System Freeze v1.0
+# DSF-KIT-001 — Kit-wide Design System Freeze v1.5
 
-| Field       | Value                                                                 |
-| ----------- | --------------------------------------------------------------------- |
-| Freeze ID   | `DSF-KIT-001`                                                         |
-| Version     | `1.0`                                                                 |
-| Date        | 2026-08-08                                                            |
-| Status      | **Accepted (solo-operator)** — 2026-08-08 (`GO DSF-KIT`)              |
-| Authority   | Solo-operator provisional (SOLO-GOV-001)                              |
-| Governing   | `07_DESIGN_SYSTEM.md` · Architecture Freeze Gate 3 · B-03 · DSF-001…006 |
-| Supersedes  | B-03 “kit-wide not accepted” residual — **this freeze closes it**     |
+| Field      | Value                                                                   |
+| ---------- | ----------------------------------------------------------------------- |
+| Freeze ID  | `DSF-KIT-001`                                                           |
+| Version    | `1.7`                                                                   |
+| Date       | 2026-08-20                                                              |
+| Status     | **Accepted (solo-operator)** — 2026-08-08 (`GO DSF-KIT`)                |
+| Authority  | Solo-operator provisional (SOLO-GOV-001)                                |
+| Governing  | `07_DESIGN_SYSTEM.md` · Architecture Freeze Gate 3 · B-03 · DSF-001…006 |
+| Supersedes | B-03 “kit-wide not accepted” residual — **this freeze closes it**       |
 
 **Honesty:** Accepted under SOLO-GOV-001. Not independent Design peer review. Does **not** flip unrestricted production GO. Slice DSFs remain the screen inventories; this freeze is the **shared chrome contract**.
 
@@ -16,18 +16,18 @@
 
 Satisfy Architecture Freeze **Gate 3** with a single kit-wide package:
 
-1. Shared layout rules + design tokens  
-2. Role navigation model  
-3. Core components + operational states  
-4. Accessibility + offline baseline  
+1. Shared layout rules + design tokens
+2. Role navigation model
+3. Core components + operational states
+4. Accessibility + offline baseline
 
 ## Relationship to slice DSFs
 
-| Layer | Authority |
-| --- | --- |
-| **DSF-KIT-001** | Tokens, shells, nav model, shared primitives, a11y/offline |
+| Layer           | Authority                                                         |
+| --------------- | ----------------------------------------------------------------- |
+| **DSF-KIT-001** | Tokens, shells, nav model, shared primitives, a11y/offline        |
 | **DSF-001…006** | Screen lists, domain copy, route-level inventory (still in force) |
-| Conflict | Kit tokens/shell rules win; amend slice DSF for screen scope |
+| Conflict        | Kit tokens/shell rules win; amend slice DSF for screen scope      |
 
 New role UI still needs a **slice DSF** (or amend) naming screens — kit freeze alone does not invent product routes.
 
@@ -35,91 +35,112 @@ New role UI still needs a **slice DSF** (or amend) naming screens — kit freeze
 
 From `07_DESIGN_SYSTEM.md`, binding for all roles:
 
-- Operations platform — not marketing  
-- Mobile-first teacher/parent; dense readable admin/finance  
-- Common tasks visible; offline state always clear  
-- Kiswahili + English without layout break  
-- Low-end Android first  
-- **Avoid:** purple-on-white AI defaults, terracotta/cream brochure look, broadsheet newspaper chrome, decorative heroes, glow/pill spam  
+- Operations platform — not marketing
+- Mobile-first teacher/parent; dense readable admin/finance
+- Common tasks visible; offline state always clear
+- Kiswahili + English without layout break
+- Low-end Android first
+- **Avoid:** purple-on-white AI defaults, terracotta/cream brochure look, broadsheet newspaper chrome, decorative heroes, glow/pill spam
 
 ## 2. Shared design tokens (single source)
 
 Canonical CSS variables (from DSF-001; all slices reuse):
 
-| Token | Role | Value |
-| --- | --- | --- |
-| `--color-bg` | Page background | `#f4f6f8` |
-| `--color-surface` | Panels / tables | `#ffffff` |
-| `--color-ink` | Primary text | `#1a2332` |
-| `--color-muted` | Secondary text | `#5c6b7a` |
-| `--color-border` | Rules | `#d5dde5` |
-| `--color-accent` | Primary actions | `#0f6b5c` |
-| `--color-accent-ink` | On accent | `#ffffff` |
-| `--color-danger` | Errors / destructive | `#b42318` |
-| `--color-warn` | Late / offline / caution | `#b54708` |
-| `--color-ok` | Success / present | `#067647` |
-| `--space-1`…`--space-6` | 4 / 8 / 12 / 16 / 24 / 32 px | |
-| `--font-sans` | UI | `"Source Sans 3", "Segoe UI", system-ui, sans-serif` |
-| `--radius` | Controls | `6px` |
-| `--focus-ring` | Focus | `2px solid #0f6b5c` |
-| `--content-max-teacher` | Teacher column | `40rem` |
-| `--content-max-admin` | Admin / parent | `48rem`–`56rem` |
+| Token                   | Role                         | Value                                                |
+| ----------------------- | ---------------------------- | ---------------------------------------------------- |
+| `--color-bg`            | Page background              | `#f4f6f8`                                            |
+| `--color-surface`       | Panels / tables              | `#ffffff`                                            |
+| `--color-ink`           | Primary text                 | `#1a2332`                                            |
+| `--color-muted`         | Secondary text               | `#5c6b7a`                                            |
+| `--color-border`        | Rules                        | `#d5dde5`                                            |
+| `--color-accent`        | Primary actions              | `#0f6b5c`                                            |
+| `--color-accent-ink`    | On accent                    | `#ffffff`                                            |
+| `--color-danger`        | Errors / destructive         | `#b42318`                                            |
+| `--color-warn`          | Late / offline / caution     | `#b54708`                                            |
+| `--color-ok`            | Success / present            | `#067647`                                            |
+| `--color-rail`          | Admin left rail              | `#12202b`                                            |
+| `--color-rail-ink`      | Rail text                    | `#e8eef3`                                            |
+| `--color-rail-muted`    | Rail secondary               | `#8b9aab`                                            |
+| `--color-rail-line`     | Rail rules                   | `#243445`                                            |
+| `--rail-width`          | Admin rail                   | `15.5rem`                                            |
+| `--space-1`…`--space-6` | 4 / 8 / 12 / 16 / 24 / 32 px |                                                      |
+| `--font-sans`           | UI                           | `"Source Sans 3", "Segoe UI", system-ui, sans-serif` |
+| `--radius`              | Controls                     | `6px`                                                |
+| `--focus-ring`          | Focus                        | `2px solid #0f6b5c`                                  |
+| `--content-max-teacher` | Teacher column               | `40rem`                                              |
+| `--content-max-admin`   | Admin workspace              | `72rem` (parent remains 48–56rem)                    |
 
 ### Type scale
 
-| Role | Size / weight |
-| --- | --- |
-| Title | 1.25rem / 600 |
-| Body | 1rem / 400 |
-| Meta | 0.875rem / 400 |
+| Role         | Size / weight                                |
+| ------------ | -------------------------------------------- |
+| Title        | 1.25rem / 600                                |
+| Body         | 1rem / 400                                   |
+| Meta         | 0.875rem / 400                               |
 | Touch target | **≥ 44×44 px** for primary actions / toggles |
 
-Changing tokens requires **DSF-KIT amend** (not silent Tailwind/shadcn swap).
+Changing tokens requires **DSF-KIT amend**. Tailwind utility classes and shadcn primitives must map to these CSS variables (see §2.1 / v1.7).
+
+### 2.1 Approved frontend stack (v1.7)
+
+Per `EduCore/09_FRONTEND_GUIDELINES.md` and Owner GO 2026-08-20 (EduNexus visual reference):
+
+| Layer        | Choice                  | Notes                                                               |
+| ------------ | ----------------------- | ------------------------------------------------------------------- |
+| CSS          | **Tailwind CSS v4**     | Utilities map to kit CSS variables; no parallel color inventing     |
+| Components   | **shadcn/ui** (Radix)   | Button, Input, Card, Table, Badge, Sheet, Tabs, Dialog, etc.        |
+| Icons        | **Lucide**              | Prefer over emoji / ad-hoc SVGs                                     |
+| Server state | **TanStack Query**      | Adopt incrementally; no optimistic updates for payments/marks/roles |
+| Legacy       | `tokens.css` classnames | Coexist until pages migrate; do not delete mid-migration            |
+
+Token values in §2 remain the semantic source of truth. shadcn theme aliases (`--primary` ↔ `--color-accent`, `--background` ↔ `--color-bg`, etc.) are allowed when they preserve teal/ink identity. Digii-style chrome layout is governed by **DSF-KIT-002 v1.1**, not by inventing a second brand.
 
 ## 3. Layout rules
 
-| Shell | Layout |
-| --- | --- |
-| **TeacherShell** | Mobile column; bottom or compact top nav; max `--content-max-teacher` |
-| **AdminShell** | Header brand = school name (`GET /tenants/current`); grouped top nav; denser tables |
-| **ParentShell** | Simple header; Home + Sign out; admin density max-width |
-| **Login / MFA** | Centered narrow form; clear errors; no marketing hero |
+| Shell            | Layout                                                                                                                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **TeacherShell** | Mobile column; bottom or compact top nav; max `--content-max-teacher`                                                                                                                                   |
+| **AdminShell**   | Left rail (grouped Option A IA) + top utility bar with school name (`GET /tenants/current`) and Log out; denser tables; workspace max `--content-max-admin`. Mobile (&lt;768): hamburger + overlay rail |
+| **ParentShell**  | Simple header; Home + Sign out; admin density max-width                                                                                                                                                 |
+| **Login / MFA**  | Centered narrow form; clear errors; no marketing hero                                                                                                                                                   |
 
-- No inset “dashboard card collage” for primary capture flows  
-- Cards only when they contain a user interaction that needs containment  
-- One job per primary view (list → detail → confirm)  
+- No inset “dashboard card collage” for primary capture flows
+- Cards only when they contain a user interaction that needs containment
+- One job per primary view (list → detail → confirm)
 
 ## 4. Role navigation model
 
-| Role | Shell | Primary nav (capability-filtered) |
-| --- | --- | --- |
-| **Teacher / staff** | TeacherShell | Attend · Sessions · Marks · Logout (per DSF-001/003) |
-| **Admin / head** | AdminShell | Grouped: Registry · Access · Academic · Fees · Notifications · Settings (DSF-002 IMP-029) |
-| **Bursar** | AdminShell | Fees-focused; same shell; nav filtered by `finance.*` |
-| **Parent / guardian** | ParentShell | Home (fees) · Sign out (DSF-006) |
+| Role                  | Shell        | Primary nav (capability-filtered)                                                         |
+| --------------------- | ------------ | ----------------------------------------------------------------------------------------- |
+| **Teacher / staff**   | TeacherShell | Attend · Sessions · Marks · Logout (per DSF-001/003)                                      |
+| **Admin / head**      | AdminShell   | Grouped: Registry · Access · Academic · Fees · Notifications · Settings (DSF-002 IMP-029) |
+| **Bursar**            | AdminShell   | Fees-focused; same shell; nav filtered by `finance.*`                                     |
+| **Parent / guardian** | ParentShell  | Home (fees) · Sign out (DSF-006)                                                          |
+
+**IMP-050:** Owner/admin chrome includes a workspace switcher (Ofisi / Mwalimu / Mzazi). Student is a disabled hint — no student login. API remains AuthZ truth. **[Superseded by DSF-KIT-002 §5 — capability-based portal switcher; enact on Phase 1b/2 implementation.]**
 
 Rules:
 
-1. Nav shows only domains the actor can reach (API remains AuthZ truth).  
-2. Post-login routing: `/auth/me` → admin vs teacher vs parent home (existing prefs).  
-3. Do not mix teacher capture chrome inside AdminShell or parent chrome inside teacher.  
+1. Nav shows only domains the actor can reach (API remains AuthZ truth).
+2. Post-login routing: `/auth/me` → admin vs teacher vs parent home (existing prefs).
+3. Do not mix teacher capture chrome inside AdminShell or parent chrome inside teacher.
 
 ## 5. Core components (kit inventory)
 
 Shared primitives (implementations may live under `apps/web/src/components/`):
 
-| Component | Purpose |
-| --- | --- |
-| `Button` | primary / secondary / danger |
-| `TextField` | labeled inputs |
-| `Banner` | error / info / offline / warn |
-| `StatusChip` | present/absent/late/excused/open/closed/paid/… |
-| `EmptyState` | next action clear |
-| `ConfirmDialog` | Esc/Cancel focus; danger for destructive |
-| `AdminPageHeader` | title + actions |
+| Component                     | Purpose                                                  |
+| ----------------------------- | -------------------------------------------------------- |
+| `Button`                      | primary / secondary / danger                             |
+| `TextField`                   | labeled inputs                                           |
+| `Banner`                      | error / info / offline / warn                            |
+| `StatusChip`                  | present/absent/late/excused/open/closed/paid/…           |
+| `EmptyState`                  | next action clear                                        |
+| `ConfirmDialog`               | Esc/Cancel focus; danger for destructive                 |
+| `AdminPageHeader`             | title + actions                                          |
 | `ResourceList` / `AdminTable` | loading / empty / error / forbidden + optional Load more |
-| `ResourceListPagination` | cursor “Load more” |
-| Shells | `TeacherShell`, `AdminShell`, `ParentShell` |
+| `ResourceListPagination`      | cursor “Load more”                                       |
+| Shells                        | `TeacherShell`, `AdminShell`, `ParentShell`              |
 
 Domain rows (e.g. `StudentMarkRow`) stay in slice DSFs.
 
@@ -127,22 +148,22 @@ Domain rows (e.g. `StudentMarkRow`) stay in slice DSFs.
 
 Every list/detail primary surface must define:
 
-| State | UX |
-| --- | --- |
-| **Loading** | Non-blocking skeleton or inline busy; no fake data |
-| **Empty** | Why empty + one next action |
-| **Error** | Friendly copy; retry when safe |
+| State               | UX                                                        |
+| ------------------- | --------------------------------------------------------- |
+| **Loading**         | Non-blocking skeleton or inline busy; no fake data        |
+| **Empty**           | Why empty + one next action                               |
+| **Error**           | Friendly copy; retry when safe                            |
 | **Forbidden (403)** | Role-appropriate message (`adminFriendlyMessage` pattern) |
-| **Offline** | Explicit offline banner; do not claim sync success |
-| **Success** | Quiet confirmation (banner/toast); no confetti |
+| **Offline**         | Explicit offline banner; do not claim sync success        |
+| **Success**         | Quiet confirmation (banner/toast); no confetti            |
 
 ### Auth / session copy (kit default)
 
-| Condition | Copy direction |
-| --- | --- |
-| 401 | Sign in again |
-| 403 | You do not have access for this school / action |
-| Network | You are offline — … (queue honesty per slice) |
+| Condition | Copy direction                                  |
+| --------- | ----------------------------------------------- |
+| 401       | Sign in again                                   |
+| 403       | You do not have access for this school / action |
+| Network   | You are offline — … (queue honesty per slice)   |
 
 ### Status language
 
@@ -152,17 +173,17 @@ Prefer precise kit statuses from `07_DESIGN_SYSTEM.md` (Draft, Pending payment, 
 
 Target **WCAG 2.1 AA** for primary flows:
 
-- Labeled controls; visible `:focus` (`--focus-ring`)  
-- Keyboard-operable toggles and dialogs  
-- Sufficient contrast on accent / danger / ok  
-- Dialogs: focus trap, Esc, restore focus on close  
-- Do not convey meaning by color alone (`StatusChip` text/icon)  
+- Labeled controls; visible `:focus` (`--focus-ring`)
+- Keyboard-operable toggles and dialogs
+- Sufficient contrast on accent / danger / ok
+- Dialogs: focus trap, Esc, restore focus on close
+- Do not convey meaning by color alone (`StatusChip` text/icon)
 
 ## 8. Offline baseline
 
-- Always show offline when disconnected  
-- Never pretend server confirmation without accept  
-- Full offline queue engine may be slice-scoped; kit requires **honest** unavailable copy when queue not enabled  
+- Always show offline when disconnected
+- Never pretend server confirmation without accept
+- Full offline queue engine may be slice-scoped; kit requires **honest** unavailable copy when queue not enabled
 
 ## 9. Auth storage (web)
 
@@ -172,41 +193,59 @@ v1 SPA: opaque Bearer in **sessionStorage** (not `localStorage`). Residual XSS �
 
 Layouts must not break for Kiswahili labels (wrap / allow slightly longer strings). String catalogs may land incrementally; freeze requires **no hard-coded English-only width assumptions** on primary buttons.
 
+**IMP-049:** Admin, Teacher, Parent, and login chrome use the EN/SW catalog (extra keys in `messages-extra.ts`). Status chips translate known tokens. API error mapper copy may remain English.
+
+**IMP-048:** Admin home KPI tiles (`.kpi-grid`) stack below 768px. Students and Fees chrome translated. Report-card print hides rail/top bar.
+
+**IMP-047:** Admin chrome (nav groups, utility bar, hub home) ships EN/SW toggle via session preference; remaining domain screens may remain English until translated incrementally.
+
+## 11. Theme
+
+**IMP-047:** Light tokens remain default (`:root`). Dark palette under `[data-theme="dark"]` on `<html>`. User preference stored in sessionStorage; Admin, Teacher, and Parent shells provide the toggle.
+
 ## Slice inventory (still governing screens)
 
-| ID | Scope |
-| --- | --- |
-| DSF-001 | Teacher attendance |
+| ID      | Scope                                      |
+| ------- | ------------------------------------------ |
+| DSF-001 | Teacher attendance                         |
 | DSF-002 | Admin shell / guardians / academic / users |
-| DSF-003 | Teacher marks |
-| DSF-004 | Admin fees |
-| DSF-005 | Guardian fees (admin compose) |
-| DSF-006 | Parent portal |
+| DSF-003 | Teacher marks                              |
+| DSF-004 | Admin fees                                 |
+| DSF-005 | Guardian fees (admin compose)              |
+| DSF-006 | Parent portal                              |
 
 ## Explicit non-goals
 
-- Redesigning all screens in this freeze document  
-- Marketing site / brand landing  
-- New component library (shadcn/MUI) adoption  
-- Claiming independent design countersign  
-- Production GO  
+- Redesigning all screens in this freeze document
+- Marketing site / brand landing
+- Claiming independent design countersign
+- Production GO
+- Silent token drift outside this amend
 
 ## Acceptance
 
-- [x] Shared tokens + layout rules  
-- [x] Role navigation model  
-- [x] Core components + states  
-- [x] A11y + offline baselines  
-- [x] Slice DSFs retained for screen scope  
-- [x] B-03 kit-wide residual closed **provisionally** under SOLO-GOV-001  
+- [x] Shared tokens + layout rules
+- [x] Role navigation model
+- [x] Core components + states
+- [x] A11y + offline baselines
+- [x] Slice DSFs retained for screen scope
+- [x] B-03 kit-wide residual closed **provisionally** under SOLO-GOV-001
+- [x] v1.7 stack (Tailwind + shadcn + Lucide + TanStack Query) Owner-authorized
 
 ## Amendments
 
-| Ver | Date | Notes |
-| --- | --- | --- |
-| 1.0 | 2026-08-08 | Initial kit-wide freeze from DSF-001…006 synthesis |
+| Ver | Date       | Notes                                                                                                                                        |
+| --- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0 | 2026-08-08 | Initial kit-wide freeze from DSF-001…006 synthesis                                                                                           |
+| 1.1 | 2026-08-14 | IMP-046 AdminShell office console: left rail + utility bar; rail tokens; admin content max 72rem                                             |
+| 1.2 | 2026-08-14 | IMP-047 dark theme tokens + EN/SW UI locale preference in Admin chrome                                                                       |
+| 1.3 | 2026-08-14 | IMP-048 KPI grid, Students/Fees i18n, report-card print CSS                                                                                  |
+| 1.4 | 2026-08-14 | IMP-049 remaining Admin/Teacher/Parent/login chrome i18n                                                                                     |
+| 1.5 | 2026-08-14 | IMP-050 workspace switcher (office / teacher / parent)                                                                                       |
+| 1.6 | 2026-08-15 | DSF-KIT-002 accepted: §4 rule 2 (post-login routing) and IMP-050 switcher superseded by portal chrome freeze; tokens/components unchanged    |
+| 1.7 | 2026-08-20 | Owner GO: adopt Tailwind v4 + shadcn/ui + Lucide + TanStack Query (§2.1); remove shadcn non-goal; EduNexus Digii chrome via DSF-KIT-002 v1.1 |
 
 ## Related
 
-- Decision posture history: `docs/engineering/decisions/B-03-design-system-freeze-posture.md`  
-- Task: `docs/engineering/task-records/DSF-KIT-001.md`  
+- Decision posture history: `docs/engineering/decisions/B-03-design-system-freeze-posture.md`
+- Task: `docs/engineering/task-records/DSF-KIT-001.md`

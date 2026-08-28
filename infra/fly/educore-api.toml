@@ -18,6 +18,7 @@ primary_region = "fra"
   NODE_ENV = "production"
   PORT = "3000"
   SERVICE_NAME = "educore-api"
+  CORS_ORIGINS = "https://educore-web.fly.dev"
 
 [http_service]
   internal_port = 3000

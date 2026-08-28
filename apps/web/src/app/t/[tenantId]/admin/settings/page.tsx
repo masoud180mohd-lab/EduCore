@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
 import { AdminMfaPanel } from '@/components/admin/AdminMfaPanel';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -32,6 +33,7 @@ type MeEnvelope = {
 export default function AdminSettingsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
+  const { t } = useAppPreferences();
   const [schemaVersion, setSchemaVersion] = useState(1);
   const [timezone, setTimezone] = useState('');
   const [locale, setLocale] = useState('');
@@ -150,24 +152,16 @@ export default function AdminSettingsPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="Settings"
-        description="School timezone, locale, and currency. Advanced JSON is for technical staff only."
-      />
+      <AdminPageHeader title={t('settings.title')} description={t('settings.description')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
-      {readOnly ? (
-        <Banner tone="info">
-          You can view settings but cannot save changes. Ask an owner or admin with tenant manage
-          access.
-        </Banner>
-      ) : null}
-      {loading ? <p className="muted">Loading…</p> : null}
+      {readOnly ? <Banner tone="info">{t('settings.readOnly')}</Banner> : null}
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {!loading ? (
         <form className="stack card" onSubmit={onSave}>
-          <p className="muted">Schema version {schemaVersion}.</p>
+          <p className="muted">{t('settings.schema', { version: schemaVersion })}</p>
           <div className="field">
-            <label htmlFor="timezone">Timezone</label>
+            <label htmlFor="timezone">{t('settings.timezone')}</label>
             <input
               id="timezone"
               value={timezone}
@@ -177,7 +171,7 @@ export default function AdminSettingsPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="locale">Locale</label>
+            <label htmlFor="locale">{t('settings.locale')}</label>
             <input
               id="locale"
               value={locale}
@@ -187,7 +181,7 @@ export default function AdminSettingsPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="currency">Currency</label>
+            <label htmlFor="currency">{t('settings.currency')}</label>
             <input
               id="currency"
               value={currency}
@@ -210,16 +204,14 @@ export default function AdminSettingsPage() {
                 });
               }}
             >
-              {showAdvanced ? 'Hide advanced JSON' : 'Advanced: edit additional JSON'}
+              {showAdvanced ? t('settings.hideAdvanced') : t('settings.advanced')}
             </button>
           </div>
           {showAdvanced ? (
             <>
-              <Banner tone="error">
-                Incorrect JSON can break school settings. Only edit if you know what each key does.
-              </Banner>
+              <Banner tone="error">{t('settings.advancedWarn')}</Banner>
               <div className="field">
-                <label htmlFor="extrasJson">Additional settings (JSON object)</label>
+                <label htmlFor="extrasJson">{t('settings.extras')}</label>
                 <textarea
                   id="extrasJson"
                   rows={8}
@@ -234,7 +226,7 @@ export default function AdminSettingsPage() {
           {updatedAt !== null ? <p className="muted">Last updated: {updatedAt}</p> : null}
           {canManage ? (
             <button type="submit" className="btn btn-primary" disabled={busy}>
-              {busy ? 'Saving…' : 'Save settings'}
+              {busy ? t('common.saving') : t('common.save')}
             </button>
           ) : null}
         </form>
@@ -244,9 +236,9 @@ export default function AdminSettingsPage() {
 
       <ConfirmDialog
         open={confirmAdvancedSave}
-        title="Save advanced JSON?"
+        title={t('settings.saveAdvanced')}
         body="You changed additional settings JSON. Saving replaces extra keys on the server. Continue only if the JSON is correct."
-        confirmLabel="Save settings"
+        confirmLabel={t('common.save')}
         danger
         busy={busy}
         onCancel={() => {

@@ -13,8 +13,11 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
+import { Card, CardContent } from '@/components/ui/card';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { FileSpreadsheet, TrendingDown, TrendingUp } from 'lucide-react';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -24,7 +27,11 @@ import {
 } from '@/lib/admin/list-pagination';
 import { missingNameIds, resolveStudentNames } from '@/lib/admin/resolve-related-names';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
-import { invoiceStatusLabel, INVOICE_LIST_STATUSES, type InvoiceListStatus } from '@/lib/finance/invoice-actions';
+import {
+  invoiceStatusLabel,
+  INVOICE_LIST_STATUSES,
+  type InvoiceListStatus,
+} from '@/lib/finance/invoice-actions';
 import { formatTzsMinor, parseMajorToMinor } from '@/lib/finance/money';
 
 type InvoiceRow = {
@@ -56,6 +63,7 @@ export default function AdminInvoicesPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const searchParams = useSearchParams();
   const prefillApplied = useRef(false);
 
@@ -344,28 +352,83 @@ export default function AdminInvoicesPage() {
     (s) => academicYearId === '' || s.academicYearId === academicYearId,
   );
 
+  const totalInvoiced = rows.reduce((sum, r) => sum + Number(r.totalMinor || 0), 0);
+  const totalBalance = rows.reduce((sum, r) => sum + Number(r.balanceMinor || 0), 0);
+  const totalCollected = Math.max(0, totalInvoiced - totalBalance);
+
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/fees`}>← Fees</Link>
+        <Link href={`/t/${tenantId}/admin/fees`}>← {t('fees.back')}</Link>
       </p>
       <AdminPageHeader
-        title="Invoices"
-        description="Draft and issued student invoices. Balance is derived (read-only)."
+        title={t('fees.invoicesTitle')}
+        description={t('fees.invoicesDescription')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
+      {/* Financial KPI Summary Cards */}
+      <div className="grid gap-4 sm:grid-cols-3" style={{ marginBottom: '1.5rem' }}>
+        <Card className="border-border/70 bg-card">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Jumla ya Ankara ({rows.length})
+              </p>
+              <p className="text-xl font-bold text-foreground tabular-nums mt-1">
+                {formatTzsMinor(totalInvoiced)}
+              </p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <FileSpreadsheet className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 bg-card">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Iliyolipwa (Collected)
+              </p>
+              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">
+                {formatTzsMinor(totalCollected)}
+              </p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 bg-card">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Deni Linalodaiwa (Balance)
+              </p>
+              <p className="text-xl font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-1">
+                {formatTzsMinor(totalBalance)}
+              </p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <TrendingDown className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Create draft invoice</h2>
+        <h2 className="section-title">{t('fees.createDraft')}</h2>
         <div className="field">
-          <label htmlFor="inv-student">Student</label>
+          <label htmlFor="inv-student">{t('fees.student')}</label>
           <select
             id="inv-student"
             required
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
           >
-            <option value="">Select student</option>
+            <option value="">{t('fees.selectStudent')}</option>
             {students.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.displayName}
@@ -381,7 +444,7 @@ export default function AdminInvoicesPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="inv-year">Academic year</label>
+          <label htmlFor="inv-year">{t('fees.academicYear')}</label>
           <select
             id="inv-year"
             required
@@ -391,7 +454,7 @@ export default function AdminInvoicesPage() {
               setFeeStructureId('');
             }}
           >
-            <option value="">Select year</option>
+            <option value="">{t('fees.selectYear')}</option>
             {years.map((y) => (
               <option key={y.id} value={y.id}>
                 {y.name}
@@ -407,13 +470,13 @@ export default function AdminInvoicesPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="inv-structure">Fee structure (optional)</label>
+          <label htmlFor="inv-structure">{t('fees.feeStructure')}</label>
           <select
             id="inv-structure"
             value={feeStructureId}
             onChange={(e) => setFeeStructureId(e.target.value)}
           >
-            <option value="">Manual line only</option>
+            <option value="">{t('fees.manualLine')}</option>
             {filteredStructures.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name} ({s.status})
@@ -431,7 +494,7 @@ export default function AdminInvoicesPage() {
         {feeStructureId === '' ? (
           <>
             <div className="field">
-              <label htmlFor="inv-line-desc">Line description</label>
+              <label htmlFor="inv-line-desc">{t('fees.lineDescription')}</label>
               <input
                 id="inv-line-desc"
                 value={lineDescription}
@@ -440,7 +503,7 @@ export default function AdminInvoicesPage() {
               />
             </div>
             <div className="field">
-              <label htmlFor="inv-line-amt">Amount (TZS major)</label>
+              <label htmlFor="inv-line-amt">{t('fees.amountTzs')}</label>
               <input
                 id="inv-line-amt"
                 inputMode="decimal"
@@ -451,14 +514,14 @@ export default function AdminInvoicesPage() {
             </div>
           </>
         ) : (
-          <p className="muted">Lines will be copied from the selected structure items.</p>
+          <p className="muted">{t('fees.linesFromStructure')}</p>
         )}
         <button
           type="submit"
           className="btn btn-primary"
           disabled={busy || studentId === '' || academicYearId === ''}
         >
-          {busy ? 'Saving…' : 'Create draft'}
+          {busy ? t('common.saving') : t('fees.createDraftBtn')}
         </button>
       </form>
 
@@ -479,15 +542,15 @@ export default function AdminInvoicesPage() {
           });
         }}
       >
-        <h2 className="section-title">Filter invoices</h2>
+        <h2 className="section-title">{t('fees.filterInvoices')}</h2>
         <div className="field">
-          <label htmlFor="list-status">Status</label>
+          <label htmlFor="list-status">{t('common.status')}</label>
           <select
             id="list-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as '' | InvoiceListStatus)}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('common.allStatuses')}</option>
             {INVOICE_LIST_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {invoiceStatusLabel(s)}
@@ -496,13 +559,13 @@ export default function AdminInvoicesPage() {
           </select>
         </div>
         <div className="field">
-          <label htmlFor="list-student">Student</label>
+          <label htmlFor="list-student">{t('fees.student')}</label>
           <select
             id="list-student"
             value={studentFilter}
             onChange={(e) => setStudentFilter(e.target.value)}
           >
-            <option value="">All students</option>
+            <option value="">{t('fees.allStudents')}</option>
             {students.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.displayName}
@@ -511,13 +574,9 @@ export default function AdminInvoicesPage() {
           </select>
         </div>
         <div className="field">
-          <label htmlFor="list-year">Academic year</label>
-          <select
-            id="list-year"
-            value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
-          >
-            <option value="">All years</option>
+          <label htmlFor="list-year">{t('fees.academicYear')}</label>
+          <select id="list-year" value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+            <option value="">{t('fees.allYears')}</option>
             {years.map((y) => (
               <option key={y.id} value={y.id}>
                 {y.name}
@@ -526,13 +585,13 @@ export default function AdminInvoicesPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          Apply filters
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No invoices yet."
+        empty={t('fees.emptyInvoices')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -551,7 +610,10 @@ export default function AdminInvoicesPage() {
           />
         }
       >
-        <AdminTable caption="Invoices" headers={['Student', 'Status', 'Total', 'Balance', '']}>
+        <AdminTable
+          caption={t('fees.invoicesTitle')}
+          headers={[t('fees.student'), t('common.status'), t('fees.total'), t('fees.balance'), '']}
+        >
           {rows.map((inv) => (
             <tr key={inv.id}>
               <td>
@@ -569,7 +631,7 @@ export default function AdminInvoicesPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/fees/invoices/${inv.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

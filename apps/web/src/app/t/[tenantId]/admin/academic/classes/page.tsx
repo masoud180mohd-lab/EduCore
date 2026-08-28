@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -36,6 +37,7 @@ export default function AdminClassesPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<ClassRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
@@ -233,18 +235,15 @@ export default function AdminClassesPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic`}>← Academic</Link>
+        <Link href={`/t/${tenantId}/admin/academic`}>← {t('academic.back')}</Link>
       </p>
-      <AdminPageHeader
-        title="Classes"
-        description="Classes belong to an academic year; term is optional. Search and filter below."
-      />
+      <AdminPageHeader title={t('academic.classes')} description={t('academic.classesDesc')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Create class</h2>
+        <h2 className="section-title">{t('academic.createClass')}</h2>
         <div className="field">
-          <label htmlFor="class-year">Academic year</label>
+          <label htmlFor="class-year">{t('academic.year')}</label>
           <select
             id="class-year"
             required
@@ -253,7 +252,9 @@ export default function AdminClassesPage() {
               setAcademicYearId(e.target.value);
             }}
           >
-            <option value="">Select year</option>
+            <option value="">
+              {t('common.select')} {t('common.year')}
+            </option>
             {years.map((y) => (
               <option key={y.id} value={y.id}>
                 {y.name}
@@ -269,12 +270,12 @@ export default function AdminClassesPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="class-term">Term (optional)</label>
+          <label htmlFor="class-term">{t('common.term')}</label>
           <select id="class-term" value={termId} onChange={(e) => setTermId(e.target.value)}>
             <option value="">None</option>
-            {terms.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
+            {terms.map((term) => (
+              <option key={term.id} value={term.id}>
+                {term.name}
               </option>
             ))}
           </select>
@@ -291,7 +292,7 @@ export default function AdminClassesPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="class-name">Name</label>
+          <label htmlFor="class-name">{t('common.name')}</label>
           <input
             id="class-name"
             required
@@ -301,11 +302,11 @@ export default function AdminClassesPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="class-code">Code (optional)</label>
+          <label htmlFor="class-code">{t('common.codeOptional')}</label>
           <input id="class-code" value={code} onChange={(e) => setCode(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="class-create-status">Status</label>
+          <label htmlFor="class-create-status">{t('common.status')}</label>
           <select
             id="class-create-status"
             value={createStatus}
@@ -319,7 +320,7 @@ export default function AdminClassesPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy || academicYearId === ''}>
-          {busy ? 'Saving…' : 'Create class'}
+          {busy ? t('common.saving') : t('common.create')}
         </button>
       </form>
 
@@ -341,13 +342,13 @@ export default function AdminClassesPage() {
         }}
       >
         <div className="field">
-          <label htmlFor="class-filter-year">Academic year</label>
+          <label htmlFor="class-filter-year">{t('academic.year')}</label>
           <select
             id="class-filter-year"
             value={yearFilter}
             onChange={(e) => setYearFilter(e.target.value)}
           >
-            <option value="">All years</option>
+            <option value="">{t('fees.allYears')}</option>
             {years.map((y) => (
               <option key={y.id} value={y.id}>
                 {y.name}
@@ -363,7 +364,7 @@ export default function AdminClassesPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="class-search">Search</label>
+          <label htmlFor="class-search">{t('common.search')}</label>
           <input
             id="class-search"
             value={search}
@@ -372,13 +373,13 @@ export default function AdminClassesPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="class-list-status">Status</label>
+          <label htmlFor="class-list-status">{t('common.status')}</label>
           <select
             id="class-list-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as '' | LifecycleStatus)}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('common.allStatuses')}</option>
             {LIFECYCLE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -387,13 +388,13 @@ export default function AdminClassesPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          Apply filters
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No classes yet."
+        empty={t('academic.emptyClasses')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -412,7 +413,10 @@ export default function AdminClassesPage() {
           />
         }
       >
-        <AdminTable caption="Classes" headers={['Name', 'Year', 'Status', '']}>
+        <AdminTable
+          caption={t('academic.classes')}
+          headers={[t('common.name'), t('common.year'), t('common.status'), '']}
+        >
           {rows.map((row) => (
             <tr key={row.id}>
               <td>
@@ -427,7 +431,7 @@ export default function AdminClassesPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/academic/classes/${row.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

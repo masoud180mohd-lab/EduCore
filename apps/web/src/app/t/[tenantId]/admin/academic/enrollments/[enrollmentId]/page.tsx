@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner, ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -30,6 +31,7 @@ type ConfirmState = { readonly kind: 'status' } | { readonly kind: 'transfer' } 
 export default function AdminEnrollmentDetailPage() {
   const params = useParams<{ tenantId: string; enrollmentId: string }>();
   const { tenantId, enrollmentId } = params;
+  const { t } = useAppPreferences();
   const [row, setRow] = useState<EnrollmentRow | null>(null);
   const [studentName, setStudentName] = useState<string | null>(null);
   const [yearName, setYearName] = useState<string | null>(null);
@@ -255,9 +257,11 @@ export default function AdminEnrollmentDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic/enrollments`}>← Enrollments</Link>
+        <Link href={`/t/${tenantId}/admin/academic/enrollments`}>
+          ← {t('academic.enrollments')}
+        </Link>
       </p>
-      <AdminPageHeader title={studentName ?? 'Enrollment'} />
+      <AdminPageHeader title={studentName ?? t('academic.enrollment')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {row !== null ? (
@@ -266,17 +270,21 @@ export default function AdminEnrollmentDetailPage() {
             <div>
               <span className="chip">{row.status}</span>
             </div>
-            <div className="muted">Student: {studentName ?? row.studentId}</div>
-            <div className="muted">Year: {yearName ?? row.academicYearId}</div>
+            <div className="muted">
+              {t('common.student')}: {studentName ?? row.studentId}
+            </div>
+            <div className="muted">
+              {t('common.year')}: {yearName ?? row.academicYearId}
+            </div>
           </div>
 
           <form className="stack card" onSubmit={onTransfer}>
-            <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Transfer class / stream</h2>
+            <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('academic.transferHeading')}</h2>
             <p className="muted">
               Moves this enrollment in place (same id). Year and term update from the target class.
             </p>
             <div className="field">
-              <label htmlFor="enroll-class">Class</label>
+              <label htmlFor="enroll-class">{t('common.class')}</label>
               <select
                 id="enroll-class"
                 required
@@ -288,7 +296,9 @@ export default function AdminEnrollmentDetailPage() {
                   void loadStreamPicker({ forClassId: next, cursor: null, append: false });
                 }}
               >
-                <option value="">Select class</option>
+                <option value="">
+                  {t('common.select')} {t('common.class')}
+                </option>
                 {classes.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -304,7 +314,7 @@ export default function AdminEnrollmentDetailPage() {
               />
             </div>
             <div className="field">
-              <label htmlFor="enroll-stream">Stream (optional)</label>
+              <label htmlFor="enroll-stream">{t('common.stream')}</label>
               <select
                 id="enroll-stream"
                 value={streamId}
@@ -330,14 +340,14 @@ export default function AdminEnrollmentDetailPage() {
               />
             </div>
             <button type="submit" className="btn btn-primary" disabled={busy || classId === ''}>
-              {busy ? 'Saving…' : 'Transfer'}
+              {busy ? t('common.saving') : t('common.transfer')}
             </button>
           </form>
 
           <form className="stack card" onSubmit={onStatus}>
-            <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Change status</h2>
+            <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('academic.changeStatusHeading')}</h2>
             <div className="field">
-              <label htmlFor="enroll-patch-status">Status</label>
+              <label htmlFor="enroll-patch-status">{t('common.status')}</label>
               <select
                 id="enroll-patch-status"
                 value={status}
@@ -351,19 +361,19 @@ export default function AdminEnrollmentDetailPage() {
               </select>
             </div>
             <button type="submit" className="btn btn-primary" disabled={busy}>
-              {busy ? 'Saving…' : 'Update status'}
+              {busy ? t('common.saving') : t('common.updateStatus')}
             </button>
           </form>
         </div>
       ) : error === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : null}
 
       <ConfirmDialog
         open={confirm?.kind === 'status'}
-        title="Change enrollment status?"
-        body={`Change enrollment status to “${status}”?`}
-        confirmLabel="Update status"
+        title={t('academic.changeStatus')}
+        body={t('academic.changeStatusBody', { status })}
+        confirmLabel={t('common.updateStatus')}
         busy={busy}
         onCancel={() => {
           if (!busy) setConfirm(null);
@@ -374,13 +384,16 @@ export default function AdminEnrollmentDetailPage() {
       />
       <ConfirmDialog
         open={confirm?.kind === 'transfer'}
-        title="Transfer enrollment?"
+        title={t('academic.transfer')}
         body={
           transferStreamName === null
-            ? `Transfer this enrollment to ${transferClassName}? Year and term will update from the target class.`
-            : `Transfer this enrollment to ${transferClassName} (${transferStreamName})? Year and term will update from the target class.`
+            ? t('academic.transferBody', { class: transferClassName ?? '' })
+            : t('academic.transferBodyStream', {
+                class: transferClassName ?? '',
+                stream: transferStreamName,
+              })
         }
-        confirmLabel="Transfer"
+        confirmLabel={t('common.transfer')}
         busy={busy}
         onCancel={() => {
           if (!busy) setConfirm(null);

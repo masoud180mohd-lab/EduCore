@@ -1,12 +1,12 @@
 # DSF-KIT-001 — Kit-wide Design System Freeze task record
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **GO DSF-KIT** / B-03 residual close |
-| Date      | 2026-08-08 |
-| Status    | **Done** (Accepted under SOLO-GOV-001) |
+| Field     | Value                                                                |
+| --------- | -------------------------------------------------------------------- |
+| Program   | **GO DSF-KIT** / B-03 residual close                                 |
+| Date      | 2026-08-08                                                           |
+| Status    | **Done** (Accepted under SOLO-GOV-001)                               |
 | Freeze    | `docs/engineering/design-freeze/DSF-KIT-001-design-system-freeze.md` |
-| Authority | Solo-operator provisional |
+| Authority | Solo-operator provisional                                            |
 
 ## Delivered
 
@@ -17,7 +17,7 @@
 ## Explicitly not done
 
 - Independent design countersign
-- UI redesign pass
+- TeacherShell / ParentShell restyle
 - Production GO
 
 ## Next

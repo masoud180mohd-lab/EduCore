@@ -6,7 +6,9 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
+import type { MessageKey } from '@/lib/i18n/messages';
 import {
   adminGuardianFeesPath,
   adminGuardianPath,
@@ -89,7 +91,7 @@ type SyncProviderResult = {
 const OFFICE_METHODS = ['cash', 'bank', 'cheque', 'other'] as const;
 
 const FAKE_PROVIDER_BANNER =
-  'Mobile money provider not configured (Fake default). Set ClickPesa secrets for sandbox.';
+  'Collect fees at the office (cash, bank, or cheque). Mobile money waits until a ClickPesa account exists (PAY-007).';
 
 type StudentGuardianLink = {
   readonly id: string;
@@ -109,6 +111,7 @@ function isProviderNotConfigured(err: ApiClientError): boolean {
 export default function AdminInvoiceDetailPage() {
   const params = useParams<{ tenantId: string; invoiceId: string }>();
   const { tenantId, invoiceId } = params;
+  const { t } = useAppPreferences();
 
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
@@ -482,10 +485,10 @@ export default function AdminInvoiceDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/fees/invoices`}>← Invoices</Link>
+        <Link href={`/t/${tenantId}/admin/fees/invoices`}>← {t('fees.invoicesTitle')}</Link>
       </p>
-      <AdminPageHeader title="Invoice" />
-      {loading ? <p className="muted">Loading…</p> : null}
+      <AdminPageHeader title={t('invoice.title')} />
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {info !== null ? <Banner tone="info">{info}</Banner> : null}
       {!momoConfigured ? <Banner tone="warn">{FAKE_PROVIDER_BANNER}</Banner> : null}
@@ -503,11 +506,11 @@ export default function AdminInvoiceDetailPage() {
           </p>
           <div className="card" style={{ marginBottom: '1rem' }}>
             <div>
-              <strong>Total</strong> {formatTzsMinor(invoice.totalMinor)}
+              <strong>{t('fees.total')}</strong> {formatTzsMinor(invoice.totalMinor)}
             </div>
             <div>
-              <strong>Balance</strong> {formatTzsMinor(invoice.balanceMinor)}
-              <span className="muted"> (derived — not editable)</span>
+              <strong>{t('fees.balance')}</strong> {formatTzsMinor(invoice.balanceMinor)}
+              <span className="muted"> {t('invoice.derived')}</span>
             </div>
             {invoice.issuedAt !== null ? (
               <div className="muted">Issued {new Date(invoice.issuedAt).toLocaleString()}</div>
@@ -520,12 +523,12 @@ export default function AdminInvoiceDetailPage() {
               style={{ marginBottom: '1rem' }}
             >
               <h2 className="section-title" style={{ margin: 0 }}>
-                Linked guardians
+                {t('invoice.linkedGuardians')}
               </h2>
-              {guardianLoading ? <p className="muted">Loading…</p> : null}
+              {guardianLoading ? <p className="muted">{t('common.loading')}</p> : null}
               {guardianError !== null ? <Banner tone="error">{guardianError}</Banner> : null}
               {!guardianLoading && guardianError === null && guardianLinks.length === 0 ? (
-                <Banner tone="info">No active guardian links for this student.</Banner>
+                <Banner tone="info">{t('students.noGuardians')}</Banner>
               ) : null}
               {!guardianLoading && guardianError === null && guardianLinks.length > 0 ? (
                 <ul className="list">
@@ -536,12 +539,12 @@ export default function AdminInvoiceDetailPage() {
                       </Link>
                       <div className="muted">
                         {link.relationshipType}
-                        {link.isPrimary ? ' · primary' : ''}
+                        {link.isPrimary ? ` · ${t('common.primary')}` : ''}
                         {showGuardianFees ? (
                           <>
                             {' · '}
                             <Link href={adminGuardianFeesPath(tenantId, link.guardianId)}>
-                              Guardian fees
+                              {t('guardians.fees')}
                             </Link>
                           </>
                         ) : null}
@@ -560,7 +563,7 @@ export default function AdminInvoiceDetailPage() {
               disabled={busy || !issueOk}
               onClick={() => void onIssue()}
             >
-              Issue
+              {t('invoice.issue')}
             </button>
             <button
               type="button"
@@ -568,11 +571,11 @@ export default function AdminInvoiceDetailPage() {
               disabled={busy || !voidOk}
               onClick={() => setConfirm({ kind: 'void' })}
             >
-              Void
+              {t('invoice.void')}
             </button>
           </div>
 
-          <h2 style={{ fontSize: '1.1rem' }}>Lines</h2>
+          <h2 style={{ fontSize: '1.1rem' }}>{t('invoice.lines')}</h2>
           <ul className="list">
             {invoice.lines.map((line) => (
               <li key={line.id} className="card">
@@ -584,12 +587,10 @@ export default function AdminInvoiceDetailPage() {
 
           {payOk ? (
             <form className="stack card" onSubmit={(e) => void onPay(e)}>
-              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Record office payment</h2>
-              <p className="muted">
-                Cash / bank / cheque / other. Mobile money uses the form below.
-              </p>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('invoice.pay')}</h2>
+              <p className="muted">{t('invoice.officePayHint')}</p>
               <div className="field">
-                <label htmlFor="pay-method">Method</label>
+                <label htmlFor="pay-method">{t('invoice.method')}</label>
                 <select
                   id="pay-method"
                   value={payMethod}
@@ -597,13 +598,13 @@ export default function AdminInvoiceDetailPage() {
                 >
                   {OFFICE_METHODS.map((m) => (
                     <option key={m} value={m}>
-                      {m}
+                      {t(`method.${m}` as MessageKey)}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="field">
-                <label htmlFor="pay-amount">Amount (TZS major, ≤ balance)</label>
+                <label htmlFor="pay-amount">{t('invoice.amountBalance')}</label>
                 <input
                   id="pay-amount"
                   required
@@ -614,25 +615,23 @@ export default function AdminInvoiceDetailPage() {
                 />
               </div>
               <button type="submit" className="btn btn-primary" disabled={busy}>
-                {busy ? 'Saving…' : 'Record payment'}
+                {busy ? t('common.saving') : t('invoice.pay')}
               </button>
             </form>
           ) : null}
 
-          {canManageFinance && canRecordPayment(invoice.status, invoice.balanceMinor) ? (
+          {canManageFinance &&
+          canRecordPayment(invoice.status, invoice.balanceMinor) &&
+          momoConfigured ? (
             <form
               className="stack card"
               style={{ marginTop: '1rem' }}
               onSubmit={(e) => void onRequestMobileMoney(e)}
             >
-              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Request mobile money</h2>
-              <p className="muted">
-                Creates a pending BillPay attempt (ClickPesa). Ask parent to pay the number; webhook
-                or Refresh updates status.
-              </p>
-              {!momoConfigured ? <Banner tone="warn">{FAKE_PROVIDER_BANNER}</Banner> : null}
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('invoice.requestMoMo')}</h2>
+              <p className="muted">{t('invoice.requestMoMoDesc')}</p>
               <div className="field">
-                <label htmlFor="momo-amount">Amount (TZS major, ≤ balance)</label>
+                <label htmlFor="momo-amount">{t('invoice.amountBalance')}</label>
                 <input
                   id="momo-amount"
                   required
@@ -644,13 +643,13 @@ export default function AdminInvoiceDetailPage() {
                 />
               </div>
               <button type="submit" className="btn btn-primary" disabled={busy || !momoOk}>
-                {busy ? 'Requesting…' : 'Request mobile money'}
+                {busy ? t('common.requesting') : t('invoice.requestMoMo')}
               </button>
             </form>
           ) : null}
 
-          <h2 style={{ fontSize: '1.1rem' }}>Payments</h2>
-          {payments.length === 0 ? <Banner tone="info">No payments yet.</Banner> : null}
+          <h2 style={{ fontSize: '1.1rem' }}>{t('invoice.payments')}</h2>
+          {payments.length === 0 ? <Banner tone="info">{t('invoice.noPayments')}</Banner> : null}
           <ul className="list">
             {payments.map((p) => {
               const billPay = billPayDisplay(p);
@@ -666,7 +665,7 @@ export default function AdminInvoiceDetailPage() {
                       <>
                         {' · '}
                         <Link href={`/t/${tenantId}/admin/fees/receipts/${p.receiptId}`}>
-                          Receipt
+                          {t('receipt.title')}
                         </Link>
                       </>
                     ) : null}
@@ -674,7 +673,7 @@ export default function AdminInvoiceDetailPage() {
                   {billPay !== null && p.status === 'pending' ? (
                     <div>
                       <div className="muted" style={{ marginTop: '0.5rem' }}>
-                        BillPay number — ask parent to pay; webhook or Refresh updates status.
+                        {t('invoice.billPayHint')}
                       </div>
                       <span className="billpay-number">{billPay}</span>
                     </div>
@@ -687,7 +686,7 @@ export default function AdminInvoiceDetailPage() {
                       onClick={() => setConfirm({ kind: 'reverse', paymentId: p.id })}
                       style={{ marginTop: '0.5rem', marginRight: '0.5rem' }}
                     >
-                      Reverse
+                      {t('invoice.reverse')}
                     </button>
                   ) : null}
                   {showSync ? (
@@ -697,9 +696,9 @@ export default function AdminInvoiceDetailPage() {
                       disabled={busy}
                       onClick={() => void onSyncProvider(p.id)}
                       style={{ marginTop: '0.5rem', marginRight: '0.5rem' }}
-                      title="Query ClickPesa and update pending payment. May complete ledger."
+                      title={t('invoice.syncTitle')}
                     >
-                      Refresh from provider
+                      {t('invoice.refreshProvider')}
                     </button>
                   ) : null}
                   {canReconcilePayment(p.status) && canReconcileFinance ? (
@@ -709,9 +708,9 @@ export default function AdminInvoiceDetailPage() {
                       disabled={busy}
                       onClick={() => void onReconcile(p.id)}
                       style={{ marginTop: '0.5rem' }}
-                      title="Compare payment to last gateway event. Does not change ledger or balances."
+                      title={t('invoice.reconcileTitle')}
                     >
-                      Reconcile
+                      {t('invoice.reconcile')}
                     </button>
                   ) : null}
                 </li>

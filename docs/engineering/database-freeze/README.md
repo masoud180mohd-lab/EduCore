@@ -1,5 +1,7 @@
 # Database Freeze Records
 
+> **SOLO-GOV-002:** Slice DBFs below are **Owner-accepted**. Independent Board re-sign is retired.
+
 This directory holds **downstream database design freeze** packages. These are engineering design records for the implementation repository. They do not replace the immutable EduCore kit (`EduCore/05_DATABASE_DESIGN.md`); they refine it for an approved slice.
 
 ## Authority
@@ -11,16 +13,16 @@ This directory holds **downstream database design freeze** packages. These are e
 
 ## Records
 
-| ID      | Slice                            | Document                                                                 | Status                            |
-| ------- | -------------------------------- | ------------------------------------------------------------------------ | --------------------------------- |
-| DBF-001 | Identity & Tenant / Organization | [DBF-001-identity-tenant-slice.md](./DBF-001-identity-tenant-slice.md)   | **Accepted v1.0 (solo-operator)** |
-| DBF-010 | Guardians                        | [DBF-010-guardians-slice.md](./DBF-010-guardians-slice.md)               | Provisional (IMP-007)             |
-| DBF-011 | Marks / Assessment               | [DBF-011-marks-assessment-slice.md](./DBF-011-marks-assessment-slice.md) | Provisional (IMP-008)             |
-| DBF-012 | Finance / Fees + Ledger          | [DBF-012-finance-fees-slice.md](./DBF-012-finance-fees-slice.md)         | Provisional (IMP-009; rev 1.2)    |
+| ID      | Slice                            | Document                                                                 | Status                             |
+| ------- | -------------------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| DBF-001 | Identity & Tenant / Organization | [DBF-001-identity-tenant-slice.md](./DBF-001-identity-tenant-slice.md)   | Owner-accepted v1.0 (SOLO-GOV-002) |
+| DBF-010 | Guardians                        | [DBF-010-guardians-slice.md](./DBF-010-guardians-slice.md)               | Owner-accepted (SOLO-GOV-002)      |
+| DBF-011 | Marks / Assessment               | [DBF-011-marks-assessment-slice.md](./DBF-011-marks-assessment-slice.md) | Owner-accepted (SOLO-GOV-002)      |
+| DBF-012 | Finance / Fees + Ledger          | [DBF-012-finance-fees-slice.md](./DBF-012-finance-fees-slice.md)         | Owner-accepted (SOLO-GOV-002)      |
 
 ## Rules
 
 - A freeze is **not** a migration.
-- Do not implement production schema for a slice until its freeze is accepted (DBF-001 Identity & Tenant is Accepted v1.0 under [SOLO-GOV-001](../governance/SOLO_OPERATOR_GOVERNANCE_NOTE.md)).
+- Do not implement production schema for a slice until its freeze is Owner-accepted ([SOLO-GOV-002](../governance/SOLO-GOV-002-owner-plus-ai.md)). Independent Board re-sign is retired.
 - Do not expand beyond the freeze table list without a revision or new freeze ID.
 - Cross-module table access remains forbidden (ADR-001).

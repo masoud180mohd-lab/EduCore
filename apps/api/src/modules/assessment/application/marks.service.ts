@@ -21,7 +21,11 @@ import {
   type PaginatedResponse,
 } from '../../../common/pagination/index.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
+import { ClassesService, SubjectsService } from '../../academic-structure/index.js';
 import { AUDIT_PUBLISHER, type AuditPublisher } from '../../platform-operations/index.js';
+import { StudentsService } from '../../student-registry/index.js';
+import { letterGrade, percentageScore } from './letter-grade.js';
+import { buildReportCardPdf } from './report-card-pdf.js';
 import {
   MarksRepository,
   type ExamRow,
@@ -53,6 +57,39 @@ const MARKS_SUFFIX = '/marks';
 const SUBMIT_SUFFIX = '/submit';
 const APPROVE_SUFFIX = '/approve';
 
+export type ReportCardSubjectLine = {
+  readonly examSubjectId: string;
+  readonly subjectId: string;
+  readonly subjectName: string;
+  readonly maxScore: number;
+  readonly score: number | null;
+  readonly percent: number | null;
+  readonly grade: string | null;
+  readonly examSubjectStatus: string;
+};
+
+export type ReportCardDetail = {
+  readonly studentId: string;
+  readonly studentName: string;
+  readonly className: string;
+  readonly examId: string;
+  readonly examName: string;
+  readonly averagePercent: number | null;
+  readonly overallGrade: string | null;
+  readonly subjects: ReadonlyArray<ReportCardSubjectLine>;
+};
+
+export type ReportCardListPayload = {
+  readonly exam: ExamRow;
+  readonly className: string;
+  readonly students: ReadonlyArray<{
+    readonly studentId: string;
+    readonly studentName: string;
+    readonly averagePercent: number | null;
+    readonly overallGrade: string | null;
+  }>;
+};
+
 @Injectable()
 export class MarksService {
   constructor(
@@ -61,6 +98,9 @@ export class MarksService {
     @Inject(IDEMPOTENCY_STORE)
     private readonly idempotency: IdempotencyStore | null = null,
     @Optional() @Inject(AUDIT_PUBLISHER) private readonly audit: AuditPublisher | null = null,
+    @Optional() private readonly students: StudentsService | null = null,
+    @Optional() private readonly subjects: SubjectsService | null = null,
+    @Optional() private readonly classes: ClassesService | null = null,
   ) {}
 
   async listExamsForTenant(
@@ -606,6 +646,158 @@ export class MarksService {
     } catch {
       // audit must not break the product path
     }
+  }
+
+  async listReportCardsForExam(
+    actorUserId: string,
+    tenantId: string,
+    examId: string,
+  ): Promise<{ readonly data: ReportCardListPayload }> {
+    const built = await this.buildReportCards(actorUserId, tenantId, examId);
+    return {
+      data: {
+        exam: built.exam,
+        className: built.className,
+        students: built.cards.map((card) => ({
+          studentId: card.studentId,
+          studentName: card.studentName,
+          averagePercent: card.averagePercent,
+          overallGrade: card.overallGrade,
+        })),
+      },
+    };
+  }
+
+  async getReportCardForStudent(
+    actorUserId: string,
+    tenantId: string,
+    examId: string,
+    studentId: string,
+  ): Promise<{ readonly data: ReportCardDetail }> {
+    const built = await this.buildReportCards(actorUserId, tenantId, examId);
+    const card = built.cards.find((row) => row.studentId === studentId);
+    if (card === undefined) throw AppError.notFound('Report card not found.');
+    return { data: card };
+  }
+
+  async getReportCardPdfForStudent(
+    actorUserId: string,
+    tenantId: string,
+    examId: string,
+    studentId: string,
+  ): Promise<Buffer> {
+    const { data } = await this.getReportCardForStudent(actorUserId, tenantId, examId, studentId);
+    const exam = await this.getExamForTenant(actorUserId, tenantId, examId);
+    // H1 fix: the school name comes from the tenant record, never a hardcoded
+    // brand. Fail closed rather than printing the wrong school on a PDF.
+    const schoolName = await this.marks.getTenantName(actorUserId, tenantId);
+    if (schoolName === null) {
+      throw new AppError('INTERNAL_ERROR', 'School profile unavailable for report card PDF.');
+    }
+    return buildReportCardPdf({
+      schoolName,
+      examName: exam.data.name,
+      studentName: data.studentName,
+      className: data.className,
+      averagePercent: data.averagePercent === null ? '—' : String(data.averagePercent),
+      lines: data.subjects.map((subject) => ({
+        subject: subject.subjectName,
+        score: subject.score === null ? '—' : String(subject.score),
+        max: String(subject.maxScore),
+        percent: subject.percent === null ? '—' : String(subject.percent),
+        grade: subject.grade ?? '—',
+      })),
+    });
+  }
+
+  private async buildReportCards(
+    actorUserId: string,
+    tenantId: string,
+    examId: string,
+  ): Promise<{
+    readonly exam: ExamRow;
+    readonly className: string;
+    readonly cards: ReadonlyArray<ReportCardDetail>;
+  }> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    if (!isUuid(examId)) throw AppError.notFound('Exam not found.');
+    if (!this.marks.isAvailable()) throw AppError.notFound('Exam not found.');
+    const exam = await this.marks.getExam(actorUserId, tenantId, examId);
+    if (exam === null) throw AppError.notFound('Exam not found.');
+    const allLines = await this.marks.listReportLinesForExam(actorUserId, tenantId, examId);
+    // ACF-011 v1.2: report cards compose approved exam subjects only. The
+    // repository query filters in SQL; this guards the invariant in depth.
+    const lines = allLines.filter((line) => line.examSubjectStatus === 'approved');
+    const studentIds = [...new Set(lines.map((line) => line.studentId))];
+    const subjectIds = [...new Set(lines.map((line) => line.subjectId))];
+    const studentNames = new Map<string, string>();
+    const subjectNames = new Map<string, string>();
+    let className = exam.classId;
+    if (this.students !== null) {
+      for (const id of studentIds) {
+        try {
+          const row = await this.students.getForTenant(actorUserId, tenantId, id);
+          studentNames.set(id, row.data.displayName);
+        } catch {
+          studentNames.set(id, id);
+        }
+      }
+    }
+    if (this.subjects !== null) {
+      for (const id of subjectIds) {
+        try {
+          const row = await this.subjects.getForTenant(actorUserId, tenantId, id);
+          subjectNames.set(id, row.data.name);
+        } catch {
+          subjectNames.set(id, id);
+        }
+      }
+    }
+    if (this.classes !== null) {
+      try {
+        const row = await this.classes.getForTenant(actorUserId, tenantId, exam.classId);
+        className = row.data.name;
+      } catch {
+        className = exam.classId;
+      }
+    }
+    const byStudent = new Map<string, ReportCardSubjectLine[]>();
+    for (const line of lines) {
+      const percent = percentageScore(line.score, line.maxScore);
+      const subjects = byStudent.get(line.studentId) ?? [];
+      subjects.push({
+        examSubjectId: line.examSubjectId,
+        subjectId: line.subjectId,
+        subjectName: subjectNames.get(line.subjectId) ?? line.subjectId,
+        maxScore: line.maxScore,
+        score: line.score,
+        percent,
+        grade: letterGrade(percent),
+        examSubjectStatus: line.examSubjectStatus,
+      });
+      byStudent.set(line.studentId, subjects);
+    }
+    const cards: ReportCardDetail[] = [];
+    for (const studentId of studentIds) {
+      const subjects = byStudent.get(studentId) ?? [];
+      const percents = subjects.map((s) => s.percent).filter((p): p is number => p !== null);
+      const averagePercent =
+        percents.length === 0
+          ? null
+          : Math.round((percents.reduce((a, b) => a + b, 0) / percents.length) * 10) / 10;
+      cards.push({
+        studentId,
+        studentName: studentNames.get(studentId) ?? studentId,
+        className,
+        examId: exam.id,
+        examName: exam.name,
+        averagePercent,
+        overallGrade: letterGrade(averagePercent),
+        subjects,
+      });
+    }
+    return { exam, className, cards };
   }
 }
 

@@ -1,10 +1,17 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
+import { Calendar, Clock, ArrowRight } from 'lucide-react';
 
-import { AdminPageHeader, Banner } from '@/components/admin';
+import { AdminPageHeader, Banner, StatusChip } from '@/components/admin';
+import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
 
@@ -25,8 +32,10 @@ export default function AttendancePickerPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [streams, setStreams] = useState<StreamRow[]>([]);
+  const [recentSessions, setRecentSessions] = useState<SessionRow[]>([]);
   const [classId, setClassId] = useState('');
   const [streamId, setStreamId] = useState('');
   const [sessionDate, setSessionDate] = useState(todayIso());
@@ -40,13 +49,17 @@ export default function AttendancePickerPage() {
     void (async () => {
       setLoadingClasses(true);
       try {
-        const result = await apiRequest<{ data: ClassRow[] }>(
-          '/api/v1/classes?limit=100&status=active',
-          {
-            auth,
-          },
-        );
-        setClasses(result.data ?? []);
+        const [classesResult, sessionsResult] = await Promise.allSettled([
+          apiRequest<{ data: ClassRow[] }>('/api/v1/classes?limit=100&status=active', { auth }),
+          apiRequest<{ data: SessionRow[] }>('/api/v1/attendance-sessions?limit=10', { auth }),
+        ]);
+
+        if (classesResult.status === 'fulfilled') {
+          setClasses(classesResult.value.data ?? []);
+        }
+        if (sessionsResult.status === 'fulfilled') {
+          setRecentSessions(sessionsResult.value.data ?? []);
+        }
       } catch (err) {
         if (err instanceof ApiClientError) setError(teacherFriendlyMessage(err));
       } finally {
@@ -126,62 +139,127 @@ export default function AttendancePickerPage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="Take attendance"
-        description="Pick class and date to open or resume a session."
-      />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {loadingClasses ? <p className="muted">Loading classes…</p> : null}
-      {!loadingClasses && classes.length === 0 ? (
-        <Banner tone="info">No active classes yet. Ask an admin to create one.</Banner>
-      ) : null}
-      <form className="stack" onSubmit={(e) => void onOpen(e)}>
-        <div className="field">
-          <label htmlFor="classId">Class</label>
-          <select
-            id="classId"
-            required
-            disabled={loadingClasses || classes.length === 0}
-            value={classId}
-            onChange={(e) => {
-              setClassId(e.target.value);
-              setStreamId('');
-            }}
-          >
-            <option value="">Select class</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-                {c.code !== null ? ` (${c.code})` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="streamId">Stream (optional)</label>
-          <select id="streamId" value={streamId} onChange={(e) => setStreamId(e.target.value)}>
-            <option value="">Whole class</option>
-            {streams.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="sessionDate">Date</label>
-          <input
-            id="sessionDate"
-            type="date"
-            required
-            value={sessionDate}
-            onChange={(e) => setSessionDate(e.target.value)}
-          />
-        </div>
-        <button type="submit" className="btn btn-primary" disabled={busy || classId === ''}>
-          {busy ? 'Opening…' : 'Open session'}
-        </button>
-      </form>
+      <div className="flex flex-col gap-6">
+        <AdminPageHeader title={t('teacher.takeAttendance')} description={t('teacher.takeDesc')} />
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {loadingClasses ? (
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+        ) : null}
+        {!loadingClasses && classes.length === 0 ? (
+          <Banner tone="info">{t('teacher.noClasses')}</Banner>
+        ) : null}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('teacher.takeAttendance')}</CardTitle>
+            <CardDescription>{t('teacher.takeDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="flex flex-col gap-4" onSubmit={(e) => void onOpen(e)}>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="classId">{t('common.class')}</Label>
+                <select
+                  id="classId"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                  disabled={loadingClasses || classes.length === 0}
+                  value={classId}
+                  onChange={(e) => {
+                    setClassId(e.target.value);
+                    setStreamId('');
+                  }}
+                >
+                  <option value="">{t('common.selectClass')}</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                      {c.code !== null ? ` (${c.code})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="streamId">{t('common.streamOptional')}</Label>
+                <select
+                  id="streamId"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={streamId}
+                  onChange={(e) => setStreamId(e.target.value)}
+                >
+                  <option value="">{t('teacher.wholeClass')}</option>
+                  {streams.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="sessionDate">{t('common.date')}</Label>
+                <Input
+                  id="sessionDate"
+                  type="date"
+                  required
+                  value={sessionDate}
+                  onChange={(e) => setSessionDate(e.target.value)}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="mt-2 w-full sm:w-auto self-start"
+                disabled={busy || classId === ''}
+              >
+                {busy ? t('common.loading') : t('common.open')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Recent Attendance Sessions */}
+        {recentSessions.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Vipindi vya Mahudhurio vya Hivi Karibuni
+              </CardTitle>
+              <CardDescription>
+                Bonyeza kipindi chochote kutazama au kuendelea kuweka mahudhurio.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="divide-y divide-border/60 p-0">
+              {recentSessions.map((sess) => {
+                const cls = classes.find((c) => c.id === sess.classId);
+                const classNameLabel = cls ? `${cls.name}${cls.code ? ` (${cls.code})` : ''}` : sess.classId;
+                return (
+                  <Link
+                    key={sess.id}
+                    href={`/t/${tenantId}/teacher/attendance/sessions/${sess.id}`}
+                    className="flex items-center justify-between p-4 hover:bg-muted/40 transition-colors group"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {classNameLabel}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Tarehe: {sess.sessionDate}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <StatusChip label={sess.status} />
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </TeacherShell>
   );
 }

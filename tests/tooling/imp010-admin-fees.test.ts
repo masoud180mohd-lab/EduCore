@@ -19,7 +19,7 @@ describe('IMP-010 admin fees UI', () => {
 
   it('registers Fees in AdminShell', () => {
     const shell = readFileSync(path.join(root, 'apps/web/src/components/AdminShell.tsx'), 'utf8');
-    expect(shell).toContain("label: 'Fees'");
+    expect(shell).toContain("id: 'fees'");
     expect(shell).toContain('/fees');
   });
 

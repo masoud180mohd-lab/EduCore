@@ -11,7 +11,8 @@
  *   npm run seed:admin
  *
  * Optional env: SEED_ADMIN_EMAIL, SEED_TENANT_CODE, SEED_TENANT_NAME,
- *   SEED_PLATFORM_DATABASE_URL (preferred), SEED_ADMIN_RESET=1
+ *   SEED_PLATFORM_DATABASE_URL (preferred), DATABASE_URL (operator grant; migrator/ops),
+ *   SEED_ADMIN_RESET=1
  */
 
 import path from 'node:path';
@@ -39,6 +40,8 @@ export type SeedAdminConfig = {
   readonly tenantCode: string;
   readonly tenantName: string;
   readonly connectionString: string;
+  /** Migrator/ops URL for `platform_operators` (educore_platform cannot INSERT). */
+  readonly migratorConnectionString: string;
   readonly resetPassword: boolean;
   readonly allowProduction: boolean;
   readonly nodeEnv: string;
@@ -75,6 +78,7 @@ export function loadSeedAdminConfig(environment: NodeJS.ProcessEnv = process.env
     tenantCode,
     tenantName,
     connectionString: resolvePlatformUrl(environment),
+    migratorConnectionString: resolveMigratorUrl(environment),
     resetPassword: environment['SEED_ADMIN_RESET'] === '1',
     allowProduction: environment['SEED_ADMIN_ALLOW_PRODUCTION'] === '1',
     nodeEnv: environment['NODE_ENV']?.trim() || 'development',
@@ -90,6 +94,21 @@ function resolvePlatformUrl(environment: NodeJS.ProcessEnv): string {
   // Prefer platform role (required for RLS-compliant INSERT). Not educore_app.
   const user = environment['SEED_PLATFORM_USER'] ?? 'educore_platform';
   const password = environment['SEED_PLATFORM_PASSWORD'] ?? 'educore_platform_local_only';
+  const host = environment['POSTGRES_HOST'] ?? '127.0.0.1';
+  const port = environment['POSTGRES_HOST_PORT'] ?? environment['POSTGRES_PORT'] ?? '5432';
+  const database = environment['POSTGRES_DB'] ?? 'educore';
+
+  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
+}
+
+function resolveMigratorUrl(environment: NodeJS.ProcessEnv): string {
+  const explicit = environment['DATABASE_URL']?.trim();
+  if (explicit !== undefined && explicit !== '') {
+    return explicit;
+  }
+
+  const user = environment['POSTGRES_USER'] ?? 'educore';
+  const password = environment['POSTGRES_PASSWORD'] ?? 'educore_local_only';
   const host = environment['POSTGRES_HOST'] ?? '127.0.0.1';
   const port = environment['POSTGRES_HOST_PORT'] ?? environment['POSTGRES_PORT'] ?? '5432';
   const database = environment['POSTGRES_DB'] ?? 'educore';
@@ -114,6 +133,7 @@ export type SeedAdminResult = {
     readonly tenant: boolean;
     readonly user: boolean;
     readonly membership: boolean;
+    readonly platformOperator: boolean;
   };
   readonly passwordUpdated: boolean;
   readonly rbac: {
@@ -226,6 +246,11 @@ export async function seedLocalAdmin(
 
     await client.query('COMMIT');
 
+    const platformOperatorGranted = await grantPlatformOperator(
+      config.migratorConnectionString,
+      userId,
+    );
+
     return {
       tenantId,
       userId,
@@ -235,6 +260,7 @@ export async function seedLocalAdmin(
         tenant: tenantCreated,
         user: userCreated,
         membership: (membershipInserted.rowCount ?? 0) > 0,
+        platformOperator: platformOperatorGranted,
       },
       passwordUpdated,
       rbac: {
@@ -249,6 +275,28 @@ export async function seedLocalAdmin(
       // ignore
     }
     throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+async function grantPlatformOperator(
+  migratorConnectionString: string,
+  userId: string,
+): Promise<boolean> {
+  const client = new Client({ connectionString: migratorConnectionString });
+  await client.connect();
+  try {
+    const result = await client.query(
+      `INSERT INTO platform_operators (user_id, role, status, granted_by, created_at, updated_at)
+       VALUES ($1::uuid, 'super_admin', 'active', $1::uuid, now(), now())
+       ON CONFLICT (user_id) DO UPDATE
+         SET status = 'active',
+             role = 'super_admin',
+             updated_at = now()`,
+      [userId],
+    );
+    return (result.rowCount ?? 0) > 0;
   } finally {
     await client.end();
   }
@@ -271,6 +319,7 @@ async function main(): Promise<void> {
         `  tenantCode: ${result.tenantCode}`,
         `  created.tenant: ${String(result.created.tenant)}`,
         `  created.user: ${String(result.created.user)}`,
+        `  created.platformOperator: ${String(result.created.platformOperator)}`,
         `  passwordUpdated: ${String(result.passwordUpdated)}`,
         `  rbac.roles: ${result.rbac.roles.join(', ')}`,
         `  rbac.assignedRole: ${result.rbac.assignedRole ?? 'none'}`,

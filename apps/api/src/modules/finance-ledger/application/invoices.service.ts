@@ -88,6 +88,37 @@ export class InvoicesService {
     return buildPaginatedResponse(page.rows, pagination.limit, page.nextCursor);
   }
 
+  async summarizeForTenant(
+    actorUserId: string,
+    tenantId: string,
+  ): Promise<{
+    readonly data: {
+      readonly collectedMinor: number;
+      readonly outstandingMinor: number;
+      readonly overdueCount: number;
+      readonly issuedCount: number;
+      readonly paidCount: number;
+      readonly partiallyPaidCount: number;
+    };
+  }> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    if (!this.finance.isAvailable()) {
+      return {
+        data: {
+          collectedMinor: 0,
+          outstandingMinor: 0,
+          overdueCount: 0,
+          issuedCount: 0,
+          paidCount: 0,
+          partiallyPaidCount: 0,
+        },
+      };
+    }
+    const data = await this.finance.summarizeInvoices(actorUserId, tenantId);
+    return { data };
+  }
+
   async getForTenant(
     actorUserId: string,
     tenantId: string,

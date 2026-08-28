@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -53,6 +54,7 @@ export default function AdminFeeStructuresPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<FeeStructureRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [years, setYears] = useState<AcademicYearRow[]>([]);
@@ -215,18 +217,18 @@ export default function AdminFeeStructuresPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/fees`}>← Fees</Link>
+        <Link href={`/t/${tenantId}/admin/fees`}>← {t('fees.back')}</Link>
       </p>
       <AdminPageHeader
-        title="Fee structures"
-        description="Named fee packages by academic year. Filter the list by year and status."
+        title={t('fees.structuresTitle')}
+        description={t('fees.structuresDescription')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Create structure</h2>
+        <h2 className="section-title">{t('fees.createStructure')}</h2>
         <div className="field">
-          <label htmlFor="fs-name">Name</label>
+          <label htmlFor="fs-name">{t('common.name')}</label>
           <input
             id="fs-name"
             required
@@ -236,14 +238,14 @@ export default function AdminFeeStructuresPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="fs-year">Academic year</label>
+          <label htmlFor="fs-year">{t('fees.academicYear')}</label>
           <select
             id="fs-year"
             required
             value={academicYearId}
             onChange={(e) => setAcademicYearId(e.target.value)}
           >
-            <option value="">Select year</option>
+            <option value="">{t('fees.selectYear')}</option>
             {years.map((y) => (
               <option key={y.id} value={y.id}>
                 {y.name}
@@ -259,7 +261,7 @@ export default function AdminFeeStructuresPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="fs-create-status">Status</label>
+          <label htmlFor="fs-create-status">{t('common.status')}</label>
           <select
             id="fs-create-status"
             value={createStatus}
@@ -271,11 +273,11 @@ export default function AdminFeeStructuresPage() {
         </div>
 
         <fieldset className="stack" style={{ border: 'none', padding: 0, margin: 0 }}>
-          <legend style={{ fontWeight: 600, fontSize: '0.875rem' }}>Items (TZS major)</legend>
+          <legend style={{ fontWeight: 600, fontSize: '0.875rem' }}>{t('fees.itemsLegend')}</legend>
           {items.map((item, index) => (
             <div key={index} className="stack" style={{ gap: '0.5rem' }}>
               <div className="field">
-                <label htmlFor={`item-name-${String(index)}`}>Item name</label>
+                <label htmlFor={`item-name-${String(index)}`}>{t('fees.itemName')}</label>
                 <input
                   id={`item-name-${String(index)}`}
                   required
@@ -288,7 +290,7 @@ export default function AdminFeeStructuresPage() {
                 />
               </div>
               <div className="field">
-                <label htmlFor={`item-amt-${String(index)}`}>Amount (TZS)</label>
+                <label htmlFor={`item-amt-${String(index)}`}>{t('fees.amountTzs')}</label>
                 <input
                   id={`item-amt-${String(index)}`}
                   required
@@ -309,12 +311,12 @@ export default function AdminFeeStructuresPage() {
             className="btn btn-secondary"
             onClick={() => setItems([...items, { name: '', amountMajor: '' }])}
           >
-            Add item
+            {t('fees.addItem')}
           </button>
         </fieldset>
 
         <button type="submit" className="btn btn-primary" disabled={busy || academicYearId === ''}>
-          {busy ? 'Saving…' : 'Create structure'}
+          {busy ? t('common.saving') : t('fees.createStructure')}
         </button>
       </form>
 
@@ -334,13 +336,13 @@ export default function AdminFeeStructuresPage() {
         }}
       >
         <div className="field">
-          <label htmlFor="fs-list-year">Academic year</label>
+          <label htmlFor="fs-list-year">{t('fees.academicYear')}</label>
           <select
             id="fs-list-year"
             value={yearFilter}
             onChange={(e) => setYearFilter(e.target.value)}
           >
-            <option value="">All years</option>
+            <option value="">{t('fees.allYears')}</option>
             {years.map((y) => (
               <option key={y.id} value={y.id}>
                 {y.name}
@@ -349,13 +351,13 @@ export default function AdminFeeStructuresPage() {
           </select>
         </div>
         <div className="field">
-          <label htmlFor="fs-list-status">Status</label>
+          <label htmlFor="fs-list-status">{t('common.status')}</label>
           <select
             id="fs-list-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as '' | FeeStructureListStatus)}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('common.allStatuses')}</option>
             {FEE_STRUCTURE_LIST_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -364,13 +366,13 @@ export default function AdminFeeStructuresPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          Apply filters
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No fee structures yet."
+        empty={t('fees.emptyStructures')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -388,7 +390,10 @@ export default function AdminFeeStructuresPage() {
           />
         }
       >
-        <AdminTable caption="Fee structures" headers={['Name', 'Year', 'Status', 'Currency', '']}>
+        <AdminTable
+          caption={t('fees.structuresTitle')}
+          headers={[t('common.name'), t('fees.year'), t('common.status'), t('fees.currency'), '']}
+        >
           {rows.map((row) => (
             <tr key={row.id}>
               <td>
@@ -404,7 +409,7 @@ export default function AdminFeeStructuresPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/fees/structures/${row.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

@@ -50,7 +50,7 @@ describe('IMP-003 academic years list + detail + create structural', () => {
     const codes = read('apps/api/src/common/policy/permission-codes.ts');
     expect(codes).toContain("'academic.read'");
     expect(codes).toContain("'academic.manage'");
-    const roles = read('apps/api/src/modules/identity-and-access/rbac/system-roles.ts');
+    const roles = read('apps/api/src/common/rbac/system-roles.ts');
     expect(roles).toMatch(/STAFF_PERMISSIONS[\s\S]*'academic\.read'/);
   });
 

@@ -13,6 +13,10 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -37,17 +41,17 @@ type MembershipRow = {
   readonly updatedAt: string;
 };
 
-const STATUS_FILTERS: ReadonlyArray<{ value: '' | MembershipStatus; label: string }> = [
-  { value: '', label: 'All statuses' },
-  { value: 'active', label: 'Active' },
-  { value: 'invited', label: 'Invited' },
-  { value: 'suspended', label: 'Suspended' },
-  { value: 'removed', label: 'Removed' },
+const MEMBERSHIP_STATUSES: ReadonlyArray<MembershipStatus> = [
+  'active',
+  'invited',
+  'suspended',
+  'removed',
 ];
 
 export default function AdminMembershipsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<MembershipRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [status, setStatus] = useState<'' | MembershipStatus>('');
@@ -102,76 +106,174 @@ export default function AdminMembershipsPage() {
     void loadPage({ statusFilter: status, cursor: null, append: false });
   }
 
+  const [actionInfo, setActionInfo] = useState<string | null>(null);
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
+
+  async function onResend(membershipId: string) {
+    const auth = readSession();
+    if (auth === null) return;
+    setActionBusy(membershipId);
+    setError(null);
+    setActionInfo(null);
+    try {
+      await apiRequest(`/api/v1/memberships/${membershipId}/resend`, {
+        method: 'POST',
+        auth,
+      });
+      setActionInfo('Mwaliko umetumwa upya kikamilifu.');
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(err.message);
+      else setError('Imeshindikana kutuma upya mwaliko.');
+    } finally {
+      setActionBusy(null);
+    }
+  }
+
+  async function onLifecycle(membershipId: string, action: 'suspend' | 'reactivate' | 'remove') {
+    const auth = readSession();
+    if (auth === null) return;
+    setActionBusy(membershipId);
+    setError(null);
+    setActionInfo(null);
+    try {
+      await apiRequest(`/api/v1/memberships/${membershipId}/${action}`, {
+        method: 'POST',
+        auth,
+      });
+      setActionInfo(`Mabadiliko ya uanachama yamehifadhiwa (${action}).`);
+      void loadPage({ statusFilter: appliedStatus, cursor: null, append: false });
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(err.message);
+      else setError('Imeshindikana kubadilisha hali ya mwanachama.');
+    } finally {
+      setActionBusy(null);
+    }
+  }
+
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="Memberships"
-        description="Tenant roster by membership status. Open a user to suspend, reactivate, or remove."
-      />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      <div className="flex flex-col gap-6">
+        <AdminPageHeader
+          title={t('memberships.title')}
+          description={t('memberships.description')}
+        />
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
+        {actionInfo !== null ? <Banner tone="info">{actionInfo}</Banner> : null}
 
-      <form className="stack" onSubmit={onFilter} style={{ marginBottom: '1rem' }}>
-        <label className="field">
-          <span>Status</span>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as '' | MembershipStatus)}
-          >
-            {STATUS_FILTERS.map((opt) => (
-              <option key={opt.label} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="btn btn-secondary" type="submit" disabled={loading || loadingMore}>
-          Apply filter
-        </button>
-      </form>
-
-      <ResourceList
-        loading={loading}
-        empty="No memberships for this filter."
-        isEmpty={rows.length === 0}
-        variant="table"
-        footer={
-          <ResourceListPagination
-            nextCursor={nextCursor}
-            loadingMore={loadingMore}
-            onLoadMore={() => {
-              void loadPage({
-                statusFilter: appliedStatus,
-                cursor: nextCursor,
-                append: true,
-              });
-            }}
-          />
-        }
-      >
-        <AdminTable caption="Memberships" headers={['Status', 'User', 'Joined', '']}>
-          {rows.map((m) => (
-            <tr key={m.id}>
-              <td>
-                <StatusChip label={m.status} />
-              </td>
-              <td>
-                <Link href={`/t/${tenantId}/admin/users/${m.userId}`}>
-                  {userNames[m.userId] ?? m.userId}
-                </Link>
-              </td>
-              <td className="muted">{m.joinedAt ?? '—'}</td>
-              <td className="admin-table-actions">
-                <Link
-                  className="btn btn-secondary admin-table-open"
-                  href={`/t/${tenantId}/admin/users/${m.userId}`}
+        <Card>
+          <CardContent className="pt-6">
+            <form className="flex flex-wrap items-end gap-3" onSubmit={onFilter}>
+              <div className="flex flex-col gap-2 min-w-[180px]">
+                <Label htmlFor="status">{t('common.status')}</Label>
+                <select
+                  id="status"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as '' | MembershipStatus)}
                 >
-                  Open
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </AdminTable>
-      </ResourceList>
+                  <option value="">{t('common.allStatuses')}</option>
+                  {MEMBERSHIP_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button variant="secondary" type="submit" disabled={loading || loadingMore}>
+                {t('common.applyFilters')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <ResourceList
+          loading={loading}
+          empty={t('memberships.empty')}
+          isEmpty={rows.length === 0}
+          variant="table"
+          footer={
+            <ResourceListPagination
+              nextCursor={nextCursor}
+              loadingMore={loadingMore}
+              onLoadMore={() => {
+                void loadPage({
+                  statusFilter: appliedStatus,
+                  cursor: nextCursor,
+                  append: true,
+                });
+              }}
+            />
+          }
+        >
+          <AdminTable
+            caption={t('memberships.title')}
+            headers={[t('common.status'), t('users.user'), 'Joined', 'Actions']}
+          >
+            {rows.map((m) => (
+              <tr key={m.id}>
+                <td>
+                  <StatusChip label={m.status} />
+                </td>
+                <td className="font-medium">
+                  <Link
+                    href={`/t/${tenantId}/admin/users/${m.userId}`}
+                    className="hover:underline text-primary"
+                  >
+                    {userNames[m.userId] ?? m.userId}
+                  </Link>
+                </td>
+                <td className="text-muted-foreground">{m.joinedAt ?? '—'}</td>
+                <td className="admin-table-actions flex items-center gap-1.5 justify-end">
+                  {m.status === 'invited' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={actionBusy === m.id}
+                      onClick={() => void onResend(m.id)}
+                    >
+                      Tuma Upya
+                    </Button>
+                  )}
+                  {m.status === 'active' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={actionBusy === m.id}
+                      onClick={() => void onLifecycle(m.id, 'suspend')}
+                    >
+                      Simamisha
+                    </Button>
+                  )}
+                  {m.status === 'suspended' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={actionBusy === m.id}
+                      onClick={() => void onLifecycle(m.id, 'reactivate')}
+                    >
+                      Rudisha
+                    </Button>
+                  )}
+                  {m.status !== 'removed' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10"
+                      disabled={actionBusy === m.id}
+                      onClick={() => void onLifecycle(m.id, 'remove')}
+                    >
+                      Ondoa
+                    </Button>
+                  )}
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href={`/t/${tenantId}/admin/users/${m.userId}`}>{t('common.open')}</Link>
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </AdminTable>
+        </ResourceList>
+      </div>
     </AdminShell>
   );
 }

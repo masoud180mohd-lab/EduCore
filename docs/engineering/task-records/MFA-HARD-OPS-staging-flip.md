@@ -1,12 +1,12 @@
 # MFA-HARD-OPS — Staging MFA_ENFORCE=hard flip script
 
-| Field     | Value                                              |
-| --------- | -------------------------------------------------- |
-| Program   | **MFA-HARD-OPS**                                   |
-| Date      | 2026-08-09                                         |
+| Field     | Value                                                                  |
+| --------- | ---------------------------------------------------------------------- |
+| Program   | **MFA-HARD-OPS**                                                       |
+| Date      | 2026-08-09                                                             |
 | Status    | **Done** — staging `MFA_ENFORCE=hard` (2026-08-11 Owner enroll + flip) |
-| Depends   | MFA-HARD · WEB-MFA-UI · OPS-001 · Doppler + flyctl |
-| Authority | Solo-operator provisional (SOLO-GOV-001)           |
+| Depends   | MFA-HARD · WEB-MFA-UI · OPS-001 · Doppler + flyctl                     |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                               |
 
 ## Outcome
 

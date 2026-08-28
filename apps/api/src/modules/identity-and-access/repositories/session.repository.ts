@@ -1,7 +1,11 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Pool } from 'pg';
 
+import { logFailClosedDbError } from '../../../common/logging/fail-closed-log.js';
+import type { AppLogger } from '../../../common/logging/logger.js';
+import { APP_LOGGER } from '../../../common/logging/logger.tokens.js';
 import { PG_POOL } from '../../../common/persistence/pg.tokens.js';
+import { isUuid } from '../../../common/tenant/tenant-context.js';
 
 export type UserCredentialRow = {
   readonly id: string;
@@ -40,7 +44,10 @@ export const SESSION_REPOSITORY = Symbol('SESSION_REPOSITORY');
  */
 @Injectable()
 export class SessionRepository {
-  constructor(@Optional() @Inject(PG_POOL) private readonly pool: Pool | null) {}
+  constructor(
+    @Optional() @Inject(PG_POOL) private readonly pool: Pool | null,
+    @Optional() @Inject(APP_LOGGER) private readonly logger: AppLogger | null = null,
+  ) {}
 
   isAvailable(): boolean {
     return this.pool !== null;
@@ -58,6 +65,38 @@ export class SessionRepository {
       password_hash: string | null;
     }>(`SELECT * FROM app.auth_lookup_user_by_email($1::citext)`, [email]);
     return mapUserCredential(result.rows[0]);
+  }
+
+  /** Accept invite: sets password and activates user + membership. */
+  async acceptInvite(
+    email: string,
+    passwordHash: string,
+    displayName?: string,
+  ): Promise<UserCredentialRow | null> {
+    if (this.pool === null) {
+      return null;
+    }
+    const result = await this.pool.query<{
+      id: string;
+      email: string;
+      display_name: string;
+      status: string;
+    }>(
+      `SELECT id, email, display_name, status
+         FROM app.auth_accept_invite($1::citext, $2::text, $3::text)`,
+      [email, passwordHash, displayName ?? null],
+    );
+    const row = result.rows[0];
+    if (row === undefined) {
+      return null;
+    }
+    return {
+      id: row.id,
+      email: row.email,
+      displayName: row.display_name,
+      status: row.status,
+      passwordHash,
+    };
   }
 
   async lookupUserByExternalSubject(subject: string): Promise<UserCredentialRow | null> {
@@ -258,6 +297,27 @@ export class SessionRepository {
       status: row.status,
       joinedAt: row.joined_at === null ? null : new Date(row.joined_at).toISOString(),
     }));
+  }
+
+  async isActivePlatformSuperAdmin(userId: string): Promise<boolean> {
+    if (this.pool === null || !isUuid(userId)) {
+      return false;
+    }
+    try {
+      const result = await this.pool.query<{ user_id: string }>(
+        `SELECT user_id
+           FROM platform_operators
+          WHERE user_id = $1::uuid
+            AND status = 'active'
+            AND role = 'super_admin'
+          LIMIT 1`,
+        [userId],
+      );
+      return result.rows[0] !== undefined;
+    } catch (error) {
+      logFailClosedDbError(this.logger, 'platform_operators.me_lookup', error);
+      return false;
+    }
   }
 
   async rebindSessionTenant(sessionId: string, userId: string, tenantId: string): Promise<boolean> {

@@ -1,5 +1,7 @@
 # 37 Final Architecture Review
 
+> **SOLO-GOV-002:** Historical freeze review. There was no separate architecture staff. Frozen decisions below remain the planning baseline; “Not Frozen Yet” items were later covered by slice DBF/ACF/DSF under Owner + AI.
+
 ## Review Verdict
 
 Architecture is approved for freeze as a planning baseline.

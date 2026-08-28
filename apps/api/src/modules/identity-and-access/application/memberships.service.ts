@@ -42,7 +42,7 @@ export type LifecycleMembershipResult = {
 };
 
 const MEMBERSHIP_STATUSES = new Set(['invited', 'active', 'suspended', 'removed']);
-const SYSTEM_ROLE_CODES = new Set(['owner', 'admin', 'staff']);
+const SYSTEM_ROLE_CODES = new Set(['owner', 'admin', 'staff', 'bursar']);
 const CREATE_ROUTE = '/api/v1/memberships';
 const LIFECYCLE_ROUTE_PREFIX = '/api/v1/memberships/';
 // Practical email shape; full RFC not required for product invite.
@@ -328,6 +328,47 @@ export class MembershipsService {
     );
   }
 
+  /**
+   * POST /memberships/:id/resend — resend invite (user.invite).
+   * Valid only for invited memberships. Missing → 404.
+   */
+  async resendInviteForTenant(
+    actorUserId: string,
+    tenantId: string,
+    membershipId: string,
+    correlationId: string,
+  ): Promise<LifecycleMembershipResult> {
+    if (!isUuid(actorUserId)) {
+      throw AppError.unauthorized();
+    }
+    if (!isUuid(tenantId)) {
+      throw AppError.tenantContextRequired();
+    }
+    if (!isUuid(membershipId)) {
+      throw AppError.notFound('Membership not found.');
+    }
+
+    const membership = await this.memberships.getByIdForTenant(actorUserId, tenantId, membershipId);
+    if (membership === null || membership.status !== 'invited') {
+      throw AppError.notFound('Invited membership not found.');
+    }
+
+    if (this.audit !== null) {
+      await this.audit.publish({
+        action: 'membership.invite_resend',
+        outcome: 'success',
+        actorUserId,
+        tenantId,
+        resourceType: 'membership',
+        resourceId: membershipId,
+        correlationId,
+        metadata: { targetUserId: membership.userId },
+      });
+    }
+
+    return { data: membership };
+  }
+
   private async runLifecycle(
     actorUserId: string,
     tenantId: string,
@@ -536,9 +577,12 @@ export function parseCreateMembershipRequest(raw: unknown): {
     }
     roleCodes = body['roleCodes'].map((code, index) => {
       if (typeof code !== 'string' || !SYSTEM_ROLE_CODES.has(code)) {
-        throw AppError.validation(`roleCodes[${String(index)}] must be owner, admin, or staff.`, {
-          field: 'roleCodes',
-        });
+        throw AppError.validation(
+          `roleCodes[${String(index)}] must be owner, admin, staff, or bursar.`,
+          {
+            field: 'roleCodes',
+          },
+        );
       }
       return code;
     });

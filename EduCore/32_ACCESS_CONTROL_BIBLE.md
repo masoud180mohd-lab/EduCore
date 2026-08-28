@@ -28,6 +28,8 @@ Some actions must be denied even if role seems broad:
 - support accessing health records without approved reason.
 - teacher editing approved marks after lock.
 - parent accessing another child.
+- approver approving marks they themselves submitted as a teacher (AMEND-2026-08-15; reachable when Head/Deputy also teach).
+- platform operator reading or writing tenant-internal data outside an approved, time-bound support session (platform capability grants tenant *lifecycle* control, never implicit tenant data access).
 
 ## Delegation
 

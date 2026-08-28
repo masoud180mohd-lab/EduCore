@@ -1,12 +1,12 @@
 # MFA-FIX — Ambiguous OUT/column names in MFA SQL helpers
 
-| Field     | Value                                          |
-| --------- | ---------------------------------------------- |
-| Program   | **MFA-FIX**                                    |
-| Date      | 2026-08-11                                     |
-| Status    | **Done** (staging migrated)                    |
-| Depends   | MFA-002 · WEB-MFA-UI                           |
-| Authority | Solo-operator provisional (SOLO-GOV-001)       |
+| Field     | Value                                    |
+| --------- | ---------------------------------------- |
+| Program   | **MFA-FIX**                              |
+| Date      | 2026-08-11                               |
+| Status    | **Done** (staging migrated)              |
+| Depends   | MFA-002 · WEB-MFA-UI                     |
+| Authority | Solo-operator provisional (SOLO-GOV-001) |
 
 ## Symptom
 

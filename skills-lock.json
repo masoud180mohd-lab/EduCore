@@ -25,6 +25,18 @@
       "skillPath": "skills/doubt-driven-development/SKILL.md",
       "computedHash": "f6094460ebc9512285c85790e49f612081b9dd6a2b77d874fe2d960ef50a9ef1"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
+    },
+    "frontend-design-deslop": {
+      "source": "samber/cc-skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design-deslop/SKILL.md",
+      "computedHash": "67578dd42fa3092f745e444351cb7662d6cc63ac4f11903ed555dfcb26c6848c"
+    },
     "git-workflow-and-versioning": {
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
@@ -54,6 +66,18 @@
       "sourceType": "github",
       "skillPath": "skills/spec-driven-development/SKILL.md",
       "computedHash": "2dee9aa940633b7b5e0f45be34839ab31c0de98d482e16772c5cd350f4b91b4b"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "d8e7d3afe37dcc8a97b99ffb5afdb4d0919ae0092ea8b68f44eb201f035e33ac"
     }
   }
 }

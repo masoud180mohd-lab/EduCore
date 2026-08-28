@@ -201,6 +201,30 @@ export class MfaRepository {
     );
   }
 
+  async getPendingChallenge(challengeTokenHash: string): Promise<{
+    readonly challengeId: string;
+    readonly userId: string;
+    readonly tenantId: string;
+  } | null> {
+    if (this.pool === null) return null;
+    try {
+      const result = await this.pool.query<{
+        challenge_id: string;
+        user_id: string;
+        tenant_id: string;
+      }>(`SELECT * FROM app.mfa_get_pending_challenge($1::text)`, [challengeTokenHash]);
+      const row = result.rows[0];
+      if (row === undefined) return null;
+      return {
+        challengeId: row.challenge_id,
+        userId: row.user_id,
+        tenantId: row.tenant_id,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   async consumeChallenge(challengeTokenHash: string): Promise<{
     readonly challengeId: string;
     readonly userId: string;

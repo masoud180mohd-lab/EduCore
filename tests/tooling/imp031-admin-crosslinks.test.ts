@@ -42,7 +42,7 @@ describe('IMP-031 admin cross-links', () => {
       'utf8',
     );
     expect(src).toContain('adminStudentPath');
-    expect(src).toContain('Linked guardians');
+    expect(src).toContain("t('invoice.linkedGuardians')");
     expect(src).toContain('/students/${forStudentId}/guardians');
   });
 

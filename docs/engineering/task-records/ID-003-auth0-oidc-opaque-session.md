@@ -1,12 +1,12 @@
 # ID-003 — Auth0 OIDC → opaque session task record
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **GO IDP-003** |
-| Date      | 2026-08-09 |
+| Field     | Value                                                                |
+| --------- | -------------------------------------------------------------------- |
+| Program   | **GO IDP-003**                                                       |
+| Date      | 2026-08-09                                                           |
 | Status    | **Done** (code integrated; Auth0 tenant + staging flag optional ops) |
-| Decision  | `docs/engineering/decisions/ID-003-auth0-oidc-opaque-session.md` |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Decision  | `docs/engineering/decisions/ID-003-auth0-oidc-opaque-session.md`     |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                             |
 
 ## Delivered
 

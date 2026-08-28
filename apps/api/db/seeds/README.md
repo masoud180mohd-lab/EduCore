@@ -13,7 +13,7 @@ $env:SEED_ADMIN_PASS = 'ChangeMe-Local-Only-1'
 npm run seed:admin
 ```
 
-This connects as **`educore_platform`** with trusted bootstrap GUCs, creates:
+This connects as **`educore_platform`** with trusted bootstrap GUCs, then grants `platform_operators` via the migrator/ops URL (`DATABASE_URL`), and creates:
 
 | Entity     | Fixed local UUID (default)             |
 | ---------- | -------------------------------------- |
@@ -30,6 +30,7 @@ This connects as **`educore_platform`** with trusted bootstrap GUCs, creates:
 | `SEED_TENANT_CODE`              | `demo-school`                                            |
 | `SEED_TENANT_NAME`              | `Demo School`                                            |
 | `SEED_PLATFORM_DATABASE_URL`    | `postgresql://educore_platform:…@127.0.0.1:5432/educore` |
+| `DATABASE_URL`                  | migrator/ops URL for `platform_operators` grant          |
 | `SEED_ADMIN_RESET=1`            | Update password if user already exists                   |
 | `SEED_ADMIN_ALLOW_PRODUCTION=1` | Required if `NODE_ENV=production` (break-glass only)     |
 

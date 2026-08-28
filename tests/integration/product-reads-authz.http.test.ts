@@ -21,12 +21,16 @@ import { httpCall, parseErrorBody } from './http-client.js';
 
 const userA = '01900000-0000-7000-8000-000000000001';
 const userNoPerm = '01900000-0000-7000-8000-000000000002';
+const userStaff = '01900000-0000-7000-8000-000000000003';
 const tenantA = '01900000-0000-7000-8000-0000000000aa';
 const tenantB = '01900000-0000-7000-8000-0000000000bb';
 
 /**
  * AUDIT-R4 / IMP-001 P10 — HTTP integration proving RequirePermission + session bind
  * are wired on representative product read routes (no live DB required).
+ *
+ * Nest `AppModule` compile on Windows can exceed Vitest's default 10s hook timeout,
+ * which skips this whole file (~83 tests). Keep hooks generous; tests stay short.
  */
 describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
   let app: INestApplication;
@@ -55,6 +59,18 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
           'finance.reconcile',
         ]),
       ],
+      [
+        `${userStaff}::${tenantA}`,
+        new Set([
+          'tenant.read',
+          'student.read',
+          'academic.read',
+          'attendance.read',
+          'attendance.manage',
+          'marks.read',
+          'marks.manage',
+        ]),
+      ],
     ]);
 
     const moduleRef = await Test.createTestingModule({
@@ -67,6 +83,7 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
         new AllowListTenantMembershipChecker([
           { userId: userA, tenantId: tenantA },
           { userId: userNoPerm, tenantId: tenantA },
+          { userId: userStaff, tenantId: tenantA },
         ]),
       )
       .overrideProvider(MembershipAwarePermissionSource.INNER)
@@ -77,11 +94,13 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     await app.init();
     await app.listen(0);
     server = app.getHttpServer() as Server;
-  });
+  }, 120_000);
 
   afterAll(async () => {
-    await app.close();
-  });
+    if (app !== undefined) {
+      await app.close();
+    }
+  }, 30_000);
 
   it('GET /api/v1/tenants requires authentication', async () => {
     const response = await httpCall(server, 'GET', '/api/v1/tenants');
@@ -789,6 +808,45 @@ describe('IMP-001 P10 product reads AuthZ (HTTP integration)', () => {
     );
     expect(response.statusCode).toBe(400);
     expect(parseErrorBody(response.body).error?.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+  });
+
+  it('POST /api/v1/invoices returns 403 for classroom staff without finance.manage', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/invoices',
+      {
+        'authorization': harnessBearer(userStaff, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-staff-invoice-00001',
+      },
+      JSON.stringify({
+        studentId: '01900000-0000-7000-8000-0000000000s1',
+        academicYearId: '01900000-0000-7000-8000-0000000000y1',
+      }),
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('POST /api/v1/payments returns 403 for classroom staff without finance.manage', async () => {
+    const response = await httpCall(
+      server,
+      'POST',
+      '/api/v1/payments',
+      {
+        'authorization': harnessBearer(userStaff, tenantA),
+        'x-tenant-id': tenantA,
+        'content-type': 'application/json',
+        'idempotency-key': 'idem-key-http-staff-pay-00001',
+      },
+      JSON.stringify({
+        invoiceId: '01900000-0000-7000-8000-0000000000f1',
+        method: 'cash',
+        amountMinor: 100,
+      }),
+    );
+    expect(response.statusCode).toBe(403);
   });
 
   it('POST /api/v1/payments returns 403 without finance.manage', async () => {

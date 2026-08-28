@@ -10,10 +10,7 @@ import type { AuditPublisher } from '../../platform-operations/index.js';
 import { AUDIT_PUBLISHER } from '../../platform-operations/index.js';
 import { RbacReadRepository } from '../rbac/rbac-read.repository.js';
 import { MfaService } from '../application/mfa.service.js';
-import {
-  SessionRepository,
-  type UserCredentialRow,
-} from '../repositories/session.repository.js';
+import { SessionRepository, type UserCredentialRow } from '../repositories/session.repository.js';
 import { resolveAuthIdpProvider } from './auth-idp-config.js';
 import type { LoginRateLimiter } from './login-rate-limiter.js';
 import { LOGIN_RATE_LIMITER } from './login-rate-limiter.js';
@@ -45,6 +42,16 @@ export type LoginCommand = {
   readonly userAgent?: string;
   readonly correlationId: string;
   readonly headerTenantId?: string;
+};
+
+export type AcceptInviteCommand = {
+  readonly email?: unknown;
+  readonly password?: unknown;
+  readonly displayName?: unknown;
+  readonly tenantId?: unknown;
+  readonly ip?: string;
+  readonly userAgent?: string;
+  readonly correlationId: string;
 };
 
 export type LoginResult = {
@@ -103,6 +110,8 @@ export type MeResult = {
   /** MFA-005: soft | hard from MFA_ENFORCE. */
   readonly mfaEnforced: 'soft' | 'hard';
   readonly mfaActive: boolean;
+  /** ACF-PLAT-001 / D2: active platform super_admin (not a tenant role). */
+  readonly platformOperator: boolean;
 };
 
 @Injectable()
@@ -180,6 +189,65 @@ export class AuthService {
     });
   }
 
+  /**
+   * Accept invite: sets initial password and transitions user + membership from invited to active.
+   */
+  async acceptInvite(command: AcceptInviteCommand): Promise<LoginResult> {
+    if (!this.sessions.isAvailable()) {
+      throw new AppError('INTERNAL_ERROR', 'Authentication service is unavailable.', 503);
+    }
+
+    const email = normalizeEmail(command.email);
+    const password = typeof command.password === 'string' ? command.password : '';
+    const displayName =
+      typeof command.displayName === 'string' ? command.displayName.trim() : undefined;
+
+    if (email === undefined || password.length < 8) {
+      throw AppError.validation('Valid email and password (minimum 8 characters) are required.');
+    }
+
+    const rateKey = `accept:${email}|${command.ip ?? 'unknown'}`;
+    const limit = await this.rateLimiter.check(rateKey);
+    if (!limit.allowed) {
+      throw AppError.rateLimited('Too many attempts. Try again later.', limit.retryAfterSeconds);
+    }
+
+    const existing = await this.sessions.lookupUserByEmail(email);
+    if (existing === null || (existing.status !== 'invited' && existing.status !== 'active')) {
+      await this.rateLimiter.recordFailure(rateKey);
+      throw AppError.notFound('Invitation not found or invalid.');
+    }
+
+    const passwordHash = await hashPassword(password);
+    const updatedUser = await this.sessions.acceptInvite(email, passwordHash, displayName);
+    if (updatedUser === null) {
+      await this.rateLimiter.recordFailure(rateKey);
+      throw AppError.validation('Could not accept invitation.');
+    }
+
+    await this.safeAudit({
+      action: 'auth.accept_invite',
+      outcome: 'success',
+      correlationId: command.correlationId,
+      actorUserId: updatedUser.id,
+      metadata: { email },
+    });
+
+    return this.finalizeAuthenticatedLogin({
+      user: updatedUser,
+      command: {
+        email,
+        password,
+        tenantId: command.tenantId,
+        correlationId: command.correlationId,
+        ...(command.ip !== undefined ? { ip: command.ip } : {}),
+        ...(command.userAgent !== undefined ? { userAgent: command.userAgent } : {}),
+      },
+      rateKey,
+      authMethod: 'password',
+    });
+  }
+
   private async loginWithIdpAssertion(command: LoginCommand): Promise<LoginResult> {
     if (resolveAuthIdpProvider() !== 'auth0') {
       throw AppError.validation('IdP assertion login is not enabled in this environment.');
@@ -230,8 +298,7 @@ export class AuthService {
     }
 
     if (!claims.emailVerified || claims.email === null) {
-      const allowUnverified =
-        process.env['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK']?.trim() === '1';
+      const allowUnverified = process.env['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK']?.trim() === '1';
       if (!allowUnverified || claims.email === null) {
         return null;
       }
@@ -619,6 +686,7 @@ export class AuthService {
       privileged = await this.mfaRepo.isPrivileged(input.userId, activeTenantId);
     }
     const mfaEnrollmentRequired = privileged && !mfaActive;
+    const platformOperator = await this.sessions.isActivePlatformSuperAdmin(input.userId);
 
     return {
       user: {
@@ -635,6 +703,7 @@ export class AuthService {
       mfaEnrollmentRequired,
       mfaEnforced: resolveMfaEnforceMode(),
       mfaActive,
+      platformOperator,
     };
   }
 

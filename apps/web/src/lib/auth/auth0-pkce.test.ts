@@ -10,7 +10,7 @@ import {
   generateCodeVerifier,
   loadAuth0PublicConfig,
   normalizeAuth0Domain,
-} from './auth0-pkce.js';
+} from './auth0-pkce';
 
 afterEach(() => {
   vi.unstubAllEnvs();

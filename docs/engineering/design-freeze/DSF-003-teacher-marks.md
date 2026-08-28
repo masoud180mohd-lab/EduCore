@@ -3,8 +3,8 @@
 | Field     | Value                                    |
 | --------- | ---------------------------------------- |
 | Freeze ID | `DSF-003`                                |
-| Version   | `1.1`                                    |
-| Date      | 2026-07-21                               |
+| Version   | `1.2`                                    |
+| Date      | 2026-08-20                               |
 | Audience  | Teacher / staff (mobile-first)           |
 | Authority | Solo-operator provisional (SOLO-GOV-001) |
 
@@ -20,10 +20,12 @@ Reuse DSF-001 CSS variables. No purple-on-white AI defaults.
 
 ## Screens
 
-1. **Marks home** — list open exams (or create if permitted)
+1. **Marks home (Subject mode / Somo)** — list open exams (or create if permitted); entered via Teacher Workspace Somo tab
 2. **Exam detail** — subjects + status chips (draft / submitted / approved)
 3. **Mark entry** — roster (active enrollments) + numeric score + save + submit
-4. **Submitted/approved** — read-only scores; admin may approve from same screen if permitted
+4. **Submitted/approved** — read-only scores; admin may approve from same screen if permitted; UI shows locked state (no editable field) when approved
+
+Mode tabs / defaulting / capability visibility: see DSF-001 v1.2 (shared TeacherShell). This freeze owns Somo surfaces only.
 
 ## Components
 
@@ -51,7 +53,8 @@ Acting seats only.
 
 ## Revisions
 
-| Ver | Date       | Notes                                      |
-| --- | ---------- | ------------------------------------------ |
-| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-008)       |
-| 1.1 | 2026-07-30 | Submit uses ConfirmDialog (IMP-034 Wave X) |
+| Ver | Date       | Notes                                                                |
+| --- | ---------- | -------------------------------------------------------------------- |
+| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-008)                                 |
+| 1.1 | 2026-07-30 | Submit uses ConfirmDialog (IMP-034 Wave X)                           |
+| 1.2 | 2026-08-20 | Subject mode (Somo) under Teacher Workspace tabs (SPEC D1 / Phase 2) |

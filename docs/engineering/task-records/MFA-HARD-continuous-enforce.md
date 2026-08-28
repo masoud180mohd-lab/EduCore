@@ -1,11 +1,11 @@
 # MFA-HARD — Continuous hard enforce for privileged access
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **MFA-HARD** (follow-on to MFA-001…005) |
-| Date      | 2026-08-04 |
-| Status    | **Done** (solo-operator provisional) |
-| Depends   | MFA-001…005 · `MFA_ENFORCE` |
+| Field     | Value                                    |
+| --------- | ---------------------------------------- |
+| Program   | **MFA-HARD** (follow-on to MFA-001…005)  |
+| Date      | 2026-08-04                               |
+| Status    | **Done** (solo-operator provisional)     |
+| Depends   | MFA-001…005 · `MFA_ENFORCE`              |
 | Authority | Solo-operator provisional (SOLO-GOV-001) |
 
 ## Delivered

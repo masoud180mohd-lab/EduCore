@@ -36,7 +36,7 @@ describe('IMP-032 operator-safe tenant settings', () => {
       'utf8',
     );
     expect(page).toContain('tenant-settings-form');
-    expect(page).toContain('Advanced: edit additional JSON');
+    expect(page).toContain("t('settings.advanced')");
     expect(page).toContain('ConfirmDialog');
     expect(page).toContain('mergeSettingsForSave(loadedExtras');
     expect(page).not.toMatch(/Save replaces the settings object/i);

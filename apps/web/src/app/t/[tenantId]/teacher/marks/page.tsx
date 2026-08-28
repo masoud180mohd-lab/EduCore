@@ -5,10 +5,17 @@ import { useParams, useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
+import { useAppPreferences } from '@/components/AppProviders';
 import { TeacherShell } from '@/components/TeacherShell';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { buildClassLabelMap, formatClassLabel } from '@/lib/academic/class-labels';
 import { ApiClientError, apiRequest, teacherFriendlyMessage } from '@/lib/api/client';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
+import { BookOpen, CheckCircle, Clock, FileText, Sparkles } from 'lucide-react';
 
 type ExamRow = {
   readonly id: string;
@@ -25,6 +32,7 @@ export default function MarksHomePage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [exams, setExams] = useState<ExamRow[]>([]);
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [classLabels, setClassLabels] = useState<ReadonlyMap<string, string>>(new Map());
@@ -85,76 +93,166 @@ export default function MarksHomePage() {
     }
   }
 
+  const openCount = exams.filter((e) => e.status === 'open' || e.status === 'draft').length;
+  const approvedCount = exams.filter(
+    (e) => e.status === 'approved' || e.status === 'closed',
+  ).length;
+
   return (
     <TeacherShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="Marks"
-        description="Create an exam, add subjects, enter scores, then submit."
-      />
-      {error !== null ? <Banner tone="error">{error}</Banner> : null}
+      <div className="flex flex-col gap-6">
+        <AdminPageHeader title={t('teacher.marksTitle')} description={t('teacher.marksDesc')} />
+        {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
-      <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem' }}>New exam</h2>
-        <div className="field">
-          <label htmlFor="name">Name</label>
-          <input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="academicYearId">Academic year</label>
-          <select
-            id="academicYearId"
-            required
-            value={academicYearId}
-            onChange={(e) => setAcademicYearId(e.target.value)}
-          >
-            <option value="">Select year</option>
-            {years.map((y) => (
-              <option key={y.id} value={y.id}>
-                {y.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="classId">Class</label>
-          <select
-            id="classId"
-            required
-            value={classId}
-            onChange={(e) => setClassId(e.target.value)}
-          >
-            <option value="">Select class</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={busy || classId === '' || academicYearId === ''}
-        >
-          {busy ? 'Creating…' : 'Create exam'}
-        </button>
-      </form>
+        {/* Metric KPI Cards */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="border-border/70 bg-card">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Jumla ya Mitihani
+                </p>
+                <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
+                  {exams.length}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <FileText className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
 
-      {loading ? <p className="muted">Loading…</p> : null}
-      {!loading && exams.length === 0 ? <Banner tone="info">No exams yet.</Banner> : null}
-      <ul className="list">
-        {exams.map((exam) => (
-          <li key={exam.id}>
-            <Link className="card" href={`/t/${tenantId}/teacher/marks/exams/${exam.id}`}>
-              <strong>{exam.name}</strong>{' '}
-              <span className={`chip chip-${exam.status === 'open' ? 'open' : 'closed'}`}>
-                {exam.status}
-              </span>
-              <div className="muted">{formatClassLabel(classLabels, exam.classId)}</div>
-            </Link>
-          </li>
-        ))}
-      </ul>
+          <Card className="border-border/70 bg-card">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Mitihani Inayoendelea (Open)
+                </p>
+                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-1">
+                  {openCount}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Clock className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-card">
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Iliyoidhinishwa (Approved)
+                </p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">
+                  {approvedCount}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('teacher.newExam')}</CardTitle>
+            <CardDescription>{t('teacher.marksDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="flex flex-col gap-4" onSubmit={(e) => void onCreate(e)}>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="name">{t('common.name')}</Label>
+                <Input
+                  id="name"
+                  required
+                  placeholder="Midterm Exam 2026"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="academicYearId">{t('academic.year')}</Label>
+                  <select
+                    id="academicYearId"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    required
+                    value={academicYearId}
+                    onChange={(e) => setAcademicYearId(e.target.value)}
+                  >
+                    <option value="">{t('common.selectYear')}</option>
+                    {years.map((y) => (
+                      <option key={y.id} value={y.id}>
+                        {y.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="classId">{t('common.class')}</Label>
+                  <select
+                    id="classId"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    required
+                    value={classId}
+                    onChange={(e) => setClassId(e.target.value)}
+                  >
+                    <option value="">{t('common.selectClass')}</option>
+                    {classes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="mt-2 w-full sm:w-auto self-start"
+                disabled={busy || classId === '' || academicYearId === '' || name.trim() === ''}
+              >
+                {busy ? t('common.creating') : t('teacher.createExam')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {loading ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p> : null}
+        {!loading && exams.length === 0 ? (
+          <Banner tone="info">{t('teacher.noExams')}</Banner>
+        ) : null}
+
+        <div className="flex flex-col gap-2.5">
+          {exams.map((exam) => (
+            <Card key={exam.id} className="transition-colors hover:bg-muted/40">
+              <CardContent className="p-4">
+                <Link
+                  className="flex items-center justify-between gap-3 text-foreground"
+                  href={`/t/${tenantId}/teacher/marks/exams/${exam.id}`}
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{exam.name}</span>
+                      <Badge variant={exam.status === 'open' ? 'default' : 'secondary'}>
+                        {exam.status}
+                      </Badge>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {formatClassLabel(classLabels, exam.classId)}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-primary">→</span>
+                </Link>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
     </TeacherShell>
   );
 }

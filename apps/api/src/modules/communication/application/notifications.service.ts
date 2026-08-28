@@ -21,22 +21,13 @@ import {
 } from '../../../common/pagination/index.js';
 import { isUuid } from '../../../common/tenant/tenant-context.js';
 import { loadBeemWebhookSecret } from '../providers/beem-config.js';
-import { FakeSmsProvider } from '../providers/fake-sms.provider.js';
-import { SMS_PROVIDER_PORT, type SmsProviderPort } from '../providers/sms-provider.port.js';
 import {
   NotificationsRepository,
   type NotificationDeliveryRow,
   type NotificationRequestRow,
   type NotificationTemplateRow,
 } from '../repositories/notifications.repository.js';
-import {
-  assertPayloadAllowlist,
-  estimateSmsSegments,
-  normalizeTzMsisdn,
-  phoneLast4,
-  renderTemplateBody,
-  TEMPLATE_ALLOWLISTS,
-} from './notification-templates.js';
+import { assertPayloadAllowlist, TEMPLATE_ALLOWLISTS } from './notification-templates.js';
 
 const CREATE_ROUTE = '/api/v1/notifications/requests';
 const DELIVERY_STATUSES = new Set(['queued', 'submitted', 'sent', 'delivered', 'failed']);
@@ -59,7 +50,6 @@ function utcTodayDateString(): string {
 export class NotificationsService {
   constructor(
     private readonly notifications: NotificationsRepository,
-    @Inject(SMS_PROVIDER_PORT) private readonly sms: SmsProviderPort,
     @Optional()
     @Inject(IDEMPOTENCY_STORE)
     private readonly idempotency: IdempotencyStore | null = null,
@@ -237,80 +227,12 @@ export class NotificationsService {
       throw mapPgCreateError(error);
     }
 
-    if (created.status !== 'queued' || created.destE164 === null) {
-      const { destE164: _d, phoneLast4: _p, ...request } = created;
-      return { data: request };
-    }
-
-    const normalized = normalizeTzMsisdn(created.destE164);
-    if (normalized === null) {
-      try {
-        await this.notifications.completeSend({
-          actorUserId,
-          tenantId,
-          requestId: created.id,
-          deliveryId: randomUUID(),
-          providerCode: this.sms.providerCode,
-          providerMessageId: `invalid_phone_${created.id}`,
-          destE164: created.destE164,
-          phoneLast4: created.phoneLast4 ?? phoneLast4(created.destE164),
-          deliveryStatus: 'failed',
-          segmentCount: 1,
-          errorCode: 'INVALID_PHONE',
-          errorMessage: 'Guardian phone could not be normalized to E.164.',
-        });
-      } catch {
-        // fall through to reload
-      }
-      const failed = await this.notifications.getRequest(actorUserId, tenantId, created.id);
-      if (failed === null) throw new AppError('INTERNAL_ERROR', 'Failed to finalize notification.');
-      return { data: failed };
-    }
-
-    const bodyTemplate = await this.notifications.getTemplateBody(
-      actorUserId,
-      tenantId,
-      created.templateCode,
-      created.locale,
-      created.templateVersion,
-    );
-    if (bodyTemplate === null) {
-      throw new AppError('INTERNAL_ERROR', 'Template body missing after create.');
-    }
-    const body = renderTemplateBody(bodyTemplate, parsed.payload);
-    const segments = estimateSmsSegments(body);
-
-    const sendResult = await this.sms.send({
-      tenantId,
-      requestId: created.id,
-      toE164: normalized,
-      body,
-      clientRef: created.id,
-    });
-
-    try {
-      await this.notifications.completeSend({
-        actorUserId,
-        tenantId,
-        requestId: created.id,
-        deliveryId: randomUUID(),
-        providerCode: sendResult.providerCode,
-        providerMessageId: sendResult.providerMessageId,
-        destE164: normalized,
-        phoneLast4: phoneLast4(normalized),
-        deliveryStatus: sendResult.status === 'sent' ? 'sent' : 'failed',
-        segmentCount: segments,
-        errorCode: sendResult.errorCode ?? null,
-        errorMessage: sendResult.errorMessage ?? null,
-      });
-    } catch (error: unknown) {
-      throw mapPgCreateError(error);
-    }
-
-    const finalRow = await this.notifications.getRequest(actorUserId, tenantId, created.id);
-    if (finalRow === null)
-      throw new AppError('INTERNAL_ERROR', 'Failed to load notification request.');
-    return { data: finalRow };
+    // COMMS-006: sending is asynchronous. The outbox worker drains
+    // notification.send_requested events with claim locking, retry/backoff,
+    // and dead-lettering; delivery status is observable via
+    // GET /notifications/requests/:id and the deliveries feed.
+    const { destE164: _destE164, phoneLast4: _phoneLast4, ...request } = created;
+    return { data: request };
   }
 
   /**
@@ -520,11 +442,10 @@ function mapPgCreateError(error: unknown): AppError {
   return new AppError('INTERNAL_ERROR', 'Failed to create notification request.');
 }
 
-/** Exported for unit tests that need Fake without Nest. */
+/** Exported for unit tests that need the service without Nest. */
 export function createNotificationsServiceForTest(
   repo: NotificationsRepository,
-  sms: SmsProviderPort = new FakeSmsProvider(),
   idempotency: IdempotencyStore | null = null,
 ): NotificationsService {
-  return new NotificationsService(repo, sms, idempotency);
+  return new NotificationsService(repo, idempotency);
 }

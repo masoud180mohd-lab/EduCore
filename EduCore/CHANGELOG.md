@@ -2,6 +2,66 @@
 
 All material documentation changes are recorded here. This changelog does not replace ADRs or freeze records.
 
+## 2026-08-15 - IMP-051 Platform Operations Phase 1a (API + /platform UI)
+
+- Platform Super Admin product path: `/api/v1/platform/*` (list/register/suspend/reinstate/plan/entitlements/audit) on the `educore_platform` pool. `/auth/me` returns `platformOperator`; login lands `/platform` first (D2).
+- Web: `PlatformShell` + schools list/register/detail + audit (DSF-007). Local seed grants `platform_operators` via migrator/ops URL.
+- Not production GO. Support sessions, metering, invoicing, and portal-preference persistence are out of this slice.
+
+## 2026-08-15 - Phase 1 gates: SRS amendment + platform freezes (ACF/DBF-PLAT-001, DSF-007) + DSF-002 v1.31
+
+- SRS AMEND-2026-08-15: platform tenant lifecycle admin, manual plans, entitlement flags, and platform audit view enter MVP scope; Student portal is Phase 4; timetable excluded from v1. Access Control Bible: self-approval marks deny + platform-operator no-tenant-data deny.
+- ACF-PLAT-001 (platform endpoints under `/api/v1/platform/*`), DBF-PLAT-001 (`platform_operators`, `tenant_plan_assignments`, `tenant_entitlements`, `audit_events`), DSF-007 (Platform portal screens). DSF-002 v1.31 scopes Phase 1b Admin visual polish (IA unchanged).
+- Phase 1a coding unlocked by these freezes.
+
+## 2026-08-15 - Multi-portal spec accepted + portal chrome freeze + governance cleanup
+
+- SPEC-PORTALS-001 v1.0 accepted (Owner GO; all 10 defaults): portal map (Platform / Office / Teacher-modes / Head / Student / Parent), capability-based routing, phased plan. DSF-KIT-002 v1.0 (portal shells, identity tints, routing rule, portal switcher) supersedes DSF-KIT-001 §4 rule 2 + IMP-050 note (v1.6).
+- SOLO-GOV-003: human-signature and video/meeting gates retired kit-wide; Owner GO in session is the only human gate. Fictional governance outbox deleted; countersignature packet banner-retired; freeze template approval block replaced.
+- No feature code. Phase 1 still gated on SRS amendments (platform billing, student portal, timetable) + ACF-PLAT/DBF-PLAT/DSF-007.
+
+## 2026-08-14 - Workspace switcher (office / teacher / parent)
+
+- Owner/admin can open Ofisi, Mwalimu, and Mzazi from the top bar. Student has no login portal (registry + parent fees). DSF-KIT-001 v1.5.
+
+## 2026-08-14 - Full UI EN/SW chrome (Admin, Teacher, Parent, login)
+
+- Remaining office, teacher, parent, and login chrome uses the EN/SW catalog (IMP-049). Language toggle covers more than Students/Fees. DSF-KIT-001 v1.4 · DSF-002 v1.30. API error mapper copy stays English.
+
+## 2026-08-14 - Dashboard KPIs, Students/Fees i18n, report-card PDF
+
+- Admin home KPI tiles from owning-module summaries (students, invoices, attendance). Students and Fees chrome EN/SW. Report cards JSON + PDF (derived letter grade). ACF-002/009/011/012 and DSF-KIT-001 v1.3 / DSF-002 v1.29.
+
+## 2026-08-14 - Admin EN/SW + dark mode + MVP nav modules
+
+- Admin utility bar: English/Kiswahili toggle and light/dark theme. New nav: Staff, Attendance, Exams, Report cards, Reports, Announcements. DSF-KIT-001 v1.2.
+
+## 2026-08-14 - Admin office console layout
+
+- AdminShell is a left-rail office console (grouped nav + school name / Log out bar). DSF-KIT-001 v1.1 and DSF-002 v1.28. Teacher and parent shells unchanged.
+
+## 2026-08-14 - Next.js web on Fly
+
+- `educore-web-staging` and `educore-web` live (fra). API CORS allowlists those origins. Office fees via browser; Auth0 staging callback not updated.
+
+## 2026-08-13 - F-004 / F-016 / F-017 live on Fly
+
+- Prod Neon: RLS, webhook EXECUTE split, bursar vs staff. Staging + prod API images redeployed.
+
+## 2026-08-13 - PAY-007 office collection until ClickPesa is affordable
+
+- Live fee path is office cash/bank/cheque. ClickPesa remains the chosen MoMo vendor for later; F-001 deferred. No invented keys; no substitute paid aggregator.
+
+## 2026-08-13 - SOLO-GOV-002 Owner + AI (Board retired)
+
+- Kit Independent Board / architect-team people-gates retired. `42` kept as historical checklist.
+- F-005 withdrawn (not fake-closed). Remaining limits: ClickPesa keys, Neon PITR 6h.
+
+## 2026-08-13 - F-002 prod MFA hard (F-005 still open)
+
+- Privileged TOTP enrolled on prod admin; Doppler `prd` + Fly `educore-api` `MFA_ENFORCE=hard`.
+- F-005 not closed: independent freeze re-sign packet only (`F-005-independent-resign-packet-2026-08-13.md`).
+
 ## 2026-08-13 - Production infra live (not Board GO)
 
 - Fly `educore-api` (fra) + Neon `educore-prod` + Doppler `prd`; `/health` green.

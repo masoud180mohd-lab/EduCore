@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -42,6 +43,7 @@ export default function AdminEnrollmentsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const searchParams = useSearchParams();
   const prefillApplied = useRef(false);
   const [rows, setRows] = useState<EnrollmentRow[]>([]);
@@ -446,25 +448,27 @@ export default function AdminEnrollmentsPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic`}>← Academic</Link>
+        <Link href={`/t/${tenantId}/admin/academic`}>← {t('academic.back')}</Link>
       </p>
       <AdminPageHeader
-        title="Enrollments"
-        description="Place students in classes. Filter by year, student, class, stream, and status."
+        title={t('academic.enrollments')}
+        description={t('academic.enrollmentsDesc')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Enroll student</h2>
+        <h2 className="section-title">{t('academic.enrollStudent')}</h2>
         <div className="field">
-          <label htmlFor="enroll-student">Student</label>
+          <label htmlFor="enroll-student">{t('common.student')}</label>
           <select
             id="enroll-student"
             required
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
           >
-            <option value="">Select student</option>
+            <option value="">
+              {t('common.select')} {t('common.student')}
+            </option>
             {students.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.displayName}
@@ -480,7 +484,7 @@ export default function AdminEnrollmentsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="enroll-class">Class</label>
+          <label htmlFor="enroll-class">{t('common.class')}</label>
           <select
             id="enroll-class"
             required
@@ -489,7 +493,9 @@ export default function AdminEnrollmentsPage() {
               setClassId(e.target.value);
             }}
           >
-            <option value="">Select class</option>
+            <option value="">
+              {t('common.select')} {t('common.class')}
+            </option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -505,7 +511,7 @@ export default function AdminEnrollmentsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="enroll-stream">Stream (optional)</label>
+          <label htmlFor="enroll-stream">{t('common.stream')}</label>
           <select id="enroll-stream" value={streamId} onChange={(e) => setStreamId(e.target.value)}>
             <option value="">None</option>
             {streams.map((s) => (
@@ -527,7 +533,7 @@ export default function AdminEnrollmentsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="enroll-status">Status</label>
+          <label htmlFor="enroll-status">{t('common.status')}</label>
           <select
             id="enroll-status"
             value={status}
@@ -545,7 +551,7 @@ export default function AdminEnrollmentsPage() {
           className="btn btn-primary"
           disabled={busy || studentId === '' || classId === ''}
         >
-          {busy ? 'Saving…' : 'Create enrollment'}
+          {busy ? t('common.saving') : t('common.create')}
         </button>
       </form>
 
@@ -571,13 +577,13 @@ export default function AdminEnrollmentsPage() {
         }}
       >
         <div className="field">
-          <label htmlFor="filter-year">Academic year</label>
+          <label htmlFor="filter-year">{t('academic.year')}</label>
           <select
             id="filter-year"
             value={yearFilter}
             onChange={(e) => setYearFilter(e.target.value)}
           >
-            <option value="">All years</option>
+            <option value="">{t('fees.allYears')}</option>
             {years.map((y) => (
               <option key={y.id} value={y.id}>
                 {y.name}
@@ -593,13 +599,13 @@ export default function AdminEnrollmentsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="filter-student">Student</label>
+          <label htmlFor="filter-student">{t('common.student')}</label>
           <select
             id="filter-student"
             value={studentFilter}
             onChange={(e) => setStudentFilter(e.target.value)}
           >
-            <option value="">All students</option>
+            <option value="">{t('fees.allStudents')}</option>
             {students.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.displayName}
@@ -615,13 +621,13 @@ export default function AdminEnrollmentsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="filter-class">Class</label>
+          <label htmlFor="filter-class">{t('common.class')}</label>
           <select
             id="filter-class"
             value={classFilter}
             onChange={(e) => setClassFilter(e.target.value)}
           >
-            <option value="">All classes</option>
+            <option value="">{t('common.allClasses')}</option>
             {filterClasses.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -641,14 +647,16 @@ export default function AdminEnrollmentsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="filter-stream">Stream</label>
+          <label htmlFor="filter-stream">{t('common.stream')}</label>
           <select
             id="filter-stream"
             value={streamFilter}
             onChange={(e) => setStreamFilter(e.target.value)}
             disabled={classFilter === ''}
           >
-            <option value="">{classFilter === '' ? 'Select a class first' : 'All streams'}</option>
+            <option value="">
+              {classFilter === '' ? t('common.selectClassFirst') : t('common.allStreams')}
+            </option>
             {filterStreams.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -670,13 +678,13 @@ export default function AdminEnrollmentsPage() {
           ) : null}
         </div>
         <div className="field">
-          <label htmlFor="filter-status">Status</label>
+          <label htmlFor="filter-status">{t('common.status')}</label>
           <select
             id="filter-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as '' | EnrollmentStatus)}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('common.allStatuses')}</option>
             {ENROLLMENT_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -685,13 +693,13 @@ export default function AdminEnrollmentsPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          Apply filters
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No enrollments yet."
+        empty={t('academic.emptyEnrollments')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -712,7 +720,10 @@ export default function AdminEnrollmentsPage() {
           />
         }
       >
-        <AdminTable caption="Enrollments" headers={['Student', 'Class', 'Status', '']}>
+        <AdminTable
+          caption={t('academic.enrollments')}
+          headers={[t('common.student'), t('common.class'), t('common.status'), '']}
+        >
           {rows.map((row) => (
             <tr key={row.id}>
               <td>
@@ -729,7 +740,7 @@ export default function AdminEnrollmentsPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/academic/enrollments/${row.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

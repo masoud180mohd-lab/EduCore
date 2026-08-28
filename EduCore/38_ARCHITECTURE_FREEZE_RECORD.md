@@ -1,5 +1,7 @@
 # 38 Architecture Freeze Record
 
+> **SOLO-GOV-002:** Frozen architecture direction still binds Owner + AI. This freeze was not signed by a separate architect staff.
+
 ## Freeze Name
 
 EduCore Architecture Freeze v1.0

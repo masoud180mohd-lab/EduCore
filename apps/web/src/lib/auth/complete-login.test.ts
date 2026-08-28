@@ -22,11 +22,24 @@ vi.mock('@/lib/api/client', () => ({
 }));
 
 import { apiRequest } from '@/lib/api/client';
-import { completeLoginFromTokens, verifyMfaAndComplete } from './complete-login.js';
+import { completeLoginFromTokens, verifyMfaAndComplete } from './complete-login';
 
 describe('completeLoginFromTokens', () => {
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('routes platform operators to /platform before tenant bind', async () => {
+    vi.mocked(apiRequest).mockResolvedValueOnce({
+      data: { platformOperator: true },
+    });
+
+    const outcome = await completeLoginFromTokens({
+      accessToken: 'tok',
+      tenantId: null,
+    });
+
+    expect(outcome).toEqual({ kind: 'routed', path: '/platform' });
   });
 
   it('returns mfa_required when challenge token present', async () => {

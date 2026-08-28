@@ -47,7 +47,7 @@ async function main(): Promise<void> {
     await client.query(sql);
     process.stdout.write('Role bootstrap completed.\n');
     process.stdout.write(
-      'Reminder: NestJS must use educore_app only; never educore_migrator, educore_platform, or superuser.\n',
+      'Reminder: NestJS request pool is educore_app; ClickPesa ingest is educore_webhook; never migrator/platform/superuser.\n',
     );
   } finally {
     await client.end();

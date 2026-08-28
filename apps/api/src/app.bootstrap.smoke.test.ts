@@ -74,11 +74,13 @@ describe('PLAT-003 NestJS modular monolith skeleton', () => {
     await app.init();
     await app.listen(0);
     server = app.getHttpServer() as Server;
-  });
+  }, 120_000);
 
   afterAll(async () => {
-    await app.close();
-  });
+    if (app !== undefined) {
+      await app.close();
+    }
+  }, 30_000);
 
   it('registers all fifteen bounded-context modules', () => {
     expect(BOUNDED_CONTEXT_MODULES).toHaveLength(15);

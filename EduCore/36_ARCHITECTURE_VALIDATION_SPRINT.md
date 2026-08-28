@@ -1,5 +1,7 @@
 # 36 Architecture Validation Sprint
 
+> **SOLO-GOV-002:** Historical Sprint 0 plan. “CTO review” / team validation language is retired. Architecture Freeze v1.0 still stands as the planning baseline.
+
 ## Purpose
 
 Architecture Validation Sprint is Sprint 0 for EduCore.

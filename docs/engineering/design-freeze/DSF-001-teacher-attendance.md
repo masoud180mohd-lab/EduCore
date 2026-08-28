@@ -3,8 +3,8 @@
 | Field     | Value                                    |
 | --------- | ---------------------------------------- |
 | Freeze ID | `DSF-001`                                |
-| Version   | `1.1`                                    |
-| Date      | 2026-07-21                               |
+| Version   | `1.2`                                    |
+| Date      | 2026-08-20                               |
 | Audience  | Teacher / staff (mobile-first)           |
 | Authority | Solo-operator provisional (SOLO-GOV-001) |
 
@@ -45,10 +45,24 @@ Avoid purple-on-white gradients, terracotta cream “AI brochure” looks, and d
 ## Screens in scope
 
 1. **Login** — email + password; clear errors; MFA challenge → “not supported in v1”
-2. **Teacher home** — recent/open sessions; link to attendance picker
+2. **Teacher home (Class mode / Darasa)** — Leo (today) header; recent/open sessions; link to attendance picker
 3. **Attendance picker** — class, optional stream, date → open/resume session
 4. **Mark session** — roster + status toggles + Save + Close
 5. **Closed session** — read-only marks
+
+### Teacher Workspace modes (v1.2 — SPEC-PORTALS-001 D1)
+
+`TeacherShell` hosts persistent **Darasa | Somo** mode tabs under the Digii top bar:
+
+| Mode               | Nav focus         | Home                                 |
+| ------------------ | ----------------- | ------------------------------------ |
+| **Darasa (class)** | Sessions · Attend | today’s / recent attendance sessions |
+| **Somo (subject)** | Marks             | open exams / marks entry (DSF-003)   |
+
+- Tabs shown only for modes the actor can reach (`attendance.manage` → Darasa; `marks.manage` → Somo; `staff` role with neither listed perm → both until assignment-matrix API exists).
+- One reachable mode → no tab strip (nav for that mode only).
+- Default mode per SPEC D1 decision table; **last-used** persisted client-side per tenant in sessionStorage until portal-preference ACF ships (honest interim).
+- Offline/sync strip remains binding for capture flows (queue may still be disabled).
 
 ## Component inventory (this slice only)
 
@@ -90,7 +104,8 @@ ACF-009 attendance · ACF-008 enrollments · ACF-005 classes · ACF-002 students
 
 ## Revisions
 
-| Ver | Date       | Notes                                             |
-| --- | ---------- | ------------------------------------------------- |
-| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-006)              |
-| 1.1 | 2026-07-30 | Close session uses ConfirmDialog (IMP-034 Wave X) |
+| Ver | Date       | Notes                                                                     |
+| --- | ---------- | ------------------------------------------------------------------------- |
+| 1.0 | 2026-07-21 | Initial provisional freeze (IMP-006)                                      |
+| 1.1 | 2026-07-30 | Close session uses ConfirmDialog (IMP-034 Wave X)                         |
+| 1.2 | 2026-08-20 | Teacher Workspace Darasa/Somo mode tabs (SPEC D1 / Phase 2); Digii chrome |

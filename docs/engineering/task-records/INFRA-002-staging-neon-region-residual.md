@@ -1,10 +1,10 @@
 # INFRA-002 — Staging Neon region residual task record
 
-| Field     | Value |
-| --------- | ----- |
-| Date      | 2026-08-09 |
-| Status    | **Done** (residual Accepted) |
-| Decision  | `docs/engineering/decisions/INFRA-002-staging-neon-region-residual.md` |
+| Field    | Value                                                                  |
+| -------- | ---------------------------------------------------------------------- |
+| Date     | 2026-08-09                                                             |
+| Status   | **Done** (residual Accepted)                                           |
+| Decision | `docs/engineering/decisions/INFRA-002-staging-neon-region-residual.md` |
 
 ## Delivered
 

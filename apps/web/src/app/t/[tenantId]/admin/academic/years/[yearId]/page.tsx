@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -23,6 +24,7 @@ export default function AdminAcademicYearDetailPage() {
   const params = useParams<{ tenantId: string; yearId: string }>();
   const { tenantId, yearId } = params;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [row, setRow] = useState<AcademicYearRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -131,9 +133,9 @@ export default function AdminAcademicYearDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic/years`}>← Years</Link>
+        <Link href={`/t/${tenantId}/admin/academic/years`}>← {t('academic.years')}</Link>
       </p>
-      <AdminPageHeader title={row?.name ?? 'Academic year'} />
+      <AdminPageHeader title={row?.name ?? t('academic.year')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {deleteDependents !== null ? (
         <DeleteDependentsBanner tenantId={tenantId} groups={deleteDependents} />
@@ -143,7 +145,7 @@ export default function AdminAcademicYearDetailPage() {
         <div className="stack">
           <form className="card stack" onSubmit={onSave}>
             <label className="field">
-              <span>Name</span>
+              <span>{t('common.name')}</span>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -152,19 +154,19 @@ export default function AdminAcademicYearDetailPage() {
               />
             </label>
             <label className="field">
-              <span>Code (optional)</span>
+              <span>{t('common.codeOptional')}</span>
               <input value={code} onChange={(e) => setCode(e.target.value)} />
             </label>
             <label className="field">
-              <span>Starts on</span>
+              <span>{t('common.startsOn')}</span>
               <input type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />
             </label>
             <label className="field">
-              <span>Ends on</span>
+              <span>{t('common.endsOn')}</span>
               <input type="date" value={endsOn} onChange={(e) => setEndsOn(e.target.value)} />
             </label>
             <label className="field">
-              <span>Status</span>
+              <span>{t('common.status')}</span>
               <select value={status} onChange={(e) => setStatus(e.target.value as LifecycleStatus)}>
                 {LIFECYCLE_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -174,7 +176,7 @@ export default function AdminAcademicYearDetailPage() {
               </select>
             </label>
             <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Save changes'}
+              {busy ? t('common.saving') : t('common.save')}
             </button>
             <button
               className="btn btn-secondary"
@@ -182,7 +184,7 @@ export default function AdminAcademicYearDetailPage() {
               onClick={() => setConfirm('delete')}
               disabled={busy}
             >
-              Delete
+              {t('common.delete')}
             </button>
           </form>
           <p>
@@ -192,12 +194,12 @@ export default function AdminAcademicYearDetailPage() {
           </p>
         </div>
       ) : error === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : null}
 
       <ConfirmDialog
         open={confirm === 'close'}
-        title="Mark academic year as closed?"
+        title={t('academic.closeYear')}
         body="Mark this academic year as closed? This is for completed years."
         confirmLabel="Mark closed"
         danger
@@ -211,9 +213,9 @@ export default function AdminAcademicYearDetailPage() {
       />
       <ConfirmDialog
         open={confirm === 'delete'}
-        title="Delete academic year?"
+        title={t('academic.deleteYear')}
         body="Delete this academic year? This only works if nothing depends on it."
-        confirmLabel="Delete"
+        confirmLabel={t('common.delete')}
         danger
         busy={busy}
         onCancel={() => {

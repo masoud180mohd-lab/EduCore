@@ -40,11 +40,18 @@ export type RequestOptions = {
 };
 
 function apiBase(): string {
-  const raw = process.env['NEXT_PUBLIC_API_BASE_URL']?.trim();
-  if (raw === undefined || raw === '') {
-    return 'http://127.0.0.1:3000';
+  if (typeof window !== 'undefined' && window.location) {
+    const raw = process.env['NEXT_PUBLIC_API_BASE_URL']?.trim();
+    if (raw && !raw.includes('127.0.0.1') && !raw.includes('localhost')) {
+      return raw.replace(/\/$/, '');
+    }
+    return `${window.location.protocol}//${window.location.hostname}:3000`;
   }
-  return raw.replace(/\/$/, '');
+  const raw = process.env['NEXT_PUBLIC_API_BASE_URL']?.trim();
+  if (raw !== undefined && raw !== '') {
+    return raw.replace(/\/$/, '');
+  }
+  return 'http://127.0.0.1:3000';
 }
 
 export function teacherFriendlyMessage(error: ApiClientError): string {
@@ -108,6 +115,25 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   return json as T;
+}
+
+export async function apiDownload(path: string, options: RequestOptions = {}): Promise<Blob> {
+  const headers: Record<string, string> = { Accept: 'application/pdf' };
+  if (options.auth !== undefined && options.auth !== null) {
+    headers['Authorization'] = `Bearer ${options.auth.accessToken}`;
+    if (options.requireTenant !== false) {
+      headers['X-Tenant-Id'] = options.auth.tenantId;
+    }
+  }
+  const response = await fetch(`${apiBase()}${path}`, { method: 'GET', headers });
+  if (!response.ok) {
+    throw new ApiClientError({
+      status: response.status,
+      code: 'HTTP_ERROR',
+      message: `Download failed (${String(response.status)}).`,
+    });
+  }
+  return response.blob();
 }
 
 export function newIdempotencyKey(): string {

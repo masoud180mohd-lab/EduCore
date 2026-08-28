@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -35,6 +36,7 @@ export default function AdminStreamsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<StreamRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [classes, setClasses] = useState<ClassRow[]>([]);
@@ -186,25 +188,24 @@ export default function AdminStreamsPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic`}>← Academic</Link>
+        <Link href={`/t/${tenantId}/admin/academic`}>← {t('academic.back')}</Link>
       </p>
-      <AdminPageHeader
-        title="Streams"
-        description="Streams belong to a class. Search and filter the list below."
-      />
+      <AdminPageHeader title={t('academic.streams')} description={t('academic.streamsDesc')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <form className="stack card" onSubmit={(e) => void onCreate(e)}>
-        <h2 className="section-title">Create stream</h2>
+        <h2 className="section-title">{t('academic.createStream')}</h2>
         <div className="field">
-          <label htmlFor="stream-class">Class</label>
+          <label htmlFor="stream-class">{t('common.class')}</label>
           <select
             id="stream-class"
             required
             value={classId}
             onChange={(e) => setClassId(e.target.value)}
           >
-            <option value="">Select class</option>
+            <option value="">
+              {t('common.select')} {t('common.class')}
+            </option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -220,7 +221,7 @@ export default function AdminStreamsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="stream-name">Name</label>
+          <label htmlFor="stream-name">{t('common.name')}</label>
           <input
             id="stream-name"
             required
@@ -230,11 +231,11 @@ export default function AdminStreamsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="stream-code">Code (optional)</label>
+          <label htmlFor="stream-code">{t('common.codeOptional')}</label>
           <input id="stream-code" value={code} onChange={(e) => setCode(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="stream-create-status">Status</label>
+          <label htmlFor="stream-create-status">{t('common.status')}</label>
           <select
             id="stream-create-status"
             value={createStatus}
@@ -248,7 +249,7 @@ export default function AdminStreamsPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy || classId === ''}>
-          {busy ? 'Saving…' : 'Create stream'}
+          {busy ? t('common.saving') : t('common.create')}
         </button>
       </form>
 
@@ -270,13 +271,13 @@ export default function AdminStreamsPage() {
         }}
       >
         <div className="field">
-          <label htmlFor="stream-filter-class">Class</label>
+          <label htmlFor="stream-filter-class">{t('common.class')}</label>
           <select
             id="stream-filter-class"
             value={classFilter}
             onChange={(e) => setClassFilter(e.target.value)}
           >
-            <option value="">All classes</option>
+            <option value="">{t('common.allClasses')}</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -292,7 +293,7 @@ export default function AdminStreamsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="stream-search">Search</label>
+          <label htmlFor="stream-search">{t('common.search')}</label>
           <input
             id="stream-search"
             value={search}
@@ -301,13 +302,13 @@ export default function AdminStreamsPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="stream-list-status">Status</label>
+          <label htmlFor="stream-list-status">{t('common.status')}</label>
           <select
             id="stream-list-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as '' | LifecycleStatus)}
           >
-            <option value="">All statuses</option>
+            <option value="">{t('common.allStatuses')}</option>
             {LIFECYCLE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -316,13 +317,13 @@ export default function AdminStreamsPage() {
           </select>
         </div>
         <button type="submit" className="btn btn-secondary" disabled={loading || loadingMore}>
-          Apply filters
+          {t('common.applyFilters')}
         </button>
       </form>
 
       <ResourceList
         loading={loading}
-        empty="No streams yet."
+        empty={t('academic.emptyStreams')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -341,7 +342,10 @@ export default function AdminStreamsPage() {
           />
         }
       >
-        <AdminTable caption="Streams" headers={['Name', 'Class', 'Status', '']}>
+        <AdminTable
+          caption={t('academic.streams')}
+          headers={[t('common.name'), t('common.class'), t('common.status'), '']}
+        >
           {rows.map((row) => (
             <tr key={row.id}>
               <td>
@@ -356,7 +360,7 @@ export default function AdminStreamsPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/academic/streams/${row.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

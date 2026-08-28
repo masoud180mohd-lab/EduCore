@@ -1,8 +1,11 @@
+'use client';
+
 import type { ReactNode } from 'react';
 
 import Link from 'next/link';
 
 import { Banner } from '@/components/admin/Banner';
+import { useAppPreferences } from '@/components/AppProviders';
 
 /**
  * Card section for related records on detail pages (IMP-031).
@@ -29,6 +32,7 @@ export function RelatedRecordsSection({
   readonly children: ReactNode;
   readonly footer?: ReactNode;
 }) {
+  const { t } = useAppPreferences();
   return (
     <section className="card stack related-records-section">
       <div className="related-records-section__header">
@@ -40,7 +44,7 @@ export function RelatedRecordsSection({
         ) : null}
       </div>
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
-      {loading ? <p className="muted">Loading…</p> : null}
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {!loading && isEmpty && error === null ? <Banner tone="info">{emptyMessage}</Banner> : null}
       {!loading && !isEmpty && error === null ? children : null}
       {!loading && !isEmpty && error === null && footer !== undefined ? footer : null}

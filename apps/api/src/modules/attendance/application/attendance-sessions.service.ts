@@ -87,6 +87,39 @@ export class AttendanceSessionsService {
     return buildPaginatedResponse(page.rows, pagination.limit, page.nextCursor);
   }
 
+  async summarizeForTenant(
+    actorUserId: string,
+    tenantId: string,
+    rawQuery: { readonly sessionDate?: unknown },
+  ): Promise<{
+    readonly data: {
+      readonly sessionDate: string;
+      readonly sessionCount: number;
+      readonly present: number;
+      readonly absent: number;
+      readonly late: number;
+      readonly excused: number;
+    };
+  }> {
+    if (!isUuid(actorUserId)) throw AppError.unauthorized();
+    if (!isUuid(tenantId)) throw AppError.tenantContextRequired();
+    const sessionDate = parseOptionalSessionDate(rawQuery.sessionDate) ?? utcToday();
+    if (!this.sessions.isAvailable()) {
+      return {
+        data: {
+          sessionDate,
+          sessionCount: 0,
+          present: 0,
+          absent: 0,
+          late: 0,
+          excused: 0,
+        },
+      };
+    }
+    const data = await this.sessions.summarizeForDate(actorUserId, tenantId, sessionDate);
+    return { data };
+  }
+
   async getForTenant(
     actorUserId: string,
     tenantId: string,
@@ -419,6 +452,10 @@ function parseOptionalUuid(raw: unknown, field: string): string | undefined {
     throw AppError.validation(`${field} must be a UUID.`, { field });
   }
   return raw;
+}
+
+function utcToday(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function parseOptionalSessionDate(raw: unknown): string | undefined {

@@ -12,9 +12,7 @@ import { spawnSync } from 'node:child_process';
 import pg from 'pg';
 
 const CONFIG =
-  process.env['DOPPLER_TARGET_CONFIG']?.trim() ||
-  process.env['DOPPLER_CONFIG']?.trim() ||
-  'stg';
+  process.env['DOPPLER_TARGET_CONFIG']?.trim() || process.env['DOPPLER_CONFIG']?.trim() || 'stg';
 
 function setSecret(name, value) {
   const r = spawnSync(

@@ -75,10 +75,7 @@ describe('IMP-011-PX parent portal bind', () => {
     );
     expect(codes).toContain('parent.guardian.read');
     expect(codes).toContain('parent.finance.read');
-    const roles = readFileSync(
-      path.join(root, 'apps/api/src/modules/identity-and-access/rbac/system-roles.ts'),
-      'utf8',
-    );
+    const roles = readFileSync(path.join(root, 'apps/api/src/common/rbac/system-roles.ts'), 'utf8');
     expect(roles).toContain("'parent'");
     expect(roles).toMatch(
       /const PARENT_PERMISSIONS[^=]*=\s*\[[^\]]*'parent\.guardian\.read'[^\]]*'parent\.finance\.read'[^\]]*\]/s,
@@ -103,6 +100,6 @@ describe('IMP-011-PX parent portal bind', () => {
     expect(page).toContain('/api/v1/me/fees/invoices');
     expect(page).not.toContain('/reconcile');
     expect(page).not.toContain('canRecordPayment');
-    expect(page).toContain('PAY-PROVIDER-001');
+    expect(page).toContain("t('parent.officePay')");
   });
 });

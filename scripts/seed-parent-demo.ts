@@ -143,6 +143,7 @@ export async function seedParentDemo(
     tenantCode: 'demo-school',
     tenantName: 'Demo School',
     connectionString: config.connectionString,
+    migratorConnectionString: config.connectionString,
     resetPassword: config.resetPassword,
     allowProduction: config.allowProduction,
     nodeEnv: config.nodeEnv,

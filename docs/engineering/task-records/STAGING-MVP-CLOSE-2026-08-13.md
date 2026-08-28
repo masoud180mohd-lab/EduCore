@@ -1,10 +1,10 @@
 # Staging lab MVP close — 2026-08-13
 
-| Field     | Value                                  |
-| --------- | -------------------------------------- |
-| Date      | 2026-08-13                             |
-| Status    | **Lab/staging MVP Done** (SOLO-GOV-001) |
-| Production | **NO GO** (Board `42` still stands)   |
+| Field      | Value                                   |
+| ---------- | --------------------------------------- |
+| Date       | 2026-08-13                              |
+| Status     | **Lab/staging MVP Done** (SOLO-GOV-001) |
+| Production | **NO GO** (Board `42` still stands)     |
 
 ## Closed in lab (not production)
 

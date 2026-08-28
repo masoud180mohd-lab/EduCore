@@ -32,9 +32,7 @@ export function resolveAuthIdpProvider(
   return raw === 'auth0' ? 'auth0' : 'local';
 }
 
-export function loadAuth0Config(
-  environment: NodeJS.ProcessEnv = process.env,
-): Auth0Config | null {
+export function loadAuth0Config(environment: NodeJS.ProcessEnv = process.env): Auth0Config | null {
   const domain = normalizeAuth0Domain(environment['AUTH0_DOMAIN']?.trim() ?? '');
   const clientId = environment['AUTH0_CLIENT_ID']?.trim() ?? '';
   if (domain === '' || clientId === '') {
@@ -72,9 +70,7 @@ function normalizeAuth0Domain(raw: string): string {
   return value.replace(/\/+$/, '');
 }
 
-function listMissingAuth0Secrets(
-  environment: NodeJS.ProcessEnv,
-): ReadonlyArray<Auth0SecretName> {
+function listMissingAuth0Secrets(environment: NodeJS.ProcessEnv): ReadonlyArray<Auth0SecretName> {
   const missing: Auth0SecretName[] = [];
   if (normalizeAuth0Domain(environment['AUTH0_DOMAIN']?.trim() ?? '') === '') {
     missing.push('AUTH0_DOMAIN');

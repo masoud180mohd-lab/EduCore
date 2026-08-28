@@ -9,6 +9,12 @@
   --color-danger: #b42318;
   --color-warn: #b54708;
   --color-ok: #067647;
+  --color-rail: #12202b;
+  --color-rail-ink: #e8eef3;
+  --color-rail-muted: #8b9aab;
+  --color-rail-line: #243445;
+  --rail-width: 15.5rem;
+  --content-max-admin: 72rem;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -18,6 +24,29 @@
   --font-sans: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
   --radius: 6px;
   --focus-ring: 2px solid var(--color-accent);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #0f1419;
+  --color-surface: #1a2332;
+  --color-ink: #e8eef3;
+  --color-muted: #9aa8b7;
+  --color-border: #2f3f52;
+  --color-accent: #2a9d8a;
+  --color-accent-ink: #ffffff;
+  --color-danger: #f97066;
+  --color-warn: #fdb022;
+  --color-ok: #32d583;
+  --color-rail: #0a1016;
+  --color-rail-ink: #e8eef3;
+  --color-rail-muted: #8b9aab;
+  --color-rail-line: #1e2a38;
+  --focus-ring: 2px solid var(--color-accent);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 
 *,
@@ -154,6 +183,9 @@ a {
 }
 
 .admin-hub-group .list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-3);
   margin: 0;
 }
 
@@ -180,6 +212,58 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.stack label,
+.filters label,
+.confirm-dialog-reason {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.stack input,
+.stack select,
+.stack textarea,
+.filters input,
+.filters select,
+.confirm-dialog-reason textarea {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font: inherit;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.confirm-dialog-reason textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.definition-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.definition-list dt {
+  color: var(--color-muted);
+}
+
+.definition-list dd {
+  margin: 0;
 }
 
 .field {
@@ -505,4 +589,388 @@ h1 {
   padding: var(--space-4);
   background: color-mix(in srgb, var(--color-bg) 92%, #fff);
   border-top: 1px solid var(--color-border);
+}
+
+/* IMP-046: Admin office console — left rail + utility bar */
+.admin-console-plain {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.admin-console {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.admin-console-rail {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-3) var(--space-5);
+  background: var(--color-rail);
+  color: var(--color-rail-ink);
+  border-right: 1px solid var(--color-rail-line);
+}
+
+.admin-console-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0 0 var(--space-4);
+  padding: 0 var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-rail-line);
+}
+
+.admin-console-product {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-console-product-meta {
+  font-size: 0.75rem;
+  color: var(--color-rail-muted);
+}
+
+.admin-console .admin-nav-groups {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--space-4);
+  min-width: 0;
+  align-items: stretch;
+}
+
+.admin-console .admin-nav-group {
+  min-width: 0;
+}
+
+.admin-console .admin-nav-group-label {
+  padding: 0 var(--space-3);
+  color: var(--color-rail-muted);
+}
+
+.admin-console .admin-nav-group-links {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0.1rem;
+}
+
+.admin-console .admin-nav-group-links a {
+  padding: 0 var(--space-3);
+  border-radius: var(--radius);
+  border-left: 3px solid transparent;
+  color: var(--color-rail-ink);
+  font-weight: 500;
+}
+
+.admin-console .admin-nav-group-links a[aria-current='page'] {
+  border-left-color: var(--color-accent);
+  background: color-mix(in srgb, #fff 9%, transparent);
+  color: #fff;
+  text-decoration: none;
+}
+
+.admin-console-rail :focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.admin-console-rail-foot {
+  margin: var(--space-5) 0 0;
+  padding: var(--space-3) var(--space-3) 0;
+  border-top: 1px solid var(--color-rail-line);
+}
+
+.admin-console-rail-foot a {
+  color: var(--color-rail-muted);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.admin-console-rail-foot a:hover {
+  color: var(--color-rail-ink);
+}
+
+.admin-console-workspace {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-console-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 3.5rem;
+  padding: 0 var(--space-5);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-console[data-portal='platform'] {
+  --portal-accent: #134a6d;
+}
+
+.admin-console[data-portal='platform'] .admin-console-top {
+  border-top: 3px solid var(--portal-accent);
+}
+
+.admin-console[data-portal='platform'] .admin-nav-group-links a[aria-current='page'] {
+  border-left-color: var(--portal-accent);
+}
+
+.portal-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--portal-accent, #134a6d);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.admin-console-school {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.9375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-console-main {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: var(--content-max-admin);
+  padding: var(--space-5) var(--space-5) var(--space-6);
+}
+
+.admin-console-menu,
+.admin-console-scrim {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .admin-console {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-console-rail {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: min(18.5rem, 88vw);
+    transform: translateX(-100%);
+    z-index: 30;
+  }
+
+  .admin-console-nav-open .admin-console-rail {
+    transform: translateX(0);
+  }
+
+  .admin-console-menu {
+    display: inline-flex;
+  }
+
+  .admin-console-nav-open .admin-console-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: color-mix(in srgb, var(--color-ink) 45%, transparent);
+    cursor: pointer;
+  }
+
+  .admin-console-top,
+  .admin-console-main {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .admin-console-rail {
+    transition: transform 0.18s ease;
+  }
+}
+
+.admin-console-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.admin-console-pref {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-console-pref-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.admin-console-select {
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+}
+
+.admin-console-theme {
+  display: inline-flex;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.admin-console-chip {
+  min-height: 2.25rem;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: calc(var(--radius) - 2px);
+  background: transparent;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.workspace-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.workspace-switch a {
+  text-decoration: none;
+}
+
+.admin-console-chip.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.admin-console-chip.is-active {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+
+.kpi-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.kpi-tile-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.kpi-tile-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.kpi-tile-meta {
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+@media (max-width: 767px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-console-top {
+    flex-wrap: wrap;
+  }
+
+  .admin-console-pref-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .admin-console-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+    gap: var(--space-1);
+  }
+}
+
+@media print {
+  .admin-console-rail,
+  .admin-console-top,
+  .admin-console-scrim,
+  .admin-console-menu,
+  .no-print {
+    display: none !important;
+  }
+
+  .admin-console-workspace,
+  .admin-console-main {
+    padding: 0;
+    max-width: none;
+  }
 }

@@ -1,12 +1,12 @@
 # UX-POLISH-R1 — Admin / teacher / parent chrome (no payments)
 
-| Field     | Value                                            |
-| --------- | ------------------------------------------------ |
-| Program   | **UX-POLISH-R1**                                 |
-| Date      | 2026-08-09                                       |
-| Status    | **Done** (solo-operator provisional)             |
-| Depends   | DSF-KIT-001 · DSF-001/003/006 · WEB-MFA-UI       |
-| Authority | Solo-operator provisional (SOLO-GOV-001)         |
+| Field     | Value                                      |
+| --------- | ------------------------------------------ |
+| Program   | **UX-POLISH-R1**                           |
+| Date      | 2026-08-09                                 |
+| Status    | **Done** (solo-operator provisional)       |
+| Depends   | DSF-KIT-001 · DSF-001/003/006 · WEB-MFA-UI |
+| Authority | Solo-operator provisional (SOLO-GOV-001)   |
 
 ## Outcome
 

@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner, ConfirmDialog } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { DeleteDependentsBanner } from '@/components/DeleteDependentsBanner';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
@@ -19,6 +20,7 @@ export default function AdminSubjectDetailPage() {
   const params = useParams<{ tenantId: string; subjectId: string }>();
   const { tenantId, subjectId } = params;
   const router = useRouter();
+  const { t } = useAppPreferences();
   const [row, setRow] = useState<SubjectRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -116,9 +118,9 @@ export default function AdminSubjectDetailPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/academic/subjects`}>← Subjects</Link>
+        <Link href={`/t/${tenantId}/admin/academic/subjects`}>← {t('academic.subjects')}</Link>
       </p>
-      <AdminPageHeader title={row?.name ?? 'Subject'} />
+      <AdminPageHeader title={row?.name ?? t('academic.subject')} />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
       {deleteDependents !== null ? (
         <DeleteDependentsBanner tenantId={tenantId} groups={deleteDependents} />
@@ -127,7 +129,7 @@ export default function AdminSubjectDetailPage() {
       {row !== null ? (
         <form className="card stack" onSubmit={onSave}>
           <label className="field">
-            <span>Name</span>
+            <span>{t('common.name')}</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -136,11 +138,11 @@ export default function AdminSubjectDetailPage() {
             />
           </label>
           <label className="field">
-            <span>Code (optional)</span>
+            <span>{t('common.codeOptional')}</span>
             <input value={code} onChange={(e) => setCode(e.target.value)} />
           </label>
           <label className="field">
-            <span>Status</span>
+            <span>{t('common.status')}</span>
             <select value={status} onChange={(e) => setStatus(e.target.value as LifecycleStatus)}>
               {LIFECYCLE_STATUSES.map((s) => (
                 <option key={s} value={s}>
@@ -150,7 +152,7 @@ export default function AdminSubjectDetailPage() {
             </select>
           </label>
           <button className="btn btn-primary" type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save changes'}
+            {busy ? t('common.saving') : t('common.save')}
           </button>
           <button
             className="btn btn-secondary"
@@ -158,16 +160,16 @@ export default function AdminSubjectDetailPage() {
             onClick={() => setConfirm('delete')}
             disabled={busy}
           >
-            Delete
+            {t('common.delete')}
           </button>
         </form>
       ) : error === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : null}
 
       <ConfirmDialog
         open={confirm === 'close'}
-        title="Mark subject as closed?"
+        title={t('academic.closeSubject')}
         body="Mark this subject as closed?"
         confirmLabel="Mark closed"
         danger
@@ -181,9 +183,9 @@ export default function AdminSubjectDetailPage() {
       />
       <ConfirmDialog
         open={confirm === 'delete'}
-        title="Delete subject?"
+        title={t('academic.deleteSubject')}
         body="Delete this subject? This only works if nothing depends on it."
-        confirmLabel="Delete"
+        confirmLabel={t('common.delete')}
         danger
         busy={busy}
         onCancel={() => {

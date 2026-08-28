@@ -1,4 +1,4 @@
-import type { SessionAuth } from '../api/client.js';
+import type { SessionAuth } from '../api/client';
 
 const TOKEN_KEY = 'educore.accessToken';
 const TENANT_KEY = 'educore.tenantId';
@@ -8,10 +8,10 @@ export function readSession(): SessionAuth | null {
   if (typeof window === 'undefined') return null;
   const accessToken = sessionStorage.getItem(TOKEN_KEY);
   const tenantId = sessionStorage.getItem(TENANT_KEY);
-  if (accessToken === null || tenantId === null || accessToken === '' || tenantId === '') {
+  if (accessToken === null || accessToken === '') {
     return null;
   }
-  return { accessToken, tenantId };
+  return { accessToken, tenantId: tenantId ?? '' };
 }
 
 export function writeSession(auth: SessionAuth): void {

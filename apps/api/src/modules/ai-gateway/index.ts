@@ -21,16 +21,16 @@ export { AI_LAB_PROMPT_CATALOG, isKnownLabPromptCode } from './application/ai-pr
 export type { AiLabPromptCatalogEntry } from './application/ai-prompt-catalog.js';
 export type { AiProviderName } from './application/ai-feature-gate.js';
 export { resolveAiProviderName } from './application/ai-feature-gate.js';
-export {
-  LAB_ECHO_EVAL_FIXTURES,
-  runAiEvalFixture,
-  runAiEvalSuite,
-} from './eval/index.js';
+export { LAB_ECHO_EVAL_FIXTURES, runAiEvalFixture, runAiEvalSuite } from './eval/index.js';
 export type {
   AiEvalCaseResult,
   AiEvalCategory,
   AiEvalFixture,
   AiEvalSuiteResult,
 } from './eval/index.js';
-export { reportOpenAiConfig, loadOpenAiConfig, OPENAI_PROVIDER_CODE } from './providers/openai-config.js';
+export {
+  reportOpenAiConfig,
+  loadOpenAiConfig,
+  OPENAI_PROVIDER_CODE,
+} from './providers/openai-config.js';
 export type { OpenAiConfigReport } from './providers/openai-config.js';

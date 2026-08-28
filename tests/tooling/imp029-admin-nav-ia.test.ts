@@ -26,8 +26,8 @@ describe('IMP-029 AdminShell nav IA', () => {
     expect(shell).toContain('groupAdminNav');
     expect(shell).toContain('visibleAdminNavIds');
     expect(shell).toContain('canAccessAdminShell');
-    expect(shell).toContain('admin-nav-groups');
-    expect(shell).toContain('aria-label="Admin"');
+    expect(shell).toContain('navGroups');
+    expect(shell).toContain('groupMessageKey');
   });
 
   it('home hub mirrors groups', () => {
@@ -36,7 +36,8 @@ describe('IMP-029 AdminShell nav IA', () => {
       'utf8',
     );
     expect(home).toContain('groupAdminNav');
-    expect(home).toContain('admin-hub-groups');
+    expect(home).toContain('group.items');
+    expect(home).toContain('ADMIN_HUB_BY_ID');
   });
 
   it('tokens define grouped nav layout', () => {

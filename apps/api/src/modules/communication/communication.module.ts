@@ -4,6 +4,7 @@ import { DatabaseModule } from '../../common/persistence/index.js';
 import { PlatformOperationsModule } from '../platform-operations/index.js';
 import { CommunicationApplicationService } from './application/communication.application-service.js';
 import { NotificationsService } from './application/notifications.service.js';
+import { SmsOutboxWorker } from './application/outbox-worker.js';
 import { CommunicationController } from './controllers/communication.controller.js';
 import { NotificationsProductController } from './controllers/notifications.product.controller.js';
 import { NotificationsWebhooksController } from './controllers/notifications.webhooks.controller.js';
@@ -38,6 +39,7 @@ import { NotificationsRepository } from './repositories/notifications.repository
     },
     NotificationsRepository,
     NotificationsService,
+    SmsOutboxWorker,
     FakeSmsProvider,
     {
       provide: BeemSmsProvider,

@@ -4,11 +4,7 @@
 import { createAiGatewayServiceForTest } from '../application/ai-gateway.service.js';
 import { FakeAiProvider } from '../providers/fake-ai.provider.js';
 import type { AiGatewayRepository } from '../repositories/ai-gateway.repository.js';
-import type {
-  AiEvalCaseResult,
-  AiEvalFixture,
-  AiEvalSuiteResult,
-} from './ai-eval.types.js';
+import type { AiEvalCaseResult, AiEvalFixture, AiEvalSuiteResult } from './ai-eval.types.js';
 
 const DEFAULT_TENANT_ID = '01900000-0000-7000-8000-00000000e001';
 const DEFAULT_ACTOR_USER_ID = '01900000-0000-7000-8000-00000000e002';

@@ -82,8 +82,8 @@ and writes `payment_allocations` + `receipts`. **Never** mutate a stored balance
 
 ## Permissions
 
-- `finance.read` — owner, admin, staff
-- `finance.manage` — owner, admin, staff
+- `finance.read` — owner, admin, bursar
+- `finance.manage` — owner, admin, bursar
 - `finance.reconcile` — owner, admin only
 
 ## Rev 1.1 — Void / reverse helpers (Wave D, migration `20260721160200`)
@@ -106,6 +106,25 @@ and writes `payment_allocations` + `receipts`. **Never** mutate a stored balance
 - Table `payment_reconciliations` — immutable audit of compare outcomes; SELECT-only for `educore_app`.
 - `app.record_gateway_event` 9-arg overload (amount + outcome); prior 7-arg dropped.
 - `app.reconcile_payment` — compare attempt vs latest linked event; outcomes `matched` | `amount_mismatch` | `missing_event` | `status_mismatch`. Does **not** post journals or mutate payment status.
+
+## Rev 1.4 — F-016 payment_reconciliations RLS (migration `20260813150000`)
+
+- `payment_reconciliations` now ENABLE + FORCE RLS via `app.enable_tenant_rls`.
+- `educore_app` SELECT policy: `tenant_id = app.current_tenant_id()` (same pattern as other finance tables).
+- PUBLIC revoked. Writes still only via `app.reconcile_payment` (SECURITY DEFINER).
+
+## Rev 1.5 — F-017 MoMo SECURITY DEFINER EXECUTE split (migration `20260813160000`)
+
+- `educore_app` **REVOKE EXECUTE** on `complete_pending_mobile_money_payment` and `ingest_clickpesa_gateway_event`.
+- New role `educore_webhook` receives EXECUTE on ingest only (HTTP HMAC still required). Complete stays internal (definer call from ingest).
+- Nest ClickPesa ingest uses `EDUCORE_WEBHOOK_DATABASE_URL` / default local webhook URL — never the `educore_app` pool.
+
+## Rev 1.6 — F-004 staff vs bursar (migration `20260813170000`)
+
+- System role `bursar` holds `finance.read` / `finance.manage` (plus student/academic/guardian/org/tenant reads for the office fees UI).
+- System role `staff` **no longer** receives `finance.read` / `finance.manage`. Classroom staff cannot create invoices or office-pay.
+- Existing staff users are **not** auto-promoted to bursar. Owner/admin still have finance.manage; assign `bursar` to fee clerks.
+- Does **not** close F-005 (independent freeze re-sign).
 
 ## Solo-operator honesty
 

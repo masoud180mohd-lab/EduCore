@@ -19,6 +19,7 @@ export type StudentRow = {
   readonly studentCode: string | null;
   readonly displayName: string;
   readonly status: string;
+  readonly userId: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 };
@@ -298,6 +299,89 @@ export class StudentsRepository {
       throw error;
     }
   }
+
+  /**
+   * Bound student for portal user (DSF-009). Fail-closed → null.
+   */
+  async getByUserIdForTenant(
+    actorUserId: string,
+    tenantId: string,
+    userId: string,
+  ): Promise<StudentRow | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(userId) || this.pool === null) {
+      return null;
+    }
+
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{
+            id: string;
+            tenant_id: string;
+            student_code: string | null;
+            display_name: string;
+            status: string;
+            user_id: string | null;
+            created_at: Date;
+            updated_at: Date;
+          }>(
+            `SELECT s.id, s.tenant_id, s.student_code, s.display_name, s.status, s.user_id,
+                    s.created_at, s.updated_at
+             FROM students s
+             WHERE s.tenant_id = $1::uuid
+               AND s.user_id = $2::uuid
+             LIMIT 1`,
+            [tenantId, userId],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : mapStudentRow(row);
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'StudentsRepository', error, {
+        operation: 'getByUserIdForTenant',
+      });
+      return null;
+    }
+  }
+
+  async summarizeForTenant(
+    actorUserId: string,
+    tenantId: string,
+  ): Promise<{ readonly total: number; readonly byStatus: Readonly<Record<string, number>> }> {
+    const empty = { total: 0, byStatus: {} };
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) {
+      return empty;
+    }
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{ status: string; n: string }>(
+            `SELECT s.status, COUNT(*)::text AS n
+             FROM students s
+             WHERE s.tenant_id = $1::uuid
+             GROUP BY s.status`,
+            [tenantId],
+          );
+          const byStatus: Record<string, number> = {};
+          let total = 0;
+          for (const row of result.rows) {
+            const n = Number(row.n);
+            byStatus[row.status] = n;
+            total += n;
+          }
+          return { total, byStatus };
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'StudentsRepository', error, { operation: 'summarize' });
+      return empty;
+    }
+  }
 }
 
 function mapStudentRow(row: {
@@ -306,6 +390,7 @@ function mapStudentRow(row: {
   student_code: string | null;
   display_name: string;
   status: string;
+  user_id?: string | null;
   created_at: Date;
   updated_at: Date;
 }): StudentRow {
@@ -315,6 +400,7 @@ function mapStudentRow(row: {
     studentCode: row.student_code,
     displayName: row.display_name,
     status: row.status,
+    userId: row.user_id ?? null,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
   };

@@ -12,6 +12,7 @@ const studentA = {
   studentCode: 'STU-001',
   displayName: 'Asha Juma',
   status: 'active',
+  userId: null,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };

@@ -53,7 +53,7 @@ describe('IMP-011 parent/guardian fees (read-only)', () => {
       ),
       'utf8',
     );
-    expect(page).toMatch(/read-only/i);
+    expect(page).toContain("t('parent.readOnlyInvoice')");
     expect(page).toContain('PAY-PROVIDER-001');
     expect(page).not.toMatch(/\/issue\b/);
     expect(page).not.toMatch(/\/void\b/);
@@ -69,6 +69,6 @@ describe('IMP-011 parent/guardian fees (read-only)', () => {
       'utf8',
     );
     expect(detail).toContain('/fees');
-    expect(detail).toMatch(/View fees/i);
+    expect(detail).toContain("t('guardians.fees')");
   });
 });

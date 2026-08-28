@@ -48,13 +48,13 @@
 | `39_ENGINEERING_EXECUTION_ROADMAP.md` | Execution plan from freeze gates to GA |
 | `40_MASTER_ENGINEERING_EXECUTION_PROMPT.md` | Mandatory AI implementation control prompt |
 | `41_AI_ENGINEERING_OPERATING_SYSTEM.md` | AI-EOS workflow, prompts, quality bar, and escalation |
-| `42_ENGINEERING_READINESS_REVIEW.md` | Independent execution readiness verdict and blockers |
+| `42_ENGINEERING_READINESS_REVIEW.md` | Historical readiness checklist (Board wrapper retired, SOLO-GOV-002) |
 | `43_PROJECT_STATUS.md` | Canonical current phase, permissions, and next milestone |
 | `44_DEFINITION_OF_READY.md` | Mandatory task readiness criteria |
 | `45_TECHNICAL_DEBT_POLICY.md` | Technical debt governance |
 | `46_KNOWN_LIMITATIONS.md` | Deferred decisions and implementation limits |
 | `47_DOCUMENT_CONTROL_REGISTER.md` | Canonical documentation control map |
-| `48_AI_DEVELOPMENT_KIT_AUDIT_AND_ENHANCEMENT.md` | Independent audit, enhancements, and documentation verdict |
+| `48_AI_DEVELOPMENT_KIT_AUDIT_AND_ENHANCEMENT.md` | Kit audit and enhancement report (historical) |
 | `CHANGELOG.md` | Material documentation history |
 | `DOCUMENT_MANIFEST.json` | Machine-readable kit metadata and authority map |
 
@@ -83,5 +83,5 @@
 Use this when starting a new AI session:
 
 ```text
-You are working on EduCore. Before doing anything, read 00_START_HERE.md, README.md, VERSION.md, 43_PROJECT_STATUS.md, 03_DEVELOPMENT_CONSTITUTION.md, 34_SOFTWARE_REQUIREMENTS_SPECIFICATION.md, 35_PROJECT_ARCHITECTURE.md, 36_ARCHITECTURE_VALIDATION_SPRINT.md, 37_FINAL_ARCHITECTURE_REVIEW.md, 38_ARCHITECTURE_FREEZE_RECORD.md, 39_ENGINEERING_EXECUTION_ROADMAP.md, 40_MASTER_ENGINEERING_EXECUTION_PROMPT.md, 41_AI_ENGINEERING_OPERATING_SYSTEM.md, 42_ENGINEERING_READINESS_REVIEW.md, 44_DEFINITION_OF_READY.md, 46_KNOWN_LIMITATIONS.md, relevant ADRs in decisions/, slice freezes under docs/engineering/, and the relevant domain bible. Follow the authority order in README.md. Do not bypass tenant isolation, ledger rules, offline sync rules, AI Gateway, privacy, audit, or observability requirements. Respect NO GO for unrestricted production/pilot. Gated IMP work is allowed only behind accepted/provisional slice freezes (SOLO-GOV-001 honesty). Do not invent real MoMo integrations while PAY-PROVIDER-001 is Fake-only. Prefer 43_PROJECT_STATUS.md over stale chat memory for the current phase.
+You are working on EduCore. Before doing anything, read 00_START_HERE.md, README.md, VERSION.md, 43_PROJECT_STATUS.md, 03_DEVELOPMENT_CONSTITUTION.md, 34_SOFTWARE_REQUIREMENTS_SPECIFICATION.md, 35_PROJECT_ARCHITECTURE.md, 36_ARCHITECTURE_VALIDATION_SPRINT.md, 37_FINAL_ARCHITECTURE_REVIEW.md, 38_ARCHITECTURE_FREEZE_RECORD.md, 39_ENGINEERING_EXECUTION_ROADMAP.md, 40_MASTER_ENGINEERING_EXECUTION_PROMPT.md, 41_AI_ENGINEERING_OPERATING_SYSTEM.md, 42_ENGINEERING_READINESS_REVIEW.md, 44_DEFINITION_OF_READY.md, 46_KNOWN_LIMITATIONS.md, relevant ADRs in decisions/, slice freezes under docs/engineering/, and the relevant domain bible. Follow the authority order in README.md. Do not bypass tenant isolation, ledger rules, offline sync rules, AI Gateway, privacy, audit, or observability requirements. Operating model is Owner + AI (SOLO-GOV-002). Do not wait for an Independent Board. Gated IMP work is allowed behind Owner-accepted slice freezes. Do not invent ClickPesa credentials. Prefer 43_PROJECT_STATUS.md over stale chat memory.
 ```

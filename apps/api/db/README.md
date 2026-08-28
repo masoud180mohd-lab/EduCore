@@ -8,10 +8,11 @@ Migration and role bootstrap for `@educore/api`. Schema is applied via ordered S
 | ------------------- | ----------------------------------- | ------------------------------------------------------------ |
 | `educore_migrator`  | Run migrations only                 | Never NestJS pool                                            |
 | `educore_app`       | Runtime NestJS connection           | FORCE RLS; **no INSERT** on `tenants`/`users` after AUDIT-R2 |
+| `educore_webhook`   | ClickPesa ingest EXECUTE only       | F-017; never the general NestJS `educore_app` pool           |
 | `educore_platform`  | Trusted local provisioning INSERT   | Never NestJS pool; requires trusted platform GUCs            |
 | Bootstrap superuser | Docker `POSTGRES_USER` (local only) | Create roles / databases only                                |
 
-**Hard rule:** the NestJS application must never use migrator, platform, or cluster superuser as its pool role.
+**Hard rule:** the NestJS application must never use migrator, platform, or cluster superuser as its pool role. ClickPesa ingest uses `educore_webhook` only.
 
 ## Layout
 

@@ -13,7 +13,10 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
+import { Card, CardContent } from '@/components/ui/card';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
+import { Layers, MessageSquare, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import {
   ADMIN_LIST_DEFAULT_LIMIT,
   appendById,
@@ -54,6 +57,7 @@ const GUARDIAN_PICKER_LIMIT = 100;
 export default function AdminNotificationsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
+  const { t } = useAppPreferences();
 
   const [canRead, setCanRead] = useState(false);
   const [canManage, setCanManage] = useState(false);
@@ -281,10 +285,7 @@ export default function AdminNotificationsPage() {
 
   return (
     <AdminShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="SMS notifications"
-        description="Delivery ledger, daily usage, and manual test SMS (ACF-014). Full phone numbers are never shown."
-      />
+      <AdminPageHeader title={t('sms.title')} description={t('sms.description')} />
 
       {!gateReady ? <p className="muted">Checking access…</p> : null}
 
@@ -294,25 +295,68 @@ export default function AdminNotificationsPage() {
 
       {gateReady && canRead ? (
         <div className="stack">
-          <section className="card stack">
-            <h2 className="section-title">Usage today (UTC)</h2>
-            {usageLoading ? <p className="muted">Loading…</p> : null}
-            {usageError !== null ? <Banner tone="error">{usageError}</Banner> : null}
-            {usage !== null ? (
-              <p className="muted">
-                Date {usage.usageDate} · Sent {usage.sentCount} · Segments {usage.segmentCount}
-                {usage.bypassDailyCap
-                  ? ' · Daily cap bypassed (lab)'
-                  : usage.dailyCap !== null
-                    ? ` · Cap ${String(usage.dailyCap)}`
-                    : ' · Cap unset'}
-              </p>
-            ) : null}
-          </section>
+          {/* SMS Usage KPI Cards */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card className="border-border/70 bg-card">
+              <CardContent className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    SMS Zilizotumwa Leo
+                  </p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums mt-1">
+                    {usageLoading ? '…' : (usage?.sentCount ?? 0)}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <Send className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 bg-card">
+              <CardContent className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Vipande vya SMS (Segments)
+                  </p>
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">
+                    {usageLoading ? '…' : (usage?.segmentCount ?? 0)}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <Layers className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 bg-card">
+              <CardContent className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Kiwango cha Ukomo (Daily Cap)
+                  </p>
+                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-1">
+                    {usageLoading
+                      ? '…'
+                      : usage?.bypassDailyCap
+                        ? 'Bypassed (Lab)'
+                        : usage?.dailyCap !== null && usage?.dailyCap !== undefined
+                          ? String(usage.dailyCap)
+                          : 'Unset'}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {usageError !== null ? <Banner tone="error">{usageError}</Banner> : null}
 
           {canManage ? (
             <section className="card stack">
-              <h2 className="section-title">Send test SMS</h2>
+              <h2 className="section-title">{t('sms.test')}</h2>
               <p className="muted">
                 Recipient type is guardian (v1). Prefer template <code>comms_test_sms</code>.
                 Payload keys must match the template allowlist.
@@ -339,7 +383,7 @@ export default function AdminNotificationsPage() {
               </div>
 
               <div className="field">
-                <label htmlFor="tpl-locale">Locale</label>
+                <label htmlFor="tpl-locale">{t('settings.locale')}</label>
                 <select
                   id="tpl-locale"
                   value={locale}
@@ -354,18 +398,20 @@ export default function AdminNotificationsPage() {
               </div>
 
               <div className="field">
-                <label htmlFor="tpl-guardian">Guardian</label>
+                <label htmlFor="tpl-guardian">{t('guardians.guardian')}</label>
                 <select
                   id="tpl-guardian"
                   required
                   value={guardianId}
                   onChange={(e) => setGuardianId(e.target.value)}
                 >
-                  <option value="">Select guardian</option>
+                  <option value="">{t('sms.selectGuardian')}</option>
                   {guardians.map((g) => (
                     <option key={g.id} value={g.id}>
                       {g.displayName}
-                      {g.phone !== null && g.phone !== '' ? ' · has phone' : ' · no phone'}
+                      {g.phone !== null && g.phone !== ''
+                        ? ` · ${t('sms.hasPhone')}`
+                        : ` · ${t('sms.noPhone')}`}
                     </option>
                   ))}
                 </select>
@@ -411,10 +457,10 @@ export default function AdminNotificationsPage() {
           )}
 
           <section className="stack">
-            <h2 className="section-title">Deliveries</h2>
+            <h2 className="section-title">{t('sms.deliveries')}</h2>
             <form className="stack" onSubmit={onFilter}>
               <div className="field">
-                <label htmlFor="del-status">Status</label>
+                <label htmlFor="del-status">{t('common.status')}</label>
                 <select
                   id="del-status"
                   value={statusFilter}
@@ -422,7 +468,7 @@ export default function AdminNotificationsPage() {
                 >
                   {DELIVERY_STATUS_FILTERS.map((opt) => (
                     <option key={opt.label} value={opt.value}>
-                      {opt.label}
+                      {opt.value === '' ? t('common.allStatuses') : opt.label}
                     </option>
                   ))}
                 </select>
@@ -441,7 +487,7 @@ export default function AdminNotificationsPage() {
                 className="btn btn-secondary"
                 disabled={listLoading || loadingMore}
               >
-                Apply filters
+                {t('common.applyFilters')}
               </button>
             </form>
 
@@ -449,7 +495,7 @@ export default function AdminNotificationsPage() {
 
             <ResourceList
               loading={listLoading}
-              empty="No deliveries yet."
+              empty={t('sms.empty')}
               isEmpty={deliveries.length === 0}
               variant="table"
               footer={
@@ -468,8 +514,16 @@ export default function AdminNotificationsPage() {
               }
             >
               <AdminTable
-                caption="SMS deliveries"
-                headers={['Created', 'Status', 'Request', 'Provider', 'Phone', 'Segments', 'Error']}
+                caption={t('sms.deliveries')}
+                headers={[
+                  t('common.created'),
+                  t('common.status'),
+                  'Request',
+                  'Provider',
+                  t('common.phone'),
+                  'Segments',
+                  'Error',
+                ]}
               >
                 {deliveries.map((d) => (
                   <tr key={d.id}>
@@ -494,7 +548,7 @@ export default function AdminNotificationsPage() {
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Send SMS?"
+        title={t('sms.confirm')}
         body={
           selectedGuardian !== null
             ? `Send template “${templateCode}” (${locale}) to guardian “${selectedGuardian.displayName}”? If they have no phone, the request will be skipped (no_phone).`

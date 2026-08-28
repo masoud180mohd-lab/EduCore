@@ -193,6 +193,30 @@ export class MembershipsController {
     );
   }
 
+  @Post(':id/resend')
+  @HttpCode(200)
+  @UseGuards(RequirePermission('user.invite'))
+  async resend(@Req() request: AuthedRequest, @Param('id') id: string): Promise<unknown> {
+    const auth = request[AUTH_CONTEXT_REQUEST_KEY];
+    const tenant = request[TENANT_CONTEXT_REQUEST_KEY];
+    if (auth === undefined) {
+      throw AppError.unauthorized();
+    }
+    if (tenant === undefined) {
+      throw AppError.tenantContextRequired();
+    }
+
+    const correlationId =
+      request[CORRELATION_ID_REQUEST_KEY] ?? request[REQUEST_ID_REQUEST_KEY] ?? 'unknown';
+
+    return this.membershipsService.resendInviteForTenant(
+      auth.userId,
+      tenant.tenantId,
+      id,
+      correlationId,
+    );
+  }
+
   @Get(':id')
   @UseGuards(RequirePermission('user.read'))
   async getById(@Req() request: AuthedRequest, @Param('id') id: string): Promise<unknown> {

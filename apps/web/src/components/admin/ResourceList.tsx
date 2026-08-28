@@ -1,6 +1,9 @@
+'use client';
+
 import type { ReactNode } from 'react';
 
 import { Banner } from '@/components/admin/Banner';
+import { useAppPreferences } from '@/components/AppProviders';
 
 /**
  * Shared loading / empty / error / list frame for admin registries (IMP-027/030/028).
@@ -25,12 +28,13 @@ export function ResourceList({
   readonly footer?: ReactNode;
   readonly variant?: 'list' | 'table';
 }) {
+  const { t } = useAppPreferences();
   return (
     <div className="resource-list stack">
       {error !== null && error !== undefined && error !== '' ? (
         <Banner tone="error">{error}</Banner>
       ) : null}
-      {loading ? <p className="muted">Loading…</p> : null}
+      {loading ? <p className="muted">{t('common.loading')}</p> : null}
       {!loading && isEmpty ? <Banner tone="info">{empty}</Banner> : null}
       {!loading && !isEmpty ? (
         variant === 'table' ? (

@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
 
+import { AppProviders } from '@/components/AppProviders';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { ThemeBootScript } from '@/components/ThemeBootScript';
 
 import '@/styles/tokens.css';
+import '@/styles/globals.css';
 
 export const metadata = {
   title: 'EduCore',
@@ -15,15 +18,18 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
     // attributes on <html>/<body> before React hydrates; that is not app state.
     <html lang="en" suppressHydrationWarning>
       <head>
+        <ThemeBootScript />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&display=swap"
         />
       </head>
       <body suppressHydrationWarning>
-        <OfflineBanner />
-        {children}
+        <AppProviders>
+          <OfflineBanner />
+          {children}
+        </AppProviders>
       </body>
     </html>
   );

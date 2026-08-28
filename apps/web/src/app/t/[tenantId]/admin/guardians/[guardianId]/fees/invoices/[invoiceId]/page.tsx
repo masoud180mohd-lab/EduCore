@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminPageHeader, Banner } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { readSession } from '@/lib/auth/session';
@@ -50,6 +51,7 @@ export default function GuardianFeesInvoiceDetailPage() {
     invoiceId: string;
   }>();
   const { tenantId, guardianId, invoiceId } = params;
+  const { t } = useAppPreferences();
 
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
@@ -122,14 +124,17 @@ export default function GuardianFeesInvoiceDetailPage() {
     <AdminShell tenantId={tenantId}>
       <p className="muted">
         {invoice !== null ? (
-          <Link href={`${base}/fees/students/${invoice.studentId}`}>← Student invoices</Link>
+          <Link href={`${base}/fees/students/${invoice.studentId}`}>
+            ← {t('fees.invoicesTitle')}
+          </Link>
         ) : (
-          <Link href={`${base}/fees`}>← Guardian fees</Link>
+          <Link href={`${base}/fees`}>← {t('guardians.fees')}</Link>
         )}
       </p>
-      <AdminPageHeader title="Invoice (read-only)" />
+      <AdminPageHeader title={t('parent.readOnlyInvoice')} />
       <Banner tone="info">
-        Pay at the school office. Mobile money is not enabled (PAY-PROVIDER-001).
+        Pay at the school office (cash, bank, or cheque). Mobile money is not enabled (PAY-007 /
+        PAY-PROVIDER-001).
       </Banner>
 
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
@@ -140,12 +145,12 @@ export default function GuardianFeesInvoiceDetailPage() {
         </Banner>
       ) : null}
 
-      {loading && !isolationBlocked ? <p className="muted">Loading…</p> : null}
+      {loading && !isolationBlocked ? <p className="muted">{t('common.loading')}</p> : null}
 
       {!loading && invoice !== null && !isolationBlocked ? (
         <>
           <p className="muted">
-            Student: {studentName ?? invoice.studentId}
+            {t('students.student')}: {studentName ?? invoice.studentId}
             {invoice.issuedAt !== null ? ` · Issued ${invoice.issuedAt}` : null}
           </p>
           <div className="card stack">
@@ -153,17 +158,17 @@ export default function GuardianFeesInvoiceDetailPage() {
               <span className="chip">{invoiceStatusLabel(invoice.status)}</span>
             </div>
             <div>
-              <strong>Total</strong> {formatTzsMinor(invoice.totalMinor)}
+              <strong>{t('fees.total')}</strong> {formatTzsMinor(invoice.totalMinor)}
             </div>
             <div>
-              <strong>Balance</strong> {formatTzsMinor(invoice.balanceMinor)}
+              <strong>{t('fees.balance')}</strong> {formatTzsMinor(invoice.balanceMinor)}
             </div>
             <div className="muted">
               {invoice.currency} · {invoice.id}
             </div>
           </div>
 
-          <h2 style={{ fontSize: '1.1rem' }}>Lines</h2>
+          <h2 style={{ fontSize: '1.1rem' }}>{t('invoice.lines')}</h2>
           {invoice.lines.length === 0 ? (
             <Banner tone="info">No line items.</Banner>
           ) : (
@@ -177,7 +182,7 @@ export default function GuardianFeesInvoiceDetailPage() {
             </ul>
           )}
 
-          <h2 style={{ fontSize: '1.1rem' }}>Payments</h2>
+          <h2 style={{ fontSize: '1.1rem' }}>{t('invoice.payments')}</h2>
           {payments.length === 0 ? (
             <Banner tone="info">No payments recorded yet.</Banner>
           ) : (
@@ -191,7 +196,7 @@ export default function GuardianFeesInvoiceDetailPage() {
                     <span className="chip">{paymentStatusLabel(p.status)}</span> · {p.id}
                   </div>
                   {p.receiptId !== null ? (
-                    <Link href={`${base}/fees/receipts/${p.receiptId}`}>View receipt</Link>
+                    <Link href={`${base}/fees/receipts/${p.receiptId}`}>{t('receipt.title')}</Link>
                   ) : null}
                 </li>
               ))}

@@ -13,6 +13,7 @@ import {
   StatusChip,
 } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
+import { useAppPreferences } from '@/components/AppProviders';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import {
@@ -35,6 +36,7 @@ type ReceiptRow = {
 export default function AdminReceiptsPage() {
   const params = useParams<{ tenantId: string }>();
   const tenantId = params.tenantId;
+  const { t } = useAppPreferences();
   const [rows, setRows] = useState<ReceiptRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,17 +76,17 @@ export default function AdminReceiptsPage() {
   return (
     <AdminShell tenantId={tenantId}>
       <p className="muted">
-        <Link href={`/t/${tenantId}/admin/fees`}>← Fees</Link>
+        <Link href={`/t/${tenantId}/admin/fees`}>← {t('fees.back')}</Link>
       </p>
       <AdminPageHeader
-        title="Receipts"
-        description="Issued after succeeded office payments (ACF-012)."
+        title={t('fees.receiptsTitle')}
+        description={t('fees.receiptsDescription')}
       />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       <ResourceList
         loading={loading}
-        empty="No receipts yet."
+        empty={t('fees.emptyReceipts')}
         isEmpty={rows.length === 0}
         variant="table"
         footer={
@@ -97,7 +99,10 @@ export default function AdminReceiptsPage() {
           />
         }
       >
-        <AdminTable caption="Receipts" headers={['Receipt #', 'Status', 'Issued', '']}>
+        <AdminTable
+          caption={t('fees.receiptsTitle')}
+          headers={[t('fees.receiptNumber'), t('common.status'), t('fees.issued'), '']}
+        >
           {rows.map((r) => (
             <tr key={r.id}>
               <td>
@@ -112,7 +117,7 @@ export default function AdminReceiptsPage() {
                   className="btn btn-secondary admin-table-open"
                   href={`/t/${tenantId}/admin/fees/receipts/${r.id}`}
                 >
-                  Open
+                  {t('common.open')}
                 </Link>
               </td>
             </tr>

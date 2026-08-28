@@ -51,7 +51,7 @@ describe('IMP-002 students list + detail + create + patch structural', () => {
     const codes = read('apps/api/src/common/policy/permission-codes.ts');
     expect(codes).toContain("'student.read'");
     expect(codes).toContain("'student.manage'");
-    const roles = read('apps/api/src/modules/identity-and-access/rbac/system-roles.ts');
+    const roles = read('apps/api/src/common/rbac/system-roles.ts');
     expect(roles).toContain("'student.read'");
     expect(roles).toMatch(/STAFF_PERMISSIONS[\s\S]*'student\.read'/);
     const up = read('apps/api/db/migrations/20260720220000_students_update.up.sql');

@@ -7,14 +7,20 @@ import type { MeLike } from '@/lib/auth/home-preference';
 export type AdminNavId =
   | 'home'
   | 'users'
+  | 'staff'
   | 'memberships'
   | 'organizations'
   | 'students'
   | 'guardians'
   | 'roles'
   | 'academic'
+  | 'attendance'
+  | 'exams'
+  | 'reportCards'
   | 'fees'
   | 'notifications'
+  | 'announcements'
+  | 'reports'
   | 'settings';
 
 const ADMIN_SHELL_PERMS = [
@@ -43,7 +49,9 @@ const ADMIN_SHELL_PERMS = [
 /** True when the actor may open AdminShell at all (any admin-domain capability). */
 export function canAccessAdminShell(me: MeLike): boolean {
   const roles = me.roles ?? [];
-  if (roles.some((r) => r.code === 'owner' || r.code === 'admin')) return true;
+  if (roles.some((r) => r.code === 'owner' || r.code === 'admin' || r.code === 'bursar')) {
+    return true;
+  }
   const perms = new Set(me.permissions ?? []);
   return ADMIN_SHELL_PERMS.some((code) => perms.has(code));
 }
@@ -59,14 +67,20 @@ export function visibleAdminNavIds(me: MeLike): ReadonlySet<AdminNavId> {
     return new Set<AdminNavId>([
       'home',
       'users',
+      'staff',
       'memberships',
       'organizations',
       'students',
       'guardians',
       'roles',
       'academic',
+      'attendance',
+      'exams',
+      'reportCards',
       'fees',
       'notifications',
+      'announcements',
+      'reports',
       'settings',
     ]);
   }
@@ -76,6 +90,7 @@ export function visibleAdminNavIds(me: MeLike): ReadonlySet<AdminNavId> {
 
   if (hasAny(perms, ['user.read', 'user.manage', 'user.invite'])) {
     visible.add('users');
+    visible.add('staff');
     visible.add('memberships');
   }
   if (hasAny(perms, ['organization.read', 'organization.manage'])) {
@@ -93,14 +108,27 @@ export function visibleAdminNavIds(me: MeLike): ReadonlySet<AdminNavId> {
   if (hasAny(perms, ['academic.read', 'academic.manage'])) {
     visible.add('academic');
   }
+  if (hasAny(perms, ['attendance.read', 'attendance.manage'])) {
+    visible.add('attendance');
+  }
+  if (hasAny(perms, ['marks.read', 'marks.manage', 'marks.approve'])) {
+    visible.add('exams');
+    visible.add('reportCards');
+  }
   if (hasAny(perms, ['finance.read', 'finance.manage', 'finance.reconcile'])) {
     visible.add('fees');
+    visible.add('reports');
+  }
+  if (hasAny(perms, ['student.read', 'student.manage'])) {
+    visible.add('reports');
   }
   if (hasAny(perms, ['notification.read', 'notification.manage'])) {
     visible.add('notifications');
+    visible.add('announcements');
   }
   if (hasAny(perms, ['tenant.manage', 'tenant.read'])) {
     visible.add('settings');
+    visible.add('reports');
   }
 
   return visible;
@@ -116,7 +144,9 @@ export function canManageTenantSettings(me: MeLike): boolean {
 /** UX gate for office pay / MoMo initiate (API still enforces finance.manage). */
 export function canFinanceManage(me: MeLike): boolean {
   const roles = me.roles ?? [];
-  if (roles.some((r) => r.code === 'owner' || r.code === 'admin')) return true;
+  if (roles.some((r) => r.code === 'owner' || r.code === 'admin' || r.code === 'bursar')) {
+    return true;
+  }
   return new Set(me.permissions ?? []).has('finance.manage');
 }
 
@@ -148,15 +178,16 @@ export function adminDeniedFallback(me: MeLike): AdminFallbackHome {
 }
 
 export type AdminNavGroupId =
-  'home' | 'registry' | 'access' | 'academic' | 'fees' | 'notifications' | 'settings';
+  'home' | 'registry' | 'access' | 'academic' | 'fees' | 'communications' | 'insights' | 'settings';
 
 export type AdminNavGroup = {
   readonly id: AdminNavGroupId;
+  /** Display label is resolved via i18n `group.{id}` in AdminShell. */
   readonly label: string;
   readonly items: ReadonlyArray<AdminNavId>;
 };
 
-/** IA groups for AdminShell (IMP-029 Option A). Membership order is display order. */
+/** IA groups for AdminShell (IMP-029 Option A + IMP-047 MVP modules). */
 const ADMIN_NAV_GROUP_DEFS: ReadonlyArray<{
   readonly id: AdminNavGroupId;
   readonly label: string;
@@ -164,10 +195,15 @@ const ADMIN_NAV_GROUP_DEFS: ReadonlyArray<{
 }> = [
   { id: 'home', label: 'Home', members: ['home'] },
   { id: 'registry', label: 'Registry', members: ['students', 'guardians', 'organizations'] },
-  { id: 'access', label: 'Access', members: ['users', 'memberships', 'roles'] },
-  { id: 'academic', label: 'Academic', members: ['academic'] },
+  { id: 'access', label: 'Access', members: ['users', 'staff', 'memberships', 'roles'] },
+  {
+    id: 'academic',
+    label: 'Academic',
+    members: ['academic', 'attendance', 'exams', 'reportCards'],
+  },
   { id: 'fees', label: 'Fees', members: ['fees'] },
-  { id: 'notifications', label: 'Notifications', members: ['notifications'] },
+  { id: 'communications', label: 'Communications', members: ['notifications', 'announcements'] },
+  { id: 'insights', label: 'Insights', members: ['reports'] },
   { id: 'settings', label: 'Settings', members: ['settings'] },
 ];
 

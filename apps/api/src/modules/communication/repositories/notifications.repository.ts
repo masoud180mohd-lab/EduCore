@@ -43,6 +43,30 @@ export type CreateNotificationRequestResult = NotificationRequestRow & {
   readonly phoneLast4: string | null;
 };
 
+/** One outbox event claimed by the SMS worker (COMMS-006). */
+export type ClaimedOutboxEvent = {
+  readonly eventId: string;
+  readonly tenantId: string;
+  readonly requestId: string;
+  /** Number of claims (send attempts) so far, including this one. */
+  readonly attempts: number;
+  readonly createdByUserId: string;
+};
+
+/** Request + pinned template body + guardian phone for one send attempt. */
+export type OutboxSendContext = {
+  readonly requestId: string;
+  readonly tenantId: string;
+  readonly templateCode: string;
+  readonly templateVersion: number;
+  readonly locale: string;
+  readonly payload: Readonly<Record<string, string>>;
+  readonly status: string;
+  readonly createdByUserId: string;
+  readonly templateBody: string | null;
+  readonly guardianPhone: string | null;
+};
+
 export type NotificationDeliveryRow = {
   readonly id: string;
   readonly tenantId: string;
@@ -115,33 +139,120 @@ export class NotificationsRepository {
     }
   }
 
-  async getTemplateBody(
+  /**
+   * COMMS-006 worker: claim due outbox events across tenants.
+   * SECURITY DEFINER claim parks available_at forward (SKIP LOCKED) so
+   * concurrent workers and crashed senders never double-send within the
+   * claim window; no tenant GUCs — the definer function scopes itself.
+   */
+  async claimPendingOutboxEvents(
+    batchSize: number,
+    claimSeconds: number,
+  ): Promise<ReadonlyArray<ClaimedOutboxEvent>> {
+    if (this.pool === null) return [];
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query<{
+        event_id: string;
+        tenant_id: string;
+        request_id: string;
+        attempts: number;
+        created_by_user_id: string;
+      }>(
+        `SELECT event_id, tenant_id, request_id, attempts, created_by_user_id
+         FROM app.claim_pending_notification_outbox($1::int, $2::int)`,
+        [batchSize, claimSeconds],
+      );
+      return result.rows.map((row) => ({
+        eventId: row.event_id,
+        tenantId: row.tenant_id,
+        requestId: row.request_id,
+        attempts: Number(row.attempts),
+        createdByUserId: row.created_by_user_id,
+      }));
+    } finally {
+      client.release();
+    }
+  }
+
+  /** COMMS-006 worker: re-park a failed attempt with backoff; records last_error. */
+  async rescheduleOutboxEvent(input: {
+    readonly tenantId: string;
+    readonly eventId: string;
+    readonly delaySeconds: number;
+    readonly error: string;
+  }): Promise<boolean> {
+    if (this.pool === null) return false;
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query<{ rescheduled: boolean }>(
+        `SELECT rescheduled FROM app.reschedule_notification_outbox(
+          $1::uuid, $2::uuid, $3::int, $4::text
+        )`,
+        [input.eventId, input.tenantId, input.delaySeconds, input.error],
+      );
+      return result.rows[0]?.rescheduled === true;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * COMMS-006 worker: request + pinned template body + guardian phone for one
+   * send attempt, under tenant RLS with the requesting user as actor.
+   * Returns the row regardless of status; the worker decides sendability.
+   */
+  async getOutboxSendContext(
     actorUserId: string,
     tenantId: string,
-    code: string,
-    locale: string,
-    version: number,
-  ): Promise<string | null> {
-    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) return null;
+    requestId: string,
+  ): Promise<OutboxSendContext | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || !isUuid(requestId) || this.pool === null) {
+      return null;
+    }
     try {
       return await withTenantTransaction(
         this.pool,
         { userId: actorUserId, tenantId },
         async (client) => {
-          const result = await client.query<{ body: string }>(
-            `SELECT body FROM notification_templates
-           WHERE code = $1 AND locale = $2 AND version = $3 AND channel = 'sms' AND status = 'active'
-             AND (tenant_id IS NULL OR tenant_id = $4::uuid)
-           ORDER BY tenant_id NULLS LAST
-           LIMIT 1`,
-            [code, locale, version, tenantId],
+          const result = await client.query<OutboxContextDbRow>(
+            `SELECT r.id, r.tenant_id, r.template_code, r.template_version, r.locale,
+                    r.payload_json, r.status, r.created_by_user_id,
+                    nt.body AS template_body, g.phone AS guardian_phone
+             FROM notification_requests r
+             LEFT JOIN notification_templates nt
+               ON nt.code = r.template_code
+              AND nt.locale = r.locale
+              AND nt.version = r.template_version
+              AND nt.channel = 'sms'
+              AND nt.status = 'active'
+              AND (nt.tenant_id IS NULL OR nt.tenant_id = r.tenant_id)
+             LEFT JOIN guardians g
+               ON g.id = r.recipient_id AND g.tenant_id = r.tenant_id
+             WHERE r.tenant_id = $1::uuid AND r.id = $2::uuid
+             ORDER BY nt.tenant_id NULLS LAST
+             LIMIT 1`,
+            [tenantId, requestId],
           );
-          return result.rows[0]?.body ?? null;
+          const row = result.rows[0];
+          if (row === undefined) return null;
+          return {
+            requestId: row.id,
+            tenantId: row.tenant_id,
+            templateCode: row.template_code,
+            templateVersion: Number(row.template_version),
+            locale: row.locale,
+            payload: parsePayload(row.payload_json),
+            status: row.status,
+            createdByUserId: row.created_by_user_id,
+            templateBody: row.template_body ?? null,
+            guardianPhone: row.guardian_phone ?? null,
+          };
         },
       );
     } catch (error: unknown) {
       logFailClosedDbError(this.logger, 'NotificationsRepository', error, {
-        operation: 'getTemplateBody',
+        operation: 'getOutboxSendContext',
       });
       return null;
     }
@@ -474,6 +585,19 @@ type RequestDbRow = QueryResultRow & {
   skip_reason: string | null;
   created_at: Date;
   updated_at: Date;
+};
+
+type OutboxContextDbRow = QueryResultRow & {
+  id: string;
+  tenant_id: string;
+  template_code: string;
+  template_version: number;
+  locale: string;
+  payload_json: Record<string, unknown> | string;
+  status: string;
+  created_by_user_id: string;
+  template_body: string | null;
+  guardian_phone: string | null;
 };
 
 type DeliveryDbRow = QueryResultRow & {

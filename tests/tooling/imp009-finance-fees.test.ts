@@ -61,18 +61,24 @@ describe('IMP-009 finance fees foundation', () => {
     expect(codes).toContain("'finance.manage'");
     expect(codes).toContain("'finance.reconcile'");
 
-    const roles = readFileSync(
-      path.join(root, 'apps/api/src/modules/identity-and-access/rbac/system-roles.ts'),
-      'utf8',
-    );
+    const roles = readFileSync(path.join(root, 'apps/api/src/common/rbac/system-roles.ts'), 'utf8');
     expect(roles).toContain("'finance.read'");
     expect(roles).toContain("'finance.manage'");
     // staff baseline must not include reconcile (owner/admin get it via full catalogue)
     const staffBlock = roles.slice(
       roles.indexOf('const STAFF_PERMISSIONS'),
-      roles.indexOf('export const SYSTEM_ROLE_DEFINITIONS'),
+      roles.indexOf('const BURSAR_PERMISSIONS'),
     );
     expect(staffBlock).not.toContain("'finance.reconcile'");
+    expect(staffBlock).not.toContain("'finance.read'");
+    expect(staffBlock).not.toContain("'finance.manage'");
+    const bursarBlock = roles.slice(
+      roles.indexOf('const BURSAR_PERMISSIONS'),
+      roles.indexOf('const PARENT_PERMISSIONS'),
+    );
+    expect(bursarBlock).toContain("'finance.read'");
+    expect(bursarBlock).toContain("'finance.manage'");
+    expect(bursarBlock).not.toContain("'finance.reconcile'");
   });
 
   it('ships product controllers with RequirePermission', () => {
@@ -144,6 +150,30 @@ describe('IMP-009 finance fees foundation', () => {
       'utf8',
     );
     expect(gateway).toContain('app.record_gateway_event');
+  });
+
+  it('F-016: payment_reconciliations ENABLE + FORCE RLS and tenant SELECT policy', () => {
+    const rls = readFileSync(
+      path.join(root, 'apps/api/db/migrations/20260813150000_payment_reconciliations_rls.up.sql'),
+      'utf8',
+    );
+    expect(rls).toContain("app.enable_tenant_rls('payment_reconciliations'");
+    expect(rls).toContain('rls_payment_reconciliations_select');
+    expect(rls).toMatch(/FOR SELECT TO educore_app/i);
+    expect(rls).toContain('tenant_id = app.current_tenant_id()');
+    expect(rls).toContain('REVOKE ALL ON TABLE payment_reconciliations FROM PUBLIC');
+  });
+
+  it('F-017: educore_app loses MoMo EXECUTE; ingest granted to educore_webhook', () => {
+    const sql = readFileSync(
+      path.join(root, 'apps/api/db/migrations/20260813160000_momo_webhook_role_grants.up.sql'),
+      'utf8',
+    );
+    expect(sql).toContain('REVOKE EXECUTE ON FUNCTION app.complete_pending_mobile_money_payment');
+    expect(sql).toContain('REVOKE EXECUTE ON FUNCTION app.ingest_clickpesa_gateway_event');
+    expect(sql).toContain('GRANT EXECUTE ON FUNCTION app.ingest_clickpesa_gateway_event');
+    expect(sql).toContain('TO educore_webhook');
+    expect(sql).toContain('FROM educore_app');
   });
 
   it('binds PAYMENT_PROVIDER_PORT with Fake default (ClickPesa optional)', () => {
