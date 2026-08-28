@@ -200,6 +200,33 @@ export class MarksRepository {
     }
   }
 
+  /**
+   * Tenant display name for report-card PDFs. `tenants` is member-readable
+   * under RLS (app.can_see_tenant), and the read is tenant-scoped in depth.
+   */
+  async getTenantName(actorUserId: string, tenantId: string): Promise<string | null> {
+    if (!isUuid(actorUserId) || !isUuid(tenantId) || this.pool === null) {
+      return null;
+    }
+    try {
+      return await withTenantTransaction(
+        this.pool,
+        { userId: actorUserId, tenantId },
+        async (client) => {
+          const result = await client.query<{ name: string }>(
+            `SELECT name FROM tenants WHERE id = $1::uuid LIMIT 1`,
+            [tenantId],
+          );
+          const row = result.rows[0];
+          return row === undefined ? null : row.name;
+        },
+      );
+    } catch (error: unknown) {
+      logFailClosedDbError(this.logger, 'MarksRepository', error, { operation: 'getTenantName' });
+      return null;
+    }
+  }
+
   async createExam(
     actorUserId: string,
     tenantId: string,

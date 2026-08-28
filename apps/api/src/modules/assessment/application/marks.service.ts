@@ -685,10 +685,15 @@ export class MarksService {
     tenantId: string,
     examId: string,
     studentId: string,
-    schoolName: string,
   ): Promise<Buffer> {
     const { data } = await this.getReportCardForStudent(actorUserId, tenantId, examId, studentId);
     const exam = await this.getExamForTenant(actorUserId, tenantId, examId);
+    // H1 fix: the school name comes from the tenant record, never a hardcoded
+    // brand. Fail closed rather than printing the wrong school on a PDF.
+    const schoolName = await this.marks.getTenantName(actorUserId, tenantId);
+    if (schoolName === null) {
+      throw new AppError('INTERNAL_ERROR', 'School profile unavailable for report card PDF.');
+    }
     return buildReportCardPdf({
       schoolName,
       examName: exam.data.name,

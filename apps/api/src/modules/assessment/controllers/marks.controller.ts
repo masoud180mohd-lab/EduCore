@@ -224,7 +224,6 @@ export class MarksController {
       tenant.tenantId,
       examId,
       studentId,
-      'EduCore',
     );
     return new StreamableFile(pdf, {
       type: 'application/pdf',

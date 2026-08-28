@@ -297,4 +297,66 @@ describe('MarksService', () => {
       service.getReportCardForStudent(actorUserId, tenantId, examId, studentDraftOnly),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
+
+  it('renders report card PDF with the real tenant school name, not a hardcoded brand', async () => {
+    const studentId = '01900000-0000-7000-8000-0000000000s1';
+    const service = makeService({
+      isAvailable: () => true,
+      getExam: vi.fn().mockResolvedValue({
+        id: examId,
+        name: 'Midterm',
+        classId,
+        academicYearId,
+        status: 'open',
+      }),
+      listReportLinesForExam: vi.fn().mockResolvedValue([
+        {
+          studentId,
+          examSubjectId,
+          subjectId,
+          maxScore: 100,
+          examSubjectStatus: 'approved',
+          score: 81,
+        },
+      ]),
+      getTenantName: vi.fn().mockResolvedValue('Shule ya Papa Mwamba'),
+    });
+
+    const pdf = await service.getReportCardPdfForStudent(actorUserId, tenantId, examId, studentId);
+
+    // PDF streams are uncompressed here, so the text is inspectable.
+    const text = pdf.toString('latin1');
+    expect(text).toContain('Shule ya Papa Mwamba');
+    expect(text).toContain('REPORT CARD');
+    expect(text).not.toContain('EduCore');
+  });
+
+  it('fails closed when the tenant school name is unavailable for the PDF', async () => {
+    const studentId = '01900000-0000-7000-8000-0000000000s1';
+    const service = makeService({
+      isAvailable: () => true,
+      getExam: vi.fn().mockResolvedValue({
+        id: examId,
+        name: 'Midterm',
+        classId,
+        academicYearId,
+        status: 'open',
+      }),
+      listReportLinesForExam: vi.fn().mockResolvedValue([
+        {
+          studentId,
+          examSubjectId,
+          subjectId,
+          maxScore: 100,
+          examSubjectStatus: 'approved',
+          score: 81,
+        },
+      ]),
+      getTenantName: vi.fn().mockResolvedValue(null),
+    });
+
+    await expect(
+      service.getReportCardPdfForStudent(actorUserId, tenantId, examId, studentId),
+    ).rejects.toMatchObject({ code: 'INTERNAL_ERROR' });
+  });
 });
