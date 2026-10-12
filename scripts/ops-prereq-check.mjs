@@ -49,11 +49,7 @@ const required = [
   {
     name: 'flyctl',
     ok: flyOk,
-    detail: flyctl.ok
-      ? flyctl.detail
-      : fly.ok
-        ? `OK via fly alias — ${fly.detail}`
-        : flyctl.detail,
+    detail: flyctl.ok ? flyctl.detail : fly.ok ? `OK via fly alias — ${fly.detail}` : flyctl.detail,
   },
   { name: 'doppler', ...which('doppler') },
   { name: 'docker daemon', ...dockerDaemon() },
@@ -69,9 +65,7 @@ const optional = [
     name: 'neonctl (optional)',
     ...(() => {
       const n = which('neonctl');
-      return n.ok
-        ? n
-        : { ok: false, detail: 'optional — Neon console alone is enough' };
+      return n.ok ? n : { ok: false, detail: 'optional — Neon console alone is enough' };
     })(),
   },
 ];

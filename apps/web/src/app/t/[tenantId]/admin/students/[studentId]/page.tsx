@@ -25,7 +25,11 @@ import {
   readPageMeta,
   type PaginatedEnvelope,
 } from '@/lib/admin/list-pagination';
-import { resolveClassNames, resolveGuardianNames, resolveStreamNames } from '@/lib/admin/resolve-related-names';
+import {
+  resolveClassNames,
+  resolveGuardianNames,
+  resolveStreamNames,
+} from '@/lib/admin/resolve-related-names';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';
 import { visibleAdminNavIds } from '@/lib/auth/admin-access';
 import type { MeLike } from '@/lib/auth/home-preference';

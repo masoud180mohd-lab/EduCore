@@ -17,8 +17,8 @@ async function neon(apiKey, method, urlPath, body) {
   const res = await fetch(`${API}${urlPath}`, {
     method,
     headers: {
-      Authorization: `Bearer ${apiKey}`,
-      Accept: 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -62,8 +62,7 @@ async function main() {
     let after = before;
     let extendNote = 'unchanged';
     const isTarget =
-      (preferId && p.id === preferId) ||
-      /educore-staging-fra|educore-prod/i.test(p.name ?? '');
+      (preferId && p.id === preferId) || /educore-staging-fra|educore-prod/i.test(p.name ?? '');
 
     if (extendDays > 0 && isTarget) {
       const want = extendDays * 86400;
@@ -101,9 +100,7 @@ async function main() {
     '',
     '| Name | Region | PG | Retention | Extend |',
     '| --- | --- | --- | --- | --- |',
-    ...rows.map(
-      (r) => `| ${r.name} | ${r.region} | ${r.pg} | ${r.retention} | ${r.extendNote} |`,
-    ),
+    ...rows.map((r) => `| ${r.name} | ${r.region} | ${r.pg} | ${r.retention} | ${r.extendNote} |`),
     '',
     '## Honesty',
     '',

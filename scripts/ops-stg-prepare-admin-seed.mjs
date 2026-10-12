@@ -64,4 +64,6 @@ if (!getSecret('SEED_ADMIN_PASS')) {
 }
 
 process.stdout.write('Seed vars ready. Retrieve password locally with:\n');
-process.stdout.write('  doppler secrets get SEED_ADMIN_PASS --plain --project educore --config stg\n');
+process.stdout.write(
+  '  doppler secrets get SEED_ADMIN_PASS --plain --project educore --config stg\n',
+);

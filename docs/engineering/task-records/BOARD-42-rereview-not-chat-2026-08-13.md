@@ -1,11 +1,11 @@
 # Board re-review of `42` — cannot be done in chat
 
-| Field | Value |
-| --- | --- |
-| Date | 2026-08-13 |
+| Field   | Value                                                                              |
+| ------- | ---------------------------------------------------------------------------------- |
+| Date    | 2026-08-13                                                                         |
 | Request | Owner asked to run Board re-review of `EduCore/42_ENGINEERING_READINESS_REVIEW.md` |
-| Result | **Refused / not performed** |
-| Verdict | Original Board **NO GO** still stands |
+| Result  | **Refused / not performed**                                                        |
+| Verdict | Original Board **NO GO** still stands                                              |
 
 ## Why chat is not the Board
 

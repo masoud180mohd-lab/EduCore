@@ -1,12 +1,12 @@
 # B-03 / DSF-POSTURE-001 — Design System Freeze posture task record
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **B-03** readiness blocker |
-| Date      | 2026-08-08 |
-| Status    | **Done** (posture locked — solo-operator provisional) |
+| Field     | Value                                                                                                  |
+| --------- | ------------------------------------------------------------------------------------------------------ |
+| Program   | **B-03** readiness blocker                                                                             |
+| Date      | 2026-08-08                                                                                             |
+| Status    | **Done** (posture locked — solo-operator provisional)                                                  |
 | Decision  | `docs/engineering/decisions/B-03-design-system-freeze-posture.md` (**Accepted**: provisional DSF only) |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                               |
 
 ## Delivered
 

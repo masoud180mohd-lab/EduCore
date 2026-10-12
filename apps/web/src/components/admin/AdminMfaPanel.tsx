@@ -176,15 +176,19 @@ export function AdminMfaPanel() {
 
       {!loading && me !== null ? (
         <p className="muted" style={{ margin: 0 }}>
-          Enforcement:{' '}
-          <strong>{me.mfaEnforced === 'hard' ? 'required' : 'optional (lab)'}</strong>
+          Enforcement: <strong>{me.mfaEnforced === 'hard' ? 'required' : 'optional (lab)'}</strong>
           {me.mfaEnrollmentRequired ? ' — enroll recommended for your role.' : null}
           {hasActive ? ' — authenticator active.' : ' — no active authenticator.'}
         </p>
       ) : null}
 
       {!loading && pending === null && !hasActive ? (
-        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void beginEnroll()}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={busy}
+          onClick={() => void beginEnroll()}
+        >
           {busy ? 'Starting…' : 'Enroll authenticator'}
         </button>
       ) : null}

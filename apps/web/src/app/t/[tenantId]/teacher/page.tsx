@@ -49,10 +49,7 @@ export default function TeacherHomePage() {
 
   return (
     <TeacherShell tenantId={tenantId}>
-      <AdminPageHeader
-        title="Sessions"
-        description="Recent attendance sessions for this school."
-      />
+      <AdminPageHeader title="Sessions" description="Recent attendance sessions for this school." />
       <p>
         <Link className="btn btn-primary" href={`/t/${tenantId}/teacher/attendance`}>
           Take attendance

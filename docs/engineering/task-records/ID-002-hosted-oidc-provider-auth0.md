@@ -1,12 +1,12 @@
 # ID-002 — Hosted OIDC provider (Auth0) task record
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **GO IDP-002** |
-| Date      | 2026-08-09 |
-| Status    | **Done** (provider selected — not integrated) |
+| Field     | Value                                                                                   |
+| --------- | --------------------------------------------------------------------------------------- |
+| Program   | **GO IDP-002**                                                                          |
+| Date      | 2026-08-09                                                                              |
+| Status    | **Done** (provider selected — not integrated)                                           |
 | Decision  | `docs/engineering/decisions/ID-002-hosted-oidc-provider-auth0.md` (**Accepted**: Auth0) |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                                |
 
 ## Delivered
 

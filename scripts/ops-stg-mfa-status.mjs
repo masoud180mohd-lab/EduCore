@@ -45,9 +45,7 @@ async function main() {
     const exists = tables.rows.some((r) => r.table_name === candidate);
     if (!exists) continue;
     const schema = tables.rows.find((r) => r.table_name === candidate)?.table_schema ?? 'public';
-    const q = await client.query(
-      `select count(*)::int as n from ${schema}.${candidate}`,
-    );
+    const q = await client.query(`select count(*)::int as n from ${schema}.${candidate}`);
     process.stdout.write(`${schema}.${candidate}.count=${q.rows[0].n}\n`);
   }
 

@@ -14,14 +14,14 @@ Close IMP-039 residuals: year/class labels beyond the first picker page on Terms
 
 ## Delivered
 
-| Surface | Fix |
-| ------- | --- |
-| Terms / Classes lists | `resolveYearNames` backfill; `search` + `status` Apply/cursor |
-| Streams list | `resolveClassNames` backfill; `search` + `status` Apply/cursor |
-| Fee structures list | `missingNameIds` + `resolveYearNames` on each list load (incl. Load more) |
-| Enrollment detail | Year **name** via `resolveYearNames`; removed `Year id` / `Id:` UUID lines |
+| Surface                     | Fix                                                                         |
+| --------------------------- | --------------------------------------------------------------------------- |
+| Terms / Classes lists       | `resolveYearNames` backfill; `search` + `status` Apply/cursor               |
+| Streams list                | `resolveClassNames` backfill; `search` + `status` Apply/cursor              |
+| Fee structures list         | `missingNameIds` + `resolveYearNames` on each list load (incl. Load more)   |
+| Enrollment detail           | Year **name** via `resolveYearNames`; removed `Year id` / `Id:` UUID lines  |
 | Organizations create/detail | `resolveOrganizationNames` + live “Parent: {name}” when UUID paste resolves |
-| Admin detail footers | Muted `Id: {uuid}` lines removed (id remains in URL) |
+| Admin detail footers        | Muted `Id: {uuid}` lines removed (id remains in URL)                        |
 
 Helpers added in `apps/web/src/lib/admin/resolve-related-names.ts`:
 `resolveYearNames`, `resolveOrganizationNames`, `looksLikeUuid` (+ unit tests).

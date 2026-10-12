@@ -1,16 +1,16 @@
 # OPS-PROD-001 — production Fly + Neon + Doppler (infra only)
 
-| Field | Value |
-| --- | --- |
-| Date | 2026-08-13 |
-| Status | **Infra live** — not Board production GO |
-| Authority | Owner-authorized ops (SOLO-GOV-001) |
-| Fly | `educore-api` (fra) `https://educore-api.fly.dev` |
-| Neon | `educore-prod` (`weathered-cherry-17401184`) `aws-eu-central-1` PG16 |
-| Doppler | `educore` / `prd` |
-| Image | `registry.fly.io/educore-api:deployment-01KZXDG0B25HFYJ8F9C92R36M8` |
+| Field        | Value                                                                                         |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| Date         | 2026-08-13                                                                                    |
+| Status       | **Infra live** — not Board production GO                                                      |
+| Authority    | Owner-authorized ops (SOLO-GOV-001)                                                           |
+| Fly          | `educore-api` (fra) `https://educore-api.fly.dev`                                             |
+| Neon         | `educore-prod` (`weathered-cherry-17401184`) `aws-eu-central-1` PG16                          |
+| Doppler      | `educore` / `prd`                                                                             |
+| Image        | `registry.fly.io/educore-api:deployment-01KZXDG0B25HFYJ8F9C92R36M8`                           |
 | Health (UTC) | 2026-08-13T11:21:09.552Z `{"status":"ok","service":"educore-api","environment":"production"}` |
-| Machines | `d8d961e6a11308`, `e826d2dc43ee28` (fra; checks passing) |
+| Machines     | `d8d961e6a11308`, `e826d2dc43ee28` (fra; checks passing)                                      |
 
 ## What ran
 

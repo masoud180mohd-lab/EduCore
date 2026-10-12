@@ -1,12 +1,12 @@
 # IMP-042 — Organization parent picker
 
-| Field     | Value                                    |
-| --------- | ---------------------------------------- |
-| Program   | **IMP-042**                              |
-| Date      | 2026-08-12                               |
-| Status    | **Done** (solo-operator provisional)     |
+| Field     | Value                                       |
+| --------- | ------------------------------------------- |
+| Program   | **IMP-042**                                 |
+| Date      | 2026-08-12                                  |
+| Status    | **Done** (solo-operator provisional)        |
 | Depends   | IMP-040 org name resolve · IMP-030x pickers |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)    |
 
 ## Outcome
 
@@ -14,10 +14,10 @@ Replace parent organization UUID paste on create/detail with a name select + Loa
 
 ## Delivered
 
-| Surface | Fix |
-| ------- | --- |
-| Organizations create | `<select>` of active orgs + pagination; optional None |
-| Organization detail | Same picker; excludes self; seeds current parent via GET if missing from first page |
+| Surface              | Fix                                                                                 |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| Organizations create | `<select>` of active orgs + pagination; optional None                               |
+| Organization detail  | Same picker; excludes self; seeds current parent via GET if missing from first page |
 
 ## Explicitly not done
 

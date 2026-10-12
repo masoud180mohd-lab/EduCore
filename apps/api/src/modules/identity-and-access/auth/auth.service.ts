@@ -10,10 +10,7 @@ import type { AuditPublisher } from '../../platform-operations/index.js';
 import { AUDIT_PUBLISHER } from '../../platform-operations/index.js';
 import { RbacReadRepository } from '../rbac/rbac-read.repository.js';
 import { MfaService } from '../application/mfa.service.js';
-import {
-  SessionRepository,
-  type UserCredentialRow,
-} from '../repositories/session.repository.js';
+import { SessionRepository, type UserCredentialRow } from '../repositories/session.repository.js';
 import { resolveAuthIdpProvider } from './auth-idp-config.js';
 import type { LoginRateLimiter } from './login-rate-limiter.js';
 import { LOGIN_RATE_LIMITER } from './login-rate-limiter.js';
@@ -230,8 +227,7 @@ export class AuthService {
     }
 
     if (!claims.emailVerified || claims.email === null) {
-      const allowUnverified =
-        process.env['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK']?.trim() === '1';
+      const allowUnverified = process.env['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK']?.trim() === '1';
       if (!allowUnverified || claims.email === null) {
         return null;
       }

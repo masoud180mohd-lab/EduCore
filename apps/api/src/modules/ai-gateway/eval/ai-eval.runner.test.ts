@@ -14,7 +14,9 @@ describe('AI_EVAL_HARNESS (AI-005)', () => {
         .filter((r) => !r.passed)
         .map((r) => `${r.id}: ${r.errors.join('; ')}`)
         .join('\n');
-      expect.fail(`Eval suite failed (${String(suite.failed)}/${String(suite.total)}):\n${details}`);
+      expect.fail(
+        `Eval suite failed (${String(suite.failed)}/${String(suite.total)}):\n${details}`,
+      );
     }
     expect(suite.total).toBe(LAB_ECHO_EVAL_FIXTURES.length);
     expect(suite.failed).toBe(0);

@@ -39,8 +39,8 @@ async function neon(apiKey, method, urlPath, body) {
   const res = await fetch(`${API}${urlPath}`, {
     method,
     headers: {
-      Authorization: `Bearer ${apiKey}`,
-      Accept: 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -117,7 +117,9 @@ async function main() {
   const existingUrl = getSecret('DATABASE_URL');
   if (existingUrl) {
     setSecret('DATABASE_URL_BEFORE_PROD_PROVISION', existingUrl);
-    process.stdout.write('preserved previous prd DATABASE_URL as DATABASE_URL_BEFORE_PROD_PROVISION\n');
+    process.stdout.write(
+      'preserved previous prd DATABASE_URL as DATABASE_URL_BEFORE_PROD_PROVISION\n',
+    );
   }
 
   process.stdout.write(`creating Neon project ${NAME} in ${REGION}…\n`);
@@ -139,7 +141,9 @@ async function main() {
   setSecret('NEON_PROJECT_ID', project.id);
   setSecret('DATABASE_URL', uri);
   process.stdout.write('prd DATABASE_URL now points at Frankfurt Neon educore-prod.\n');
-  process.stdout.write('NEXT: doppler run --project educore --config prd -- npm run db:bootstrap-roles\n');
+  process.stdout.write(
+    'NEXT: doppler run --project educore --config prd -- npm run db:bootstrap-roles\n',
+  );
   process.stdout.write('THEN: doppler run --project educore --config prd -- npm run db:migrate\n');
   process.stdout.write('THEN: node scripts/ops-prod-set-runtime-secrets.mjs (via doppler prd)\n');
 }

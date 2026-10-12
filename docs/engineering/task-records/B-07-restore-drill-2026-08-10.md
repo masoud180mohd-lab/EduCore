@@ -1,23 +1,23 @@
 # B-07 restore drill — 2026-08-10
 
-| Field | Value |
-| --- | --- |
-| Env | staging Neon (`educore-staging-fra` / project `bitter-darkness-15594292`, `aws-eu-central-1`) |
-| Start (UTC) | 2026-08-10T15:49:04.364Z |
-| End (UTC) | 2026-08-10T15:49:13.861Z |
-| RTO measured | 9s (branch create + spot-check + delete) |
-| RPO assumed | Neon PITR / branch from primary head (`main`) |
-| Pass / Fail | **Pass** |
-| Owner | Project Owner / solo-operator (SOLO-GOV-001) |
-| Notes | Ephemeral branch `drill-20260810-msneplry` created from primary, connected as `educore_app`, branch deleted. Fly app not rewired (DB-only drill per OPS-001). Re-check after INFRA-002 Frankfurt cutover (prior Pass: 2026-08-08 on legacy US project). |
+| Field        | Value                                                                                                                                                                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Env          | staging Neon (`educore-staging-fra` / project `bitter-darkness-15594292`, `aws-eu-central-1`)                                                                                                                                                           |
+| Start (UTC)  | 2026-08-10T15:49:04.364Z                                                                                                                                                                                                                                |
+| End (UTC)    | 2026-08-10T15:49:13.861Z                                                                                                                                                                                                                                |
+| RTO measured | 9s (branch create + spot-check + delete)                                                                                                                                                                                                                |
+| RPO assumed  | Neon PITR / branch from primary head (`main`)                                                                                                                                                                                                           |
+| Pass / Fail  | **Pass**                                                                                                                                                                                                                                                |
+| Owner        | Project Owner / solo-operator (SOLO-GOV-001)                                                                                                                                                                                                            |
+| Notes        | Ephemeral branch `drill-20260810-msneplry` created from primary, connected as `educore_app`, branch deleted. Fly app not rewired (DB-only drill per OPS-001). Re-check after INFRA-002 Frankfurt cutover (prior Pass: 2026-08-08 on legacy US project). |
 
 ## Spot checks
 
-| Check | Result |
-| --- | --- |
-| current_user (drill branch) | `educore_app` |
-| current_database | `neondb` |
-| schema_migrations count (app role) | 61 |
+| Check                                                      | Result                           |
+| ---------------------------------------------------------- | -------------------------------- |
+| current_user (drill branch)                                | `educore_app`                    |
+| current_database                                           | `neondb`                         |
+| schema_migrations count (app role)                         | 61                               |
 | tenants / memberships via `educore_app` without tenant GUC | 0 / 0 (expected under FORCE RLS) |
 
 ## Honesty

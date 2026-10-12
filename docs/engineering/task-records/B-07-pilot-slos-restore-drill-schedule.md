@@ -1,13 +1,13 @@
 # B-07 / OPS-001 — Pilot ops minimum task record
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **B-07** readiness blocker |
-| Date      | 2026-08-08 |
-| Status    | **Done** (ops stub / schedule — solo-operator provisional) |
+| Field     | Value                                                                                 |
+| --------- | ------------------------------------------------------------------------------------- |
+| Program   | **B-07** readiness blocker                                                            |
+| Date      | 2026-08-08                                                                            |
+| Status    | **Done** (ops stub / schedule — solo-operator provisional)                            |
 | Decision  | `docs/engineering/decisions/B-07-pilot-slos-restore-drill-schedule.md` (**Accepted**) |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
-| Depends   | B-05 topology · B-04 lite threat model |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                              |
+| Depends   | B-05 topology · B-04 lite threat model                                                |
 
 ## Delivered
 

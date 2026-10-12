@@ -26,8 +26,8 @@ async function neon(apiKey, method, urlPath, body) {
   const res = await fetch(`${API}${urlPath}`, {
     method,
     headers: {
-      Authorization: `Bearer ${apiKey}`,
-      Accept: 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -109,9 +109,7 @@ async function main() {
   }
 
   // Connection URIs sometimes returned on create
-  const conn =
-    created.connection_uris?.[0]?.connection_uri ??
-    null;
+  const conn = created.connection_uris?.[0]?.connection_uri ?? null;
 
   const appTemplate = withAppRole(ownerUrl, appUrl);
   const dbName = new URL(ownerUrl).pathname.replace(/^\//, '') || 'neondb';

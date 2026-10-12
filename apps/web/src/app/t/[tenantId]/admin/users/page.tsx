@@ -115,7 +115,9 @@ export default function AdminUsersPage() {
       setEmail('');
       setDisplayName('');
       setRoleCode('staff');
-      setInfo('Invitation sent. User appears when membership is active (or filter status = invited).');
+      setInfo(
+        'Invitation sent. User appears when membership is active (or filter status = invited).',
+      );
       setAppliedSearch(search);
       setAppliedStatus(statusFilter);
       await loadPage({

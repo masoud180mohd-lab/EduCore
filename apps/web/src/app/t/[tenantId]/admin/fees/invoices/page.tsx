@@ -24,7 +24,11 @@ import {
 } from '@/lib/admin/list-pagination';
 import { missingNameIds, resolveStudentNames } from '@/lib/admin/resolve-related-names';
 import { clearIdempotencyKey, readOrCreateIdempotencyKey, readSession } from '@/lib/auth/session';
-import { invoiceStatusLabel, INVOICE_LIST_STATUSES, type InvoiceListStatus } from '@/lib/finance/invoice-actions';
+import {
+  invoiceStatusLabel,
+  INVOICE_LIST_STATUSES,
+  type InvoiceListStatus,
+} from '@/lib/finance/invoice-actions';
 import { formatTzsMinor, parseMajorToMinor } from '@/lib/finance/money';
 
 type InvoiceRow = {
@@ -512,11 +516,7 @@ export default function AdminInvoicesPage() {
         </div>
         <div className="field">
           <label htmlFor="list-year">Academic year</label>
-          <select
-            id="list-year"
-            value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
-          >
+          <select id="list-year" value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
             <option value="">All years</option>
             {years.map((y) => (
               <option key={y.id} value={y.id}>
