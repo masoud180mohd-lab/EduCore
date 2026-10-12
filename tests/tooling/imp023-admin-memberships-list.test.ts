@@ -34,7 +34,11 @@ describe('IMP-023 admin memberships list', () => {
       path.join(root, 'apps/web/src/app/t/[tenantId]/admin/page.tsx'),
       'utf8',
     );
-    expect(home).toContain('/memberships');
+    const hub = readFileSync(path.join(root, 'apps/web/src/lib/admin/admin-hub.ts'), 'utf8');
+    expect(home).toContain('ADMIN_HUB_BY_ID[id]');
+    expect(home).toContain('href={`${base}${card.hrefSuffix}`}');
+    expect(hub).toContain("id: 'memberships'");
+    expect(hub).toContain("hrefSuffix: '/memberships'");
   });
 
   it('has task record and manual QA', () => {

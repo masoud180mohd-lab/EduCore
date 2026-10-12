@@ -243,9 +243,7 @@ describe('AuthService login', () => {
         idpAssertion: 'aaa.bbb.ccc',
         correlationId: 'c1',
       }),
-    ).rejects.toMatchObject({
-      message: expect.stringContaining('not enabled'),
-    });
+    ).rejects.toThrowError(/not enabled/);
     if (prev === undefined) delete process.env['AUTH_IDP_PROVIDER'];
     else process.env['AUTH_IDP_PROVIDER'] = prev;
   });
@@ -298,10 +296,7 @@ describe('AuthService login', () => {
     };
     const sessions = {
       isAvailable: () => true,
-      lookupUserByExternalSubject: vi
-        .fn()
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(user),
+      lookupUserByExternalSubject: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(user),
       lookupUserByEmail: vi.fn().mockResolvedValue(user),
       linkExternalSubject: vi.fn().mockResolvedValue(true),
       hasActiveMembership: vi.fn().mockResolvedValue(true),
@@ -340,10 +335,7 @@ describe('AuthService login', () => {
     };
     const sessions = {
       isAvailable: () => true,
-      lookupUserByExternalSubject: vi
-        .fn()
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(user),
+      lookupUserByExternalSubject: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(user),
       lookupUserByEmail: vi.fn().mockResolvedValue(user),
       linkExternalSubject: vi.fn().mockResolvedValue(true),
       hasActiveMembership: vi.fn().mockResolvedValue(true),
