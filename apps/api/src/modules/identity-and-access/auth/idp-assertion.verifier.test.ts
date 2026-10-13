@@ -99,10 +99,15 @@ describe('Auth0IdpAssertionVerifier', () => {
       .setExpirationTime('2h')
       .sign(privateKey);
 
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ id_token: idToken }),
-    })) as unknown as typeof fetch;
+    const fetchMock: typeof fetch = vi.fn(
+      (_input: RequestInfo | URL, _init?: RequestInit): Promise<Response> =>
+        Promise.resolve(
+          new Response(JSON.stringify({ id_token: idToken }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        ),
+    );
 
     const verifier = new Auth0IdpAssertionVerifier(
       {
@@ -130,9 +135,7 @@ describe('Auth0IdpAssertionVerifier', () => {
 describe('createIdpAssertionVerifier', () => {
   it('returns disabled verifier for local provider', async () => {
     const verifier = createIdpAssertionVerifier({ AUTH_IDP_PROVIDER: 'local' });
-    await expect(verifier.verify('a.b.c')).rejects.toMatchObject({
-      message: expect.stringContaining('not enabled'),
-    });
+    await expect(verifier.verify('a.b.c')).rejects.toThrowError(/not enabled/);
   });
 
   it('fails closed when auth0 selected without secrets', async () => {

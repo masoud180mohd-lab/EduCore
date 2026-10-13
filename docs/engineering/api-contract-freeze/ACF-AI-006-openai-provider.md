@@ -1,22 +1,22 @@
 # API Contract Freeze Addendum — OpenAI provider (ACF-AI-006)
 
-| Field     | Value                                                    |
-| --------- | -------------------------------------------------------- |
-| Freeze ID | `ACF-AI-006`                                             |
-| Version   | `1.0`                                                    |
-| Date      | 2026-08-04                                               |
-| Parent    | ACF-AI-001                                               |
-| Decision  | `docs/engineering/decisions/AI-006-mvp-ai-provider.md`   |
-| Authority | Solo-operator provisional (SOLO-GOV-001)                 |
+| Field     | Value                                                  |
+| --------- | ------------------------------------------------------ |
+| Freeze ID | `ACF-AI-006`                                           |
+| Version   | `1.0`                                                  |
+| Date      | 2026-08-04                                             |
+| Parent    | ACF-AI-001                                             |
+| Decision  | `docs/engineering/decisions/AI-006-mvp-ai-provider.md` |
+| Authority | Solo-operator provisional (SOLO-GOV-001)               |
 
 ## Config
 
-| Env               | Role                                              |
-| ----------------- | ------------------------------------------------- |
-| `AI_PROVIDER`     | `fake` (default) \| `disabled` \| `openai`        |
-| `OPENAI_API_KEY`  | Required when `AI_PROVIDER=openai`                |
-| `OPENAI_BASE_URL` | Optional; default `https://api.openai.com`        |
-| `OPENAI_MODEL`    | Optional; default `gpt-4o-mini`                   |
+| Env               | Role                                       |
+| ----------------- | ------------------------------------------ |
+| `AI_PROVIDER`     | `fake` (default) \| `disabled` \| `openai` |
+| `OPENAI_API_KEY`  | Required when `AI_PROVIDER=openai`         |
+| `OPENAI_BASE_URL` | Optional; default `https://api.openai.com` |
+| `OPENAI_MODEL`    | Optional; default `gpt-4o-mini`            |
 
 ## Behaviour
 

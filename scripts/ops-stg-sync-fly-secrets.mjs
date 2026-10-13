@@ -81,7 +81,8 @@ const syncAuth0 = idp === 'auth0' || Boolean(auth0Domain);
 if (syncAuth0) {
   const optionalAuth0 = new Set(['AUTH0_ALLOW_UNVERIFIED_EMAIL_LINK']);
   for (const name of AUTH0_NAMES) {
-    const required = !optionalAuth0.has(name) && (name !== 'AUTH0_CLIENT_SECRET' || idp === 'auth0');
+    const required =
+      !optionalAuth0.has(name) && (name !== 'AUTH0_CLIENT_SECRET' || idp === 'auth0');
     const value = getSecret(name, { required });
     if (value !== undefined) {
       setFlySecret(name, value);
@@ -95,7 +96,9 @@ if (syncAuth0) {
     }
   }
 } else {
-  process.stdout.write('skip Auth0 Fly secrets (AUTH_IDP_PROVIDER!=auth0 and AUTH0_DOMAIN unset)\n');
+  process.stdout.write(
+    'skip Auth0 Fly secrets (AUTH_IDP_PROVIDER!=auth0 and AUTH0_DOMAIN unset)\n',
+  );
 }
 
 process.stdout.write(`Fly secrets synced to ${APP} (no owner DATABASE_URL).\n`);

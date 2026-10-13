@@ -1,12 +1,12 @@
 # B-05 / INFRA-001 — Hosting & DR decision task record
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **B-05** readiness blocker |
-| Date      | 2026-08-04 |
-| Status    | **Done** (solo-operator provisional) |
+| Field     | Value                                                                      |
+| --------- | -------------------------------------------------------------------------- |
+| Program   | **B-05** readiness blocker                                                 |
+| Date      | 2026-08-04                                                                 |
+| Status    | **Done** (solo-operator provisional)                                       |
 | Decision  | `docs/engineering/decisions/B-05-mvp-hosting-dr-secrets.md` (**Accepted**) |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                   |
 
 ## Delivered
 

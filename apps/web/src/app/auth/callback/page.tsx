@@ -187,9 +187,7 @@ export default function Auth0CallbackPage() {
         <p className="muted">Please wait…</p>
       ) : null}
 
-      {mfaChallengeToken !== null ? (
-        <MfaChallengeForm busy={busy} onSubmit={onMfaVerify} />
-      ) : null}
+      {mfaChallengeToken !== null ? <MfaChallengeForm busy={busy} onSubmit={onMfaVerify} /> : null}
 
       {tenants !== null ? (
         <div className="stack">

@@ -4,12 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import {
-  AdminPageHeader,
-  Banner,
-  ConfirmDialog,
-  ResourceListPagination,
-} from '@/components/admin';
+import { AdminPageHeader, Banner, ConfirmDialog, ResourceListPagination } from '@/components/admin';
 import { AdminShell } from '@/components/AdminShell';
 import { ApiClientError, apiRequest } from '@/lib/api/client';
 import { adminFriendlyMessage } from '@/lib/admin/admin-friendly-message';

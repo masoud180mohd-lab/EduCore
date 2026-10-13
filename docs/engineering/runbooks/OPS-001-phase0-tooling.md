@@ -7,8 +7,8 @@ Install these **before** Phases A–E. No secrets in git.
 
 ## 1. Docker Desktop
 
-1. Install/start [Docker Desktop](https://www.docker.com/products/docker-desktop/).  
-2. Confirm: `docker info` shows a **Server Version** (not a pipe error).  
+1. Install/start [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+2. Confirm: `docker info` shows a **Server Version** (not a pipe error).
 3. Then: `npm run docker:build:api`
 
 ## 2. flyctl

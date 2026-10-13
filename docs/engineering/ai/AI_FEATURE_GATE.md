@@ -64,19 +64,19 @@ Any code not listed in **Runtime allowlist** is treated as **blocked** (fail clo
 
 Copy this checklist into the feature’s task record; all items must be **Yes** or **N/A with reason**:
 
-| #   | Check                                                                          | Evidence                  |
-| --- | ------------------------------------------------------------------------------ | ------------------------- |
-| 1   | Calls only `AiGatewayPort` (no provider SDK in domain module)                  | Code review / import lint |
-| 2   | `featureCode` added to this doc + runtime allowlist amend                      | PR + gate version bump    |
-| 3   | Prompt in registry with allowlisted placeholders only                          | Migration / seed          |
-| 4   | Privacy: `redactForAi` path exercised; no unredacted child PII in default logs | Tests / fixtures          |
-| 5   | Tenant + actor required; AuthZ on product permission                           | ACF / tests               |
-| 6   | Budget: daily cap / metering defined; fail closed                              | Config + tests            |
+| #   | Check                                                                          | Evidence                                              |
+| --- | ------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| 1   | Calls only `AiGatewayPort` (no provider SDK in domain module)                  | Code review / import lint                             |
+| 2   | `featureCode` added to this doc + runtime allowlist amend                      | PR + gate version bump                                |
+| 3   | Prompt in registry with allowlisted placeholders only                          | Migration / seed                                      |
+| 4   | Privacy: `redactForAi` path exercised; no unredacted child PII in default logs | Tests / fixtures                                      |
+| 5   | Tenant + actor required; AuthZ on product permission                           | ACF / tests                                           |
+| 6   | Budget: daily cap / metering defined; fail closed                              | Config + tests                                        |
 | 7   | Eval fixtures exist (AI_EVAL_HARNESS) for happy + failure + redaction          | AI-005 — see `AI_EVAL_HARNESS.md` + `ai-gateway/eval` |
-| 8   | Human-review flag documented if guidelines require review                      | Product UX / API          |
-| 9   | Kill switch / per-feature flag can disable without deploy                      | Config                    |
-| 10  | No auto-send of AI text to parents/students                                    | Product rule              |
-| 11  | Known Limitations / ADR conflicts checked                                      | Docs                      |
+| 8   | Human-review flag documented if guidelines require review                      | Product UX / API                                      |
+| 9   | Kill switch / per-feature flag can disable without deploy                      | Config                                                |
+| 10  | No auto-send of AI text to parents/students                                    | Product rule                                          |
+| 11  | Known Limitations / ADR conflicts checked                                      | Docs                                                  |
 
 ## Relationship to pipeline
 

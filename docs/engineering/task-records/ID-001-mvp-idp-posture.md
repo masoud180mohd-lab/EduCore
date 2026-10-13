@@ -1,12 +1,12 @@
 # ID-001 — MVP IdP posture task record
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **GO IDP** / B-04 residual |
-| Date      | 2026-08-08 |
-| Status    | **Done** (posture locked — solo-operator provisional) |
+| Field     | Value                                                                            |
+| --------- | -------------------------------------------------------------------------------- |
+| Program   | **GO IDP** / B-04 residual                                                       |
+| Date      | 2026-08-08                                                                       |
+| Status    | **Done** (posture locked — solo-operator provisional)                            |
 | Decision  | `docs/engineering/decisions/ID-001-mvp-idp-posture.md` (**Accepted**: defer IdP) |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                                         |
 
 ## Delivered
 

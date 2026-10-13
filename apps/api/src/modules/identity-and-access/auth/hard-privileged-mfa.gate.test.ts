@@ -10,13 +10,14 @@ describe('HardPrivilegedMfaGate', () => {
   it('no-ops when MFA_ENFORCE is soft', async () => {
     const prev = process.env['MFA_ENFORCE'];
     process.env['MFA_ENFORCE'] = 'soft';
+    const hasActiveTotp = vi.fn();
     const mfa = {
       isAvailable: () => true,
-      hasActiveTotp: vi.fn(),
+      hasActiveTotp,
     } as unknown as MfaRepository;
     const gate = new HardPrivilegedMfaGate(mfa);
     await expect(gate.assertAccess('u1', 't1', ['finance.manage'])).resolves.toBeUndefined();
-    expect(mfa.hasActiveTotp).not.toHaveBeenCalled();
+    expect(hasActiveTotp).not.toHaveBeenCalled();
     if (prev === undefined) delete process.env['MFA_ENFORCE'];
     else process.env['MFA_ENFORCE'] = prev;
   });
@@ -24,13 +25,14 @@ describe('HardPrivilegedMfaGate', () => {
   it('allows non-privileged routes under hard', async () => {
     const prev = process.env['MFA_ENFORCE'];
     process.env['MFA_ENFORCE'] = 'hard';
+    const hasActiveTotp = vi.fn();
     const mfa = {
       isAvailable: () => true,
-      hasActiveTotp: vi.fn(),
+      hasActiveTotp,
     } as unknown as MfaRepository;
     const gate = new HardPrivilegedMfaGate(mfa);
     await expect(gate.assertAccess('u1', 't1', ['student.read'])).resolves.toBeUndefined();
-    expect(mfa.hasActiveTotp).not.toHaveBeenCalled();
+    expect(hasActiveTotp).not.toHaveBeenCalled();
     if (prev === undefined) delete process.env['MFA_ENFORCE'];
     else process.env['MFA_ENFORCE'] = prev;
   });

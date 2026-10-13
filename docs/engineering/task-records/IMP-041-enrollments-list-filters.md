@@ -1,12 +1,12 @@
 # IMP-041 — Enrollments list filter parity
 
-| Field     | Value                                      |
-| --------- | ------------------------------------------ |
-| Program   | **IMP-041**                                |
-| Date      | 2026-08-12                                 |
-| Status    | **Done** (solo-operator provisional)       |
-| Depends   | IMP-038/040 Apply pattern · ACF-008        |
-| Authority | Solo-operator provisional (SOLO-GOV-001)   |
+| Field     | Value                                    |
+| --------- | ---------------------------------------- |
+| Program   | **IMP-041**                              |
+| Date      | 2026-08-12                               |
+| Status    | **Done** (solo-operator provisional)     |
+| Depends   | IMP-038/040 Apply pattern · ACF-008      |
+| Authority | Solo-operator provisional (SOLO-GOV-001) |
 
 ## Outcome
 
@@ -14,11 +14,11 @@ Close the last IMP-038 Academic filter residual: Enrollments list uses the same 
 
 ## Delivered
 
-| Filter | Notes |
-| ------ | ----- |
+| Filter      | Notes                                                                       |
+| ----------- | --------------------------------------------------------------------------- |
 | `studentId` | Picker + URL `?studentId=` applies as list filter and still prefills create |
-| `classId` | Draft → Apply (was live `useEffect`) |
-| `status` | Draft → Apply |
+| `classId`   | Draft → Apply (was live `useEffect`)                                        |
+| `status`    | Draft → Apply                                                               |
 
 - `AdminPageHeader` + `Banner`
 - Load more keeps **applied** filters

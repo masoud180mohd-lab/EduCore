@@ -1,13 +1,13 @@
 # AI-005 — Evaluation harness (Fake only)
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **AI-005** / EPIC-AI-01 / F-AI-03 |
-| Date      | 2026-08-04 |
-| Status    | **Done** (solo-operator provisional) |
+| Field     | Value                                             |
+| --------- | ------------------------------------------------- |
+| Program   | **AI-005** / EPIC-AI-01 / F-AI-03                 |
+| Date      | 2026-08-04                                        |
+| Status    | **Done** (solo-operator provisional)              |
 | Depends   | AI-002…AI-004 · `AI_FEATURE_GATE.md` checklist #7 |
-| Spec      | `docs/engineering/ai/AI_EVAL_HARNESS.md` |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Spec      | `docs/engineering/ai/AI_EVAL_HARNESS.md`          |
+| Authority | Solo-operator provisional (SOLO-GOV-001)          |
 
 ## Delivered
 

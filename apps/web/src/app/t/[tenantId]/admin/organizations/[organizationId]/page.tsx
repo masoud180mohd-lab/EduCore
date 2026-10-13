@@ -74,10 +74,9 @@ export default function AdminOrganizationDetailPage() {
     const auth = readSession();
     if (auth === null) return;
     try {
-      const res = await apiRequest<{ data: OrganizationRow }>(
-        `/api/v1/organizations/${parentId}`,
-        { auth },
-      );
+      const res = await apiRequest<{ data: OrganizationRow }>(`/api/v1/organizations/${parentId}`, {
+        auth,
+      });
       setParentOptions((prev) => appendById(prev, [res.data]));
     } catch {
       /* select still holds id until picker catches up */

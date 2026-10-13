@@ -66,4 +66,6 @@ for (const name of CORE_NAMES) {
   setFlySecret(name, getSecret(name, { required: true }));
 }
 
-process.stdout.write(`Fly secrets synced to ${APP} (no owner DATABASE_URL; Auth0 not auto-copied).\n`);
+process.stdout.write(
+  `Fly secrets synced to ${APP} (no owner DATABASE_URL; Auth0 not auto-copied).\n`,
+);

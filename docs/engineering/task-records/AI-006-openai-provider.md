@@ -1,14 +1,14 @@
 # AI-006 — OpenAI real provider adapter (env-gated)
 
-| Field     | Value |
-| --------- | ----- |
-| Program   | **AI-006** / EPIC-AI-01 optional follow-on |
-| Date      | 2026-08-04 |
-| Status    | **Done** (solo-operator provisional) |
-| Depends   | AI-001…005 · ADR-003 · ACF-AI-001 |
+| Field     | Value                                                                 |
+| --------- | --------------------------------------------------------------------- |
+| Program   | **AI-006** / EPIC-AI-01 optional follow-on                            |
+| Date      | 2026-08-04                                                            |
+| Status    | **Done** (solo-operator provisional)                                  |
+| Depends   | AI-001…005 · ADR-003 · ACF-AI-001                                     |
 | Decision  | `docs/engineering/decisions/AI-006-mvp-ai-provider.md` (**Accepted**) |
-| Freeze    | `docs/engineering/api-contract-freeze/ACF-AI-006-openai-provider.md` |
-| Authority | Solo-operator provisional (SOLO-GOV-001) |
+| Freeze    | `docs/engineering/api-contract-freeze/ACF-AI-006-openai-provider.md`  |
+| Authority | Solo-operator provisional (SOLO-GOV-001)                              |
 
 ## Delivered
 

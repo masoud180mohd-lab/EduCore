@@ -65,9 +65,18 @@ function defaultCallbacks() {
     process.env['AUTH0_WEB_ORIGINS']?.trim() ||
     'https://educore-api-staging.fly.dev,http://localhost:3001';
   return {
-    callbacks: callbacks.split(',').map((s) => s.trim()).filter(Boolean),
-    logout: logout.split(',').map((s) => s.trim()).filter(Boolean),
-    origins: origins.split(',').map((s) => s.trim()).filter(Boolean),
+    callbacks: callbacks
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+    logout: logout
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+    origins: origins
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
   };
 }
 
@@ -93,8 +102,8 @@ async function mgmt(domain, token, method, path, body) {
   const res = await fetch(`https://${domain}/api/v2${path}`, {
     method,
     headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -114,7 +123,12 @@ async function mgmt(domain, token, method, path, body) {
 
 async function ensureClientViaManagement(domain, token) {
   const urls = defaultCallbacks();
-  const list = await mgmt(domain, token, 'GET', '/clients?fields=client_id,name,app_type&include_fields=true&per_page=100');
+  const list = await mgmt(
+    domain,
+    token,
+    'GET',
+    '/clients?fields=client_id,name,app_type&include_fields=true&per_page=100',
+  );
   const clients = Array.isArray(list) ? list : [];
   const existing = clients.find((c) => c.name === APP_NAME);
   const payload = {
@@ -169,7 +183,9 @@ function ensureClientViaCli(domain) {
     windowsHide: true,
   });
   if (list.status !== 0) {
-    throw new Error(`auth0 apps list failed — run auth0 login first: ${(list.stderr || list.stdout || '').trim()}`);
+    throw new Error(
+      `auth0 apps list failed — run auth0 login first: ${(list.stderr || list.stdout || '').trim()}`,
+    );
   }
   let apps = [];
   try {
@@ -225,9 +241,7 @@ function ensureClientViaCli(domain) {
 }
 
 async function main() {
-  const domain = normalizeDomain(
-    process.env['AUTH0_DOMAIN'] ?? dopplerGet('AUTH0_DOMAIN') ?? '',
-  );
+  const domain = normalizeDomain(process.env['AUTH0_DOMAIN'] ?? dopplerGet('AUTH0_DOMAIN') ?? '');
 
   let clientId;
   let clientSecret;

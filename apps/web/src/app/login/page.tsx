@@ -135,10 +135,7 @@ export default function LoginPage() {
 
   return (
     <div className="app-shell">
-      <AdminPageHeader
-        title="Sign in"
-        description="EduCore — staff, admin, and parent accounts."
-      />
+      <AdminPageHeader title="Sign in" description="EduCore — staff, admin, and parent accounts." />
       {error !== null ? <Banner tone="error">{error}</Banner> : null}
 
       {mfaChallengeToken !== null ? (

@@ -23,9 +23,7 @@ export function MfaChallengeForm({ busy = false, onSubmit, onCancel }: Props) {
 
   return (
     <form className="stack" onSubmit={handleSubmit}>
-      <p>
-        Enter the 6-digit code from your authenticator app to finish signing in.
-      </p>
+      <p>Enter the 6-digit code from your authenticator app to finish signing in.</p>
       <div className="field">
         <label htmlFor="mfaCode">Authenticator code</label>
         <input

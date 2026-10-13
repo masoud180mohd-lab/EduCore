@@ -3,9 +3,9 @@
 Topology decision: `docs/engineering/decisions/B-05-mvp-hosting-dr-secrets.md`  
 Operator runbook: `docs/engineering/runbooks/OPS-001-staging-provision-and-d1.md`
 
-| File | App | Region |
-| --- | --- | --- |
-| `educore-api.staging.toml` | `educore-api-staging` | `fra` |
+| File                       | App                   | Region |
+| -------------------------- | --------------------- | ------ |
+| `educore-api.staging.toml` | `educore-api-staging` | `fra`  |
 
 ## Deploy (API)
 

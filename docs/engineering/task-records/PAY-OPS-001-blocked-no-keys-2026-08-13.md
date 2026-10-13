@@ -1,18 +1,18 @@
 # PAY-OPS-001 — blocked 2026-08-13 (no ClickPesa keys)
 
-| Field | Value |
-| --- | --- |
-| Date | 2026-08-13 |
-| Status | **Still deferred** |
-| Runtime | Fake (`PAYMENT_PROVIDER=fake`) |
+| Field     | Value                                            |
+| --------- | ------------------------------------------------ |
+| Date      | 2026-08-13                                       |
+| Status    | **Still deferred**                               |
+| Runtime   | Fake (`PAYMENT_PROVIDER=fake`)                   |
 | Authority | SOLO-GOV-001 honesty; Owner asked to run PAY-OPS |
 
 ## Check (names / presence only)
 
-| Config | `CLICKPESA_*` present | `PAYMENT_PROVIDER` |
-| --- | --- | --- |
-| Doppler `educore`/`stg` | **no** | present (Fake path) |
-| Doppler `educore`/`prd` | **no** | `fake` |
+| Config                                      | `CLICKPESA_*` present                                                        | `PAYMENT_PROVIDER`                                    |
+| ------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Doppler `educore`/`stg`                     | **no**                                                                       | present (Fake path)                                   |
+| Doppler `educore`/`prd`                     | **no**                                                                       | `fake`                                                |
 | `npm run payments:check-config` (via `prd`) | missing `CLICKPESA_CLIENT_ID`, `CLICKPESA_API_KEY`, `CLICKPESA_CHECKSUM_KEY` | `requestedProvider: fake` → `effectiveProvider: fake` |
 
 ## Honesty

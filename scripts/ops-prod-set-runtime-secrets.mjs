@@ -105,4 +105,6 @@ process.stdout.write('Runtime secrets ready for educore/prd (PAYMENT_PROVIDER=fa
 process.stdout.write(
   'Retrieve prod admin password locally: doppler secrets get SEED_ADMIN_PASS --plain --project educore --config prd\n',
 );
-process.stdout.write('Rotate DB role passwords before any school traffic (ops-stg-rotate pattern).\n');
+process.stdout.write(
+  'Rotate DB role passwords before any school traffic (ops-stg-rotate pattern).\n',
+);

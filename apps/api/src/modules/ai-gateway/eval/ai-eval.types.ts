@@ -2,13 +2,7 @@
  * AI eval harness types (AI-005 / AI_EVAL_HARNESS).
  */
 
-export type AiEvalCategory =
-  | 'happy'
-  | 'failure'
-  | 'redaction'
-  | 'gate'
-  | 'kill_switch'
-  | 'cap';
+export type AiEvalCategory = 'happy' | 'failure' | 'redaction' | 'gate' | 'kill_switch' | 'cap';
 
 export type AiEvalPromptOverride = {
   readonly code?: string;

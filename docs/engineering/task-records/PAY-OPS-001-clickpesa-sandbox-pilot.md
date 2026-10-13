@@ -1,12 +1,12 @@
 # PAY-OPS-001 — ClickPesa sandbox pilot (operator)
 
-| Field     | Value                                                      |
-| --------- | ---------------------------------------------------------- |
-| Program   | **PAY-OPS-001** (post PAY-006)                             |
-| Date      | 2026-08-02                                                 |
+| Field     | Value                                                                 |
+| --------- | --------------------------------------------------------------------- |
+| Program   | **PAY-OPS-001** (post PAY-006)                                        |
+| Date      | 2026-08-02                                                            |
 | Status    | **Deferred** (re-checked 2026-08-13 — still no Doppler `CLICKPESA_*`) |
-| Depends   | PAY-001…PAY-006 Done on `main`                             |
-| Authority | Solo-operator (SOLO-GOV-001)                               |
+| Depends   | PAY-001…PAY-006 Done on `main`                                        |
+| Authority | Solo-operator (SOLO-GOV-001)                                          |
 
 ## Goal
 
